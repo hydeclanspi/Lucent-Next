@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>名片主页</title>
+  <link rel="stylesheet" href="./assets/app.css">
+  <style>
+    body {
+      background-image: url("./assets/wallpaper.jpg");
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+    }
+  </style>
+  <script>
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      document.documentElement.dataset.theme = "dark";
+    }
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="clock">
+        <strong id="clockTime">--:--</strong>
+        <span id="clockDate">Aira</span>
+      </div>
+      <div class="actions">
+        <button class="abtn primary" id="btnSearch" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.2"/><path d="M15.6 15.6 20.4 20.4"/></svg>
+          <span>搜索</span>
+        </button>
+        <button class="abtn" id="btnTabs" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7h13v12.5h-13z"/><path d="M8 4.5h9.5A2.5 2.5 0 0 1 20 7v9.5"/></svg>
+          <span>全部标签</span>
+        </button>
+        <button class="abtn" id="btnPrivacy" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.4 19 6v5.4c0 4.3-2.9 7.7-7 9.2-4.1-1.5-7-4.9-7-9.2V6z"/></svg>
+          <span id="privacyLabel">隐私模式</span>
+        </button>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="btnHistory" type="button" aria-label="历史记录">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3.8 12a8.2 8.2 0 1 0 2.4-5.8"/>
+          <path d="M3.5 4.6v4h4"/>
+          <path d="M12 8v4.4l3 1.8"/>
+        </svg>
+      </button>
+      <button class="icon-btn" id="btnScan" type="button" aria-label="扫一扫">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 8V5.5A2.5 2.5 0 0 1 5.5 3H8M16 3h2.5A2.5 2.5 0 0 1 21 5.5V8M21 16v2.5A2.5 2.5 0 0 1 18.5 21H16M8 21H5.5A2.5 2.5 0 0 1 3 18.5V16"/>
+          <path d="M3.5 12h17"/>
+        </svg>
+      </button>
+      <button class="icon-btn" id="btnSettings" type="button" aria-label="设置">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3.2"/>
+          <path d="M12 2.8v2.4M12 18.8v2.4M4.6 7.2l2 1.2M17.4 15.6l2 1.2M4.6 16.8l2-1.2M17.4 8.4l2-1.2"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="hero">
+      <div class="avatar">
+        <span class="avatar-halo" aria-hidden="true"></span>
+        <span class="avatar-ring" aria-hidden="true"></span>
+        <img class="avatar-img" id="avatarImg" src="./assets/avatar.jpg" alt="">
+        <span class="avatar-dot" id="avatarDot" aria-hidden="true"></span>
+        <span class="floaters" aria-hidden="true">
+          <svg class="fl fl-1" viewBox="0 0 24 24"><path d="M12 21s-7.2-4.5-9.1-9A5.2 5.2 0 0 1 12 6.6 5.2 5.2 0 0 1 21.1 12c-1.9 4.5-9.1 9-9.1 9z" fill="currentColor"/></svg>
+          <svg class="fl fl-2" viewBox="0 0 24 24"><path d="M12 2.6C13 8 15.6 10.6 21 11.6 15.6 12.6 13 15.2 12 20.6 11 15.2 8.4 12.6 3 11.6 8.4 10.6 11 8 12 2.6z" fill="currentColor"/></svg>
+        </span>
+      </div>
+
+      <h1 class="name" id="profileName">无名氏</h1>
+
+      <div class="meta">
+        <span class="status-pill" id="statusPill"><i aria-hidden="true"></i><span id="statusText">普通模式</span></span>
+        <span class="meta-text" id="profileMeta">18 · 上海</span>
+      </div>
+
+      <p class="signature" id="profileSign">把今天过成想要的样子。</p>
+
+      <div class="badges" id="badges"></div>
+      <div class="tags" id="tags"></div>
+    </section>
+
+    <section class="card">
+      <form class="search" id="searchForm" autocomplete="off">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+          <circle cx="11" cy="11" r="6.4"/>
+          <path d="M15.8 15.8 20.5 20.5"/>
+        </svg>
+        <input id="searchInput" type="search" inputmode="text" enterkeyhint="search" placeholder="搜索或输入网址" aria-label="搜索或输入网址">
+        <button class="search-go" id="btnSystemSearch" type="button" aria-label="打开 Aira 搜索">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 12h13M12.5 6.5 18 12l-5.5 5.5"/>
+          </svg>
+        </button>
+      </form>
+
+      <div class="block">
+        <div class="block-head">
+          <h2 class="block-title">搜索引擎</h2>
+          <button class="mini" id="btnEngineSettings" type="button">管理</button>
+        </div>
+        <div class="block-body">
+          <div class="chips" id="engineChips"></div>
+        </div>
+      </div>
+
+      <div class="block" id="blockShortcuts">
+        <div class="block-head">
+          <h2 class="block-title">快捷方式</h2>
+          <button class="mini" id="btnEditMode" type="button">排序</button>
+          <button class="fold" id="btnFoldShortcuts" type="button" aria-label="折叠快捷方式" aria-expanded="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9.5 12 15 17.5 9.5"/></svg>
+          </button>
+        </div>
+        <div class="block-body">
+          <div class="grid" id="shortcutGrid"></div>
+        </div>
+      </div>
+
+      <div class="block" id="blockEntries">
+        <div class="block-head">
+          <h2 class="block-title">直达</h2>
+          <button class="mini" id="btnEditProfile" type="button">编辑名片</button>
+          <button class="fold" id="btnFoldEntries" type="button" aria-label="折叠直达" aria-expanded="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9.5 12 15 17.5 9.5"/></svg>
+          </button>
+        </div>
+        <div class="block-body">
+          <div class="rows" id="entryRows"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="sheet-root" id="sheetRoot" hidden>
+    <div class="sheet-mask" id="sheetMask"></div>
+    <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="操作面板"></div>
+  </div>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <script src="./assets/app.js"></script>
+</body>
+</html>
