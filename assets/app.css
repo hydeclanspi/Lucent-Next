@@ -181,11 +181,11 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 }
 .topbar-actions .abtn.box:active { transform: rotate(-7deg) scale(0.97); }
 .topbar-actions .abtn .arrow {
-  position: absolute;
-  top: -15px;
-  right: -17px;
-  width: 32px;
-  height: 32px;
+  width: 18px;
+  height: 18px;
+  margin-left: 2px;
+  margin-top: -7px;
+  align-self: flex-start;
   opacity: 0.9;
 }
 
