@@ -169,6 +169,25 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 /* 右上角这排里，带文字的动作按钮与图标按钮同高 */
 .topbar-actions .abtn { height: 40px; padding: 0 14px; }
 
+/* 历史记录：按批注做成倾斜的方框，玻璃材质与全局一致；箭头从右上角挑出框外 */
+.topbar-actions .abtn.box {
+  position: relative;
+  overflow: visible;
+  border-radius: 0;
+  height: 44px;
+  padding: 0 18px;
+  transform: rotate(-7deg);
+}
+.topbar-actions .abtn.box:active { transform: rotate(-7deg) scale(0.97); }
+.topbar-actions .abtn .arrow {
+  position: absolute;
+  top: -12px;
+  right: -13px;
+  width: 26px;
+  height: 26px;
+  opacity: 0.85;
+}
+
 .icon-btn {
   width: 40px;
   height: 40px;
