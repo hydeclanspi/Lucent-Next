@@ -174,18 +174,19 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   position: relative;
   overflow: visible;
   border-radius: 0;
-  height: 44px;
-  padding: 0 18px;
+  height: 46px;
+  padding: 0 20px;
+  font-size: 14px;
   transform: rotate(-7deg);
 }
 .topbar-actions .abtn.box:active { transform: rotate(-7deg) scale(0.97); }
 .topbar-actions .abtn .arrow {
   position: absolute;
-  top: -12px;
-  right: -13px;
-  width: 26px;
-  height: 26px;
-  opacity: 0.85;
+  top: -15px;
+  right: -17px;
+  width: 32px;
+  height: 32px;
+  opacity: 0.9;
 }
 
 .icon-btn {
