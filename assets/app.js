@@ -70,6 +70,7 @@
     shortcuts: [],
     iconPrefs: {},
     logs: [],
+    signs: [],
     theme: { mode: "system", effectiveMode: "light" },
     privacy: { isPrivate: false },
     editing: false,
@@ -1304,6 +1305,7 @@
           state.profile.name = name.input.value.trim() || DEFAULT_PROFILE.name;
           state.profile.meta = meta.input.value.trim();
           state.profile.sign = sign.input.value.trim();
+          recordSign(state.profile.sign);
           applyProfile();
           persist("名片已保存");
         }
@@ -1582,7 +1584,7 @@
     paintDailyLog();
   }
 
-  function logRow(row, index, refresh) {
+  function historyRow(row, onRemove) {
     var wrap = document.createElement("div");
     wrap.className = "log-row";
 
@@ -1619,10 +1621,7 @@
     }
     function close() { dx = 0; slide(0); }
 
-    action.addEventListener("click", function () {
-      removeLog(index);
-      if (refresh) refresh();
-    });
+    action.addEventListener("click", function () { onRemove(); });
 
     item.addEventListener("pointerdown", function (event) {
       if (event.button && event.button !== 0) return;
@@ -1653,6 +1652,73 @@
     return wrap;
   }
 
+  // 淡橙色「国中国」：列表 + 分页，日志和签名历史共用同一套
+  function buildHistoryBlock(rows, remove) {
+    var box = document.createElement("div");
+    box.className = "log-history";
+
+    var brand = document.createElement("p");
+    brand.className = "log-brand";
+    brand.textContent = "历史记录";
+
+    var list = document.createElement("div");
+    list.className = "log-list";
+
+    var pager = document.createElement("div");
+    pager.className = "log-pager";
+
+    box.appendChild(brand);
+    box.appendChild(list);
+    box.appendChild(pager);
+
+    var page = 1;
+
+    function pageButton(glyph, disabled, run) {
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "log-page-btn";
+      button.textContent = glyph;
+      button.disabled = !!disabled;
+      button.addEventListener("click", run);
+      return button;
+    }
+
+    function render() {
+      var total = Math.max(1, Math.ceil(rows.length / LOG_PAGE_SIZE));
+      if (page > total) page = total;
+      if (page < 1) page = 1;
+      var from = (page - 1) * LOG_PAGE_SIZE;
+
+      list.textContent = "";
+      var slice = rows.slice(from, from + LOG_PAGE_SIZE);
+      if (!slice.length) {
+        var empty = document.createElement("p");
+        empty.className = "log-empty";
+        empty.textContent = "还没有记录。";
+        list.appendChild(empty);
+      }
+      slice.forEach(function (row, offset) {
+        list.appendChild(historyRow(row, function () {
+          remove(from + offset);
+          render();
+        }));
+      });
+
+      pager.textContent = "";
+      if (total > 1) {
+        pager.appendChild(pageButton("‹", page <= 1, function () { page--; render(); }));
+        var info = document.createElement("span");
+        info.className = "log-pageinfo";
+        info.textContent = page + " / " + total + " · " + rows.length + " 条";
+        pager.appendChild(info);
+        pager.appendChild(pageButton("›", page >= total, function () { page++; render(); }));
+      }
+    }
+
+    render();
+    return { node: box, render: render, first: function () { page = 1; } };
+  }
+
   function openLogEditor() {
     var body = document.createElement("div");
     body.className = "log-editor";
@@ -1677,66 +1743,29 @@
     saveButton.textContent = "Done";
     saveRow.appendChild(saveButton);
 
-    var history = document.createElement("div");
-    history.className = "log-history";
-    var brand = document.createElement("p");
-    brand.className = "log-brand";
-    brand.textContent = "历史记录";
+    var block = buildHistoryBlock(state.logs, removeLog);
+    var history = block.node;
 
-    var list = document.createElement("div");
-    list.className = "log-list";
-
-    var pager = document.createElement("div");
-    pager.className = "log-pager";
-
-    history.appendChild(brand);
-    history.appendChild(list);
-    history.appendChild(pager);
+    var chipRow = document.createElement("div");
+    chipRow.className = "log-more";
+    var chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "log-chip";
+    chip.textContent = "{历史签名}";
+    chip.addEventListener("click", function () { openSignHistory(); });
+    chipRow.appendChild(chip);
 
     body.appendChild(field);
     body.appendChild(saveRow);
     body.appendChild(history);
-
-    var page = 1;
-
-    function pageButton(glyph, disabled, run) {
-      var button = document.createElement("button");
-      button.type = "button";
-      button.className = "log-page-btn";
-      button.textContent = glyph;
-      button.disabled = !!disabled;
-      button.addEventListener("click", run);
-      return button;
-    }
-
-    function renderList() {
-      var total = Math.max(1, Math.ceil(state.logs.length / LOG_PAGE_SIZE));
-      if (page > total) page = total;
-      if (page < 1) page = 1;
-      var from = (page - 1) * LOG_PAGE_SIZE;
-
-      list.textContent = "";
-      state.logs.slice(from, from + LOG_PAGE_SIZE).forEach(function (row, offset) {
-        list.appendChild(logRow(row, from + offset, renderList));
-      });
-
-      pager.textContent = "";
-      if (total > 1) {
-        pager.appendChild(pageButton("‹", page <= 1, function () { page--; renderList(); }));
-        var info = document.createElement("span");
-        info.className = "log-pageinfo";
-        info.textContent = page + " / " + total + " · " + state.logs.length + " 条";
-        pager.appendChild(info);
-        pager.appendChild(pageButton("›", page >= total, function () { page++; renderList(); }));
-      }
-    }
+    body.appendChild(chipRow);
 
     saveButton.addEventListener("click", function () {
       if (pushLog(input.value)) {
         input.value = currentLogText();
         input.blur();
-        page = 1;
-        renderList();
+        block.first();
+        block.render();
       }
     });
     input.addEventListener("keydown", function (event) {
@@ -1752,7 +1781,47 @@
       center: true,
       buttons: [{ label: "完成", variant: "primary", size: "sm", run: function () { closeSheet(); } }]
     });
-    renderList();
+  }
+
+  /* ---------- 签名历史（左侧个签的留档） ---------- */
+
+  function loadSigns() {
+    return storageGet("signs", null).then(function (saved) {
+      state.signs = Array.isArray(saved) ? saved.map(function (row) {
+        return {
+          text: String((row && row.text) || "").slice(0, 120),
+          at: Number(row && row.at) || Date.now()
+        };
+      }).filter(function (row) { return row.text; }) : [];
+    }).catch(function () { state.signs = []; });
+  }
+
+  function recordSign(value) {
+    var text = String(value || "").trim().slice(0, 120);
+    if (!text) return;
+    if (state.signs.length && state.signs[0].text === text) return;
+    state.signs.unshift({ text: text, at: Date.now() });
+    if (state.signs.length > LOG_MAX) state.signs.length = LOG_MAX;
+    storageSet("signs", state.signs).catch(function () {});
+  }
+
+  function openSignHistory() {
+    if (!state.signs.length && state.profile.sign) {
+      state.signs = [{ text: String(state.profile.sign).slice(0, 120), at: Date.now() }];
+      storageSet("signs", state.signs).catch(function () {});
+    }
+
+    var block = buildHistoryBlock(state.signs, function (index) {
+      state.signs.splice(index, 1);
+      storageSet("signs", state.signs).catch(function () {});
+    });
+
+    openSheet({
+      title: "历史签名",
+      content: block.node,
+      center: true,
+      buttons: [{ label: "完成", variant: "primary", size: "sm", run: function () { closeSheet(); } }]
+    });
   }
 
   function bindDailyLog() {
@@ -1921,6 +1990,7 @@
       loadShortcuts();
       loadIconPrefs();
       loadLogs();
+      loadSigns();
       renderBadges();
       if (!window.__airaDemoNotice) {
         window.__airaDemoNotice = true;
@@ -1950,6 +2020,7 @@
     loadShortcuts();
     loadIconPrefs();
     loadLogs();
+    loadSigns();
     renderBadges();
   }
 
