@@ -1955,6 +1955,21 @@
     var modeNote = document.createElement("p");
     modeNote.className = "wp-mode-note";
 
+    var randomSwitch = document.createElement("button");
+    randomSwitch.type = "button";
+    randomSwitch.className = "wp-random";
+    randomSwitch.setAttribute("aria-label", "随机壁纸开关");
+    var randomText = document.createElement("span");
+    randomText.textContent = "随机";
+    var track = document.createElement("i");
+    track.className = "wp-track";
+    var knob = document.createElement("i");
+    knob.className = "wp-knob";
+    track.appendChild(knob);
+    randomSwitch.appendChild(randomText);
+    randomSwitch.appendChild(track);
+
+    body.appendChild(randomSwitch);
     body.appendChild(modeNote);
     body.appendChild(picks);
     body.appendChild(blurRow);
@@ -1967,6 +1982,25 @@
         if (node) node.style.filter = "blur(" + (wpBlurPercent(side) * WP_BLUR_RATIO * WP_THUMB_SCALE).toFixed(2) + "px)";
       });
     }
+
+    function syncRandom() {
+      randomSwitch.setAttribute("aria-pressed", wpMode() === "random" ? "true" : "false");
+    }
+
+    randomSwitch.addEventListener("click", function () {
+      if (wpMode() === "random") {
+        state.wallpaper = wpSide();
+        state.wallpaperRolled = state.wallpaper;
+      } else {
+        state.wallpaper = "random";
+        state.wallpaperRolled = wpRoll();
+      }
+      applyWallpaper();
+      saveWallpaper();
+      refresh();
+      syncBlur();
+      syncRandom();
+    });
 
     function syncBlur() {
       var percent = wpBlurPercent(wpSide());
@@ -2007,6 +2041,7 @@
         picks.appendChild(card);
       });
       paintThumbs();
+      syncRandom();
       modeNote.hidden = wpMode() !== "random";
       modeNote.textContent = "随机模式 · 这次抽到 " + (wpSide() === "light" ? "Light" : "Dark");
     }
@@ -2028,6 +2063,7 @@
     });
     refresh();
     syncBlur();
+    syncRandom();
   }
 
   function bindWallpaper() {
