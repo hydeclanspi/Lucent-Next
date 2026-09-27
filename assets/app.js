@@ -74,6 +74,7 @@
     signs: [],
     wallpaper: "dark",
     wallpaperBlur: {},
+    wallpaperRolled: "",
     theme: { mode: "system", effectiveMode: "light" },
     privacy: { isPrivate: false },
     editing: false,
@@ -1851,8 +1852,23 @@
   var WP_BLUR_RATIO = 1.2;
   var WP_THUMB_SCALE = 0.25;
 
+  var WP_MODES = ["dark", "light", "random"];
+
+  function wpMode() {
+    var value = state.wallpaper;
+    if (value === "yin") value = "dark";
+    if (value === "yang") value = "light";
+    return WP_MODES.indexOf(value) >= 0 ? value : "dark";
+  }
+
+  function wpRoll() {
+    return Math.random() < 0.5 ? "light" : "dark";
+  }
+
   function wpSide() {
-    return state.wallpaper === "light" ? "light" : "dark";
+    var mode = wpMode();
+    if (mode === "random") return state.wallpaperRolled === "light" ? "light" : "dark";
+    return mode;
   }
 
   function wpBlurPercent(side) {
@@ -1879,9 +1895,14 @@
       /* 忽略 */
     }
     if (el.wallpaperBtn) {
+      var mode = wpMode();
+      var label = mode === "random"
+        ? "壁纸：随机（这次抽到 " + (side === "light" ? "Light" : "Dark") + "）"
+        : (side === "light" ? "壁纸：Light" : "壁纸：Dark");
       el.wallpaperBtn.classList.toggle("yang", side === "light");
-      el.wallpaperBtn.setAttribute("aria-pressed", side === "light" ? "true" : "false");
-      el.wallpaperBtn.title = (side === "light" ? "壁纸：Light" : "壁纸：Dark") + "（点一下切换 · 长按细调）";
+      el.wallpaperBtn.classList.toggle("random", mode === "random");
+      el.wallpaperBtn.setAttribute("aria-pressed", mode === "random" ? "mixed" : "false");
+      el.wallpaperBtn.title = label + "（点一下切换 · 长按细调）";
     }
   }
 
@@ -1894,7 +1915,8 @@
     return storageGet("wallpaper", null).then(function (saved) {
       if (saved === "yin") saved = "dark";
       if (saved === "yang") saved = "light";
-      if (saved === "light" || saved === "dark") state.wallpaper = saved;
+      if (saved === "light" || saved === "dark" || saved === "random") state.wallpaper = saved;
+      if (wpMode() === "random") state.wallpaperRolled = wpRoll();
       return storageGet("wallpaperBlur", null);
     }).then(function (savedBlur) {
       if (savedBlur && typeof savedBlur === "object") {
@@ -1930,6 +1952,10 @@
     blurRow.appendChild(range);
     blurRow.appendChild(value);
 
+    var modeNote = document.createElement("p");
+    modeNote.className = "wp-mode-note";
+
+    body.appendChild(modeNote);
     body.appendChild(picks);
     body.appendChild(blurRow);
 
@@ -1972,6 +1998,7 @@
         card.appendChild(cap);
         card.addEventListener("click", function () {
           state.wallpaper = side;
+          state.wallpaperRolled = side;
           applyWallpaper();
           saveWallpaper();
           refresh();
@@ -1980,6 +2007,8 @@
         picks.appendChild(card);
       });
       paintThumbs();
+      modeNote.hidden = wpMode() !== "random";
+      modeNote.textContent = "随机模式 · 这次抽到 " + (wpSide() === "light" ? "Light" : "Dark");
     }
 
     range.addEventListener("input", function () {
@@ -2034,7 +2063,9 @@
         openWallpaperPanel();
         return;
       }
-      state.wallpaper = wpSide() === "light" ? "dark" : "light";
+      var next = WP_MODES[(WP_MODES.indexOf(wpMode()) + 1) % WP_MODES.length];
+      state.wallpaper = next;
+      if (next === "random") state.wallpaperRolled = wpRoll();
       applyWallpaper();
       saveWallpaper();
     });
