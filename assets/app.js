@@ -342,15 +342,35 @@
     { id: "letter", label: "首字母" }
   ];
 
-  var LETTER_COLORS = [
-    { name: "跟随图标色", value: "" },
-    { name: "冰蓝", value: "#3F6EA8" },
-    { name: "靛", value: "#4B5AA6" },
-    { name: "苔绿", value: "#3F7358" },
-    { name: "琥珀", value: "#A9752F" },
-    { name: "绯", value: "#A84F4A" },
-    { name: "紫", value: "#6A4F9C" },
-    { name: "墨", value: "#2F3844" }
+  var LETTER_AUTO = { name: "跟随图标色", value: "" };
+
+  var LETTER_COLOR_GROUPS = [
+    {
+      label: "清新",
+      colors: [
+        ["雾蓝", "#E9F1F9"], ["冰蓝", "#DCEBF7"], ["天青", "#EAF4F8"],
+        ["冰青", "#E2F2F0"], ["薄荷", "#E3F2E8"], ["芽绿", "#EFF6EC"],
+        ["青瓷", "#E8F2DC"], ["月白", "#F1F2E4"], ["象牙", "#F6F1E4"],
+        ["杏仁", "#F8EDE2"], ["藕粉", "#FAECE7"], ["樱粉", "#F8E8EF"],
+        ["薰衣草", "#F1EAF7"], ["雾紫", "#EAECF9"], ["石灰", "#EEF1F3"],
+        ["细沙", "#F4EEE9"]
+      ]
+    },
+    {
+      label: "沉静",
+      colors: [
+        ["深灰蓝", "#2F4858"], ["蓝", "#33658A"], ["青", "#3E7D86"],
+        ["松绿", "#38686A"], ["苔绿", "#4A7054"], ["橄榄", "#5A6E4F"],
+        ["卡其", "#7A6A53"], ["陶土", "#8C5A5A"], ["深绯", "#9A031E"],
+        ["紫酒", "#5F0F40"], ["夜紫", "#4B3F72"], ["铁灰", "#444F5A"]
+      ]
+    },
+    {
+      label: "墨",
+      colors: [
+        ["墨", "#2B2F38"], ["深墨", "#1F2933"], ["深海", "#23303A"], ["咖墨", "#33302B"]
+      ]
+    }
   ];
 
   function iconKey(item) {
@@ -687,10 +707,13 @@
     var note = document.createElement("p");
     note.className = "icon-note";
     note.textContent = "首字母牌底色";
-    var swatches = document.createElement("div");
-    swatches.className = "swatches";
+    var autoRow = document.createElement("div");
+    autoRow.className = "swatches auto-row";
+    var groups = document.createElement("div");
+    groups.className = "swatch-groups";
     colorRow.appendChild(note);
-    colorRow.appendChild(swatches);
+    colorRow.appendChild(autoRow);
+    colorRow.appendChild(groups);
     body.appendChild(colorRow);
 
     function tintFor(mode) {
@@ -720,21 +743,41 @@
         opts.appendChild(card);
       });
 
-      swatches.textContent = "";
-      LETTER_COLORS.forEach(function (entry) {
+      autoRow.textContent = "";
+      groups.textContent = "";
+
+      function swatchButton(name, value) {
         var swatch = document.createElement("button");
         swatch.type = "button";
-        swatch.className = "swatch" + (draft.color === entry.value ? " on" : "");
-        swatch.title = entry.name;
-        if (entry.value) swatch.style.background = entry.value;
+        swatch.className = "swatch" + (draft.color === value && draft.mode === "letter" ? " on" : "");
+        swatch.title = name;
+        if (value) swatch.style.background = value;
         else swatch.textContent = letterText(item);
         swatch.addEventListener("click", function () {
-          draft.color = entry.value;
+          draft.color = value;
           draft.mode = "letter";
-          setIconPref(item, { mode: "letter", color: entry.value });
+          setIconPref(item, { mode: "letter", color: value });
           refresh();
         });
-        swatches.appendChild(swatch);
+        return swatch;
+      }
+
+      autoRow.appendChild(swatchButton(LETTER_AUTO.name, LETTER_AUTO.value));
+
+      LETTER_COLOR_GROUPS.forEach(function (group) {
+        var box = document.createElement("div");
+        box.className = "swatch-group";
+        var label = document.createElement("p");
+        label.className = "icon-note sub";
+        label.textContent = group.label;
+        var row = document.createElement("div");
+        row.className = "swatches";
+        group.colors.forEach(function (pair) {
+          row.appendChild(swatchButton(pair[0], pair[1]));
+        });
+        box.appendChild(label);
+        box.appendChild(row);
+        groups.appendChild(box);
       });
 
       colorRow.hidden = draft.mode !== "letter";
@@ -744,6 +787,7 @@
       title: "图标 · " + String(item.title || "未命名"),
       sub: "抓回来的原图、装进统一画框、或换成首字母牌 —— 这一格用哪种，你说了算。",
       content: body,
+      center: true,
       buttons: [
         { label: "更多…", run: function () { openShortcutMenu(item); } },
         { label: "完成", variant: "primary", run: function () { closeSheet(); } }
@@ -1329,6 +1373,7 @@
   function openSheet(options) {
     var sheet = el.sheet;
     sheet.textContent = "";
+    sheet.classList.toggle("center", !!options.center);
 
     var title = document.createElement("h3");
     title.className = "sheet-title";
