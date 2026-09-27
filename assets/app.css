@@ -169,8 +169,8 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 /* 历史记录：浮在卡片右上角的菱形标签；框体倾斜（skewX），内容保持直立 */
 #btnHistory {
   position: absolute;
-  top: calc(-62px - 100%);
-  right: 40px;
+  top: -104px;
+  right: 52px;
   z-index: 5;
   display: inline-flex;
   align-items: center;
