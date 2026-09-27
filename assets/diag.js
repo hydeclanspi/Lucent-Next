@@ -12,7 +12,7 @@
   var entries = [];
   var api = null;
   var clean = false;
-  var counters = { grip: 0, grid: 0, badge: 0 };
+  var counters = { grip: 0, grid: 0, badge: 0, ready: 0 };
   var overlay = null;
   var flushTimer = null;
   var wrapped = false;
@@ -192,7 +192,8 @@
 
   window.addEventListener("aira-home-ready", function (event) {
     var detail = event && event.detail ? event.detail : {};
-    push("ready", "apiVersion=" + (detail.apiVersion || "?"));
+    counters.ready++;
+    if (counters.ready === 1) push("ready", "apiVersion=" + (detail.apiVersion || "?"));
   });
 
   window.addEventListener("pagehide", function () {
@@ -221,7 +222,9 @@
 
   setInterval(function () {
     push("hb", "heap=" + heap() + "MB nodes=" + nodes() +
-      " grip+" + counters.grip + " grid+" + counters.grid + " badge+" + counters.badge);
+      " ready+" + counters.ready + " grip+" + counters.grip +
+      " grid+" + counters.grid + " badge+" + counters.badge);
+    counters.ready = 0;
     counters.grip = 0;
     counters.grid = 0;
     counters.badge = 0;
