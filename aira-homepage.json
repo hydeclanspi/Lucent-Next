@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "2.5.2",
+  "version": "2.6.0",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "把浏览器主页做成一张会呼吸的个人名片：壁纸、头像、签名与标签打底，搜索引擎、快捷方式和系统入口直接长在名片上。卡片右下角是一行可长按编辑的日志，按日期留档、可分页回看。"
+  "description": "把浏览器主页做成一张会呼吸的个人名片：壁纸、头像、签名与标签打底，搜索引擎、快捷方式和系统入口直接长在名片上。卡片右下角是一行可长按编辑的日志；个签也自带历史留档，按秒记时、可分页回看。"
 }
