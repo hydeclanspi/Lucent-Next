@@ -1384,6 +1384,7 @@
     var sheet = el.sheet;
     sheet.textContent = "";
     sheet.classList.toggle("center", !!options.center);
+    sheet.classList.toggle("wide", !!options.wide);
 
     var title = document.createElement("h3");
     title.className = "sheet-title";
@@ -1993,6 +1994,7 @@
       title: "壁纸",
       content: body,
       center: true,
+      wide: true,
       buttons: [{ label: "完成", variant: "primary", size: "sm", run: function () { closeSheet(); } }]
     });
     refresh();

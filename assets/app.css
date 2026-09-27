@@ -101,6 +101,8 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 /* 窄屏：时钟与图标一行，动作横带独占一行；宽屏：三者同一行 */
 
 .topbar {
+  position: relative;
+  z-index: 5;
   max-width: var(--content-max);
   margin: 0 auto;
   padding: calc(var(--safe-t) + 26px) 40px 0;
@@ -258,13 +260,13 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 .wp-picks {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 16px;
 }
 .wp-pick {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px;
+  gap: 12px;
+  padding: 14px;
   border-radius: 18px;
   background: var(--glass);
   border: 1px solid var(--glass-line);
@@ -281,7 +283,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   width: 100%;
   aspect-ratio: 3 / 2;
   object-fit: cover;
-  border-radius: 12px;
+  border-radius: 14px;
   background: var(--glass-3);
 }
 .wp-pick .cap {
@@ -306,9 +308,9 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 .wp-blurrow {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-top: 18px;
-  padding: 0 2px;
+  gap: 16px;
+  margin-top: 28px;
+  padding: 0 4px;
 }
 .wp-blurrow .wp-label {
   flex: none;
@@ -1078,6 +1080,14 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   border-color: rgba(255, 255, 255, 0.14);
   box-shadow: var(--glass-deep), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
+
+/* 宽版面板：更大气、更多留白 */
+.sheet.wide {
+  max-width: 760px;
+  padding: 30px 32px 26px;
+  border-radius: 28px;
+}
+.sheet.wide .sheet-title { font-size: 18.5px; margin-bottom: 18px; }
 
 /* 居中版面板（长按图标编辑用） */
 .sheet.center {
