@@ -1663,9 +1663,9 @@
   }
 
   // 淡橙色「国中国」：列表 + 分页，日志和签名历史共用同一套
-  function buildHistoryBlock(rows, remove) {
+  function buildHistoryBlock(rows, remove, plain) {
     var box = document.createElement("div");
-    box.className = "log-history";
+    box.className = "log-history" + (plain ? " plain" : "");
 
     var brand = document.createElement("p");
     brand.className = "log-brand";
@@ -1814,7 +1814,7 @@
     var block = buildHistoryBlock(state.signs, function (index) {
       state.signs.splice(index, 1);
       storageSet("signs", state.signs).catch(function () {});
-    });
+    }, true);
 
     openSheet({
       title: "历史签名",
