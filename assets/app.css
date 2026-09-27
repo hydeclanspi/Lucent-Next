@@ -241,9 +241,134 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 :root[data-theme="dark"] .wp-toggle.yang .wp-lit { fill: #1A2130; }
 :root[data-theme="dark"] .wp-toggle.yang .wp-dark { fill: #F3C892; }
 
+/* 壁纸层：位于壁纸之上、内容之下；模糊只作用于这一层，不会糊到界面 */
+.wp-img {
+  position: fixed;
+  inset: -26px;
+  z-index: 0;
+  pointer-events: none;
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  filter: blur(var(--wp-blur, 0px));
+  -webkit-filter: blur(var(--wp-blur, 0px));
+}
+
+/* 壁纸面板 */
+.wp-picks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.wp-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 18px;
+  background: var(--glass);
+  border: 1px solid var(--glass-line);
+  box-shadow: inset 0 1px 0 var(--glass-top);
+  transition: transform 0.16s ease, box-shadow 0.2s ease;
+}
+.wp-pick:active { transform: scale(0.98); }
+.wp-pick.on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), inset 0 1px 0 var(--glass-top);
+}
+.wp-thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: 12px;
+  background: var(--glass-3);
+}
+.wp-pick .cap {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 0 2px 2px;
+}
+.wp-pick .cap b {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--ink);
+}
+.wp-pick .cap span {
+  font-size: 10.5px;
+  letter-spacing: 0.4px;
+  color: var(--ink-3);
+}
+
+.wp-blurrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 0 2px;
+}
+.wp-blurrow .wp-label {
+  flex: none;
+  font-size: 11.5px;
+  letter-spacing: 1.4px;
+  color: var(--ink-3);
+}
+.wp-blurrow .wp-value {
+  flex: none;
+  min-width: 40px;
+  text-align: right;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.wp-range {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 26px;
+  margin: 0;
+  background: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.wp-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 99px;
+  background: var(--glass-3);
+  border: 1px solid var(--glass-line);
+}
+.wp-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -9px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid rgba(120, 150, 180, 0.28);
+  box-shadow: 0 3px 10px rgba(6, 10, 24, 0.22);
+}
+.wp-range::-moz-range-track {
+  height: 6px;
+  border-radius: 99px;
+  background: var(--glass-3);
+}
+.wp-range::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid rgba(120, 150, 180, 0.28);
+}
+:root[data-theme="dark"] .wp-range::-webkit-slider-thumb { background: #E8EDF6; }
+
 /* ---------- 页面骨架 ---------- */
 
 .page {
+  position: relative;
+  z-index: 2;
   max-width: var(--content-max);
   margin: 0 auto;
   padding: 10px 40px calc(150px + var(--safe-b));

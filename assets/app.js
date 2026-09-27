@@ -72,7 +72,8 @@
     iconPrefs: {},
     logs: [],
     signs: [],
-    wallpaper: "yin",
+    wallpaper: "dark",
+    wallpaperBlur: {},
     theme: { mode: "system", effectiveMode: "light" },
     privacy: { isPrivate: false },
     editing: false,
@@ -1837,40 +1838,203 @@
     });
   }
 
-  /* ---------- 壁纸（阴 / 阳） ---------- */
+  /* ---------- 壁纸（Light / Dark + 柔焦） ---------- */
 
-  var WALLPAPER = {
-    yin: "./assets/wallpaper.jpg",
-    yang: "./assets/wallpaper-yang.jpg"
+  var WALLPAPERS = {
+    light: { src: "./assets/wallpaper-yang.jpg", thumb: "./assets/wp-thumb-light.jpg", label: "Light", note: "伦敦夜景" },
+    dark: { src: "./assets/wallpaper.jpg", thumb: "./assets/wp-thumb-dark.jpg", label: "Dark", note: "日漫黄昏" }
   };
 
+  var WP_BLUR_DEFAULT = { light: 5, dark: 0 };
+  var WP_BLUR_MAX = 20;
+  var WP_BLUR_RATIO = 1.2;
+  var WP_THUMB_SCALE = 0.25;
+
+  function wpSide() {
+    return state.wallpaper === "light" ? "light" : "dark";
+  }
+
+  function wpBlurPercent(side) {
+    var value = state.wallpaperBlur[side];
+    return typeof value === "number" ? value : WP_BLUR_DEFAULT[side];
+  }
+
+  function wpBlurPx(side) {
+    return Math.round(wpBlurPercent(side) * WP_BLUR_RATIO * 10) / 10;
+  }
+
   function applyWallpaper() {
-    var side = state.wallpaper === "yang" ? "yang" : "yin";
+    var side = wpSide();
+    var url = 'url("' + WALLPAPERS[side].src + '")';
     try {
-      document.body.style.backgroundImage = 'url("' + WALLPAPER[side] + '")';
+      document.body.style.backgroundImage = url;
+      if (el.wpImg) el.wpImg.style.backgroundImage = url;
+    } catch (error) {
+      /* 忽略 */
+    }
+    try {
+      document.documentElement.style.setProperty("--wp-blur", wpBlurPx(side) + "px");
     } catch (error) {
       /* 忽略 */
     }
     if (el.wallpaperBtn) {
-      el.wallpaperBtn.classList.toggle("yang", side === "yang");
-      el.wallpaperBtn.setAttribute("aria-pressed", side === "yang" ? "true" : "false");
-      el.wallpaperBtn.title = side === "yang" ? "壁纸：阳（点一下换阴）" : "壁纸：阴（点一下换阳）";
+      el.wallpaperBtn.classList.toggle("yang", side === "light");
+      el.wallpaperBtn.setAttribute("aria-pressed", side === "light" ? "true" : "false");
+      el.wallpaperBtn.title = (side === "light" ? "壁纸：Light" : "壁纸：Dark") + "（点一下切换 · 长按细调）";
     }
+  }
+
+  function saveWallpaper() {
+    storageSet("wallpaper", state.wallpaper).catch(function () {});
+    storageSet("wallpaperBlur", state.wallpaperBlur).catch(function () {});
   }
 
   function loadWallpaper() {
     return storageGet("wallpaper", null).then(function (saved) {
-      if (saved === "yin" || saved === "yang") state.wallpaper = saved;
+      if (saved === "yin") saved = "dark";
+      if (saved === "yang") saved = "light";
+      if (saved === "light" || saved === "dark") state.wallpaper = saved;
+      return storageGet("wallpaperBlur", null);
+    }).then(function (savedBlur) {
+      if (savedBlur && typeof savedBlur === "object") {
+        ["light", "dark"].forEach(function (side) {
+          if (typeof savedBlur[side] === "number") state.wallpaperBlur[side] = savedBlur[side];
+        });
+      }
       applyWallpaper();
     }).catch(function () { applyWallpaper(); });
   }
 
-  function bindWallpaper() {
-    if (!el.wallpaperBtn) return;
-    el.wallpaperBtn.addEventListener("click", function () {
-      state.wallpaper = state.wallpaper === "yang" ? "yin" : "yang";
+  function openWallpaperPanel() {
+    var body = document.createElement("div");
+    body.className = "wp-panel";
+
+    var picks = document.createElement("div");
+    picks.className = "wp-picks";
+
+    var blurRow = document.createElement("div");
+    blurRow.className = "wp-blurrow";
+    var blurLabel = document.createElement("span");
+    blurLabel.className = "wp-label";
+    blurLabel.textContent = "柔焦";
+    var range = document.createElement("input");
+    range.type = "range";
+    range.className = "wp-range";
+    range.min = "0";
+    range.max = String(WP_BLUR_MAX);
+    range.step = "1";
+    var value = document.createElement("span");
+    value.className = "wp-value";
+    blurRow.appendChild(blurLabel);
+    blurRow.appendChild(range);
+    blurRow.appendChild(value);
+
+    body.appendChild(picks);
+    body.appendChild(blurRow);
+
+    var thumbs = {};
+
+    function paintThumbs() {
+      ["light", "dark"].forEach(function (side) {
+        var node = thumbs[side];
+        if (node) node.style.filter = "blur(" + (wpBlurPercent(side) * WP_BLUR_RATIO * WP_THUMB_SCALE).toFixed(2) + "px)";
+      });
+    }
+
+    function syncBlur() {
+      var percent = wpBlurPercent(wpSide());
+      range.value = String(percent);
+      value.textContent = percent + "%";
+    }
+
+    function refresh() {
+      picks.textContent = "";
+      ["light", "dark"].forEach(function (side) {
+        var item = WALLPAPERS[side];
+        var card = document.createElement("button");
+        card.type = "button";
+        card.className = "wp-pick" + (wpSide() === side ? " on" : "");
+        var img = document.createElement("img");
+        img.className = "wp-thumb";
+        img.alt = "";
+        img.src = item.thumb;
+        thumbs[side] = img;
+        var cap = document.createElement("span");
+        cap.className = "cap";
+        var name = document.createElement("b");
+        name.textContent = item.label;
+        var note = document.createElement("span");
+        note.textContent = item.note;
+        cap.appendChild(name);
+        cap.appendChild(note);
+        card.appendChild(img);
+        card.appendChild(cap);
+        card.addEventListener("click", function () {
+          state.wallpaper = side;
+          applyWallpaper();
+          saveWallpaper();
+          refresh();
+          syncBlur();
+        });
+        picks.appendChild(card);
+      });
+      paintThumbs();
+    }
+
+    range.addEventListener("input", function () {
+      state.wallpaperBlur[wpSide()] = Number(range.value) || 0;
+      value.textContent = state.wallpaperBlur[wpSide()] + "%";
       applyWallpaper();
-      storageSet("wallpaper", state.wallpaper).catch(function () {});
+      paintThumbs();
+    });
+    range.addEventListener("change", saveWallpaper);
+
+    openSheet({
+      title: "壁纸",
+      content: body,
+      center: true,
+      buttons: [{ label: "完成", variant: "primary", size: "sm", run: function () { closeSheet(); } }]
+    });
+    refresh();
+    syncBlur();
+  }
+
+  function bindWallpaper() {
+    var node = el.wallpaperBtn;
+    if (!node) return;
+    var timer = null;
+    var fired = false;
+
+    node.addEventListener("pointerdown", function (event) {
+      if (event.button && event.button !== 0) return;
+      fired = false;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(function () {
+        timer = null;
+        fired = true;
+        openWallpaperPanel();
+      }, 480);
+    });
+
+    ["pointerup", "pointercancel", "pointerleave"].forEach(function (name) {
+      node.addEventListener(name, function () {
+        if (timer) { clearTimeout(timer); timer = null; }
+      });
+    });
+
+    node.addEventListener("click", function (event) {
+      if (fired) {
+        fired = false;
+        event.preventDefault();
+        return;
+      }
+      if (!event.detail) {
+        openWallpaperPanel();
+        return;
+      }
+      state.wallpaper = wpSide() === "light" ? "dark" : "light";
+      applyWallpaper();
+      saveWallpaper();
     });
   }
 
@@ -2097,7 +2261,8 @@
       sheetMask: $("sheetMask"),
       toast: $("toast"),
       dailyLog: $("dailyLog"),
-      wallpaperBtn: $("btnWallpaper")
+      wallpaperBtn: $("btnWallpaper"),
+      wpImg: $("wpImg")
     };
 
     tickClock();
