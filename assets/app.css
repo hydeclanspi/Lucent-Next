@@ -237,14 +237,13 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 /* 随机模式：图标左上角一枚绿色呼吸灯 */
 .wp-dot {
   position: absolute;
-  left: 12px;
-  top: 9px;
-  width: 7px;
-  height: 7px;
+  left: 14px;
+  top: 11px;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
   background: #43D17C;
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  box-shadow: 0 0 6px rgba(67, 209, 124, 0.7);
+  box-shadow: 0 0 6px rgba(67, 209, 124, 0.8);
   opacity: 0;
   transform: scale(0.5);
   transition: opacity 0.24s ease, transform 0.24s ease;
@@ -256,8 +255,8 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   animation: wpBreathe 2.4s ease-in-out infinite;
 }
 @keyframes wpBreathe {
-  0%, 100% { opacity: 0.45; box-shadow: 0 0 4px rgba(67, 209, 124, 0.45); }
-  50% { opacity: 1; box-shadow: 0 0 10px rgba(67, 209, 124, 1); }
+  0%, 100% { opacity: 0.45; box-shadow: 0 0 3px rgba(67, 209, 124, 0.45); }
+  50% { opacity: 1; box-shadow: 0 0 7px rgba(67, 209, 124, 1); }
 }
 .wp-toggle .wp-g1 { stop-color: #EFF3F9; transition: stop-color 0.3s ease; }
 .wp-toggle .wp-g2 { stop-color: #2A3346; transition: stop-color 0.3s ease; }
