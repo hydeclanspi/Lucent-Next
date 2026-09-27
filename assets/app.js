@@ -192,7 +192,6 @@
     el.tags.appendChild(add);
 
     document.title = (state.profile.name || "名片") + " · 主页";
-    renderBadges();
   }
 
   function loadProfile() {
@@ -307,7 +306,7 @@
       var gripBadge = document.createElement("span");
       var gripLive = !customGrip && state.gripLabel && state.gripLabel !== "握姿待命";
       gripBadge.className = "badge" + (gripLive ? " live" : "");
-      // 🧊：苹果原图（包里 assets/icon-ice.svg，内嵌位图快照），不走系统表情字体
+      // 🧊：新定制冰块（包内 assets/icon-ice.svg，内嵌位图快照），不走系统表情字体
       var cube = document.createElement("span");
       cube.className = "ice-cube";
       var cubeImg = document.createElement("img");
@@ -1209,35 +1208,24 @@
     if (!motion) return;
     var map = motion.HoldingHandStatus || {};
     var label = "";
-    var grip = "default";
     if (status === map.LEFT_HAND_HELD) {
       label = "左手握持";
-      grip = "left";
+      root.dataset.smartGrip = "left";
     } else if (status === map.RIGHT_HAND_HELD) {
       label = "右手握持";
-      grip = "right";
+      root.dataset.smartGrip = "right";
     } else if (status === map.BOTH_HANDS_HELD) {
       label = "双手握持";
-      grip = "both";
+      root.dataset.smartGrip = "both";
     } else if (status === map.NOT_HELD) {
       label = "未握持";
+      root.dataset.smartGrip = "default";
     } else {
       label = "握姿未知";
+      root.dataset.smartGrip = "default";
     }
-    if (state.gripLabel === label && root.dataset.smartGrip === grip) return;
-    root.dataset.smartGrip = grip;
     state.gripLabel = label;
-    scheduleBadges();
-  }
-
-  // 握姿传感器可能连续上报，把徽章重绘合并成每 200ms 一次，避免高频重建 DOM
-  var badgeTimer = null;
-  function scheduleBadges() {
-    if (badgeTimer) return;
-    badgeTimer = setTimeout(function () {
-      badgeTimer = null;
-      renderBadges();
-    }, 200);
+    renderBadges();
   }
 
   function bindMotion() {
