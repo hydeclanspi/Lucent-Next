@@ -810,63 +810,9 @@
 
   initFolds();
 
-  /* ---------- 名片区长按编辑 ---------- */
+  /* ---------- 名片编辑：左右双面板 ---------- */
 
-  function focusProfileField(index) {
-    openProfileEditor();
-    setTimeout(function () {
-      var inputs = document.querySelectorAll("#sheet .field input");
-      var target = inputs[index];
-      if (!target) return;
-      target.focus();
-      try { target.setSelectionRange(target.value.length, target.value.length); } catch (error) {}
-    }, 80);
-  }
-
-  function openLevelEditor() {
-    var box = field("等级", state.profile.level ? String(state.profile.level) : "", "1 – 9；留空则按快捷方式数量自动算");
-    var content = document.createDocumentFragment();
-    content.appendChild(box.wrap);
-
-    openSheet({
-      title: "等级",
-      sub: "Lv. 后面那个数字，只属于这个主页。",
-      content: content,
-      buttons: [
-        {
-          label: "交回自动",
-          run: function () {
-            state.profile.level = null;
-            renderBadges();
-            storageSet("profile", state.profile).catch(function () {});
-            closeSheet();
-            toast("等级已交回自动计算");
-          }
-        },
-        {
-          label: "保存",
-          variant: "primary",
-          run: function () {
-            var raw = box.input.value.trim();
-            if (!raw) {
-              state.profile.level = null;
-            } else {
-              var next = parseInt(raw, 10);
-              if (isNaN(next) || next < 1 || next > 9) {
-                toast("请输入 1 到 9 之间的整数");
-                return;
-              }
-              state.profile.level = next;
-            }
-            renderBadges();
-            storageSet("profile", state.profile).catch(function () {});
-            closeSheet();
-            toast("等级已更新");
-          }
-        }
-      ]
-    });
-  }
+  var editRoot = null;
 
   function openInfoSheet(title, sub, entries) {
     var a = api();
@@ -916,67 +862,234 @@
     );
   }
 
-  function bindHeroEditing() {
-    var targets = [
-      { sel: "#profileName", action: function () { focusProfileField(0); } },
-      { sel: "#profileMeta", action: function () { focusProfileField(1); } },
-      { sel: "#profileSign", action: function () { focusProfileField(2); } },
-      { sel: "#tags", action: function () { focusProfileField(3); } },
-      { sel: "#statusPill", action: openStatusSheet },
-      { sel: "#badges .badge:nth-child(1)", action: openLevelEditor },
-      { sel: "#badges .badge:nth-child(2)", action: openThemeSheet },
-      { sel: "#badges .badge:nth-child(3)", action: openGripSheet }
-    ];
-    var timer = null;
-    var fired = false;
-    var startX = 0;
-    var startY = 0;
+  function buildEditRoot() {
+    var root = document.createElement("div");
+    root.className = "edit-root";
+    root.hidden = true;
 
-    function clear() {
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
-      }
-    }
+    var mask = document.createElement("div");
+    mask.className = "edit-mask";
 
-    function hitTarget(node) {
-      for (var i = 0; i < targets.length; i++) {
-        if (node.closest && node.closest(targets[i].sel)) return targets[i];
-      }
-      return null;
-    }
+    var stage = document.createElement("div");
+    stage.className = "edit-stage";
 
-    document.addEventListener("pointerdown", function (event) {
-      if (event.button && event.button !== 0) return;
-      var target = hitTarget(event.target);
-      if (!target) return;
-      fired = false;
-      startX = event.clientX;
-      startY = event.clientY;
-      clear();
-      timer = setTimeout(function () {
-        fired = true;
-        target.action();
-      }, 460);
-    }, true);
-
-    document.addEventListener("pointermove", function (event) {
-      if (Math.abs(event.clientX - startX) > 8 || Math.abs(event.clientY - startY) > 8) clear();
-    }, true);
-
-    document.addEventListener("pointerup", clear, true);
-    document.addEventListener("pointercancel", clear, true);
-
-    // 长按已经响应过的那次点击不再往下走，避免连带触发底下的按钮
-    document.addEventListener("click", function (event) {
-      if (!fired) return;
-      fired = false;
-      event.preventDefault();
-      event.stopPropagation();
-    }, true);
+    root.appendChild(mask);
+    root.appendChild(stage);
+    document.body.appendChild(root);
+    return { root: root, mask: mask, stage: stage };
   }
 
-  bindHeroEditing();
+  function panelFooter(buttons) {
+    var foot = document.createElement("div");
+    foot.className = "sheet-actions";
+    buttons.forEach(function (item) {
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "btn" + (item.variant ? " " + item.variant : "");
+      button.textContent = item.label;
+      button.addEventListener("click", item.run);
+      foot.appendChild(button);
+    });
+    return foot;
+  }
+
+  function openCardEditor() {
+    if (!editRoot) editRoot = buildEditRoot();
+    var stage = editRoot.stage;
+    stage.textContent = "";
+
+    var profile = state.profile;
+
+    /* 左：名片 */
+    var left = document.createElement("section");
+    left.className = "edit-panel";
+    var leftTitle = document.createElement("h3");
+    leftTitle.textContent = "名片";
+    left.appendChild(leftTitle);
+
+    var name = field("名字", profile.name || "", "显示在名片上的名字");
+    var meta = field("一行简介", profile.meta || "", "年龄 · 城市");
+    var sign = field("签名", profile.sign || "", "一句话写你自己");
+    left.appendChild(name.wrap);
+    left.appendChild(meta.wrap);
+    left.appendChild(sign.wrap);
+
+    /* 右：标签与等级 */
+    var right = document.createElement("section");
+    right.className = "edit-panel";
+    var rightTitle = document.createElement("h3");
+    rightTitle.textContent = "标签与等级";
+    right.appendChild(rightTitle);
+
+    var tagHint = document.createElement("p");
+    tagHint.className = "panel-hint";
+    tagHint.textContent = "标签（点 × 删除，最多 12 个）";
+    right.appendChild(tagHint);
+
+    var draftTags = (profile.tags || []).slice();
+    var tagList = document.createElement("div");
+    tagList.className = "tag-edit";
+
+    function renderTagList() {
+      tagList.textContent = "";
+      if (!draftTags.length) {
+        var none = document.createElement("span");
+        none.className = "panel-hint";
+        none.textContent = "还没有标签";
+        tagList.appendChild(none);
+        return;
+      }
+      draftTags.forEach(function (text, index) {
+        var chip = document.createElement("span");
+        chip.className = "tag";
+        chip.appendChild(document.createTextNode(text));
+        var kill = document.createElement("button");
+        kill.type = "button";
+        kill.className = "tag-kill";
+        kill.setAttribute("aria-label", "删除标签 " + text);
+        kill.textContent = "×";
+        kill.addEventListener("click", function () {
+          draftTags.splice(index, 1);
+          renderTagList();
+        });
+        chip.appendChild(kill);
+        tagList.appendChild(chip);
+      });
+    }
+    renderTagList();
+    right.appendChild(tagList);
+
+    var addRow = document.createElement("div");
+    addRow.className = "tag-add";
+    var addInput = document.createElement("input");
+    addInput.type = "text";
+    addInput.placeholder = "新标签";
+    var addButton = document.createElement("button");
+    addButton.type = "button";
+    addButton.className = "mini";
+    addButton.textContent = "添加";
+    addButton.addEventListener("click", function () {
+      var text = addInput.value.trim();
+      if (!text) return;
+      if (draftTags.indexOf(text) >= 0) {
+        addInput.value = "";
+        return;
+      }
+      if (draftTags.length >= 12) {
+        toast("最多 12 个标签");
+        return;
+      }
+      draftTags.push(text);
+      addInput.value = "";
+      renderTagList();
+    });
+    addRow.appendChild(addInput);
+    addRow.appendChild(addButton);
+    right.appendChild(addRow);
+
+    var level = field("等级", typeof profile.level === "number" ? String(profile.level) : "", "1 – 9；留空＝按快捷方式数量自动");
+    right.appendChild(level.wrap);
+
+    var infoHint = document.createElement("p");
+    infoHint.className = "panel-hint";
+    infoHint.textContent = "下面三项由 Aira 决定，主页只跟随";
+    right.appendChild(infoHint);
+
+    var infoRow = document.createElement("div");
+    infoRow.className = "info-row";
+    [
+      { label: state.privacy.isPrivate ? "浏览模式 · 隐私中" : "浏览模式 · 普通", run: openStatusSheet },
+      { label: "主题 · 跟随系统", run: openThemeSheet },
+      { label: state.gripLabel ? "握姿 · " + state.gripLabel : "握姿", run: openGripSheet }
+    ].forEach(function (item) {
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "mini";
+      button.textContent = item.label;
+      button.addEventListener("click", item.run);
+      infoRow.appendChild(button);
+    });
+    right.appendChild(infoRow);
+
+    function persist(message) {
+      storageSet("profile", state.profile).then(function () {
+        toast(message);
+      }).catch(function () {
+        toast("保存失败，请再试一次");
+      });
+    }
+
+    left.appendChild(panelFooter([
+      {
+        label: "恢复默认",
+        run: function () {
+          state.profile.name = DEFAULT_PROFILE.name;
+          state.profile.meta = DEFAULT_PROFILE.meta;
+          state.profile.sign = DEFAULT_PROFILE.sign;
+          name.input.value = DEFAULT_PROFILE.name;
+          meta.input.value = DEFAULT_PROFILE.meta;
+          sign.input.value = DEFAULT_PROFILE.sign;
+          applyProfile();
+          persist("已恢复默认名片");
+        }
+      },
+      {
+        label: "保存",
+        variant: "primary",
+        run: function () {
+          state.profile.name = name.input.value.trim() || DEFAULT_PROFILE.name;
+          state.profile.meta = meta.input.value.trim();
+          state.profile.sign = sign.input.value.trim();
+          applyProfile();
+          persist("名片已保存");
+        }
+      }
+    ]));
+
+    right.appendChild(panelFooter([
+      {
+        label: "关闭",
+        run: closeCardEditor
+      },
+      {
+        label: "保存",
+        variant: "primary",
+        run: function () {
+          var raw = level.input.value.trim();
+          if (!raw) {
+            state.profile.level = null;
+          } else {
+            var next = parseInt(raw, 10);
+            if (isNaN(next) || next < 1 || next > 9) {
+              toast("等级请输入 1 到 9");
+              return;
+            }
+            state.profile.level = next;
+          }
+          state.profile.tags = draftTags.slice();
+          applyProfile();
+          renderBadges();
+          persist("标签与等级已保存");
+        }
+      }
+    ]));
+
+    stage.appendChild(left);
+    stage.appendChild(right);
+
+    editRoot.mask.addEventListener("click", closeCardEditor);
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && editRoot && !editRoot.root.hidden) closeCardEditor();
+    });
+
+    editRoot.root.hidden = false;
+    setBackActive(true);
+  }
+
+  function closeCardEditor() {
+    if (editRoot) editRoot.root.hidden = true;
+    setBackActive(false);
+  }
 
   /* ---------- 面板 ---------- */
 
@@ -1062,57 +1175,7 @@
   }
 
   function openProfileEditor() {
-    var content = document.createDocumentFragment();
-    var name = field("名字", state.profile.name, "显示在名片上的名字");
-    var meta = field("一行简介", state.profile.meta, "年龄 · 城市");
-    var sign = field("签名", state.profile.sign, "一句话写你自己");
-    var tags = field("标签", (state.profile.tags || []).join(" "), "用空格分开，最多 12 个");
-    content.appendChild(name.wrap);
-    content.appendChild(meta.wrap);
-    content.appendChild(sign.wrap);
-    content.appendChild(tags.wrap);
-
-    openSheet({
-      title: "编辑名片",
-      sub: "名字、签名和标签会保存到 AiraHome.storage，只属于这个主页。",
-      content: content,
-      buttons: [
-        {
-          label: "清空",
-          run: function () {
-            storageRemove("profile").catch(function () {});
-            state.profile = {
-              name: DEFAULT_PROFILE.name,
-              meta: DEFAULT_PROFILE.meta,
-              sign: DEFAULT_PROFILE.sign,
-              tags: DEFAULT_PROFILE.tags.slice()
-            };
-            applyProfile();
-            closeSheet();
-            toast("已恢复默认名片");
-          }
-        },
-        {
-          label: "保存",
-          variant: "primary",
-          run: function () {
-            state.profile = {
-              name: name.input.value.trim() || DEFAULT_PROFILE.name,
-              meta: meta.input.value.trim(),
-              sign: sign.input.value.trim(),
-              tags: tags.input.value.split(/[\s,，、]+/).filter(Boolean).slice(0, 12)
-            };
-            applyProfile();
-            storageSet("profile", state.profile).then(function () {
-              toast("名片已保存");
-            }).catch(function () {
-              toast("保存失败，请再试一次");
-            });
-            closeSheet();
-          }
-        }
-      ]
-    });
+    openCardEditor();
   }
 
   /* ---------- 智感握姿 ---------- */
