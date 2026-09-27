@@ -930,12 +930,17 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   padding: 20px;
   overflow: auto;
   border-radius: 24px;
-  background: var(--glass-3);
-  border: 1px solid var(--glass-line);
-  box-shadow: var(--glass-deep), inset 0 1px 0 var(--glass-top);
-  backdrop-filter: var(--blur-lg);
-  -webkit-backdrop-filter: var(--blur-lg);
+  background: linear-gradient(156deg, rgba(255, 255, 255, 0.54), rgba(255, 255, 255, 0.4));
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  box-shadow: var(--glass-deep), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(38px) saturate(200%);
+  -webkit-backdrop-filter: blur(38px) saturate(200%);
   animation: rise 0.28s cubic-bezier(0.22, 0.9, 0.3, 1);
+}
+:root[data-theme="dark"] .sheet {
+  background: linear-gradient(156deg, rgba(20, 23, 34, 0.6), rgba(16, 18, 28, 0.5));
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: var(--glass-deep), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 /* 居中版面板（长按图标编辑用） */
@@ -1154,7 +1159,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 }
 .log-brand {
   margin: 0 0 13px;
-  font-size: 17.5px;
+  font-size: 16.6px;
   font-weight: 800;
   letter-spacing: 1.4px;
   color: #B4562A;
@@ -1172,6 +1177,35 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   color: #8A5426;
 }
 .log-history .log-pageinfo { color: rgba(140, 84, 40, 0.78); }
+
+/* 无底版本：条目直接写在面板玻璃上，靠间距和细分隔线撑着 */
+.log-history.plain {
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+.log-history.plain .log-brand {
+  margin-bottom: 6px;
+  text-shadow: none;
+}
+.log-history.plain .log-row { border-radius: 10px; }
+.log-history.plain .log-row + .log-row { border-top: 1px solid rgba(18, 28, 42, 0.1); }
+.log-history.plain .log-item {
+  padding: 15px 2px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.log-history.plain .log-date { color: var(--ink-3); letter-spacing: 0.5px; }
+.log-history.plain .log-remove {
+  border-radius: 10px;
+  margin-left: 8px;
+}
+:root[data-theme="dark"] .log-history.plain .log-row + .log-row {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
 
 /* 编辑名片里，签名字段下方右下角的小按钮：名片面板的玻璃质感 + 一层淡橙 */
 .field-more { display: flex; justify-content: flex-end; margin: -8px 0 14px; }
