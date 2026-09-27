@@ -1521,14 +1521,15 @@
 
   /* ---------- 日志（贴在主题卡片右下角的一句话） ---------- */
 
-  var LOG_DEFAULT = "hydecaside vibes only.";
+  var LOG_DEFAULT = "wilson vibes only.";
   var LOG_PAGE_SIZE = 5;
   var LOG_MAX = 200;
 
   function logDate(at) {
     var d = new Date(Number(at) || Date.now());
     var pad = function (n) { return n < 10 ? "0" + n : String(n); };
-    return d.getFullYear() + "." + pad(d.getMonth() + 1) + "." + pad(d.getDate());
+    return d.getFullYear() + "." + pad(d.getMonth() + 1) + "." + pad(d.getDate()) +
+      " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
   }
 
   function currentLogText() {
@@ -1548,6 +1549,11 @@
             at: Number(row && row.at) || Date.now()
           };
         }).filter(function (row) { return row.text; });
+      }
+      // 一次性迁移：把旧的默认句换成新的默认句（只在它还是那一句时）
+      if (state.logs.length && state.logs[0].text === "hydecaside vibes only.") {
+        state.logs[0].text = LOG_DEFAULT;
+        storageSet("logs", state.logs).catch(function () {});
       }
       if (!state.logs.length) {
         state.logs = [{ text: LOG_DEFAULT, at: Date.now() }];
@@ -1654,7 +1660,7 @@
     var field = document.createElement("div");
     field.className = "field";
     var label = document.createElement("label");
-    label.textContent = "这一句";
+    label.textContent = "New.";
     var input = document.createElement("input");
     input.type = "text";
     input.maxLength = 120;
@@ -1668,12 +1674,14 @@
     var saveButton = document.createElement("button");
     saveButton.type = "button";
     saveButton.className = "btn primary";
-    saveButton.textContent = "记下这一句";
+    saveButton.textContent = "Done";
     saveRow.appendChild(saveButton);
 
-    var head = document.createElement("p");
-    head.className = "icon-note sub";
-    head.textContent = "历史记录";
+    var history = document.createElement("div");
+    history.className = "log-history";
+    var brand = document.createElement("p");
+    brand.className = "log-brand";
+    brand.textContent = "历史记录";
 
     var list = document.createElement("div");
     list.className = "log-list";
@@ -1681,11 +1689,13 @@
     var pager = document.createElement("div");
     pager.className = "log-pager";
 
+    history.appendChild(brand);
+    history.appendChild(list);
+    history.appendChild(pager);
+
     body.appendChild(field);
     body.appendChild(saveRow);
-    body.appendChild(head);
-    body.appendChild(list);
-    body.appendChild(pager);
+    body.appendChild(history);
 
     var page = 1;
 
@@ -1737,8 +1747,7 @@
     });
 
     openSheet({
-      title: "日志",
-      sub: "长按主页上那行字就能回到这里。写下的每一句都按日期留档，左划一条可以移除。",
+      title: "签名日志",
       content: body,
       center: true,
       buttons: [{ label: "完成", variant: "primary", size: "sm", run: function () { closeSheet(); } }]
