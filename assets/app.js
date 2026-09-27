@@ -69,6 +69,7 @@
     selectedEngineId: "",
     shortcuts: [],
     iconPrefs: {},
+    logs: [],
     theme: { mode: "system", effectiveMode: "light" },
     privacy: { isPrivate: false },
     editing: false,
@@ -1518,9 +1519,271 @@
 
   /* ---------- 初始化 ---------- */
 
+  /* ---------- 日志（贴在主题卡片右下角的一句话） ---------- */
+
+  var LOG_DEFAULT = "hydecaside vibes only.";
+  var LOG_PAGE_SIZE = 5;
+  var LOG_MAX = 200;
+
+  function logDate(at) {
+    var d = new Date(Number(at) || Date.now());
+    var pad = function (n) { return n < 10 ? "0" + n : String(n); };
+    return d.getFullYear() + "." + pad(d.getMonth() + 1) + "." + pad(d.getDate());
+  }
+
+  function currentLogText() {
+    return state.logs.length ? state.logs[0].text : LOG_DEFAULT;
+  }
+
+  function paintDailyLog() {
+    if (el.dailyLog) el.dailyLog.textContent = currentLogText();
+  }
+
+  function loadLogs() {
+    return storageGet("logs", null).then(function (saved) {
+      if (Array.isArray(saved) && saved.length) {
+        state.logs = saved.map(function (row) {
+          return {
+            text: String((row && row.text) || "").slice(0, 120),
+            at: Number(row && row.at) || Date.now()
+          };
+        }).filter(function (row) { return row.text; });
+      }
+      if (!state.logs.length) {
+        state.logs = [{ text: LOG_DEFAULT, at: Date.now() }];
+        storageSet("logs", state.logs).catch(function () {});
+      }
+      paintDailyLog();
+    }).catch(function () { paintDailyLog(); });
+  }
+
+  function pushLog(value) {
+    var text = String(value || "").trim().slice(0, 120);
+    if (!text) { toast("写点什么吧"); return false; }
+    if (state.logs.length && state.logs[0].text === text) { toast("和上一句一样"); return false; }
+    state.logs.unshift({ text: text, at: Date.now() });
+    if (state.logs.length > LOG_MAX) state.logs.length = LOG_MAX;
+    storageSet("logs", state.logs).catch(function () {});
+    paintDailyLog();
+    return true;
+  }
+
+  function removeLog(index) {
+    if (index < 0 || index >= state.logs.length) return;
+    state.logs.splice(index, 1);
+    if (!state.logs.length) state.logs = [{ text: LOG_DEFAULT, at: Date.now() }];
+    storageSet("logs", state.logs).catch(function () {});
+    paintDailyLog();
+  }
+
+  function logRow(row, index, refresh) {
+    var wrap = document.createElement("div");
+    wrap.className = "log-row";
+
+    var inner = document.createElement("div");
+    inner.className = "log-row-inner";
+
+    var action = document.createElement("button");
+    action.type = "button";
+    action.className = "log-remove";
+    action.textContent = "移除";
+
+    var item = document.createElement("div");
+    item.className = "log-item";
+    var date = document.createElement("span");
+    date.className = "log-date";
+    date.textContent = logDate(row.at);
+    var text = document.createElement("span");
+    text.className = "log-text";
+    text.textContent = row.text;
+    item.appendChild(date);
+    item.appendChild(text);
+
+    inner.appendChild(action);
+    inner.appendChild(item);
+    wrap.appendChild(inner);
+
+    var REVEAL = 88;
+    var dragging = false;
+    var startX = 0;
+    var dx = 0;
+
+    function slide(value) {
+      inner.style.transform = value ? "translateX(" + value + "px)" : "";
+    }
+    function close() { dx = 0; slide(0); }
+
+    action.addEventListener("click", function () {
+      removeLog(index);
+      if (refresh) refresh();
+    });
+
+    item.addEventListener("pointerdown", function (event) {
+      if (event.button && event.button !== 0) return;
+      dragging = true;
+      dx = 0;
+      startX = event.clientX;
+      inner.style.transition = "none";
+    });
+    item.addEventListener("pointermove", function (event) {
+      if (!dragging) return;
+      dx = event.clientX - startX;
+      if (dx < 0) dx = 0;
+      if (dx > REVEAL) dx = REVEAL;
+      slide(dx);
+      if (dx > 4) event.preventDefault();
+    });
+    function end() {
+      if (!dragging) return;
+      dragging = false;
+      inner.style.transition = "";
+      if (dx > 44) slide(REVEAL);
+      else close();
+    }
+    item.addEventListener("pointerup", end);
+    item.addEventListener("pointercancel", end);
+    item.addEventListener("pointerleave", end);
+
+    return wrap;
+  }
+
+  function openLogEditor() {
+    var body = document.createElement("div");
+    body.className = "log-editor";
+
+    var field = document.createElement("div");
+    field.className = "field";
+    var label = document.createElement("label");
+    label.textContent = "这一句";
+    var input = document.createElement("input");
+    input.type = "text";
+    input.maxLength = 120;
+    input.value = currentLogText();
+    input.placeholder = "写一句今天想留在主页上的话";
+    field.appendChild(label);
+    field.appendChild(input);
+
+    var saveRow = document.createElement("div");
+    saveRow.className = "log-save";
+    var saveButton = document.createElement("button");
+    saveButton.type = "button";
+    saveButton.className = "btn primary";
+    saveButton.textContent = "记下这一句";
+    saveRow.appendChild(saveButton);
+
+    var head = document.createElement("p");
+    head.className = "icon-note sub";
+    head.textContent = "历史记录";
+
+    var list = document.createElement("div");
+    list.className = "log-list";
+
+    var pager = document.createElement("div");
+    pager.className = "log-pager";
+
+    body.appendChild(field);
+    body.appendChild(saveRow);
+    body.appendChild(head);
+    body.appendChild(list);
+    body.appendChild(pager);
+
+    var page = 1;
+
+    function pageButton(glyph, disabled, run) {
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "log-page-btn";
+      button.textContent = glyph;
+      button.disabled = !!disabled;
+      button.addEventListener("click", run);
+      return button;
+    }
+
+    function renderList() {
+      var total = Math.max(1, Math.ceil(state.logs.length / LOG_PAGE_SIZE));
+      if (page > total) page = total;
+      if (page < 1) page = 1;
+      var from = (page - 1) * LOG_PAGE_SIZE;
+
+      list.textContent = "";
+      state.logs.slice(from, from + LOG_PAGE_SIZE).forEach(function (row, offset) {
+        list.appendChild(logRow(row, from + offset, renderList));
+      });
+
+      pager.textContent = "";
+      if (total > 1) {
+        pager.appendChild(pageButton("‹", page <= 1, function () { page--; renderList(); }));
+        var info = document.createElement("span");
+        info.className = "log-pageinfo";
+        info.textContent = page + " / " + total + " · " + state.logs.length + " 条";
+        pager.appendChild(info);
+        pager.appendChild(pageButton("›", page >= total, function () { page++; renderList(); }));
+      }
+    }
+
+    saveButton.addEventListener("click", function () {
+      if (pushLog(input.value)) {
+        input.value = currentLogText();
+        input.blur();
+        page = 1;
+        renderList();
+      }
+    });
+    input.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        saveButton.click();
+      }
+    });
+
+    openSheet({
+      title: "日志",
+      sub: "长按主页上那行字就能回到这里。写下的每一句都按日期留档，右划一条可以移除。",
+      content: body,
+      center: true,
+      buttons: [{ label: "完成", variant: "primary", run: function () { closeSheet(); } }]
+    });
+    renderList();
+  }
+
+  function bindDailyLog() {
+    var node = el.dailyLog;
+    if (!node) return;
+    var timer = null;
+    var fired = false;
+
+    node.addEventListener("pointerdown", function (event) {
+      if (event.button && event.button !== 0) return;
+      fired = false;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(function () {
+        timer = null;
+        fired = true;
+        openLogEditor();
+      }, 480);
+    });
+
+    ["pointerup", "pointercancel", "pointerleave"].forEach(function (name) {
+      node.addEventListener(name, function () {
+        if (timer) { clearTimeout(timer); timer = null; }
+      });
+    });
+
+    node.addEventListener("click", function (event) {
+      if (fired) {
+        fired = false;
+        event.preventDefault();
+        return;
+      }
+      if (!event.detail) openLogEditor();
+    });
+  }
+
   function bindInteractions() {
     if (iconsBound) return;
     iconsBound = true;
+
+    bindDailyLog();
 
     var a = function () { return api(); };
 
@@ -1648,6 +1911,7 @@
       loadEngines();
       loadShortcuts();
       loadIconPrefs();
+      loadLogs();
       renderBadges();
       if (!window.__airaDemoNotice) {
         window.__airaDemoNotice = true;
@@ -1676,6 +1940,7 @@
     loadEngines();
     loadShortcuts();
     loadIconPrefs();
+    loadLogs();
     renderBadges();
   }
 
@@ -1697,7 +1962,8 @@
       sheetRoot: $("sheetRoot"),
       sheet: $("sheet"),
       sheetMask: $("sheetMask"),
-      toast: $("toast")
+      toast: $("toast"),
+      dailyLog: $("dailyLog")
     };
 
     tickClock();
