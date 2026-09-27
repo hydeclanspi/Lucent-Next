@@ -6,7 +6,8 @@
 
   var DEFAULT_PROFILE = {
     name: "无名氏",
-    meta: "18 · 上海",
+    meta: "17 · 上海",
+    level: 14,
     sign: "把今天过成想要的样子。",
     tags: ["学生", "技术宅", "乐观", "完美主义"]
   };
@@ -285,7 +286,7 @@
 
     var level = typeof state.profile.level === "number"
       ? state.profile.level
-      : Math.min(9, 1 + Math.floor(state.shortcuts.length / 8));
+      : DEFAULT_PROFILE.level;
     var lv = document.createElement("span");
     lv.className = "badge lv";
     lv.appendChild(icon(ICONS.star, { fill: true }));
@@ -1259,7 +1260,7 @@
     addRow.appendChild(addButton);
     right.appendChild(addRow);
 
-    var level = field("等级", typeof profile.level === "number" ? String(profile.level) : "", "1 – 99；留空＝按快捷方式数量自动");
+    var level = field("等级", typeof profile.level === "number" ? String(profile.level) : "", "1 – 99；留空＝默认 Lv." + DEFAULT_PROFILE.level);
     right.appendChild(level.wrap);
 
     var grip = field("握姿标签", profile.gripText || "", "留空＝显示 Aira 的真实握姿；写了就顶替它");
@@ -1594,7 +1595,7 @@
     paintDailyLog();
   }
 
-  function historyRow(row, onRemove) {
+  function historyRow(row, onRemove, tag) {
     var wrap = document.createElement("div");
     wrap.className = "log-row";
 
@@ -1611,11 +1612,20 @@
     var date = document.createElement("span");
     date.className = "log-date";
     date.textContent = logDate(row.at);
+    var line = document.createElement("span");
+    line.className = "log-line";
     var text = document.createElement("span");
     text.className = "log-text";
     text.textContent = row.text;
+    line.appendChild(text);
+    if (tag) {
+      var badge = document.createElement("span");
+      badge.className = "log-tag";
+      badge.textContent = tag;
+      line.appendChild(badge);
+    }
     item.appendChild(date);
-    item.appendChild(text);
+    item.appendChild(line);
 
     inner.appendChild(item);
     inner.appendChild(action);
@@ -1663,7 +1673,7 @@
   }
 
   // 淡橙色「国中国」：列表 + 分页，日志和签名历史共用同一套
-  function buildHistoryBlock(rows, remove, plain) {
+  function buildHistoryBlock(rows, remove, plain, tagFor) {
     var box = document.createElement("div");
     box.className = "log-history" + (plain ? " plain" : "");
 
@@ -1711,7 +1721,7 @@
         list.appendChild(historyRow(row, function () {
           remove(from + offset);
           render();
-        }));
+        }, tagFor ? tagFor(row) : ""));
       });
 
       pager.textContent = "";
@@ -1814,7 +1824,9 @@
     var block = buildHistoryBlock(state.signs, function (index) {
       state.signs.splice(index, 1);
       storageSet("signs", state.signs).catch(function () {});
-    }, true);
+    }, true, function (row) {
+      return row.text === DEFAULT_PROFILE.sign ? "[Default]" : "";
+    });
 
     openSheet({
       title: "历史签名",
