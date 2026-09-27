@@ -233,7 +233,32 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 .icon-btn:active { transform: scale(0.93); }
 
 /* 阴阳壁纸开关：对角渐层，切换时渐变方向翻转（靠两个 stop 的颜色对调实现） */
-.wp-toggle { align-self: center; }
+.wp-toggle { position: relative; align-self: center; }
+/* 随机模式：图标左上角一枚绿色呼吸灯 */
+.wp-dot {
+  position: absolute;
+  left: 12px;
+  top: 9px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #43D17C;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 6px rgba(67, 209, 124, 0.7);
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.24s ease, transform 0.24s ease;
+  pointer-events: none;
+}
+.wp-toggle.random .wp-dot {
+  opacity: 1;
+  transform: scale(1);
+  animation: wpBreathe 2.4s ease-in-out infinite;
+}
+@keyframes wpBreathe {
+  0%, 100% { opacity: 0.45; box-shadow: 0 0 4px rgba(67, 209, 124, 0.45); }
+  50% { opacity: 1; box-shadow: 0 0 10px rgba(67, 209, 124, 1); }
+}
 .wp-toggle .wp-g1 { stop-color: #EFF3F9; transition: stop-color 0.3s ease; }
 .wp-toggle .wp-g2 { stop-color: #2A3346; transition: stop-color 0.3s ease; }
 .wp-toggle.yang .wp-g1 { stop-color: #2A3346; }
@@ -302,6 +327,14 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 .wp-pick .cap span {
   font-size: 10.5px;
   letter-spacing: 0.4px;
+  color: var(--ink-3);
+}
+
+.wp-mode-note {
+  margin: 0 0 14px;
+  padding-left: 2px;
+  font-size: 12px;
+  letter-spacing: 0.5px;
   color: var(--ink-3);
 }
 
