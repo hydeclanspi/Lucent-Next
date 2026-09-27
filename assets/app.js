@@ -72,6 +72,7 @@
     iconPrefs: {},
     logs: [],
     signs: [],
+    wallpaper: "yin",
     theme: { mode: "system", effectiveMode: "light" },
     privacy: { isPrivate: false },
     editing: false,
@@ -1836,6 +1837,43 @@
     });
   }
 
+  /* ---------- 壁纸（阴 / 阳） ---------- */
+
+  var WALLPAPER = {
+    yin: "./assets/wallpaper.jpg",
+    yang: "./assets/wallpaper-yang.jpg"
+  };
+
+  function applyWallpaper() {
+    var side = state.wallpaper === "yang" ? "yang" : "yin";
+    try {
+      document.body.style.backgroundImage = 'url("' + WALLPAPER[side] + '")';
+    } catch (error) {
+      /* 忽略 */
+    }
+    if (el.wallpaperBtn) {
+      el.wallpaperBtn.classList.toggle("yang", side === "yang");
+      el.wallpaperBtn.setAttribute("aria-pressed", side === "yang" ? "true" : "false");
+      el.wallpaperBtn.title = side === "yang" ? "壁纸：阳（点一下换阴）" : "壁纸：阴（点一下换阳）";
+    }
+  }
+
+  function loadWallpaper() {
+    return storageGet("wallpaper", null).then(function (saved) {
+      if (saved === "yin" || saved === "yang") state.wallpaper = saved;
+      applyWallpaper();
+    }).catch(function () { applyWallpaper(); });
+  }
+
+  function bindWallpaper() {
+    if (!el.wallpaperBtn) return;
+    el.wallpaperBtn.addEventListener("click", function () {
+      state.wallpaper = state.wallpaper === "yang" ? "yin" : "yang";
+      applyWallpaper();
+      storageSet("wallpaper", state.wallpaper).catch(function () {});
+    });
+  }
+
   function bindDailyLog() {
     var node = el.dailyLog;
     if (!node) return;
@@ -1874,6 +1912,7 @@
     iconsBound = true;
 
     bindDailyLog();
+    bindWallpaper();
 
     var a = function () { return api(); };
 
@@ -2003,6 +2042,7 @@
       loadIconPrefs();
       loadLogs();
       loadSigns();
+      loadWallpaper();
       renderBadges();
       if (!window.__airaDemoNotice) {
         window.__airaDemoNotice = true;
@@ -2033,6 +2073,7 @@
     loadIconPrefs();
     loadLogs();
     loadSigns();
+    loadWallpaper();
     renderBadges();
   }
 
@@ -2055,7 +2096,8 @@
       sheet: $("sheet"),
       sheetMask: $("sheetMask"),
       toast: $("toast"),
-      dailyLog: $("dailyLog")
+      dailyLog: $("dailyLog"),
+      wallpaperBtn: $("btnWallpaper")
     };
 
     tickClock();
