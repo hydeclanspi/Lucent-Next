@@ -201,7 +201,8 @@
           name: String(saved.name || DEFAULT_PROFILE.name),
           meta: String(saved.meta || ""),
           sign: String(saved.sign || ""),
-          tags: Array.isArray(saved.tags) ? saved.tags.slice(0, 12).map(String) : DEFAULT_PROFILE.tags.slice()
+          tags: Array.isArray(saved.tags) ? saved.tags.slice(0, 12).map(String) : DEFAULT_PROFILE.tags.slice(),
+          level: typeof saved.level === "number" ? saved.level : null
         };
       }
       applyProfile();
@@ -277,14 +278,16 @@
     if (!el.badges) return;
     el.badges.textContent = "";
 
-    var level = Math.min(9, 1 + Math.floor(state.shortcuts.length / 8));
+    var level = typeof state.profile.level === "number"
+      ? state.profile.level
+      : Math.min(9, 1 + Math.floor(state.shortcuts.length / 8));
     var lv = document.createElement("span");
     lv.className = "badge lv";
     lv.appendChild(icon(ICONS.star, { fill: true }));
     var lvText = document.createElement("strong");
     lvText.textContent = "Lv." + level;
     lv.appendChild(lvText);
-    lv.title = "快捷方式越多，等级越高";
+    lv.title = "长按编辑等级";
     el.badges.appendChild(lv);
 
     var themeBadge = document.createElement("span");
@@ -806,6 +809,174 @@
   }
 
   initFolds();
+
+  /* ---------- 名片区长按编辑 ---------- */
+
+  function focusProfileField(index) {
+    openProfileEditor();
+    setTimeout(function () {
+      var inputs = document.querySelectorAll("#sheet .field input");
+      var target = inputs[index];
+      if (!target) return;
+      target.focus();
+      try { target.setSelectionRange(target.value.length, target.value.length); } catch (error) {}
+    }, 80);
+  }
+
+  function openLevelEditor() {
+    var box = field("等级", state.profile.level ? String(state.profile.level) : "", "1 – 9；留空则按快捷方式数量自动算");
+    var content = document.createDocumentFragment();
+    content.appendChild(box.wrap);
+
+    openSheet({
+      title: "等级",
+      sub: "Lv. 后面那个数字，只属于这个主页。",
+      content: content,
+      buttons: [
+        {
+          label: "交回自动",
+          run: function () {
+            state.profile.level = null;
+            renderBadges();
+            storageSet("profile", state.profile).catch(function () {});
+            closeSheet();
+            toast("等级已交回自动计算");
+          }
+        },
+        {
+          label: "保存",
+          variant: "primary",
+          run: function () {
+            var raw = box.input.value.trim();
+            if (!raw) {
+              state.profile.level = null;
+            } else {
+              var next = parseInt(raw, 10);
+              if (isNaN(next) || next < 1 || next > 9) {
+                toast("请输入 1 到 9 之间的整数");
+                return;
+              }
+              state.profile.level = next;
+            }
+            renderBadges();
+            storageSet("profile", state.profile).catch(function () {});
+            closeSheet();
+            toast("等级已更新");
+          }
+        }
+      ]
+    });
+  }
+
+  function openInfoSheet(title, sub, entries) {
+    var a = api();
+    var actions = entries.map(function (entry) {
+      return {
+        label: entry.label,
+        icon: entry.icon,
+        run: function () {
+          if (a && typeof a[entry.method] === "function") a()[entry.method]();
+          else toast("预览模式：" + entry.label);
+          closeSheet();
+        }
+      };
+    });
+    openSheet({ title: title, sub: sub, actions: actions });
+  }
+
+  function openStatusSheet() {
+    openInfoSheet(
+      "浏览模式",
+      "这枚胶囊显示的是 Aira 当前真实的浏览边界。主页读不到、也改不了它，只能帮你切换。",
+      [
+        { label: state.privacy.isPrivate ? "退出隐私模式" : "进入隐私模式", icon: ICONS.shield, method: "togglePrivateMode" },
+        { label: "隐私与安全设置", icon: ICONS.edit, method: "openPrivacySecuritySettings" }
+      ]
+    );
+  }
+
+  function openThemeSheet() {
+    openInfoSheet(
+      "浅色 / 深色",
+      "主题由 Aira 与系统决定，主页只跟随、不修改。要换就跳去设置里换。",
+      [
+        { label: "外观设置", icon: ICONS.sun, method: "openAppearanceSettings" },
+        { label: "主题配色", icon: ICONS.moon, method: "openThemePaletteSettings" }
+      ]
+    );
+  }
+
+  function openGripSheet() {
+    openInfoSheet(
+      "智感握姿",
+      "握姿要 Aira 在实验室开关打开后才提供，主页只接收左手 / 右手 / 双手 / 未握持这几个状态。",
+      [
+        { label: "打开实验室设置", icon: ICONS.hand, method: "openExperimentsSettings" }
+      ]
+    );
+  }
+
+  function bindHeroEditing() {
+    var targets = [
+      { sel: "#profileName", action: function () { focusProfileField(0); } },
+      { sel: "#profileMeta", action: function () { focusProfileField(1); } },
+      { sel: "#profileSign", action: function () { focusProfileField(2); } },
+      { sel: "#tags", action: function () { focusProfileField(3); } },
+      { sel: "#statusPill", action: openStatusSheet },
+      { sel: "#badges .badge:nth-child(1)", action: openLevelEditor },
+      { sel: "#badges .badge:nth-child(2)", action: openThemeSheet },
+      { sel: "#badges .badge:nth-child(3)", action: openGripSheet }
+    ];
+    var timer = null;
+    var fired = false;
+    var startX = 0;
+    var startY = 0;
+
+    function clear() {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    }
+
+    function hitTarget(node) {
+      for (var i = 0; i < targets.length; i++) {
+        if (node.closest && node.closest(targets[i].sel)) return targets[i];
+      }
+      return null;
+    }
+
+    document.addEventListener("pointerdown", function (event) {
+      if (event.button && event.button !== 0) return;
+      var target = hitTarget(event.target);
+      if (!target) return;
+      fired = false;
+      startX = event.clientX;
+      startY = event.clientY;
+      clear();
+      timer = setTimeout(function () {
+        fired = true;
+        target.action();
+      }, 460);
+    }, true);
+
+    document.addEventListener("pointermove", function (event) {
+      if (Math.abs(event.clientX - startX) > 8 || Math.abs(event.clientY - startY) > 8) clear();
+    }, true);
+
+    document.addEventListener("pointerup", clear, true);
+    document.addEventListener("pointercancel", clear, true);
+
+    // 长按已经响应过的那次点击不再往下走，避免连带触发底下的按钮
+    document.addEventListener("click", function (event) {
+      if (!fired) return;
+      fired = false;
+      event.preventDefault();
+      event.stopPropagation();
+    }, true);
+  }
+
+  bindHeroEditing();
 
   /* ---------- 面板 ---------- */
 
