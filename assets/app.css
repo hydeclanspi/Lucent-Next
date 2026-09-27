@@ -908,7 +908,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 
 /* ---------- 面板与提示 ---------- */
 
-.sheet-root { position: fixed; inset: 0; z-index: 20; }
+.sheet-root { position: fixed; inset: 0; z-index: 26; }
 
 .sheet-mask {
   position: absolute;
@@ -1173,25 +1173,18 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 }
 .log-history .log-pageinfo { color: rgba(140, 84, 40, 0.78); }
 
-/* 淡色小按钮：{历史签名} */
-.log-more { display: flex; justify-content: center; margin: 16px 0 2px; }
-.log-chip {
-  height: 34px;
-  padding: 0 20px;
-  border-radius: 999px;
-  font-size: 12.5px;
-  letter-spacing: 1.4px;
-  color: #A9552B;
-  background: linear-gradient(158deg, rgba(253, 242, 230, 0.96), rgba(248, 228, 208, 0.96));
-  border: 1px solid rgba(186, 118, 58, 0.26);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 4px 12px rgba(120, 70, 30, 0.08);
-  transition: transform 0.16s ease, box-shadow 0.2s ease;
+/* 编辑名片里，签名字段下方右下角的小按钮：名片面板的玻璃质感 + 一层淡橙 */
+.field-more { display: flex; justify-content: flex-end; margin: -8px 0 14px; }
+.btn.warm {
+  background: linear-gradient(158deg, rgba(255, 245, 236, 0.72), rgba(253, 232, 212, 0.62));
+  border-color: rgba(198, 134, 74, 0.26);
+  color: #9C5A2C;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86);
 }
-.log-chip:active { transform: scale(0.96); }
-:root[data-theme="dark"] .log-chip {
-  color: #F3C79E;
-  background: linear-gradient(158deg, rgba(96, 62, 34, 0.5), rgba(74, 46, 24, 0.5));
-  border-color: rgba(226, 165, 110, 0.3);
+:root[data-theme="dark"] .btn.warm {
+  background: linear-gradient(158deg, rgba(118, 78, 44, 0.34), rgba(94, 60, 32, 0.32));
+  border-color: rgba(226, 165, 110, 0.26);
+  color: #EFC69E;
 }
 
 .log-row { position: relative; overflow: hidden; border-radius: 14px; }
