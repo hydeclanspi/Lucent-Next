@@ -306,7 +306,12 @@
       var gripBadge = document.createElement("span");
       var gripLive = !customGrip && state.gripLabel && state.gripLabel !== "握姿待命";
       gripBadge.className = "badge" + (gripLive ? " live" : "");
-      gripBadge.appendChild(icon(ICONS.hand));
+      var gripIcon = document.createElement("span");
+      gripIcon.className = "emoji";
+      gripIcon.textContent = "🧊";
+      gripIcon.style.fontSize = "12px";
+      gripIcon.style.lineHeight = "1";
+      gripBadge.appendChild(gripIcon);
       var gripText = document.createElement("strong");
       gripText.textContent = customGrip || state.gripLabel || "握姿待命";
       gripBadge.appendChild(gripText);
