@@ -1847,7 +1847,7 @@
     dark: { src: "./assets/wallpaper.jpg", thumb: "./assets/wp-thumb-dark.jpg", label: "Dark", note: "日漫黄昏" }
   };
 
-  var WP_BLUR_DEFAULT = { light: 5, dark: 0 };
+  var WP_BLUR_DEFAULT = { light: 4, dark: 0 };
   var WP_BLUR_MAX = 20;
   var WP_BLUR_RATIO = 1.2;
   var WP_THUMB_SCALE = 0.25;
@@ -1924,6 +1924,11 @@
           if (typeof savedBlur[side] === "number") state.wallpaperBlur[side] = savedBlur[side];
         });
       }
+      // 一次性迁移：Light 的旧默认 5% → 新默认 4%
+      if (state.wallpaperBlur.light === 5) {
+        state.wallpaperBlur.light = WP_BLUR_DEFAULT.light;
+        storageSet("wallpaperBlur", state.wallpaperBlur).catch(function () {});
+      }
       applyWallpaper();
     }).catch(function () { applyWallpaper(); });
   }
@@ -1994,8 +1999,11 @@
         state.wallpaper = wpSide();
         state.wallpaperRolled = state.wallpaper;
       } else {
+        // 在面板里开启随机时，保持当前这张不动（避免背景在眼前反复换）；
+        // 下次进入主页才重新掷。
+        var keep = wpSide();
         state.wallpaper = "random";
-        state.wallpaperRolled = wpRoll();
+        state.wallpaperRolled = keep;
       }
       applyWallpaper();
       saveWallpaper();
