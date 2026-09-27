@@ -232,16 +232,16 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 .icon-btn svg { width: 18px; height: 18px; }
 .icon-btn:active { transform: scale(0.93); }
 
-/* 阴阳壁纸开关：对角线一分为二，切换时两半配色互换 */
+/* 阴阳壁纸开关：对角渐层，切换时渐变方向翻转（靠两个 stop 的颜色对调实现） */
 .wp-toggle { align-self: center; }
-.wp-toggle .wp-lit { fill: #EFF3F9; transition: fill 0.3s ease; }
-.wp-toggle .wp-dark { fill: #2A3346; transition: fill 0.3s ease; }
-.wp-toggle.yang .wp-lit { fill: #2A3346; }
-.wp-toggle.yang .wp-dark { fill: #FFE0B4; }
-:root[data-theme="dark"] .wp-toggle .wp-lit { fill: #DDE5F0; }
-:root[data-theme="dark"] .wp-toggle .wp-dark { fill: #1A2130; }
-:root[data-theme="dark"] .wp-toggle.yang .wp-lit { fill: #1A2130; }
-:root[data-theme="dark"] .wp-toggle.yang .wp-dark { fill: #F3C892; }
+.wp-toggle .wp-g1 { stop-color: #EFF3F9; transition: stop-color 0.3s ease; }
+.wp-toggle .wp-g2 { stop-color: #2A3346; transition: stop-color 0.3s ease; }
+.wp-toggle.yang .wp-g1 { stop-color: #2A3346; }
+.wp-toggle.yang .wp-g2 { stop-color: #EFF3F9; }
+:root[data-theme="dark"] .wp-toggle .wp-g1 { stop-color: #E8EEF8; }
+:root[data-theme="dark"] .wp-toggle .wp-g2 { stop-color: #4E5C74; }
+:root[data-theme="dark"] .wp-toggle.yang .wp-g1 { stop-color: #4E5C74; }
+:root[data-theme="dark"] .wp-toggle.yang .wp-g2 { stop-color: #E8EEF8; }
 
 /* 壁纸层：位于壁纸之上、内容之下；模糊只作用于这一层，不会糊到界面 */
 .wp-img {
