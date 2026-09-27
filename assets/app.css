@@ -196,14 +196,14 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   inset: 0;
   z-index: -1;
   border-radius: 0;
-  background: rgba(252, 253, 255, 0.16);
+  background: rgba(252, 253, 255, 0.76);
   border: 1px solid var(--glass-line);
   box-shadow: var(--glass-soft), inset 0 1px 0 var(--glass-top);
   backdrop-filter: var(--blur-lg);
   -webkit-backdrop-filter: var(--blur-lg);
   transform: skewX(-14deg);
 }
-:root[data-theme="dark"] #btnHistory::before { background: rgba(20, 23, 34, 0.22); }
+:root[data-theme="dark"] #btnHistory::before { background: rgba(20, 23, 34, 0.78); }
 #btnHistory:active::before { transform: skewX(-14deg) scale(0.97); }
 #btnHistory .arrow {
   width: 18px;
