@@ -202,7 +202,8 @@
           meta: String(saved.meta || ""),
           sign: String(saved.sign || ""),
           tags: Array.isArray(saved.tags) ? saved.tags.slice(0, 12).map(String) : DEFAULT_PROFILE.tags.slice(),
-          level: typeof saved.level === "number" ? saved.level : null
+          level: typeof saved.level === "number" ? saved.level : null,
+          gripText: typeof saved.gripText === "string" ? saved.gripText : ""
         };
       }
       applyProfile();
@@ -300,12 +301,14 @@
     themeBadge.appendChild(themeText);
     el.badges.appendChild(themeBadge);
 
-    if (state.motion) {
+    var customGrip = String(state.profile.gripText || "").trim();
+    if (state.motion || customGrip) {
       var gripBadge = document.createElement("span");
-      gripBadge.className = "badge" + (state.gripLabel && state.gripLabel !== "握姿待命" ? " live" : "");
+      var gripLive = !customGrip && state.gripLabel && state.gripLabel !== "握姿待命";
+      gripBadge.className = "badge" + (gripLive ? " live" : "");
       gripBadge.appendChild(icon(ICONS.hand));
       var gripText = document.createElement("strong");
-      gripText.textContent = state.gripLabel || "握姿待命";
+      gripText.textContent = customGrip || state.gripLabel || "握姿待命";
       gripBadge.appendChild(gripText);
       el.badges.appendChild(gripBadge);
     }
@@ -987,8 +990,11 @@
     addRow.appendChild(addButton);
     right.appendChild(addRow);
 
-    var level = field("等级", typeof profile.level === "number" ? String(profile.level) : "", "1 – 9；留空＝按快捷方式数量自动");
+    var level = field("等级", typeof profile.level === "number" ? String(profile.level) : "", "1 – 99；留空＝按快捷方式数量自动");
     right.appendChild(level.wrap);
+
+    var grip = field("握姿标签", profile.gripText || "", "留空＝显示 Aira 的真实握姿；写了就顶替它");
+    right.appendChild(grip.wrap);
 
     var infoHint = document.createElement("p");
     infoHint.className = "panel-hint";
@@ -1060,13 +1066,14 @@
             state.profile.level = null;
           } else {
             var next = parseInt(raw, 10);
-            if (isNaN(next) || next < 1 || next > 9) {
-              toast("等级请输入 1 到 9");
+            if (isNaN(next) || next < 1 || next > 99) {
+              toast("等级请输入 1 到 99");
               return;
             }
             state.profile.level = next;
           }
           state.profile.tags = draftTags.slice();
+          state.profile.gripText = grip.input.value.trim();
           applyProfile();
           renderBadges();
           persist("标签与等级已保存");
