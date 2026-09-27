@@ -306,12 +306,8 @@
       var gripBadge = document.createElement("span");
       var gripLive = !customGrip && state.gripLabel && state.gripLabel !== "握姿待命";
       gripBadge.className = "badge" + (gripLive ? " live" : "");
-      var gripIcon = document.createElement("span");
-      gripIcon.className = "emoji";
-      gripIcon.textContent = "🧊";
-      gripIcon.style.fontSize = "12px";
-      gripIcon.style.lineHeight = "1";
-      gripBadge.appendChild(gripIcon);
+      // 冰块：等距立方体，描边风格与其它徽章图标一致
+      gripBadge.appendChild(icon("M12 3.2 19.5 7.5V16.5L12 20.8 4.5 16.5V7.5Z M12 12 19.5 16.5 M12 12 4.5 16.5 M12 3.2V12"));
       var gripText = document.createElement("strong");
       gripText.textContent = customGrip || state.gripLabel || "握姿待命";
       gripBadge.appendChild(gripText);
