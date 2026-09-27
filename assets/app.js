@@ -306,8 +306,25 @@
       var gripBadge = document.createElement("span");
       var gripLive = !customGrip && state.gripLabel && state.gripLabel !== "握姿待命";
       gripBadge.className = "badge" + (gripLive ? " live" : "");
-      // 冰块：等距立方体，描边风格与其它徽章图标一致
-      gripBadge.appendChild(icon("M12 3.2 19.5 7.5V16.5L12 20.8 4.5 16.5V7.5Z M12 12 19.5 16.5 M12 12 4.5 16.5 M12 3.2V12"));
+      // 冰块：按 🧊 的观感画的——三面渐变 + 圆角 + 高光，纯矢量不依赖系统表情字体
+      var cube = document.createElement("span");
+      cube.className = "ice-cube";
+      cube.innerHTML =
+        '<svg viewBox="0 0 24 24" fill="none">' +
+        '<defs>' +
+        '<linearGradient id="iceTop" x1="0.15" y1="0" x2="0.5" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d6ebff"/></linearGradient>' +
+        '<linearGradient id="iceLeft" x1="0" y1="0.1" x2="0.8" y2="1"><stop offset="0" stop-color="#d3e9ff"/><stop offset="1" stop-color="#a6cff5"/></linearGradient>' +
+        '<linearGradient id="iceRight" x1="0.2" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c2ddfa"/><stop offset="1" stop-color="#8fbdec"/></linearGradient>' +
+        '</defs>' +
+        '<g stroke="#6ea4d8" stroke-width="1.4" stroke-opacity="0.5" stroke-linejoin="round">' +
+        '<path d="M12 3.6 19.2 7.7 12 11.8 4.8 7.7Z" fill="url(#iceTop)"/>' +
+        '<path d="M4.8 7.7 12 11.8 12 20.2 4.8 16.1Z" fill="url(#iceLeft)"/>' +
+        '<path d="M19.2 7.7 19.2 16.1 12 20.2 12 11.8Z" fill="url(#iceRight)"/>' +
+        '</g>' +
+        '<path d="M7.6 9.6 9.4 10.6" stroke="#ffffff" stroke-width="1.1" stroke-linecap="round" opacity="0.9"/>' +
+        '<path d="M13.2 6.2 14.8 6.8" stroke="#ffffff" stroke-width="0.9" stroke-linecap="round" opacity="0.65"/>' +
+        '</svg>';
+      gripBadge.appendChild(cube.firstElementChild);
       var gripText = document.createElement("strong");
       gripText.textContent = customGrip || state.gripLabel || "握姿待命";
       gripBadge.appendChild(gripText);
