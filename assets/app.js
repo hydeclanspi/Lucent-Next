@@ -1984,7 +1984,9 @@
     }
 
     function syncRandom() {
-      randomSwitch.setAttribute("aria-pressed", wpMode() === "random" ? "true" : "false");
+      var on = wpMode() === "random";
+      randomSwitch.setAttribute("aria-pressed", on ? "true" : "false");
+      randomSwitch.classList.toggle("lower", on);
     }
 
     randomSwitch.addEventListener("click", function () {
