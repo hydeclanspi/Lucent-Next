@@ -54,7 +54,8 @@
     sun: "M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6zM12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M5.5 18.5l1.6-1.6M16.9 7.1l1.6-1.6",
     moon: "M20 14.6A8.6 8.6 0 0 1 9.4 4a8.6 8.6 0 1 0 10.6 10.6z",
     shield: "M12 3.4 19 6v5.4c0 4.3-2.9 7.7-7 9.2-4.1-1.5-7-4.9-7-9.2V6z",
-    hand: "M9 11.5V5.6a1.5 1.5 0 0 1 3 0v5.4M12 10.8V4.9a1.5 1.5 0 0 1 3 0v6.3M15 11.5V7.2a1.5 1.5 0 0 1 3 0v8.3a5.5 5.5 0 0 1-5.5 5.5H11a5 5 0 0 1-4.2-2.3L4.3 14.2a1.6 1.6 0 0 1 2.7-1.7l2 2.9"
+    hand: "M9 11.5V5.6a1.5 1.5 0 0 1 3 0v5.4M12 10.8V4.9a1.5 1.5 0 0 1 3 0v6.3M15 11.5V7.2a1.5 1.5 0 0 1 3 0v8.3a5.5 5.5 0 0 1-5.5 5.5H11a5 5 0 0 1-4.2-2.3L4.3 14.2a1.6 1.6 0 0 1 2.7-1.7l2 2.9",
+    picture: "M4.5 5.5h15v13h-15zM4.8 15.4l4.5-4.3 3.3 3.1 2.7-2.6 4.2 4M9.6 9.7a1.25 1.25 0 1 0 0-2.5 1.25 1.25 0 0 0 0 2.5z"
   };
 
   var state = {
@@ -67,6 +68,7 @@
     engines: [],
     selectedEngineId: "",
     shortcuts: [],
+    iconPrefs: {},
     theme: { mode: "system", effectiveMode: "light" },
     privacy: { isPrivate: false },
     editing: false,
@@ -332,19 +334,59 @@
 
   /* ---------- 快捷方式 ---------- */
 
-  function shortcutLetter(container, item) {
-    var text = String(item.title || item.url || "?").trim();
-    container.textContent = text.slice(0, 1) || "?";
+  /* ---------- 快捷方式图标：自动 / 装框 / 首字母牌 ---------- */
+
+  var ICON_MODES = [
+    { id: "auto", label: "自动" },
+    { id: "frame", label: "装框" },
+    { id: "letter", label: "首字母" }
+  ];
+
+  var LETTER_COLORS = [
+    { name: "跟随图标色", value: "" },
+    { name: "冰蓝", value: "#3F6EA8" },
+    { name: "靛", value: "#4B5AA6" },
+    { name: "苔绿", value: "#3F7358" },
+    { name: "琥珀", value: "#A9752F" },
+    { name: "绯", value: "#A84F4A" },
+    { name: "紫", value: "#6A4F9C" },
+    { name: "墨", value: "#2F3844" }
+  ];
+
+  function iconKey(item) {
+    if (!item) return "";
+    if (item.kind === "system") return "sys:" + String(item.iconId || item.id || "");
+    return String(item.url || item.id || "");
   }
 
-  function renderShortcutIcon(container, item) {
-    container.textContent = "";
-    container.style.color = "";
-    container.style.background = "";
+  function iconPrefOf(item) {
+    var pref = state.iconPrefs[iconKey(item)];
+    return pref && typeof pref === "object" ? pref : null;
+  }
+
+  function letterText(item) {
+    var text = String(item.title || item.url || "?").trim();
+    return text.slice(0, 1) || "?";
+  }
+
+  function inkFor(tint) {
+    var m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(String(tint || "").trim());
+    if (!m) return "";
+    var v = m[1];
+    if (v.length === 3) v = v.charAt(0) + v.charAt(0) + v.charAt(1) + v.charAt(1) + v.charAt(2) + v.charAt(2);
+    var r = parseInt(v.slice(0, 2), 16);
+    var g = parseInt(v.slice(2, 4), 16);
+    var b = parseInt(v.slice(4, 6), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.62
+      ? "rgba(20, 28, 40, 0.88)"
+      : "rgba(255, 255, 255, 0.96)";
+  }
+
+  function paintSource(container, item) {
     var a = api();
     if (a && typeof a.renderShortcutIcon === "function") {
       try {
-        if (a.renderShortcutIcon(container, item)) return;
+        if (a.renderShortcutIcon(container, item)) return true;
       } catch (error) {
         /* 交给下面的回退 */
       }
@@ -357,12 +399,89 @@
       img.src = item.icon;
       img.addEventListener("error", function () {
         img.remove();
-        shortcutLetter(container, item);
+        if (!container.firstChild) {
+          container.classList.add("lettered");
+          container.textContent = letterText(item);
+        }
       });
       container.appendChild(img);
+      return true;
+    }
+    return false;
+  }
+
+  function paintIcon(container, item, mode, tint) {
+    container.textContent = "";
+    container.style.color = "";
+    container.style.background = "";
+    container.classList.remove("framed", "lettered");
+
+    var color = String(tint || "").trim();
+
+    if (mode === "letter") {
+      container.classList.add("lettered");
+      if (color) {
+        container.style.background = color;
+        container.style.color = inkFor(color);
+      }
+      container.textContent = letterText(item);
       return;
     }
-    shortcutLetter(container, item);
+
+    if (mode === "frame") {
+      var plate = document.createElement("span");
+      plate.className = "plate";
+      if (paintSource(plate, item)) {
+        container.classList.add("framed");
+        container.appendChild(plate);
+        return;
+      }
+      container.classList.add("lettered");
+      container.textContent = letterText(item);
+      return;
+    }
+
+    if (!paintSource(container, item)) {
+      container.classList.add("lettered");
+      container.textContent = letterText(item);
+    }
+  }
+
+  function renderShortcutIcon(container, item) {
+    var pref = iconPrefOf(item);
+    var mode = pref && pref.mode ? pref.mode : "auto";
+    var tint = pref && pref.color ? pref.color : "";
+    if (mode === "letter" && !tint) tint = String(item.iconColor || "").trim();
+    paintIcon(container, item, mode, tint);
+  }
+
+  function setIconPref(item, patch) {
+    var key = iconKey(item);
+    if (!key) {
+      toast("这条快捷方式没有可用的标识，无法单独记图标");
+      return;
+    }
+    var next = {};
+    var current = state.iconPrefs[key];
+    if (current && typeof current === "object") {
+      Object.keys(current).forEach(function (k) { next[k] = current[k]; });
+    }
+    Object.keys(patch || {}).forEach(function (k) { next[k] = patch[k]; });
+    if (next.mode === "auto" && !next.color) delete state.iconPrefs[key];
+    else state.iconPrefs[key] = next;
+    storageSet("icons", state.iconPrefs).catch(function () {});
+    renderShortcuts(state.shortcuts);
+  }
+
+  function loadIconPrefs() {
+    storageGet("icons", null).then(function (saved) {
+      if (saved && typeof saved === "object") state.iconPrefs = saved;
+      renderShortcuts(state.shortcuts);
+    }).catch(function () {});
+  }
+
+  function shortcutLetter(container, item) {
+    container.textContent = letterText(item);
   }
 
   function renderShortcuts(items) {
@@ -449,7 +568,7 @@
           startDrag(event);
         } else {
           fired = true;
-          openShortcutMenu(item);
+          openIconEditor(item);
         }
       }, state.editing ? 240 : 430);
     });
@@ -547,6 +666,90 @@
       return;
     }
     toast("预览模式：" + (item.title || item.url || "快捷方式") + " 会由 Aira 打开");
+  }
+
+  function openIconEditor(item) {
+    var pref = iconPrefOf(item);
+    var draft = {
+      mode: pref && pref.mode ? pref.mode : "auto",
+      color: pref && pref.color ? pref.color : ""
+    };
+
+    var body = document.createElement("div");
+    body.className = "icon-editor";
+
+    var opts = document.createElement("div");
+    opts.className = "icon-opts";
+    body.appendChild(opts);
+
+    var colorRow = document.createElement("div");
+    colorRow.className = "icon-color";
+    var note = document.createElement("p");
+    note.className = "icon-note";
+    note.textContent = "首字母牌底色";
+    var swatches = document.createElement("div");
+    swatches.className = "swatches";
+    colorRow.appendChild(note);
+    colorRow.appendChild(swatches);
+    body.appendChild(colorRow);
+
+    function tintFor(mode) {
+      if (mode !== "letter") return "";
+      return draft.color || String(item.iconColor || "").trim();
+    }
+
+    function refresh() {
+      opts.textContent = "";
+      ICON_MODES.forEach(function (mode) {
+        var card = document.createElement("button");
+        card.type = "button";
+        card.className = "icon-opt" + (draft.mode === mode.id ? " on" : "");
+        var prev = document.createElement("span");
+        prev.className = "ticon prev";
+        paintIcon(prev, item, mode.id, tintFor(mode.id));
+        var cap = document.createElement("span");
+        cap.className = "cap";
+        cap.textContent = mode.label;
+        card.appendChild(prev);
+        card.appendChild(cap);
+        card.addEventListener("click", function () {
+          draft.mode = mode.id;
+          setIconPref(item, { mode: mode.id, color: mode.id === "letter" ? draft.color : "" });
+          refresh();
+        });
+        opts.appendChild(card);
+      });
+
+      swatches.textContent = "";
+      LETTER_COLORS.forEach(function (entry) {
+        var swatch = document.createElement("button");
+        swatch.type = "button";
+        swatch.className = "swatch" + (draft.color === entry.value ? " on" : "");
+        swatch.title = entry.name;
+        if (entry.value) swatch.style.background = entry.value;
+        else swatch.textContent = letterText(item);
+        swatch.addEventListener("click", function () {
+          draft.color = entry.value;
+          draft.mode = "letter";
+          setIconPref(item, { mode: "letter", color: entry.value });
+          refresh();
+        });
+        swatches.appendChild(swatch);
+      });
+
+      colorRow.hidden = draft.mode !== "letter";
+    }
+
+    openSheet({
+      title: "图标 · " + String(item.title || "未命名"),
+      sub: "抓回来的原图、装进统一画框、或换成首字母牌 —— 这一格用哪种，你说了算。",
+      content: body,
+      buttons: [
+        { label: "更多…", run: function () { openShortcutMenu(item); } },
+        { label: "完成", variant: "primary", run: function () { closeSheet(); } }
+      ]
+    });
+    refresh();
   }
 
   function openShortcutMenu(item) {
@@ -1397,6 +1600,7 @@
       state.demo = true;
       loadEngines();
       loadShortcuts();
+      loadIconPrefs();
       renderBadges();
       if (!window.__airaDemoNotice) {
         window.__airaDemoNotice = true;
@@ -1424,6 +1628,7 @@
 
     loadEngines();
     loadShortcuts();
+    loadIconPrefs();
     renderBadges();
   }
 
