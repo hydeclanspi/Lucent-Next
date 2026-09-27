@@ -1409,7 +1409,7 @@
       options.buttons.forEach(function (item) {
         var button = document.createElement("button");
         button.type = "button";
-        button.className = "btn" + (item.variant ? " " + item.variant : "");
+        button.className = "btn" + (item.variant ? " " + item.variant : "") + (item.size === "sm" ? " sm" : "");
         button.textContent = item.label;
         button.addEventListener("click", function () { item.run(); });
         footer.appendChild(button);
@@ -1599,8 +1599,8 @@
     item.appendChild(date);
     item.appendChild(text);
 
-    inner.appendChild(action);
     inner.appendChild(item);
+    inner.appendChild(action);
     wrap.appendChild(inner);
 
     var REVEAL = 88;
@@ -1628,16 +1628,16 @@
     item.addEventListener("pointermove", function (event) {
       if (!dragging) return;
       dx = event.clientX - startX;
-      if (dx < 0) dx = 0;
-      if (dx > REVEAL) dx = REVEAL;
+      if (dx > 0) dx = 0;
+      if (dx < -REVEAL) dx = -REVEAL;
       slide(dx);
-      if (dx > 4) event.preventDefault();
+      if (dx < -4) event.preventDefault();
     });
     function end() {
       if (!dragging) return;
       dragging = false;
       inner.style.transition = "";
-      if (dx > 44) slide(REVEAL);
+      if (dx < -44) slide(-REVEAL);
       else close();
     }
     item.addEventListener("pointerup", end);
@@ -1738,10 +1738,10 @@
 
     openSheet({
       title: "日志",
-      sub: "长按主页上那行字就能回到这里。写下的每一句都按日期留档，右划一条可以移除。",
+      sub: "长按主页上那行字就能回到这里。写下的每一句都按日期留档，左划一条可以移除。",
       content: body,
       center: true,
-      buttons: [{ label: "完成", variant: "primary", run: function () { closeSheet(); } }]
+      buttons: [{ label: "完成", variant: "primary", size: "sm", run: function () { closeSheet(); } }]
     });
     renderList();
   }
