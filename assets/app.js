@@ -1176,6 +1176,16 @@
     left.appendChild(meta.wrap);
     left.appendChild(sign.wrap);
 
+    var signMore = document.createElement("div");
+    signMore.className = "field-more";
+    var signHistoryBtn = document.createElement("button");
+    signHistoryBtn.type = "button";
+    signHistoryBtn.className = "btn sm warm";
+    signHistoryBtn.textContent = "历史签名";
+    signHistoryBtn.addEventListener("click", function () { openSignHistory(); });
+    signMore.appendChild(signHistoryBtn);
+    left.appendChild(signMore);
+
     /* 右：标签与等级 */
     var right = document.createElement("section");
     right.className = "edit-panel";
@@ -1746,19 +1756,9 @@
     var block = buildHistoryBlock(state.logs, removeLog);
     var history = block.node;
 
-    var chipRow = document.createElement("div");
-    chipRow.className = "log-more";
-    var chip = document.createElement("button");
-    chip.type = "button";
-    chip.className = "log-chip";
-    chip.textContent = "{历史签名}";
-    chip.addEventListener("click", function () { openSignHistory(); });
-    chipRow.appendChild(chip);
-
     body.appendChild(field);
     body.appendChild(saveRow);
     body.appendChild(history);
-    body.appendChild(chipRow);
 
     saveButton.addEventListener("click", function () {
       if (pushLog(input.value)) {
