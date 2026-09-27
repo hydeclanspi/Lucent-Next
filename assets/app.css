@@ -430,6 +430,16 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   white-space: nowrap;
 }
 .badge svg { width: 12px; height: 12px; }
+.badge .ice-cube {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  font-size: 11px;
+  line-height: 1;
+}
+.badge .ice-cube img { display: block; width: 100%; height: 100%; }
 .badge strong { font-weight: 600; color: var(--shell-ink); font-family: var(--mono); letter-spacing: 0.3px; }
 
 .badge.lv { border-color: rgba(255, 176, 110, 0.45); }
