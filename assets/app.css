@@ -1127,8 +1127,19 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 
 /* 日志面板 */
 .log-editor { margin: 2px 0; }
-.log-save { display: flex; justify-content: flex-end; margin: -4px 0 18px; }
-.log-save .btn { min-width: 118px; }
+.log-save { display: flex; justify-content: flex-end; margin: -2px 0 18px; }
+
+/* 日志面板里的按钮收小一点：不要拉满宽、不要 47px 高 */
+.log-save .btn,
+.btn.sm {
+  flex: 0 0 auto;
+  height: 38px;
+  min-width: 0;
+  padding: 0 18px;
+  border-radius: 11px;
+  font-size: 13.5px;
+}
+.sheet.center .sheet-actions { justify-content: flex-end; }
 
 .log-list { display: flex; flex-direction: column; gap: 9px; }
 
@@ -1136,7 +1147,6 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 .log-row-inner {
   display: flex;
   width: calc(100% + 88px);
-  margin-left: -88px;
   transition: transform 0.22s cubic-bezier(0.22, 0.9, 0.3, 1);
   will-change: transform;
 }
@@ -1144,12 +1154,12 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   flex: 0 0 88px;
   border: 0;
   border-radius: 0;
-  background: linear-gradient(160deg, #e0524c, #c23a38);
+  background: linear-gradient(200deg, #e0524c, #c23a38);
   color: #fff;
   font-size: 12.5px;
   letter-spacing: 1.5px;
 }
-.log-remove:active { background: linear-gradient(160deg, #cf4a44, #ad3230); }
+.log-remove:active { background: linear-gradient(200deg, #cf4a44, #ad3230); }
 .log-item {
   flex: 1 1 auto;
   min-width: 0;
@@ -1164,10 +1174,9 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   touch-action: pan-y;
 }
 .log-date {
-  font-size: 10.5px;
-  letter-spacing: 1.6px;
+  font-size: 11px;
+  letter-spacing: 0.7px;
   color: var(--ink-4);
-  font-family: var(--mono);
 }
 .log-text {
   font-size: 13.5px;
@@ -1201,7 +1210,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   line-height: 1;
 }
 .log-page-btn:disabled { opacity: 0.35; }
-.log-pageinfo { font-size: 12px; letter-spacing: 1px; color: var(--ink-3); font-family: var(--mono); }
+.log-pageinfo { font-size: 12px; letter-spacing: 0.6px; color: var(--ink-3); }
 
 .toast {
   position: fixed;
