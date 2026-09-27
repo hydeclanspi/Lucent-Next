@@ -1587,8 +1587,16 @@
     }
   }
 
+  // 0＝还没初始化；1＝已按浏览器预览跑过；2＝已按 Aira 桥接跑过。
+  // aira-home-ready 可能被反复派发（实测每秒几十次），所以这里只允许「预览 → 桥接」升级一次，
+  // 之后重复的 ready 一律忽略；否则每次 ready 都会重跑整套加载，几秒内就能把渲染进程拖死。
+  var initStage = 0;
+
   function init() {
     var a = api();
+    var stage = a ? 2 : 1;
+    if (initStage >= stage) return;
+    initStage = stage;
 
     loadProfile();
     bindInteractions();
