@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "2.10.0",
+  "version": "3.1",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互——在新的留白范围中随机浮游；独立面板可调整 0–49 枚浮光、保存默认数量和 Light / Dark 随机比例，并展开黑箱算法说明。"
+  "description": "通透的个人名片主页。代号：交互 beta v0.7——单击添入浮光，长按打开设置；调整浮光数量与主图随机比例。内置签名记录及新版 Light 主图。"
 }

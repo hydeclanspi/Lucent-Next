@@ -312,6 +312,13 @@
         const nearby = candidates.filter(site => distance(site, placed[0]) >= 130 * scale && distance(site, placed[0]) <= 210 * scale);
         if (nearby.length) choices = nearby;
         else choices = [candidates.reduce((a, b) => Math.abs(distance(a, placed[0]) - 165 * scale) < Math.abs(distance(b, placed[0]) - 165 * scale) ? a : b)];
+      } else if (placed.length > 1) {
+        // New arrivals stay near an existing lens, while dense populations can fill gaps.
+        const scale = clamp(Math.min(geometry.width / 1560, geometry.height / 1040), 0.7, 1.3);
+        const nearestGap = site => Math.min(...placed.map(other => distance(site, other)));
+        const nearby = candidates.filter(site => nearestGap(site) >= 60 * scale && nearestGap(site) <= 180 * scale);
+        if (nearby.length) choices = nearby;
+        else choices = [candidates.reduce((a, b) => nearestGap(a) < nearestGap(b) ? a : b)];
       }
       const site = choices[Math.min(choices.length - 1, Math.floor(Math.random() * choices.length))];
       body.x = site.x; body.y = site.y; body.positioned = true;
