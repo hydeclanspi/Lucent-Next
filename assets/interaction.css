@@ -1,0 +1,138 @@
+/* 代号：交互 v1 — thin glass, quiet motion, precise contact. */
+.interaction-field {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+  contain: layout style;
+}
+
+.interaction-item {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  cursor: grab;
+  outline-offset: -3px;
+  border-radius: 12px;
+  will-change: transform;
+}
+
+.interaction-lens {
+  position: relative;
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px 3px 8px 3px;
+  transform: rotate(-24deg);
+  background: linear-gradient(135deg, rgba(212, 242, 255, 0.16), rgba(230, 247, 255, 0.025) 49%, rgba(205, 235, 250, 0.12));
+  border: 0.7px solid rgba(228, 247, 255, 0.44);
+  box-shadow: inset 0.8px 0.8px 0 rgba(250, 254, 255, 0.58), inset -0.8px -0.8px 0 rgba(137, 183, 207, 0.13), 0 2px 7px rgba(8, 20, 35, 0.10);
+  backdrop-filter: blur(2px) saturate(125%);
+  -webkit-backdrop-filter: blur(2px) saturate(125%);
+  opacity: 0.74;
+  transition: opacity 160ms ease, box-shadow 160ms ease;
+  pointer-events: none;
+}
+
+.interaction-lens::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  width: 10px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.90), transparent);
+  transform: rotate(-8deg);
+}
+
+.interaction-item[data-item="1"] .interaction-lens {
+  border-radius: 3px 8px 3px 7px;
+  transform: rotate(18deg);
+  background: linear-gradient(140deg, rgba(255, 229, 202, 0.15), rgba(255, 241, 218, 0.025) 51%, rgba(255, 225, 192, 0.11));
+  border-color: rgba(255, 240, 216, 0.43);
+}
+
+.interaction-item.is-dragging { cursor: grabbing; }
+.interaction-item.is-dragging .interaction-lens,
+.interaction-item:focus-visible .interaction-lens {
+  opacity: 1;
+  box-shadow: inset 0.8px 0.8px 0 rgba(255, 255, 255, 0.9), inset -0.8px -0.8px 0 rgba(185, 215, 234, 0.25), 0 2px 9px rgba(13, 25, 37, 0.16);
+}
+.interaction-item:focus-visible { outline: 1px solid rgba(244, 250, 255, 0.76); }
+
+.interaction-glint {
+  position: absolute;
+  top: 10px;
+  left: 3px;
+  width: 16px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.97), transparent);
+  box-shadow: 0 0 3px rgba(230, 247, 255, 0.45);
+  opacity: 0;
+  transform: rotate(-35deg);
+  pointer-events: none;
+}
+.interaction-item.is-contact .interaction-glint { animation: interaction-contact 240ms ease-out; }
+@keyframes interaction-contact {
+  0% { opacity: 0; transform: rotate(-35deg) scaleX(0.35); }
+  22% { opacity: 0.85; }
+  100% { opacity: 0; transform: rotate(-35deg) scaleX(1.18); }
+}
+
+/* Wallpaper panel: reuse its existing material, add only the requested controls. */
+.wp-probability { margin-top: 28px; padding: 0 4px; }
+.wp-probability-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  color: var(--ink-2);
+  font-size: 12.5px;
+}
+.wp-probability-head label { font-size: 11.5px; letter-spacing: 1.4px; color: var(--ink-3); }
+#wallpaperProbabilityValue { font-variant-numeric: tabular-nums; }
+.wp-probability-track { display: flex; align-items: center; gap: 16px; margin-top: 8px; }
+.wp-probability-track > span { flex: none; width: 32px; color: var(--ink-2); font-size: 11.5px; }
+.wp-probability-track > span:last-child { text-align: right; }
+.wp-probability-range { height: 40px; }
+.wp-probability-range:disabled { opacity: 0.45; }
+.wp-probability-range::-webkit-slider-runnable-track {
+  background: linear-gradient(90deg, rgba(51, 64, 88, 0.35), rgba(245, 249, 255, 0.84));
+}
+.wp-probability-range::-moz-range-track {
+  background: linear-gradient(90deg, rgba(51, 64, 88, 0.35), rgba(245, 249, 255, 0.84));
+}
+.wp-probability-status { margin: 2px 0 0; color: var(--ink-3); font-size: 11px; letter-spacing: 0.3px; }
+.wp-interaction-note {
+  margin: 25px 0 0;
+  text-align: right;
+  color: rgba(255, 255, 255, 0.96);
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 1.8;
+  letter-spacing: 0.35px;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 3px rgba(9, 20, 35, 0.45);
+}
+@media (max-width: 520px) {
+  .wp-probability-track { gap: 10px; }
+  .wp-interaction-note { max-width: 100%; text-wrap: pretty; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .interaction-item, .interaction-lens { will-change: auto; transition: none; }
+  .interaction-item.is-contact .interaction-glint { animation: none; }
+}

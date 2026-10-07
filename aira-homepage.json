@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "2.8.5",
+  "version": "2.9.0",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "把浏览器主页做成一张会呼吸的个人名片：壁纸、头像、签名与标签打底，搜索引擎、快捷方式和系统入口直接长在名片上。顶部开关按 暗 → 亮 → 随机 三态循环切换壁纸，随机态带绿色呼吸灯，长按可细调柔焦。"
+  "description": "通透的个人名片主页。代号：交互——轻拨两枚玻璃浮游物，以势场、距离、旋转与碰撞共同改变下一张随机壁纸的概率；长按壁纸开关可调整柔焦及 Light / Dark 比例。"
 }
