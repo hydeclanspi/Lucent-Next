@@ -75,6 +75,8 @@
     wallpaper: "dark",
     wallpaperBlur: {},
     wallpaperRolled: "",
+    wallpaperProbability: { version: 1, light: 0.5, source: "default", updatedAt: 0 },
+    wallpaperProbabilityReady: false,
     theme: { mode: "system", effectiveMode: "light" },
     privacy: { isPrivate: false },
     editing: false,
@@ -1365,11 +1367,13 @@
 
     editRoot.root.hidden = false;
     setBackActive(true);
+    refreshInteraction();
   }
 
   function closeCardEditor() {
     if (editRoot) editRoot.root.hidden = true;
     setBackActive(false);
+    refreshInteraction();
   }
 
   /* ---------- 面板 ---------- */
@@ -1436,11 +1440,13 @@
 
     el.sheetRoot.hidden = false;
     setBackActive(true);
+    refreshInteraction();
   }
 
   function closeSheet() {
     el.sheetRoot.hidden = true;
     setBackActive(false);
+    refreshInteraction();
   }
 
   function field(labelText, value, placeholder) {
@@ -1853,6 +1859,72 @@
   var WP_THUMB_SCALE = 0.25;
 
   var WP_MODES = ["dark", "light", "random"];
+  var interactionController = null;
+  var wallpaperLoadRevision = 0;
+  var probabilityWriteQueue = Promise.resolve();
+
+  function probabilityValue(value) {
+    return typeof value === "number" && isFinite(value)
+      ? Math.round(Math.max(0, Math.min(1, value)) * 100) / 100 : 0.5;
+  }
+
+  function syncProbabilityPanel() {
+    var slider = $("wallpaperProbability");
+    if (!slider) return;
+    var light = Math.round(state.wallpaperProbability.light * 100);
+    var dark = 100 - light;
+    slider.value = String(light);
+    slider.disabled = !state.wallpaperProbabilityReady;
+    slider.setAttribute("aria-valuetext", "Light " + light + "%，Dark " + dark + "%");
+    slider.style.setProperty("--probability-light", light + "%");
+    $("wallpaperProbabilityValue").textContent = "Light " + light + "% · Dark " + dark + "%";
+    $("wallpaperInteractionNote").textContent = "代号：交互 功能当前获得的下一次随机概率为 " + light + ":" + dark;
+    var source = state.wallpaperProbability.source === "interaction" ? "交互生成"
+      : state.wallpaperProbability.source === "manual" ? "手动设置" : "初始比例";
+    $("wallpaperProbabilityStatus").textContent = !state.wallpaperProbabilityReady ? "正在读取比例…"
+      : source + " · " + (wpMode() === "random" ? "下次随机生效" : "开启随机后生效");
+  }
+
+  function setWallpaperProbability(value, options) {
+    if (!state.wallpaperProbabilityReady) return;
+    var opts = options || {};
+    state.wallpaperProbability = {
+      version: 1,
+      light: probabilityValue(value),
+      source: opts.source === "interaction" ? "interaction" : "manual",
+      updatedAt: Date.now()
+    };
+    syncProbabilityPanel();
+    if (!opts.commit) return;
+    var snapshot = Object.assign({}, state.wallpaperProbability);
+    localSet("wallpaperProbability", snapshot);
+    var nativeStorage = api() && api().storage;
+    // Native writes are serialized; an older slow write cannot overwrite a newer gesture.
+    // Save the preview backup immediately; queued older native writes must not rewind it.
+    probabilityWriteQueue = probabilityWriteQueue.then(function () {
+      if (nativeStorage && typeof nativeStorage.set === "function") {
+        return nativeStorage.set("wallpaperProbability", snapshot);
+      }
+    }).catch(function () {
+      toast("随机比例尚未保存成功，请再调整一次");
+    });
+  }
+
+  function refreshInteraction() {
+    if (interactionController) interactionController.refresh();
+  }
+
+  function mountInteraction() {
+    if (interactionController || !window.AiraInteraction) return;
+    interactionController = window.AiraInteraction.mount({
+      getProbability: function () { return state.wallpaperProbability.light; },
+      setProbability: setWallpaperProbability,
+      isReady: function () { return state.wallpaperProbabilityReady; },
+      isPaused: function () {
+        return !el.sheetRoot.hidden || !!(editRoot && !editRoot.root.hidden);
+      }
+    });
+  }
 
   function wpMode() {
     var value = state.wallpaper;
@@ -1862,7 +1934,7 @@
   }
 
   function wpRoll() {
-    return Math.random() < 0.5 ? "light" : "dark";
+    return Math.random() < state.wallpaperProbability.light ? "light" : "dark";
   }
 
   function wpSide() {
@@ -1904,6 +1976,7 @@
       el.wallpaperBtn.setAttribute("aria-pressed", mode === "random" ? "mixed" : "false");
       el.wallpaperBtn.title = label + "（点一下切换 · 长按细调）";
     }
+    syncProbabilityPanel();
   }
 
   function saveWallpaper() {
@@ -1912,13 +1985,31 @@
   }
 
   function loadWallpaper() {
-    return storageGet("wallpaper", null).then(function (saved) {
+    var revision = ++wallpaperLoadRevision;
+    state.wallpaperProbabilityReady = false;
+    syncProbabilityPanel();
+    refreshInteraction();
+    return Promise.all([
+      storageGet("wallpaper", null),
+      storageGet("wallpaperBlur", null),
+      storageGet("wallpaperProbability", null)
+    ]).then(function (settings) {
+      if (revision !== wallpaperLoadRevision) return;
+      var saved = settings[0];
+      var savedBlur = settings[1];
+      var savedProbability = settings[2];
+      state.wallpaperProbability = {
+        version: 1,
+        light: probabilityValue(savedProbability && savedProbability.light),
+        source: savedProbability && (savedProbability.source === "manual" || savedProbability.source === "interaction")
+          ? savedProbability.source : "default",
+        updatedAt: savedProbability && typeof savedProbability.updatedAt === "number" ? savedProbability.updatedAt : 0
+      };
       if (saved === "yin") saved = "dark";
       if (saved === "yang") saved = "light";
       if (saved === "light" || saved === "dark" || saved === "random") state.wallpaper = saved;
+      // Restore the actual probability before the first draw, including delayed native storage.
       if (wpMode() === "random") state.wallpaperRolled = wpRoll();
-      return storageGet("wallpaperBlur", null);
-    }).then(function (savedBlur) {
       if (savedBlur && typeof savedBlur === "object") {
         ["light", "dark"].forEach(function (side) {
           if (typeof savedBlur[side] === "number") state.wallpaperBlur[side] = savedBlur[side];
@@ -1929,8 +2020,15 @@
         state.wallpaperBlur.light = WP_BLUR_DEFAULT.light;
         storageSet("wallpaperBlur", state.wallpaperBlur).catch(function () {});
       }
+      state.wallpaperProbabilityReady = true;
       applyWallpaper();
-    }).catch(function () { applyWallpaper(); });
+      refreshInteraction();
+    }).catch(function () {
+      if (revision !== wallpaperLoadRevision) return;
+      state.wallpaperProbabilityReady = true;
+      applyWallpaper();
+      refreshInteraction();
+    });
   }
 
   function openWallpaperPanel() {
@@ -1957,6 +2055,50 @@
     blurRow.appendChild(range);
     blurRow.appendChild(value);
 
+    var probabilityBlock = document.createElement("section");
+    probabilityBlock.className = "wp-probability";
+    var probabilityHead = document.createElement("div");
+    probabilityHead.className = "wp-probability-head";
+    var probabilityLabel = document.createElement("label");
+    probabilityLabel.htmlFor = "wallpaperProbability";
+    probabilityLabel.textContent = "随机比例";
+    var probabilityValueLabel = document.createElement("span");
+    probabilityValueLabel.id = "wallpaperProbabilityValue";
+    probabilityHead.appendChild(probabilityLabel);
+    probabilityHead.appendChild(probabilityValueLabel);
+    var probabilityTrack = document.createElement("div");
+    probabilityTrack.className = "wp-probability-track";
+    var darkLabel = document.createElement("span");
+    darkLabel.textContent = "Dark";
+    var probabilityRange = document.createElement("input");
+    probabilityRange.id = "wallpaperProbability";
+    probabilityRange.className = "wp-range wp-probability-range";
+    probabilityRange.type = "range";
+    probabilityRange.min = "0";
+    probabilityRange.max = "100";
+    probabilityRange.step = "1";
+    var lightLabel = document.createElement("span");
+    lightLabel.textContent = "Light";
+    probabilityTrack.appendChild(darkLabel);
+    probabilityTrack.appendChild(probabilityRange);
+    probabilityTrack.appendChild(lightLabel);
+    var probabilityStatus = document.createElement("p");
+    probabilityStatus.id = "wallpaperProbabilityStatus";
+    probabilityStatus.className = "wp-probability-status";
+    var probabilityNote = document.createElement("p");
+    probabilityNote.id = "wallpaperInteractionNote";
+    probabilityNote.className = "wp-interaction-note";
+    probabilityBlock.appendChild(probabilityHead);
+    probabilityBlock.appendChild(probabilityTrack);
+    probabilityBlock.appendChild(probabilityStatus);
+    probabilityBlock.appendChild(probabilityNote);
+    probabilityRange.addEventListener("input", function () {
+      setWallpaperProbability(Number(probabilityRange.value) / 100, { source: "manual", commit: false });
+    });
+    probabilityRange.addEventListener("change", function () {
+      setWallpaperProbability(Number(probabilityRange.value) / 100, { source: "manual", commit: true });
+    });
+
     var modeNote = document.createElement("p");
     modeNote.className = "wp-mode-note";
 
@@ -1978,6 +2120,7 @@
     body.appendChild(modeNote);
     body.appendChild(picks);
     body.appendChild(blurRow);
+    body.appendChild(probabilityBlock);
 
     var thumbs = {};
 
@@ -2074,6 +2217,7 @@
     refresh();
     syncBlur();
     syncRandom();
+    syncProbabilityPanel();
   }
 
   function bindWallpaper() {
@@ -2109,6 +2253,7 @@
         openWallpaperPanel();
         return;
       }
+      if (!state.wallpaperProbabilityReady) return;
       var next = WP_MODES[(WP_MODES.indexOf(wpMode()) + 1) % WP_MODES.length];
       state.wallpaper = next;
       if (next === "random") state.wallpaperRolled = wpRoll();
@@ -2156,6 +2301,7 @@
 
     bindDailyLog();
     bindWallpaper();
+    mountInteraction();
 
     var a = function () { return api(); };
 
