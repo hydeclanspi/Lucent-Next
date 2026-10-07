@@ -77,6 +77,10 @@
     wallpaperRolled: "",
     wallpaperProbability: { version: 1, light: 0.5, source: "default", updatedAt: 0 },
     wallpaperProbabilityReady: false,
+    interactionCount: 2,
+    interactionDefaultCount: 2,
+    interactionSettingsReady: false,
+    interactionDefaultSaving: false,
     theme: { mode: "system", effectiveMode: "light" },
     privacy: { isPrivate: false },
     editing: false,
@@ -1388,13 +1392,29 @@
   function openSheet(options) {
     var sheet = el.sheet;
     sheet.textContent = "";
+    $("btnInteraction").setAttribute("aria-expanded", options.interaction ? "true" : "false");
     sheet.classList.toggle("center", !!options.center);
     sheet.classList.toggle("wide", !!options.wide);
+    sheet.classList.toggle("interaction-sheet", !!options.interaction);
 
     var title = document.createElement("h3");
     title.className = "sheet-title";
     title.textContent = options.title || "";
-    sheet.appendChild(title);
+    if (options.interaction) {
+      var heading = document.createElement("div");
+      heading.className = "interaction-heading";
+      var subtitle = document.createElement("div");
+      subtitle.className = "interaction-subtitle";
+      var motto = document.createElement("span");
+      motto.textContent = "灵感与犀利并存";
+      var identity = document.createElement("span");
+      identity.textContent = "鸿蒙hydeclanspi灵感台";
+      subtitle.appendChild(motto);
+      subtitle.appendChild(identity);
+      heading.appendChild(title);
+      heading.appendChild(subtitle);
+      sheet.appendChild(heading);
+    } else sheet.appendChild(title);
 
     if (options.sub) {
       var sub = document.createElement("p");
@@ -1445,6 +1465,7 @@
 
   function closeSheet() {
     el.sheetRoot.hidden = true;
+    $("btnInteraction").setAttribute("aria-expanded", "false");
     setBackActive(false);
     refreshInteraction();
   }
@@ -1917,9 +1938,10 @@
   function mountInteraction() {
     if (interactionController || !window.AiraInteraction) return;
     interactionController = window.AiraInteraction.mount({
+      count: state.interactionCount,
       getProbability: function () { return state.wallpaperProbability.light; },
       setProbability: setWallpaperProbability,
-      isReady: function () { return state.wallpaperProbabilityReady; },
+      isReady: function () { return state.wallpaperProbabilityReady && state.interactionSettingsReady; },
       isPaused: function () {
         return !el.sheetRoot.hidden || !!(editRoot && !editRoot.root.hidden);
       }
@@ -1987,17 +2009,23 @@
   function loadWallpaper() {
     var revision = ++wallpaperLoadRevision;
     state.wallpaperProbabilityReady = false;
+    state.interactionSettingsReady = false;
+    syncInteractionPanel();
     syncProbabilityPanel();
     refreshInteraction();
     return Promise.all([
       storageGet("wallpaper", null),
       storageGet("wallpaperBlur", null),
-      storageGet("wallpaperProbability", null)
+      storageGet("wallpaperProbability", null),
+      storageGet("interactionSettings", null)
     ]).then(function (settings) {
       if (revision !== wallpaperLoadRevision) return;
       var saved = settings[0];
       var savedBlur = settings[1];
       var savedProbability = settings[2];
+      state.interactionDefaultCount = interactionCountValue(settings[3] && settings[3].defaultCount);
+      state.interactionCount = state.interactionDefaultCount;
+      if (interactionController) interactionController.setCount(state.interactionCount);
       state.wallpaperProbability = {
         version: 1,
         light: probabilityValue(savedProbability && savedProbability.light),
@@ -2021,40 +2049,63 @@
         storageSet("wallpaperBlur", state.wallpaperBlur).catch(function () {});
       }
       state.wallpaperProbabilityReady = true;
+      state.interactionSettingsReady = true;
+      syncInteractionPanel();
       applyWallpaper();
       refreshInteraction();
     }).catch(function () {
       if (revision !== wallpaperLoadRevision) return;
       state.wallpaperProbabilityReady = true;
+      state.interactionSettingsReady = true;
+      syncInteractionPanel();
       applyWallpaper();
       refreshInteraction();
     });
   }
 
-  function openWallpaperPanel() {
-    var body = document.createElement("div");
-    body.className = "wp-panel";
+  /* ---------- 代号：交互 ---------- */
 
-    var picks = document.createElement("div");
-    picks.className = "wp-picks";
+  function interactionCountValue(value) {
+    return typeof value === "number" && isFinite(value) ? Math.max(0, Math.min(49, Math.round(value))) : 2;
+  }
 
-    var blurRow = document.createElement("div");
-    blurRow.className = "wp-blurrow";
-    var blurLabel = document.createElement("span");
-    blurLabel.className = "wp-label";
-    blurLabel.textContent = "柔焦";
-    var range = document.createElement("input");
-    range.type = "range";
-    range.className = "wp-range";
-    range.min = "0";
-    range.max = String(WP_BLUR_MAX);
-    range.step = "1";
-    var value = document.createElement("span");
-    value.className = "wp-value";
-    blurRow.appendChild(blurLabel);
-    blurRow.appendChild(range);
-    blurRow.appendChild(value);
+  function syncInteractionPanel() {
+    var button = $("btnInteraction");
+    var enabled = state.interactionSettingsReady && state.interactionCount > 0;
+    button.classList.toggle("is-enabled", enabled);
+    button.title = "代号：交互 · " + state.interactionCount + " 枚浮光";
+    var slider = $("interactionCount");
+    if (!slider) return;
+    slider.value = String(state.interactionCount);
+    slider.disabled = !state.interactionSettingsReady;
+    slider.setAttribute("aria-valuetext", state.interactionCount + " 枚浮光");
+    $("interactionCountValue").textContent = state.interactionCount + " 枚";
+    $("interactionDefaultValue").textContent = "当前默认值：" + state.interactionDefaultCount;
+    var save = $("interactionSaveDefault");
+    save.hidden = state.interactionCount === state.interactionDefaultCount && !state.interactionDefaultSaving;
+    save.disabled = !state.interactionSettingsReady || state.interactionDefaultSaving;
+    save.textContent = state.interactionDefaultSaving ? "保存中…" : "设为默认";
+    $("interactionCountHint").textContent = !state.interactionSettingsReady ? "正在读取默认数量…"
+      : state.interactionCount === 0 ? "浮光已收起。仍可在这里调整随机比例。" : "即时调整本次数量；设为默认后，下次进入主页沿用。";
+  }
 
+  function saveInteractionDefault() {
+    if (!state.interactionSettingsReady || state.interactionDefaultSaving) return;
+    var count = state.interactionCount;
+    state.interactionDefaultSaving = true;
+    syncInteractionPanel();
+    storageSet("interactionSettings", { version: 1, defaultCount: count }).then(function () {
+      state.interactionDefaultCount = count;
+      toast("默认数量已设为 " + count);
+    }).catch(function () {
+      toast("默认数量尚未保存成功，请重试");
+    }).then(function () {
+      state.interactionDefaultSaving = false;
+      syncInteractionPanel();
+    });
+  }
+
+  function buildProbabilityBlock() {
     var probabilityBlock = document.createElement("section");
     probabilityBlock.className = "wp-probability";
     var probabilityHead = document.createElement("div");
@@ -2099,6 +2150,106 @@
       setWallpaperProbability(Number(probabilityRange.value) / 100, { source: "manual", commit: true });
     });
 
+    return probabilityBlock;
+  }
+
+  function openInteractionPanel() {
+    var body = document.createElement("div");
+    body.className = "interaction-panel";
+    var countBlock = document.createElement("section");
+    countBlock.className = "interaction-count";
+    var head = document.createElement("div");
+    head.className = "wp-probability-head";
+    var label = document.createElement("label");
+    label.htmlFor = "interactionCount";
+    label.textContent = "浮光数量";
+    var defaultValue = document.createElement("span");
+    defaultValue.id = "interactionDefaultValue";
+    head.appendChild(label); head.appendChild(defaultValue);
+    var track = document.createElement("div");
+    track.className = "interaction-count-track";
+    var slider = document.createElement("input");
+    slider.id = "interactionCount";
+    slider.className = "wp-range";
+    slider.type = "range"; slider.min = "0"; slider.max = "49"; slider.step = "1";
+    var value = document.createElement("output");
+    value.id = "interactionCountValue";
+    value.htmlFor = "interactionCount";
+    var save = document.createElement("button");
+    save.id = "interactionSaveDefault";
+    save.className = "btn sm interaction-save";
+    save.type = "button"; save.hidden = true;
+    save.textContent = "设为默认";
+    save.addEventListener("click", saveInteractionDefault);
+    track.appendChild(slider); track.appendChild(value); track.appendChild(save);
+    var ends = document.createElement("div");
+    ends.className = "interaction-count-ends";
+    var zero = document.createElement("span"), max = document.createElement("span");
+    zero.textContent = "0"; max.textContent = "49";
+    ends.appendChild(zero); ends.appendChild(max);
+    var hint = document.createElement("p");
+    hint.id = "interactionCountHint";
+    hint.className = "interaction-count-hint";
+    countBlock.appendChild(head); countBlock.appendChild(track); countBlock.appendChild(ends); countBlock.appendChild(hint);
+    slider.addEventListener("input", function () {
+      if (!state.interactionSettingsReady) return;
+      state.interactionCount = interactionCountValue(Number(slider.value));
+      if (interactionController) interactionController.setCount(state.interactionCount);
+      syncInteractionPanel();
+    });
+    body.appendChild(countBlock);
+    body.appendChild(buildProbabilityBlock());
+
+    var explanation = document.createElement("details");
+    explanation.className = "interaction-algorithm";
+    var summary = document.createElement("summary");
+    summary.textContent = "黑箱里，灵感怎样发生";
+    explanation.appendChild(summary);
+    var copy = document.createElement("div");
+    copy.className = "interaction-algorithm-copy";
+    [
+      ["一张看不见的地形", "拖动浮光，在隐形势场中改变 Light / Dark 的倾向。方向是主线，局部的弯曲与起伏带来一点难以预料。"],
+      ["距离、绕行与碰撞", "每次拖动会选定最近的一枚作为参照：拉开、聚拢、顺逆绕行，以及对方被推动的位移，都参与比例变化。多枚浮光彼此碰撞；只有一枚时，由势场决定。"],
+      ["轻拨之后，安静落定", "比例从当前设置出发，随手势变化，松手时保存。自然游动与松手后的惯性只负责氛围；手动滑轨与拖动共用同一个比例。"],
+      ["一点可知的黑箱", "势场、距离、旋转、连带位移的系数为 62 / 20 / 13 / 5。它把动作映射为抽签权重，不是训练模型，也不猜测心情。68:32 表示下一次随机时 Light / Dark 的机会；有限次结果不必恰好符合这个比例。"]
+    ].forEach(function (entry) {
+      var paragraph = document.createElement("p"), title = document.createElement("b");
+      title.textContent = entry[0];
+      paragraph.appendChild(title);
+      paragraph.appendChild(document.createTextNode(entry[1]));
+      copy.appendChild(paragraph);
+    });
+    explanation.appendChild(copy); body.appendChild(explanation);
+    openSheet({ title: "代号：交互", content: body, center: true, wide: true, interaction: true,
+      buttons: [{ label: "完成", variant: "primary", size: "sm", run: function () { closeSheet(); } }] });
+    $("btnInteraction").setAttribute("aria-expanded", "true");
+    syncInteractionPanel(); syncProbabilityPanel();
+  }
+
+  function openWallpaperPanel() {
+    var body = document.createElement("div");
+    body.className = "wp-panel";
+
+    var picks = document.createElement("div");
+    picks.className = "wp-picks";
+
+    var blurRow = document.createElement("div");
+    blurRow.className = "wp-blurrow";
+    var blurLabel = document.createElement("span");
+    blurLabel.className = "wp-label";
+    blurLabel.textContent = "柔焦";
+    var range = document.createElement("input");
+    range.type = "range";
+    range.className = "wp-range";
+    range.min = "0";
+    range.max = String(WP_BLUR_MAX);
+    range.step = "1";
+    var value = document.createElement("span");
+    value.className = "wp-value";
+    blurRow.appendChild(blurLabel);
+    blurRow.appendChild(range);
+    blurRow.appendChild(value);
+
     var modeNote = document.createElement("p");
     modeNote.className = "wp-mode-note";
 
@@ -2120,7 +2271,6 @@
     body.appendChild(modeNote);
     body.appendChild(picks);
     body.appendChild(blurRow);
-    body.appendChild(probabilityBlock);
 
     var thumbs = {};
 
@@ -2217,7 +2367,6 @@
     refresh();
     syncBlur();
     syncRandom();
-    syncProbabilityPanel();
   }
 
   function bindWallpaper() {
@@ -2316,6 +2465,8 @@
       if (a() && typeof a().openHistory === "function") a().openHistory();
       else toast("预览模式：这里会打开 Aira 历史记录");
     });
+
+    $("btnInteraction").addEventListener("click", openInteractionPanel);
 
     $("btnScan").addEventListener("click", function () {
       if (a() && typeof a().scanQr === "function") a().scanQr();
