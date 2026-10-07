@@ -5,7 +5,7 @@
   var api = function () { return window.AiraHome || null; };
 
   var DEFAULT_PROFILE = {
-    name: "无名氏",
+    name: "hydeclanspi",
     meta: "17 · 上海",
     level: 14,
     sign: "把今天过成想要的样子。",
@@ -1411,7 +1411,14 @@
       identity.textContent = "鸿蒙hydeclanspi灵感台";
       subtitle.appendChild(motto);
       subtitle.appendChild(identity);
-      heading.appendChild(title);
+      var titleGroup = document.createElement("div");
+      titleGroup.className = "interaction-title-group";
+      var engineSubtitle = document.createElement("p");
+      engineSubtitle.className = "wp-mode-note interaction-engine-subtitle";
+      engineSubtitle.textContent = "beta v0.7 引擎 · 26-10";
+      titleGroup.appendChild(title);
+      titleGroup.appendChild(engineSubtitle);
+      heading.appendChild(titleGroup);
       heading.appendChild(subtitle);
       sheet.appendChild(heading);
     } else sheet.appendChild(title);
@@ -1584,27 +1591,61 @@
     if (el.dailyLog) el.dailyLog.textContent = currentLogText();
   }
 
+  var BUNDLED_HISTORY = {
+    logs: [{ bundledId: "31-log-1", text: "wilson vibes only.", at: new Date(2026, 8, 27, 9, 1, 17).getTime(), atLabel: "2026.09.27 09:01:17" }],
+    signs: [
+      { bundledId: "31-sign-1", text: "我真的是活着玩的。都别压力我。", at: new Date(2026, 8, 28, 11, 49, 36).getTime(), atLabel: "2026.09.28 11:49:36" },
+      { bundledId: "31-sign-2", text: "把今天过成想要的样子。", at: new Date(2026, 8, 27, 8, 36, 30).getTime(), atLabel: "2026.09.27 08:36:30" }
+    ]
+  };
+  var historyLoadRevisions = {};
+  var historyWriteQueues = {};
+
+  function persistHistory(key, rows) {
+    var snapshot = rows.map(function (row) { return Object.assign({}, row); });
+    var nativeStorage = api() && api().storage;
+    localSet(key, snapshot);
+    localSet(key + "BundleVersion", 31);
+    // Migration and later deletion/edit writes share one ordered queue per collection.
+    var queue = (historyWriteQueues[key] || Promise.resolve()).catch(function () {}).then(function () {
+      if (nativeStorage && typeof nativeStorage.set === "function") {
+        return nativeStorage.set(key, snapshot).then(function () { return nativeStorage.set(key + "BundleVersion", 31); });
+      }
+    });
+    historyWriteQueues[key] = queue;
+    return queue;
+  }
+
+  function loadBundledHistory(key) {
+    var revision = (historyLoadRevisions[key] || 0) + 1;
+    historyLoadRevisions[key] = revision;
+    var seeds = BUNDLED_HISTORY[key];
+    return Promise.all([storageGet(key, null), storageGet(key + "BundleVersion", 0)]).then(function (saved) {
+      if (historyLoadRevisions[key] !== revision) return;
+      var rows = Array.isArray(saved[0]) ? saved[0].map(function (row) {
+        var result = { text: String((row && row.text) || "").slice(0, 120), at: Number(row && row.at) || Date.now() };
+        var bundled = seeds.filter(function (seed) { return seed.bundledId === (row && row.bundledId); })[0];
+        if (bundled) { result.bundledId = bundled.bundledId; result.atLabel = bundled.atLabel; }
+        return result;
+      }).filter(function (row) { return row.text; }) : [];
+      if (key === "logs" && rows.length && rows[0].text === "hydecaside vibes only.") rows[0].text = LOG_DEFAULT;
+      if (!(Number(saved[1]) >= 31)) {
+        seeds.forEach(function (seed) {
+          var match = rows.filter(function (row) {
+            return row.bundledId === seed.bundledId || (row.text.replace(/\s/g, "") === seed.text.replace(/\s/g, "") && (row.atLabel || logDate(row.at)) === seed.atLabel);
+          })[0];
+          if (match) { match.bundledId = seed.bundledId; match.atLabel = seed.atLabel; }
+          else rows.push(Object.assign({}, seed));
+        });
+        rows.sort(function (a, b) { return b.at - a.at; });
+        persistHistory(key, rows).catch(function () {});
+      }
+      state[key] = rows;
+    });
+  }
+
   function loadLogs() {
-    return storageGet("logs", null).then(function (saved) {
-      if (Array.isArray(saved) && saved.length) {
-        state.logs = saved.map(function (row) {
-          return {
-            text: String((row && row.text) || "").slice(0, 120),
-            at: Number(row && row.at) || Date.now()
-          };
-        }).filter(function (row) { return row.text; });
-      }
-      // 一次性迁移：把旧的默认句换成新的默认句（只在它还是那一句时）
-      if (state.logs.length && state.logs[0].text === "hydecaside vibes only.") {
-        state.logs[0].text = LOG_DEFAULT;
-        storageSet("logs", state.logs).catch(function () {});
-      }
-      if (!state.logs.length) {
-        state.logs = [{ text: LOG_DEFAULT, at: Date.now() }];
-        storageSet("logs", state.logs).catch(function () {});
-      }
-      paintDailyLog();
-    }).catch(function () { paintDailyLog(); });
+    return loadBundledHistory("logs").then(paintDailyLog).catch(function () { paintDailyLog(); });
   }
 
   function pushLog(value) {
@@ -1613,7 +1654,7 @@
     if (state.logs.length && state.logs[0].text === text) { toast("和上一句一样"); return false; }
     state.logs.unshift({ text: text, at: Date.now() });
     if (state.logs.length > LOG_MAX) state.logs.length = LOG_MAX;
-    storageSet("logs", state.logs).catch(function () {});
+    persistHistory("logs", state.logs).catch(function () {});
     paintDailyLog();
     return true;
   }
@@ -1622,7 +1663,7 @@
     if (index < 0 || index >= state.logs.length) return;
     state.logs.splice(index, 1);
     if (!state.logs.length) state.logs = [{ text: LOG_DEFAULT, at: Date.now() }];
-    storageSet("logs", state.logs).catch(function () {});
+    persistHistory("logs", state.logs).catch(function () {});
     paintDailyLog();
   }
 
@@ -1642,7 +1683,7 @@
     item.className = "log-item";
     var date = document.createElement("span");
     date.className = "log-date";
-    date.textContent = logDate(row.at);
+    date.textContent = row.atLabel || logDate(row.at);
     var line = document.createElement("span");
     line.className = "log-line";
     var text = document.createElement("span");
@@ -1827,14 +1868,7 @@
   /* ---------- 签名历史（左侧个签的留档） ---------- */
 
   function loadSigns() {
-    return storageGet("signs", null).then(function (saved) {
-      state.signs = Array.isArray(saved) ? saved.map(function (row) {
-        return {
-          text: String((row && row.text) || "").slice(0, 120),
-          at: Number(row && row.at) || Date.now()
-        };
-      }).filter(function (row) { return row.text; }) : [];
-    }).catch(function () { state.signs = []; });
+    return loadBundledHistory("signs").catch(function () {});
   }
 
   function recordSign(value) {
@@ -1843,18 +1877,18 @@
     if (state.signs.length && state.signs[0].text === text) return;
     state.signs.unshift({ text: text, at: Date.now() });
     if (state.signs.length > LOG_MAX) state.signs.length = LOG_MAX;
-    storageSet("signs", state.signs).catch(function () {});
+    persistHistory("signs", state.signs).catch(function () {});
   }
 
   function openSignHistory() {
     if (!state.signs.length && state.profile.sign) {
       state.signs = [{ text: String(state.profile.sign).slice(0, 120), at: Date.now() }];
-      storageSet("signs", state.signs).catch(function () {});
+      persistHistory("signs", state.signs).catch(function () {});
     }
 
     var block = buildHistoryBlock(state.signs, function (index) {
       state.signs.splice(index, 1);
-      storageSet("signs", state.signs).catch(function () {});
+      persistHistory("signs", state.signs).catch(function () {});
     }, true, function (row) {
       return row.text === DEFAULT_PROFILE.sign ? "[Default]" : "";
     });
@@ -1870,7 +1904,7 @@
   /* ---------- 壁纸（Light / Dark + 柔焦） ---------- */
 
   var WALLPAPERS = {
-    light: { src: "./assets/wallpaper-yang.jpg", thumb: "./assets/wp-thumb-light.jpg", label: "Light", note: "伦敦夜景" },
+    light: { src: "./assets/wallpaper-yang.jpg", thumb: "./assets/wallpaper-yang.jpg", label: "Light", note: "伦敦夜景" },
     dark: { src: "./assets/wallpaper.jpg", thumb: "./assets/wp-thumb-dark.jpg", label: "Dark", note: "日漫黄昏" }
   };
 
@@ -1894,12 +1928,14 @@
     if (!slider) return;
     var light = Math.round(state.wallpaperProbability.light * 100);
     var dark = 100 - light;
-    slider.value = String(light);
+    slider.value = String(dark);
     slider.disabled = !state.wallpaperProbabilityReady;
     slider.setAttribute("aria-valuetext", "Light " + light + "%，Dark " + dark + "%");
     slider.style.setProperty("--probability-light", light + "%");
     $("wallpaperProbabilityValue").textContent = "Light " + light + "% · Dark " + dark + "%";
-    $("wallpaperInteractionNote").textContent = "代号：交互 功能当前获得的下一次随机概率为 " + light + ":" + dark;
+    $("wallpaperInteractionNote").textContent = "代号：交互 功能当前获得的下一次主图随机概率为 " + light + ":" + dark;
+    var liveRatio = $("interactionAlgorithmRatio");
+    if (liveRatio) liveRatio.textContent = light + ":" + dark;
     var source = state.wallpaperProbability.source === "interaction" ? "交互生成"
       : state.wallpaperProbability.source === "manual" ? "手动设置" : "初始比例";
     $("wallpaperProbabilityStatus").textContent = !state.wallpaperProbabilityReady ? "正在读取比例…"
@@ -2073,7 +2109,7 @@
     var button = $("btnInteraction");
     var enabled = state.interactionSettingsReady && state.interactionCount > 0;
     button.classList.toggle("is-enabled", enabled);
-    button.title = "代号：交互 · " + state.interactionCount + " 枚浮光";
+    button.title = "代号：交互 · " + state.interactionCount + " 枚浮光（单击添加 · 长按设置）";
     var slider = $("interactionCount");
     if (!slider) return;
     slider.value = String(state.interactionCount);
@@ -2082,7 +2118,7 @@
     $("interactionCountValue").textContent = state.interactionCount + " 枚";
     $("interactionDefaultValue").textContent = "当前默认值：" + state.interactionDefaultCount;
     var save = $("interactionSaveDefault");
-    save.hidden = state.interactionCount === state.interactionDefaultCount && !state.interactionDefaultSaving;
+    save.hidden = false;
     save.disabled = !state.interactionSettingsReady || state.interactionDefaultSaving;
     save.textContent = state.interactionDefaultSaving ? "保存中…" : "设为默认";
     $("interactionCountHint").textContent = !state.interactionSettingsReady ? "正在读取默认数量…"
@@ -2112,7 +2148,7 @@
     probabilityHead.className = "wp-probability-head";
     var probabilityLabel = document.createElement("label");
     probabilityLabel.htmlFor = "wallpaperProbability";
-    probabilityLabel.textContent = "随机比例";
+    probabilityLabel.textContent = "主图随机比例";
     var probabilityValueLabel = document.createElement("span");
     probabilityValueLabel.id = "wallpaperProbabilityValue";
     probabilityHead.appendChild(probabilityLabel);
@@ -2130,9 +2166,9 @@
     probabilityRange.step = "1";
     var lightLabel = document.createElement("span");
     lightLabel.textContent = "Light";
-    probabilityTrack.appendChild(darkLabel);
-    probabilityTrack.appendChild(probabilityRange);
     probabilityTrack.appendChild(lightLabel);
+    probabilityTrack.appendChild(probabilityRange);
+    probabilityTrack.appendChild(darkLabel);
     var probabilityStatus = document.createElement("p");
     probabilityStatus.id = "wallpaperProbabilityStatus";
     probabilityStatus.className = "wp-probability-status";
@@ -2144,10 +2180,10 @@
     probabilityBlock.appendChild(probabilityStatus);
     probabilityBlock.appendChild(probabilityNote);
     probabilityRange.addEventListener("input", function () {
-      setWallpaperProbability(Number(probabilityRange.value) / 100, { source: "manual", commit: false });
+      setWallpaperProbability(1 - Number(probabilityRange.value) / 100, { source: "manual", commit: false });
     });
     probabilityRange.addEventListener("change", function () {
-      setWallpaperProbability(Number(probabilityRange.value) / 100, { source: "manual", commit: true });
+      setWallpaperProbability(1 - Number(probabilityRange.value) / 100, { source: "manual", commit: true });
     });
 
     return probabilityBlock;
@@ -2178,7 +2214,7 @@
     var save = document.createElement("button");
     save.id = "interactionSaveDefault";
     save.className = "btn sm interaction-save";
-    save.type = "button"; save.hidden = true;
+    save.type = "button";
     save.textContent = "设为默认";
     save.addEventListener("click", saveInteractionDefault);
     track.appendChild(slider); track.appendChild(value); track.appendChild(save);
@@ -2208,15 +2244,21 @@
     var copy = document.createElement("div");
     copy.className = "interaction-algorithm-copy";
     [
-      ["一张看不见的地形", "拖动浮光，在隐形势场中改变 Light / Dark 的倾向。方向是主线，局部的弯曲与起伏带来一点难以预料。"],
+      ["一张看不见的地形", "拖动浮光，在隐形势场梯度中改变 Light / Dark 的倾向。方向是主线，局部的弯曲与起伏带来一点难以预料。"],
       ["距离、绕行与碰撞", "每次拖动会选定最近的一枚作为参照：拉开、聚拢、顺逆绕行，以及对方被推动的位移，都参与比例变化。多枚浮光彼此碰撞；只有一枚时，由势场决定。"],
       ["轻拨之后，安静落定", "比例从当前设置出发，随手势变化，松手时保存。自然游动与松手后的惯性只负责氛围；手动滑轨与拖动共用同一个比例。"],
-      ["一点可知的黑箱", "势场、距离、旋转、连带位移的系数为 62 / 20 / 13 / 5。它把动作映射为抽签权重，不是训练模型，也不猜测心情。68:32 表示下一次随机时 Light / Dark 的机会；有限次结果不必恰好符合这个比例。"]
+      ["一点可知的黑箱", "势场、距离、旋转、连带位移的系数为 62 / 20 / 13 / 5。它把动作映射为抽签权重，不是训练模型，也不猜测心情。"]
     ].forEach(function (entry) {
       var paragraph = document.createElement("p"), title = document.createElement("b");
       title.textContent = entry[0];
       paragraph.appendChild(title);
       paragraph.appendChild(document.createTextNode(entry[1]));
+      if (entry[0] === "一点可知的黑箱") {
+        var liveRatio = document.createElement("span");
+        liveRatio.id = "interactionAlgorithmRatio";
+        paragraph.appendChild(liveRatio);
+        paragraph.appendChild(document.createTextNode(" 表示下一次主图随机时 Light / Dark 的机会；有限次结果不必恰好符合这个比例。"));
+      }
       copy.appendChild(paragraph);
     });
     explanation.appendChild(copy); body.appendChild(explanation);
@@ -2369,6 +2411,56 @@
     syncRandom();
   }
 
+  function bindInteractionLauncher() {
+    var node = $("btnInteraction"), timer = null, start = null, suppressClick = false, longPressPoint = null;
+    function clear() { if (timer) clearTimeout(timer); timer = null; }
+    function cancel() { clear(); start = null; suppressClick = true; }
+    function addItem() {
+      if (!state.interactionSettingsReady) return;
+      if (state.interactionCount >= 49) { toast("浮光已达上限 49 枚"); return; }
+      state.interactionCount++;
+      if (interactionController) interactionController.setCount(state.interactionCount);
+      syncInteractionPanel();
+    }
+    // Touch WebViews may retarget the release's compatibility click to the new mask.
+    // Consume only that continuation; the next real pointerdown immediately clears it.
+    document.addEventListener("pointerdown", function () { longPressPoint = null; }, true);
+    document.addEventListener("click", function (event) {
+      if (longPressPoint && event.detail && Math.hypot(event.clientX - longPressPoint.x, event.clientY - longPressPoint.y) < 32) {
+        longPressPoint = null; suppressClick = false;
+        event.preventDefault(); event.stopImmediatePropagation();
+      }
+    }, true);
+    node.addEventListener("pointerdown", function (event) {
+      if (!event.isPrimary || (event.pointerType === "mouse" && event.button !== 0)) return;
+      clear(); suppressClick = false;
+      start = { x: event.clientX, y: event.clientY };
+      timer = setTimeout(function () {
+        timer = null; suppressClick = true; longPressPoint = start; start = null;
+        openInteractionPanel();
+      }, 480);
+    });
+    node.addEventListener("pointermove", function (event) {
+      if (start && Math.hypot(event.clientX - start.x, event.clientY - start.y) > 10) cancel();
+    });
+    node.addEventListener("pointerup", function () { clear(); start = null; });
+    node.addEventListener("pointercancel", cancel);
+    node.addEventListener("pointerleave", function () { if (start) cancel(); });
+    node.addEventListener("contextmenu", function (event) { event.preventDefault(); });
+    node.addEventListener("click", function (event) {
+      if (suppressClick && event.detail) { suppressClick = false; event.preventDefault(); return; }
+      addItem();
+    });
+    // Keyboard users can add with Enter/Space and open settings with Shift+Enter or the menu key.
+    node.addEventListener("keydown", function (event) {
+      if ((event.key === "Enter" && event.shiftKey) || event.key === "ContextMenu" || (event.key === "F10" && event.shiftKey)) {
+        event.preventDefault(); cancel(); openInteractionPanel();
+      }
+    });
+    window.addEventListener("blur", cancel);
+    document.addEventListener("visibilitychange", function () { if (document.hidden) cancel(); });
+  }
+
   function bindWallpaper() {
     var node = el.wallpaperBtn;
     if (!node) return;
@@ -2466,7 +2558,7 @@
       else toast("预览模式：这里会打开 Aira 历史记录");
     });
 
-    $("btnInteraction").addEventListener("click", openInteractionPanel);
+    bindInteractionLauncher();
 
     $("btnScan").addEventListener("click", function () {
       if (a() && typeof a().scanQr === "function") a().scanQr();
