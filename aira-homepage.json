@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "2.9.1",
+  "version": "2.10.0",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互——轻拨两枚玻璃浮游物，以势场、距离、旋转与碰撞共同改变下一张随机壁纸的概率；长按壁纸开关可调整柔焦及 Light / Dark 比例。"
+  "description": "通透的个人名片主页。代号：交互——在新的留白范围中随机浮游；独立面板可调整 0–49 枚浮光、保存默认数量和 Light / Dark 随机比例，并展开黑箱算法说明。"
 }

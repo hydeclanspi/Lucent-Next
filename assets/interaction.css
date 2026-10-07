@@ -44,7 +44,7 @@
   transition: opacity 150ms ease, transform 200ms ease;
   pointer-events: none;
 }
-.interaction-item[data-item="1"]::before {
+.interaction-item[data-tone="warm"]::before {
   background: radial-gradient(ellipse at 52% 45%, rgba(255, 242, 223, 0.27), rgba(255, 232, 204, 0.10) 42%, transparent 73%);
 }
 .interaction-item.is-held::before,
@@ -79,7 +79,7 @@
   transform: rotate(-8deg);
 }
 
-.interaction-item[data-item="1"] .interaction-lens {
+.interaction-item[data-tone="warm"] .interaction-lens {
   border-radius: 3px 8px 3px 7px;
   transform: rotate(18deg);
   background: linear-gradient(140deg, rgba(255, 229, 202, 0.15), rgba(255, 241, 218, 0.025) 51%, rgba(255, 225, 192, 0.11));
@@ -113,7 +113,7 @@
   100% { opacity: 0; transform: rotate(-35deg) scaleX(1.18); }
 }
 
-/* Wallpaper panel: reuse its existing material, add only the requested controls. */
+/* Probability controls share the existing sheet and range material. */
 .wp-probability { margin-top: 28px; padding: 0 4px; }
 .wp-probability-head {
   display: flex;
@@ -156,4 +156,69 @@
 @media (prefers-reduced-motion: reduce) {
   .interaction-item, .interaction-item::before, .interaction-lens { will-change: auto; transition: none; }
   .interaction-item.is-contact .interaction-glint { animation: none; }
+}
+
+/* Same glass shell as the scan/settings controls, with the lens itself tilted 40 degrees. */
+.interaction-launcher { position: relative; }
+.interaction-launcher > .interaction-lens {
+  width: 15px;
+  height: 15px;
+  border-radius: 5px 2px 5px 2px;
+  transform: rotate(40deg);
+  opacity: 0.9;
+}
+.interaction-launcher > .interaction-lens::before { left: 2px; width: 8px; }
+.interaction-launcher > .wp-dot { left: auto; right: 7px; top: 7px; }
+.interaction-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 32px; }
+.sheet.wide .interaction-heading .sheet-title { margin: 0; white-space: nowrap; }
+.interaction-subtitle {
+  display: flex; flex-direction: column; gap: 6px; align-items: flex-end;
+  color: rgba(255, 255, 255, 0.96); text-align: right; line-height: 1.35;
+  font-size: 16.5px; font-weight: 400; letter-spacing: 0.45px;
+  text-shadow: 0 1px 3px rgba(9, 20, 35, 0.22);
+}
+.interaction-subtitle > span:last-child { font-size: 0.67em; letter-spacing: 0.3px; }
+.interaction-count { padding: 0 4px; }
+.interaction-count-track { display: flex; align-items: center; gap: 14px; margin-top: 12px; min-height: 40px; }
+.interaction-count-track .wp-range { min-width: 0; height: 40px; }
+#interactionCountValue { flex: none; min-width: 39px; font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; text-align: right; }
+#interactionDefaultValue { font-size: 11.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.btn.interaction-save { flex: none; min-height: 36px; padding: 6px 10px; white-space: nowrap; font-size: 12px; animation: fade 180ms ease; }
+/* Keep the slider's length stable when the save button appears. */
+.interaction-count-track { display: grid; grid-template-columns: minmax(0, 1fr) 39px 92px; }
+.interaction-count-ends { display: flex; justify-content: space-between; margin-right: 159px; margin-top: -3px; font-size: 10px; color: var(--ink-3); }
+.interaction-count-hint { margin: 14px 0 0; font-size: 11px; color: var(--ink-3); line-height: 1.65; }
+.interaction-panel .wp-probability { margin-top: 32px; }
+.interaction-algorithm {
+  margin-top: 28px; border-radius: 17px; overflow: hidden;
+  background: linear-gradient(130deg, rgba(184, 220, 255, 0.28), rgba(214, 237, 255, 0.12));
+  border: 1px solid rgba(230, 247, 255, 0.36);
+  box-shadow: inset 0 1px 0 rgba(245, 252, 255, 0.38);
+}
+.interaction-algorithm summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 17px 20px; min-height: 48px; cursor: pointer; list-style: none;
+  color: var(--ink-2); font-size: 12.5px; letter-spacing: 0.35px; user-select: none;
+}
+.interaction-algorithm summary::-webkit-details-marker { display: none; }
+.interaction-algorithm summary::after {
+  content: ""; width: 6px; height: 6px; border-right: 1px solid currentColor; border-bottom: 1px solid currentColor;
+  transform: rotate(45deg); transition: transform 180ms ease; opacity: 0.65;
+}
+.interaction-algorithm[open] summary::after { transform: rotate(225deg); }
+.interaction-algorithm-copy { padding: 0 20px 20px; font-size: 11.5px; line-height: 1.85; color: var(--ink-2); }
+.interaction-algorithm-copy p { margin: 0 0 17px; }
+.interaction-algorithm-copy p:last-child { margin-bottom: 0; }
+.interaction-algorithm-copy b { display: block; margin-bottom: 4px; font-size: 12px; font-weight: 600; }
+:root[data-theme="dark"] .interaction-algorithm { background: linear-gradient(130deg, rgba(101, 170, 222, 0.15), rgba(136, 195, 236, 0.06)); border-color: rgba(202, 229, 251, 0.17); }
+@media (max-width: 520px) {
+  .sheet.wide.interaction-sheet { padding: 26px 20px 22px; }
+  .interaction-heading { gap: 12px; }
+  .interaction-subtitle { font-size: 15px; }
+  .interaction-count-track { gap: 10px; grid-template-columns: minmax(0, 1fr) 35px 84px; }
+  .interaction-count-ends { margin-right: 139px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .interaction-save, .interaction-launcher.is-enabled .wp-dot { animation: none; }
+  .interaction-algorithm summary::after { transition: none; }
 }

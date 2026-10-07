@@ -249,7 +249,8 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   transition: opacity 0.24s ease, transform 0.24s ease;
   pointer-events: none;
 }
-.wp-toggle.random .wp-dot {
+.wp-toggle.random .wp-dot,
+.interaction-launcher.is-enabled .wp-dot {
   opacity: 1;
   transform: scale(1);
   animation: wpBreathe 2.4s ease-in-out infinite;
