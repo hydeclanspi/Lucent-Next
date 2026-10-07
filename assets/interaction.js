@@ -9,6 +9,8 @@
 
   const REGION = [[98,140],[58,185],[36,275],[50,341],[90,351],[223,331],[289,336],[339,359],[368,401],[382,449],[408,495],[416,556],[417,588],[445,620],[487,645],[533,661],[562,651],[568,630],[558,588],[550,542],[547,453],[543,359],[548,328],[565,311],[602,300],[688,292],[817,285],[879,267],[908,230],[923,185],[920,170],[895,160],[853,156],[764,159],[669,163],[560,169],[465,172],[382,169],[288,165],[204,161],[167,159],[143,168]];
   const WEIGHTS = Object.freeze({ field: 0.62, distance: 0.20, rotation: 0.13, collision: 0.05 });
+  const MOTION = Object.freeze({ speedScale: 1.164, horizontal: 6 * 1.164, vertical: 4.5 * 1.164 });
+  const RESTITUTION = 0.64;
   const RADIUS = 11;
   const CLEARANCE = 30; // A 44px touch target plus 8px of space around existing UI.
   const STEP = 4;
@@ -152,7 +154,7 @@
       const lens = document.createElement('span'); lens.className = 'interaction-lens'; lens.setAttribute('aria-hidden', 'true');
       const glint = document.createElement('span'); glint.className = 'interaction-glint'; glint.setAttribute('aria-hidden', 'true');
       lens.appendChild(glint); button.appendChild(lens); field.appendChild(button);
-      return { x: 0, y: 0, vx: index ? -4 : 5, vy: index ? 3 : -2, angle: Math.random() * Math.PI * 2, turn: 0, button, contactUntil: 0 };
+      return { x: 0, y: 0, vx: (index ? -4 : 5) * MOTION.speedScale, vy: (index ? 3 : -2) * MOTION.speedScale, angle: Math.random() * Math.PI * 2, turn: 0, button, contactUntil: 0 };
     });
     document.body.appendChild(field);
 
@@ -197,16 +199,26 @@
         if (gap < RADIUS * 2) {
           let nx = (other.x - next.x) / (gap || 1), ny = (other.y - next.y) / (gap || 1);
           if (gap < 0.01) { nx = index ? -1 : 1; ny = 0; }
+          const relative = (body.vx - other.vx) * nx + (body.vy - other.vy) * ny;
+          if (gesture && gesture.index === 1 - index) {
+            // The held lens is kinematic: a drifting lens bounces off it, never moves the finger.
+            if (relative > 0) {
+              body.vx -= (1 + RESTITUTION) * relative * nx;
+              body.vy -= (1 + RESTITUTION) * relative * ny;
+            }
+            contact(now);
+            return false;
+          }
           const push = RADIUS * 2 - gap + 0.02;
           const pushed = copy(other);
           advance(pushed, { x: other.x + nx * push, y: other.y + ny * push }, geometry);
           // If the other lens is trapped at the edge, the active lens stops at contact.
           if (distance(next, pushed) < RADIUS * 2 - 0.01) return false;
           other.x = pushed.x; other.y = pushed.y;
-          const relative = (body.vx - other.vx) * nx + (body.vy - other.vy) * ny;
           if (relative > 0) {
-            const impulse = relative * 0.82;
-            body.vx -= impulse * nx; body.vy -= impulse * ny;
+            const held = gesture && gesture.index === index;
+            const impulse = relative * (1 + RESTITUTION) * (held ? 1 : 0.5);
+            if (!held) { body.vx -= impulse * nx; body.vy -= impulse * ny; }
             other.vx += impulse * nx; other.vy += impulse * ny;
           }
           contact(now);
@@ -222,10 +234,11 @@
       const current = gesture; gesture = null;
       const body = bodies[current.index];
       body.button.classList.remove('is-dragging');
+      body.button.classList.remove('is-held');
       try { if (body.button.hasPointerCapture(current.pointerId)) body.button.releasePointerCapture(current.pointerId); } catch (_) {}
       // Cancellation, modal opening and visibility loss lock the last visible value.
       if (commit && current.started) emit(current.value, true);
-      if (!current.started || motion.matches) { body.vx = 0; body.vy = 0; }
+      if (!current.started || motion.matches || performance.now() - current.lastTime > 80) { body.vx = 0; body.vy = 0; }
       paint(performance.now());
     }
 
@@ -246,23 +259,29 @@
       if (now - lastPaint < (gesture ? 15 : 32)) { requestFrame(); return; }
       const dt = clamp((now - previousTime) / 1000, 0, 0.05);
       previousTime = now; lastPaint = now;
-      // A held gesture only advances through user input. Waiting with a finger down never changes the ratio.
-      if (!gesture) {
-        bodies.forEach((body, index) => {
+      // Only the grabbed lens is pinned. Its partner keeps drifting and spends collision
+      // velocity immediately; animation frames never write wallpaper probability.
+      if (gesture && now - gesture.lastTime > 80) {
+        bodies[gesture.index].vx = 0; bodies[gesture.index].vy = 0;
+      }
+      bodies.forEach((body, index) => {
+          if (gesture && gesture.index === index) {
+            return;
+          }
           body.turn = body.turn * Math.exp(-1.8 * dt) + (Math.random() - 0.5) * 1.6 * Math.sqrt(dt);
           body.angle += body.turn * dt;
           const pull = 1 - Math.exp(-1.3 * dt);
-          body.vx += (Math.cos(body.angle) * 6 - body.vx) * pull;
-          body.vy += (Math.sin(body.angle) * 4.5 - body.vy) * pull;
+          body.vx += (Math.cos(body.angle) * MOTION.horizontal - body.vx) * pull;
+          body.vy += (Math.sin(body.angle) * MOTION.vertical - body.vy) * pull;
           const old = copy(body), target = { x: body.x + body.vx * dt, y: body.y + body.vy * dt };
           moveBody(index, target, now);
-          if (Math.abs(body.x - target.x) > 0.1 || Math.abs(body.y - target.y) > 0.1) {
-            if (Math.abs(body.x - old.x) < 0.1) body.vx *= -0.65;
-            if (Math.abs(body.y - old.y) < 0.1) body.vy *= -0.65;
+          if (!geometry.valid(target) && (Math.abs(body.x - target.x) > 0.1 || Math.abs(body.y - target.y) > 0.1)) {
+            // A contact bounce has already changed velocity; do not reflect it a second time.
+            if (Math.abs(body.x - old.x) < 0.1 && (target.x - old.x) * body.vx > 0) body.vx *= -0.65;
+            if (Math.abs(body.y - old.y) < 0.1 && (target.y - old.y) * body.vy > 0) body.vy *= -0.65;
             body.angle = Math.atan2(body.vy, body.vx);
           }
-        });
-      }
+      });
       paint(now); requestFrame();
     }
 
@@ -323,8 +342,11 @@
         const pointer = { x: event.clientX, y: event.clientY };
         const selectedIndex = distance(pointer, bodies[1 - index]) + 0.5 < distance(pointer, body) ? 1 - index : index;
         const selected = bodies[selectedIndex];
+        selected.vx = 0; selected.vy = 0;
+        selected.button.classList.add('is-pointer-focused');
+        selected.button.classList.add('is-held');
         selected.button.focus({ preventScroll: true });
-        gesture = { index: selectedIndex, pointerId: event.pointerId, origin: pointer, offset: { x: selected.x - event.clientX, y: selected.y - event.clientY }, last: copy(selected), lastTime: performance.now(), started: false, value: finiteProbability(getProbability()), model: null };
+        gesture = { index: selectedIndex, pointerId: event.pointerId, origin: pointer, offset: { x: selected.x - event.clientX, y: selected.y - event.clientY }, last: copy(selected), lastPointer: pointer, lastTime: performance.now(), started: false, value: finiteProbability(getProbability()), model: null };
         try { selected.button.setPointerCapture(event.pointerId); } catch (_) {}
       });
       listen(body.button, 'pointermove', event => {
@@ -339,22 +361,26 @@
           body.button.classList.add('is-dragging');
         }
         const now = performance.now();
+        const dt = Math.max(0.008, (now - current.lastTime) / 1000);
+        // Resolve contact with this event's velocity, not the preceding pointermove's velocity.
+        body.vx = clamp((event.clientX - current.lastPointer.x) / dt, -75, 75);
+        body.vy = clamp((event.clientY - current.lastPointer.y) / dt, -75, 75);
         const target = { x: clamp(event.clientX + current.offset.x, 0, geometry.width), y: clamp(event.clientY + current.offset.y, 0, geometry.height) };
         const moved = moveBody(index, target, now, (next, other) => sampleModel(current.model, next, other));
-        const dt = Math.max(0.008, (now - current.lastTime) / 1000);
         if (moved > 0) {
           body.vx = clamp((body.x - current.last.x) / dt, -75, 75);
           body.vy = clamp((body.y - current.last.y) / dt, -75, 75);
           current.value = modelProbability(current.model, body, bodies[1 - index]);
           emit(current.value, false);
         }
-        current.last = copy(body); current.lastTime = now;
+        current.last = copy(body); current.lastPointer = { x: event.clientX, y: event.clientY }; current.lastTime = now;
         paint(now);
       });
       for (const name of ['pointerup', 'pointercancel', 'lostpointercapture']) listen(body.button, name, event => {
         if (gesture && gesture.index === index && gesture.pointerId === event.pointerId) finishGesture(true);
       });
       listen(body.button, 'keydown', event => {
+        body.button.classList.remove('is-pointer-focused');
         if (!canRun() || gesture) return;
         const direction = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[event.key];
         if (!direction) return;
@@ -366,6 +392,7 @@
         if (moved) emit(modelProbability(model, body, bodies[1 - index]), true);
         paint(performance.now());
       });
+      listen(body.button, 'blur', () => body.button.classList.remove('is-pointer-focused'));
       listen(body.button, 'contextmenu', event => event.preventDefault());
     });
 
@@ -409,5 +436,5 @@
     return controller;
   }
 
-  return { mount, _test: { REGION, WEIGHTS, makeGeometry, inPolygon, segmentDistance, advance, potential, startModel, sampleModel, modelProbability, safeSites } };
+  return { mount, _test: { REGION, WEIGHTS, MOTION, makeGeometry, inPolygon, segmentDistance, advance, potential, startModel, sampleModel, modelProbability, safeSites } };
 });
