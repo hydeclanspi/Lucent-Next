@@ -81,6 +81,11 @@
     interactionDefaultCount: 2,
     interactionSettingsReady: false,
     interactionDefaultSaving: false,
+    collision: { version: 1, strength: 1, randomOnLaunch: false, randomUpper: 12 },
+    collisionCurrent: 1,
+    collisionReady: false,
+    collisionReadError: false,
+    collisionSaveStatus: "",
     theme: { mode: "system", effectiveMode: "light" },
     privacy: { isPrivate: false },
     editing: false,
@@ -1527,7 +1532,7 @@
       el.sheet.className = parent.classes; el.sheet.scrollTop = parent.scroll;
       el.sheet.setAttribute('aria-label', parent.label);
       $("btnInteraction").setAttribute('aria-expanded', 'true');
-      syncInteractionPanel(); syncProbabilityPanel();
+      syncInteractionPanel(); syncProbabilityPanel(); syncCollisionPanel();
       $("btnInteractionStats").focus({ preventScroll: true });
       return;
     }
@@ -2039,7 +2044,8 @@
       getProbability: function () { return state.wallpaperProbability.light; },
       setProbability: setWallpaperProbability,
       onActivity: recordStats,
-      isReady: function () { return state.wallpaperProbabilityReady && state.interactionSettingsReady; },
+      collisionStrength: state.collisionCurrent,
+      isReady: function () { return state.wallpaperProbabilityReady && state.interactionSettingsReady && state.collisionReady; },
       isPaused: function () {
         return !el.sheetRoot.hidden || !!(editRoot && !editRoot.root.hidden);
       }
@@ -2162,6 +2168,147 @@
   }
 
   /* ---------- 代号：交互 ---------- */
+
+  var collisionLoadRevision = 0, collisionWriteRevision = 0;
+  var collisionWriteQueue = Promise.resolve(), collisionSessionSample = null;
+
+  function collisionAPI() { return window.AiraInteraction.collision; }
+  function collisionLabel(value) { return value.toFixed(1) + "×"; }
+
+  function applyCollisionStrength() {
+    if (interactionController) interactionController.setCollisionStrength(state.collisionCurrent);
+    syncCollisionPanel();
+  }
+
+  function rollCollisionForEntry() {
+    collisionSessionSample = null;
+    if (state.collisionReady && state.collision.randomOnLaunch && !state.collisionReadError) {
+      collisionSessionSample = Math.random();
+      state.collisionCurrent = collisionAPI().draw(state.collision.randomUpper, collisionSessionSample);
+      applyCollisionStrength();
+    }
+  }
+
+  function loadCollisionSettings() {
+    var revision = ++collisionLoadRevision, a = api();
+    state.collisionReady = false; state.collisionReadError = false;
+    syncCollisionPanel(); refreshInteraction();
+    var read = Promise.resolve().then(function () {
+      if (a && a.storage) return a.storage.get("collisionSettings", null);
+      var raw = window.localStorage.getItem("aira-profile-card:collisionSettings");
+      return raw == null ? null : JSON.parse(raw);
+    });
+    return read.then(function (saved) {
+      if (revision !== collisionLoadRevision) return;
+      state.collision = collisionAPI().normalize(saved);
+      if (state.collision.randomOnLaunch) {
+        if (collisionSessionSample === null) collisionSessionSample = Math.random();
+        state.collisionCurrent = collisionAPI().draw(state.collision.randomUpper, collisionSessionSample);
+      } else state.collisionCurrent = state.collision.strength;
+      state.collisionReady = true; state.collisionSaveStatus = "";
+      applyCollisionStrength(); refreshInteraction();
+    }).catch(function () {
+      if (revision !== collisionLoadRevision) return;
+      state.collisionReady = true; state.collisionReadError = true;
+      applyCollisionStrength(); refreshInteraction();
+    });
+  }
+
+  function saveCollisionSettings() {
+    if (!state.collisionReady || state.collisionReadError) return;
+    var snapshot = collisionAPI().normalize(state.collision), revision = ++collisionWriteRevision, a = api();
+    state.collisionSaveStatus = "saving"; syncCollisionPanel();
+    collisionWriteQueue = collisionWriteQueue.then(function () {
+      if (a && a.storage) return a.storage.set("collisionSettings", snapshot);
+      window.localStorage.setItem("aira-profile-card:collisionSettings", JSON.stringify(snapshot));
+    }).then(function () {
+      if (revision === collisionWriteRevision) state.collisionSaveStatus = "saved";
+    }).catch(function () {
+      if (revision === collisionWriteRevision) state.collisionSaveStatus = "error";
+    }).then(syncCollisionPanel);
+  }
+
+  function syncCollisionPanel() {
+    var slider = $("collisionStrength"); if (!slider) return;
+    var settings = state.collision, available = state.collisionReady && !state.collisionReadError;
+    $("collisionCurrent").textContent = "本次 " + collisionLabel(state.collisionCurrent);
+    slider.value = String(collisionAPI().toSlider(settings.strength));
+    slider.disabled = !available || settings.randomOnLaunch;
+    slider.setAttribute("aria-valuetext", collisionLabel(settings.strength));
+    $("collisionStrengthValue").textContent = collisionLabel(settings.strength);
+    $("collisionRandom").disabled = !available;
+    $("collisionRandom").setAttribute("aria-pressed", String(settings.randomOnLaunch));
+    $("collisionUpperBlock").hidden = !settings.randomOnLaunch;
+    var upper = $("collisionUpper");
+    upper.value = String(collisionAPI().toSlider(settings.randomUpper)); upper.disabled = !available;
+    upper.setAttribute("aria-valuetext", "随机上限 " + collisionLabel(settings.randomUpper));
+    $("collisionUpperValue").textContent = collisionLabel(settings.randomUpper);
+    $("collisionReset").disabled = !available;
+    $("collisionHint").textContent = settings.randomOnLaunch
+      ? "启动时在 1.0×–" + collisionLabel(settings.randomUpper) + " 之间抽取，本次保持不变。调低上限时，本次力度也会收回范围内。"
+      : "1.0× 是原来的手感。调高后，拖动相撞会弹得更远；自然巡航保持轻盈。";
+    var note = $("collisionSaveNote");
+    note.textContent = !state.collisionReady ? "正在读取碰撞设置…"
+      : state.collisionReadError ? "碰撞设置暂未读出，未覆盖原设置。"
+      : state.collisionSaveStatus === "saving" ? "正在保存…"
+      : state.collisionSaveStatus === "error" ? "本次已生效，但设置尚未保存成功。"
+      : state.collisionSaveStatus === "saved" ? "已保存，下次进入主页沿用。" : "";
+    $("collisionRetry").hidden = !state.collisionReadError && state.collisionSaveStatus !== "error";
+  }
+
+  function buildCollisionBlock() {
+    var block = document.createElement("section"); block.className = "collision-panel";
+    var head = document.createElement("div"); head.className = "wp-probability-head";
+    var heading = document.createElement("span"); heading.className = "collision-title"; heading.textContent = "碰撞力度";
+    var current = document.createElement("span"); current.id = "collisionCurrent"; head.appendChild(heading); head.appendChild(current); block.appendChild(head);
+    function rangeRow(id, labelText, outputId) {
+      var wrap = document.createElement("div"); wrap.className = "collision-control";
+      var label = document.createElement("label"); label.htmlFor = id; label.textContent = labelText; wrap.appendChild(label);
+      var row = document.createElement("div"); row.className = "collision-range-row";
+      var range = document.createElement("input"); range.type = "range"; range.id = id; range.className = "wp-range collision-range";
+      range.min = "0"; range.max = "1000"; range.step = "1";
+      var output = document.createElement("output"); output.id = outputId; output.htmlFor = id; row.appendChild(range); row.appendChild(output); wrap.appendChild(row);
+      var ends = document.createElement("div"); ends.className = "collision-range-ends";
+      var low = document.createElement("span"), high = document.createElement("span"); low.textContent = "1×"; high.textContent = "24×"; ends.appendChild(low); ends.appendChild(high); wrap.appendChild(ends);
+      block.appendChild(wrap); return { wrap: wrap, range: range };
+    }
+    var manual = rangeRow("collisionStrength", "固定力度", "collisionStrengthValue");
+    manual.range.addEventListener("input", function () {
+      if (!state.collisionReady || state.collisionReadError || state.collision.randomOnLaunch) return;
+      state.collision.strength = collisionAPI().fromSlider(manual.range.value); state.collisionCurrent = state.collision.strength; applyCollisionStrength();
+    });
+    manual.range.addEventListener("change", saveCollisionSettings);
+    var modeRow = document.createElement("div"); modeRow.className = "collision-mode-row";
+    var random = document.createElement("button"); random.type = "button"; random.id = "collisionRandom"; random.className = "wp-random collision-random";
+    var text = document.createElement("span"); text.textContent = "每次启动随机";
+    var track = document.createElement("i"); track.className = "wp-track";
+    var knob = document.createElement("i"); knob.className = "wp-knob"; track.appendChild(knob); track.setAttribute("aria-hidden", "true"); random.appendChild(text); random.appendChild(track); modeRow.appendChild(random);
+    var reset = document.createElement("button"); reset.type = "button"; reset.id = "collisionReset"; reset.className = "collision-reset"; reset.textContent = "恢复默认"; modeRow.appendChild(reset); block.appendChild(modeRow);
+    var upper = rangeRow("collisionUpper", "随机上限", "collisionUpperValue"); upper.wrap.id = "collisionUpperBlock";
+    upper.range.addEventListener("input", function () {
+      if (!state.collisionReady || state.collisionReadError) return;
+      state.collision.randomUpper = collisionAPI().fromSlider(upper.range.value);
+      if (state.collision.randomOnLaunch) state.collisionCurrent = Math.min(state.collisionCurrent, state.collision.randomUpper);
+      applyCollisionStrength();
+    });
+    upper.range.addEventListener("change", saveCollisionSettings);
+    random.addEventListener("click", function () {
+      state.collision.randomOnLaunch = !state.collision.randomOnLaunch;
+      if (state.collision.randomOnLaunch) rollCollisionForEntry();
+      else { collisionSessionSample = null; state.collisionCurrent = state.collision.strength; applyCollisionStrength(); }
+      saveCollisionSettings();
+    });
+    reset.addEventListener("click", function () {
+      state.collision = collisionAPI().normalize(null); state.collisionCurrent = 1; collisionSessionSample = null;
+      applyCollisionStrength(); saveCollisionSettings();
+    });
+    var hint = document.createElement("p"); hint.id = "collisionHint"; hint.className = "collision-hint"; block.appendChild(hint);
+    var saveLine = document.createElement("div"); saveLine.className = "collision-save-line";
+    var note = document.createElement("span"); note.id = "collisionSaveNote"; note.setAttribute("role", "status"); saveLine.appendChild(note);
+    var retry = document.createElement("button"); retry.type = "button"; retry.id = "collisionRetry"; retry.textContent = "重试"; retry.className = "collision-retry";
+    retry.addEventListener("click", function () { if (state.collisionReadError) loadCollisionSettings(); else saveCollisionSettings(); }); saveLine.appendChild(retry); block.appendChild(saveLine);
+    return block;
+  }
 
   function interactionCountValue(value) {
     return typeof value === "number" && isFinite(value) ? Math.max(0, Math.min(49, Math.round(value))) : 2;
@@ -2296,6 +2443,7 @@
       syncInteractionPanel();
     });
     body.appendChild(countBlock);
+    body.appendChild(buildCollisionBlock());
     body.appendChild(buildProbabilityBlock());
 
     var explanation = document.createElement("details");
@@ -2327,7 +2475,7 @@
     openSheet({ title: "代号：交互", content: body, center: true, wide: true, interaction: true,
       buttons: [{ label: "完成", variant: "primary", size: "sm", run: function () { closeSheet(); } }] });
     $("btnInteraction").setAttribute("aria-expanded", "true");
-    syncInteractionPanel(); syncProbabilityPanel();
+    syncInteractionPanel(); syncProbabilityPanel(); syncCollisionPanel();
   }
 
   function openWallpaperPanel() {
@@ -2691,6 +2839,7 @@
     document.addEventListener('visibilitychange', function () { if (document.hidden) flushStatsAfterGesture(); });
 
     window.addEventListener("aira-home-ready", init);
+    window.addEventListener("pageshow", function (event) { if (event.persisted) rollCollisionForEntry(); });
     window.addEventListener("aira-home-shortcuts-changed", function (event) {
       renderShortcuts(event.detail || []);
     });
@@ -2736,6 +2885,7 @@
     if (initStage >= stage) return;
     initStage = stage;
     initStats();
+    loadCollisionSettings();
 
     loadProfile();
     bindInteractions();

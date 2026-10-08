@@ -11,6 +11,8 @@
   const WEIGHTS = Object.freeze({ field: 0.62, distance: 0.20, rotation: 0.13, collision: 0.05 });
   const MOTION = Object.freeze({ speedScale: 1.164, horizontal: 6 * 1.164, vertical: 4.5 * 1.164 });
   const RESTITUTION = 0.64;
+  const COLLISION_MAX = 24;
+  const MAX_IMPACT_SPEED = 640;
   const RADIUS = 11;
   const CLEARANCE = 30; // A 44px touch target plus 8px of space around existing UI.
   const STEP = 4;
@@ -22,6 +24,34 @@
   const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   const copy = p => ({ x: p.x, y: p.y });
   const finiteProbability = p => Number.isFinite(p) ? clamp(p, 0, 1) : 0.5;
+
+  function collisionStrength(value, fallback = 1) {
+    return Number.isFinite(value) ? Math.round(clamp(value, 1, COLLISION_MAX) * 10) / 10 : fallback;
+  }
+  function collisionSettings(value) {
+    const saved = value && typeof value === 'object' ? value : {};
+    return { version: 1, strength: collisionStrength(saved.strength), randomOnLaunch: saved.randomOnLaunch === true, randomUpper: collisionStrength(saved.randomUpper, 12) };
+  }
+  function randomCollision(upper, sample) {
+    // Equal room for each multiplicative range: soft encounters stay possible at high ceilings.
+    const u = Number.isFinite(sample) ? clamp(sample, 0, 1) : Math.random();
+    return collisionStrength(Math.pow(collisionStrength(upper, 12), u));
+  }
+  function limitVelocity(body) {
+    const speed = Math.hypot(body.vx, body.vy);
+    if (!Number.isFinite(speed)) { body.vx = 0; body.vy = 0; }
+    else if (speed > MAX_IMPACT_SPEED) { body.vx *= MAX_IMPACT_SPEED / speed; body.vy *= MAX_IMPACT_SPEED / speed; }
+  }
+  function resolveImpact(body, other, nx, ny, held, strength) {
+    const relative = (body.vx - other.vx) * nx + (body.vy - other.vy) * ny;
+    if (relative <= 0) return;
+    // Only an active push supplies extra energy. Free-to-free collisions transfer it once,
+    // with the original restitution, instead of multiplying it at every link in a chain.
+    const impulse = relative * (1 + RESTITUTION) * (held ? collisionStrength(strength) : 0.5);
+    if (!held) { body.vx -= impulse * nx; body.vy -= impulse * ny; }
+    other.vx += impulse * nx; other.vy += impulse * ny;
+    limitVelocity(body); limitVelocity(other);
+  }
 
   function segmentDistance(p, a, b) {
     const dx = b.x - a.x, dy = b.y - a.y;
@@ -142,6 +172,7 @@
     const getProbability = typeof opts.getProbability === 'function' ? opts.getProbability : () => 0.5;
     const setProbability = typeof opts.setProbability === 'function' ? opts.setProbability : () => {};
     const onActivity = typeof opts.onActivity === 'function' ? opts.onActivity : () => {};
+    let impactStrength = collisionStrength(opts.collisionStrength);
     const isReady = typeof opts.isReady === 'function' ? opts.isReady : () => true;
     const isPaused = typeof opts.isPaused === 'function' ? opts.isPaused : () => false;
     const field = document.createElement('div');
@@ -201,6 +232,7 @@
               if (relative > 0) {
                 body.vx -= (1 + RESTITUTION) * relative * nx;
                 body.vy -= (1 + RESTITUTION) * relative * ny;
+                limitVelocity(body);
               }
               contact(body, other, now);
               return false;
@@ -214,9 +246,7 @@
             other.x = pushed.x; other.y = pushed.y;
             if (relative > 0) {
               const held = gesture && gesture.index === index;
-              const impulse = relative * (1 + RESTITUTION) * (held ? 1 : 0.5);
-              if (!held) { body.vx -= impulse * nx; body.vy -= impulse * ny; }
-              other.vx += impulse * nx; other.vy += impulse * ny;
+              resolveImpact(body, other, nx, ny, held, impactStrength);
             }
             contact(body, other, now);
           }
@@ -512,6 +542,8 @@
     const controller = {
       refresh,
       setCount,
+      setCollisionStrength(value) { impactStrength = collisionStrength(value); },
+      getCollisionStrength() { return impactStrength; },
       destroy() {
         if (destroyed) return;
         finishGesture(true); destroyed = true; stopFrames();
@@ -527,5 +559,8 @@
     return controller;
   }
 
-  return { mount, _test: { REGION, WEIGHTS, MOTION, makeGeometry, inPolygon, segmentDistance, advance, potential, startModel, sampleModel, modelProbability, safeSites } };
+  return { mount, collision: { max: COLLISION_MAX, normalize: collisionSettings, strength: collisionStrength, draw: randomCollision,
+    fromSlider: value => collisionStrength(Math.pow(COLLISION_MAX, clamp(Number(value) || 0, 0, 1000) / 1000)),
+    toSlider: value => Math.round(Math.log(collisionStrength(value)) / Math.log(COLLISION_MAX) * 1000) },
+    _test: { REGION, WEIGHTS, MOTION, RESTITUTION, MAX_IMPACT_SPEED, resolveImpact, limitVelocity, makeGeometry, inPolygon, segmentDistance, advance, potential, startModel, sampleModel, modelProbability, safeSites } };
 });
