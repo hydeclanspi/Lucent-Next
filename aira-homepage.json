@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "3.2.1",
+  "version": "3.3.0",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互新增历史统计：Light 倾向、交互次数与概率分布三图联动。仅保存分时段统计，不记录逐次操作轨迹。"
+  "description": "通透的个人名片主页。代号：交互支持 1–24 倍碰撞力度、每次启动随机及自定上限。含历史统计、玻璃星球入口与淡蓝呼吸灯。"
 }
