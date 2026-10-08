@@ -1382,6 +1382,40 @@
 
   /* ---------- 面板 ---------- */
 
+  var statsStore = null, statsController = null, statsParent = null;
+
+  function initStats() {
+    if (!window.AiraStatsStore) return;
+    var native = api(), previous = statsStore;
+    if (previous) previous.flush().then(function () { previous.destroy(); });
+    // Preview statistics stay separate. Native read errors must never look like an empty history.
+    var storage = native && native.storage ? {
+      get: function (key, fallback) { return native.storage.get(key, fallback); },
+      set: function (key, value) { return native.storage.set(key, value); }
+    } : {
+      get: function (key, fallback) { return Promise.resolve().then(function () {
+        var raw = window.localStorage.getItem('aira-profile-card:preview-stats:' + key);
+        return raw == null ? fallback : JSON.parse(raw);
+      }); },
+      set: function (key, value) { return Promise.resolve().then(function () {
+        window.localStorage.setItem('aira-profile-card:preview-stats:' + key, JSON.stringify(value));
+      }); }
+    };
+    statsStore = window.AiraStatsStore.create({ storage: storage });
+    if (statsController) { statsController.destroy(); statsController = window.AiraStatsPanel.mount(el.sheet, { store: statsStore, onBack: closeSheet }); }
+  }
+
+  function recordStats(event) { if (statsStore) statsStore.record(event); }
+
+  function openStatsPanel() {
+    if (!statsStore || !window.AiraStatsPanel) return;
+    var parent = { nodes: Array.from(el.sheet.childNodes), classes: el.sheet.className, scroll: el.sheet.scrollTop, label: el.sheet.getAttribute('aria-label') };
+    openSheet({ title: '历史统计', center: true, wide: true, stats: true });
+    statsParent = parent;
+    statsController = window.AiraStatsPanel.mount(el.sheet, { store: statsStore, onBack: closeSheet });
+    el.sheet.querySelector('.stats-back').focus({ preventScroll: true });
+  }
+
   function setBackActive(active) {
     var a = api();
     if (a && typeof a.setBackHandlerActive === "function") {
@@ -1391,7 +1425,11 @@
 
   function openSheet(options) {
     var sheet = el.sheet;
+    if (statsController) { statsController.destroy(); statsController = null; }
+    statsParent = null;
     sheet.textContent = "";
+    sheet.classList.toggle("stats-sheet", !!options.stats);
+    sheet.setAttribute("aria-label", options.title || "操作面板");
     $("btnInteraction").setAttribute("aria-expanded", options.interaction ? "true" : "false");
     sheet.classList.toggle("center", !!options.center);
     sheet.classList.toggle("wide", !!options.wide);
@@ -1418,10 +1456,20 @@
       engineSubtitle.textContent = "beta v0.7 引擎 · 26-10";
       titleGroup.appendChild(title);
       titleGroup.appendChild(engineSubtitle);
-      heading.appendChild(titleGroup);
+      var headingLeft = document.createElement("div");
+      headingLeft.className = "interaction-heading-left";
+      headingLeft.appendChild(titleGroup);
+      var statistics = document.createElement("button");
+      statistics.id = "btnInteractionStats"; statistics.type = "button";
+      statistics.className = "interaction-stats-launcher";
+      statistics.setAttribute("aria-haspopup", "dialog");
+      statistics.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5v15h16M7 14l4-5 4 3 5-7"/></svg><span>历史统计</span>';
+      statistics.addEventListener("click", openStatsPanel);
+      headingLeft.appendChild(statistics);
+      heading.appendChild(headingLeft);
       heading.appendChild(subtitle);
       sheet.appendChild(heading);
-    } else sheet.appendChild(title);
+    } else if (!options.stats) sheet.appendChild(title);
 
     if (options.sub) {
       var sub = document.createElement("p");
@@ -1471,6 +1519,18 @@
   }
 
   function closeSheet() {
+    if (statsParent) {
+      var parent = statsParent; statsParent = null;
+      if (statsController) { statsController.destroy(); statsController = null; }
+      el.sheet.textContent = '';
+      parent.nodes.forEach(function (node) { el.sheet.appendChild(node); });
+      el.sheet.className = parent.classes; el.sheet.scrollTop = parent.scroll;
+      el.sheet.setAttribute('aria-label', parent.label);
+      $("btnInteraction").setAttribute('aria-expanded', 'true');
+      syncInteractionPanel(); syncProbabilityPanel();
+      $("btnInteractionStats").focus({ preventScroll: true });
+      return;
+    }
     el.sheetRoot.hidden = true;
     $("btnInteraction").setAttribute("aria-expanded", "false");
     setBackActive(false);
@@ -1953,6 +2013,7 @@
     };
     syncProbabilityPanel();
     if (!opts.commit) return;
+    if (opts.source !== "interaction") recordStats({ source: "manual", light: state.wallpaperProbability.light });
     var snapshot = Object.assign({}, state.wallpaperProbability);
     localSet("wallpaperProbability", snapshot);
     var nativeStorage = api() && api().storage;
@@ -1977,6 +2038,7 @@
       count: state.interactionCount,
       getProbability: function () { return state.wallpaperProbability.light; },
       setProbability: setWallpaperProbability,
+      onActivity: recordStats,
       isReady: function () { return state.wallpaperProbabilityReady && state.interactionSettingsReady; },
       isPaused: function () {
         return !el.sheetRoot.hidden || !!(editRoot && !editRoot.root.hidden);
@@ -2419,6 +2481,7 @@
       if (!state.interactionSettingsReady) return;
       if (state.interactionCount >= 49) { toast("浮光已达上限 49 枚"); return; }
       state.interactionCount++;
+      recordStats({ source: "add" });
       if (interactionController) interactionController.setCount(state.interactionCount);
       syncInteractionPanel();
     }
@@ -2613,7 +2676,19 @@
     el.sheetMask.addEventListener("click", closeSheet);
     document.addEventListener("keydown", function (event) {
       if (event.key === "Escape" && !el.sheetRoot.hidden) closeSheet();
+      if (event.key === "Tab" && statsParent) {
+        var focusable = Array.from(el.sheet.querySelectorAll('button:not(:disabled), select')).filter(function (node) { return !node.hidden && node.getClientRects().length; });
+        var first = focusable[0], last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
     });
+
+    function flushStatsAfterGesture() {
+      Promise.resolve().then(function () { if (statsStore) statsStore.flush(); });
+    }
+    window.addEventListener('pagehide', flushStatsAfterGesture);
+    document.addEventListener('visibilitychange', function () { if (document.hidden) flushStatsAfterGesture(); });
 
     window.addEventListener("aira-home-ready", init);
     window.addEventListener("aira-home-shortcuts-changed", function (event) {
@@ -2660,6 +2735,7 @@
     var stage = a ? 2 : 1;
     if (initStage >= stage) return;
     initStage = stage;
+    initStats();
 
     loadProfile();
     bindInteractions();

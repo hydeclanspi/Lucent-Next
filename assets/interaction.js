@@ -141,6 +141,7 @@
     const opts = options || {};
     const getProbability = typeof opts.getProbability === 'function' ? opts.getProbability : () => 0.5;
     const setProbability = typeof opts.setProbability === 'function' ? opts.setProbability : () => {};
+    const onActivity = typeof opts.onActivity === 'function' ? opts.onActivity : () => {};
     const isReady = typeof opts.isReady === 'function' ? opts.isReady : () => true;
     const isPaused = typeof opts.isPaused === 'function' ? opts.isPaused : () => false;
     const field = document.createElement('div');
@@ -152,6 +153,7 @@
 
     let destroyed = false, geometry = null, sites = [], available = false, paused = true, layoutReady = true;
     let frameId = 0, refreshId = 0, contactTimer = 0, settleTimer = 0, previousTime = 0, lastPaint = 0, gesture = null, pageAway = false;
+    let keyboardActivity = null;
     const motion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
     const cleanups = [];
     const listen = (target, name, fn, settings) => { target.addEventListener(name, fn, settings); cleanups.push(() => target.removeEventListener(name, fn, settings)); };
@@ -225,7 +227,14 @@
       return distance(before, body);
     }
 
+    function finishKeyboard() {
+      if (!keyboardActivity) return;
+      const current = keyboardActivity; keyboardActivity = null;
+      onActivity({ source: 'keyboard', light: current.value });
+    }
+
     function finishGesture(commit) {
+      finishKeyboard();
       if (!gesture) return;
       const current = gesture; gesture = null;
       const body = bodies[current.index];
@@ -234,6 +243,7 @@
       try { if (body.button.hasPointerCapture(current.pointerId)) body.button.releasePointerCapture(current.pointerId); } catch (_) {}
       // Cancellation, modal opening and visibility loss lock the last visible value.
       if (commit && current.started) emit(current.value, true);
+      if (commit && current.moved) onActivity({ source: 'drag', light: current.value });
       if (!current.started || motion.matches || performance.now() - current.lastTime > 80) { body.vx = 0; body.vy = 0; }
       paint(performance.now());
     }
@@ -371,6 +381,7 @@
       };
       listen(body.button, 'pointerdown', event => {
         if (!canRun() || gesture || (event.pointerType === 'mouse' && event.button !== 0)) return;
+        finishKeyboard();
         event.preventDefault();
         // The invisible 44px targets overlap at contact: pick the nearest visible lens,
         // rather than letting DOM stacking make the first lens impossible to grab.
@@ -404,6 +415,7 @@
         const target = { x: clamp(event.clientX + current.offset.x, 0, geometry.width), y: clamp(event.clientY + current.offset.y, 0, geometry.height) };
         const moved = moveBody(index, target, now, next => sampleModel(current.model, next, current.partner));
         if (moved > 0) {
+          current.moved = true;
           body.vx = clamp((body.x - current.last.x) / dt, -75, 75);
           body.vy = clamp((body.y - current.last.y) / dt, -75, 75);
           current.value = modelProbability(current.model, body, current.partner);
@@ -426,10 +438,19 @@
         const step = event.shiftKey ? 48 : 16;
         const moved = moveBody(index, { x: body.x + direction[0] * step, y: body.y + direction[1] * step }, performance.now(), next => sampleModel(model, next, partner));
         body.vx = 0; body.vy = 0;
-        if (moved) emit(modelProbability(model, body, partner), true);
+        if (moved) {
+          const value = modelProbability(model, body, partner);
+          emit(value, true);
+          if (keyboardActivity && keyboardActivity.index !== index) finishKeyboard();
+          if (!keyboardActivity) keyboardActivity = { index, value, keys: new Set() };
+          keyboardActivity.value = value; keyboardActivity.keys.add(event.key);
+        }
         paint(performance.now());
       });
-      listen(body.button, 'blur', () => body.button.classList.remove('is-pointer-focused'));
+      listen(body.button, 'keyup', event => {
+        if (keyboardActivity) { keyboardActivity.keys.delete(event.key); if (!keyboardActivity.keys.size) finishKeyboard(); }
+      });
+      listen(body.button, 'blur', () => { finishKeyboard(); body.button.classList.remove('is-pointer-focused'); });
       listen(body.button, 'contextmenu', event => event.preventDefault());
     }
 
