@@ -1,4 +1,4 @@
-/* 代号：交互 — local, gesture-driven wallpaper probability. No network or dependencies. */
+/* 代号：交互 — gesture-driven probability and optional autonomous glass motion. */
 (function (root, factory) {
   'use strict';
   const api = factory();
@@ -13,6 +13,7 @@
   const RESTITUTION = 0.64;
   const COLLISION_MAX = 24;
   const MAX_IMPACT_SPEED = 640;
+  const AUTO = Object.freeze({ cruiseMin: 5, cruiseMax: 8, burst: 1.7, kickLimit: 320, manualGrace: 1.25, replan: 0.75 });
   const RADIUS = 11;
   const CLEARANCE = 30; // A 44px touch target plus 8px of space around existing UI.
   const STEP = 4;
@@ -49,6 +50,22 @@
     // with the original restitution, instead of multiplying it at every link in a chain.
     const impulse = relative * (1 + RESTITUTION) * (held ? collisionStrength(strength) : 0.5);
     if (!held) { body.vx -= impulse * nx; body.vy -= impulse * ny; }
+    other.vx += impulse * nx; other.vy += impulse * ny;
+    limitVelocity(body); limitVelocity(other);
+  }
+
+  function autoBounds(count) {
+    const n = Number.isFinite(count) ? clamp(Math.floor(count), 0, 49) : 0;
+    const lower = n ? Math.max(1, Math.ceil(n / 5)) : 0;
+    return { lower, upper: Math.max(lower, Math.floor(n / 2)) };
+  }
+  function resolveAutoImpact(body, other, nx, ny, strength) {
+    const closing = (body.vx - other.vx) * nx + (body.vy - other.vy) * ny;
+    if (closing <= 0) return;
+    // Equal masses: the driver recoils as well. One charged strike has a bounded
+    // motor impulse; subsequent free collisions only transfer existing momentum.
+    const impulse = closing * (1 + RESTITUTION) * 0.5 + Math.min(AUTO.kickLimit, closing * (collisionStrength(strength) - 1) * 0.4);
+    body.vx -= impulse * nx; body.vy -= impulse * ny;
     other.vx += impulse * nx; other.vy += impulse * ny;
     limitVelocity(body); limitVelocity(other);
   }
@@ -165,6 +182,51 @@
     return largest;
   }
 
+  function clearRoute(a, b, geometry) {
+    const steps = Math.max(1, Math.ceil(distance(a, b) / STEP));
+    for (let i = 0; i <= steps; i++) {
+      if (!geometry.valid({ x: a.x + (b.x - a.x) * i / steps, y: a.y + (b.y - a.y) * i / steps })) return false;
+    }
+    return true;
+  }
+  function navigationGrid(sites, geometry) {
+    const nodes = sites.map((site, index) => ({ ...site, index, neighbors: [] }));
+    const grid = new Map(nodes.map(node => [node.gx + ',' + node.gy, node]));
+    for (const node of nodes) {
+      for (const [dx, dy] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+        const neighbor = grid.get((node.gx + dx) + ',' + (node.gy + dy));
+        if (neighbor && clearRoute(node, neighbor, geometry)) node.neighbors.push(neighbor.index);
+      }
+    }
+    return { nodes, geometry };
+  }
+  function routeBetween(start, goal, navigation) {
+    const { nodes, geometry } = navigation;
+    if (clearRoute(start, goal, geometry)) return [copy(goal)];
+    function nearest(point) {
+      const ordered = nodes.slice().sort((a, b) => distance(a, point) - distance(b, point));
+      return ordered.find(node => clearRoute(point, node, geometry));
+    }
+    const first = nearest(start), last = nearest(goal);
+    if (!first || !last) return [];
+    const queue = [first.index], previous = new Map([[first.index, -1]]);
+    for (let i = 0; i < queue.length && !previous.has(last.index); i++) {
+      for (const next of nodes[queue[i]].neighbors) if (!previous.has(next)) { previous.set(next, queue[i]); queue.push(next); }
+    }
+    if (!previous.has(last.index)) return [];
+    const path = [copy(goal)];
+    for (let index = last.index; index !== -1; index = previous.get(index)) path.push(copy(nodes[index]));
+    path.reverse();
+    // Keep bends around exclusions, skipping only fully visible grid segments.
+    const simplified = []; let from = start, index = 0;
+    while (index < path.length) {
+      let far = index;
+      for (let j = index + 1; j < path.length; j++) { if (!clearRoute(from, path[j], geometry)) break; far = j; }
+      simplified.push(path[far]); from = path[far]; index = far + 1;
+    }
+    return simplified;
+  }
+
   function mount(options) {
     if (mounted) { mounted.refresh(); return mounted; }
     if (typeof document === 'undefined' || !document.body) return null;
@@ -172,6 +234,7 @@
     const getProbability = typeof opts.getProbability === 'function' ? opts.getProbability : () => 0.5;
     const setProbability = typeof opts.setProbability === 'function' ? opts.setProbability : () => {};
     const onActivity = typeof opts.onActivity === 'function' ? opts.onActivity : () => {};
+    const onAutoDriveChange = typeof opts.onAutoDriveChange === 'function' ? opts.onAutoDriveChange : () => {};
     let impactStrength = collisionStrength(opts.collisionStrength);
     const isReady = typeof opts.isReady === 'function' ? opts.isReady : () => true;
     const isPaused = typeof opts.isPaused === 'function' ? opts.isPaused : () => false;
@@ -185,6 +248,8 @@
     let destroyed = false, geometry = null, sites = [], available = false, paused = true, layoutReady = true;
     let frameId = 0, refreshId = 0, contactTimer = 0, settleTimer = 0, previousTime = 0, lastPaint = 0, gesture = null, pageAway = false;
     let keyboardActivity = null;
+    let autoEnabled = false, autoClock = 0, navigation = null, autoNotice = '', lastRelay = -10, relay = null;
+    const chargedContacts = new Map();
     const motion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
     const cleanups = [];
     const listen = (target, name, fn, settings) => { target.addEventListener(name, fn, settings); cleanups.push(() => target.removeEventListener(name, fn, settings)); };
@@ -193,11 +258,149 @@
       setProbability(finiteProbability(value), { source: 'interaction', commit: !!commit });
     }
 
+    function autoUnavailable() {
+      if (!bodies.length) return 'empty';
+      if (motion.matches) return 'reduced-motion';
+      if (!isReady()) return 'not-ready';
+      if (!layoutReady || !available) return 'layout';
+      return '';
+    }
+    function getAutoDrive() {
+      return { enabled: autoEnabled, activeCount: bodies.filter(body => body.auto).length, count: bodies.length,
+        paused: autoEnabled && (paused || !!autoUnavailable()), unavailableReason: autoUnavailable() };
+    }
+    function notifyAuto() {
+      const state = getAutoDrive(), next = JSON.stringify(state);
+      if (next !== autoNotice) { autoNotice = next; onAutoDriveChange(state); }
+    }
+    function newDriver(body) {
+      body.auto = { phase: 'roam', until: autoClock + 0.5 + Math.random(), nextPlan: 0, target: null, lastTarget: null,
+        path: [], speed: AUTO.cruiseMin + Math.random() * (AUTO.cruiseMax - AUTO.cruiseMin), stuck: 0, nextSight: 0, aim: null };
+    }
+    function reconcileDrivers(redraw) {
+      if (!autoEnabled) return;
+      const bounds = autoBounds(bodies.length);
+      if (!bounds.lower) { autoEnabled = false; bodies.forEach(body => { body.auto = null; }); return; }
+      const active = bodies.filter(body => body.auto);
+      const desired = redraw ? bounds.lower + Math.floor(Math.random() * (bounds.upper - bounds.lower + 1)) : clamp(active.length, bounds.lower, bounds.upper);
+      while (active.length > desired) active.splice(Math.floor(Math.random() * active.length), 1)[0].auto = null;
+      const idle = bodies.filter(body => !body.auto);
+      while (active.length < desired && idle.length) {
+        const body = idle.splice(Math.floor(Math.random() * idle.length), 1)[0]; newDriver(body); active.push(body);
+      }
+    }
+    function setAutoDrive(value) {
+      const enable = !!value;
+      if (enable && autoUnavailable()) { notifyAuto(); return false; }
+      if (enable === autoEnabled) return autoEnabled;
+      autoEnabled = enable; relay = null; chargedContacts.clear();
+      if (enable) { if (!navigation) navigation = navigationGrid(sites, geometry); reconcileDrivers(true); }
+      else bodies.forEach(body => { body.auto = null; });
+      paint(performance.now()); notifyAuto(); requestFrame();
+      return autoEnabled;
+    }
+    function isManual(body) {
+      return !!((gesture && gesture.index === body.index) || (keyboardActivity && keyboardActivity.index === body.index) || body.manualUntil > autoClock);
+    }
+    function releaseDriver(body) {
+      body.manualUntil = autoClock + AUTO.manualGrace;
+      if (body.auto) { body.auto.phase = 'coast'; body.auto.until = body.manualUntil; body.auto.path = []; body.auto.target = null; }
+    }
+    function planDriver(body, escape) {
+      const driver = body.auto;
+      if (!driver || !navigation || !navigation.nodes.length) return;
+      let candidates = bodies.filter(other => other !== body && !isManual(other));
+      if (candidates.length > 1) candidates = candidates.filter(other => other !== driver.lastTarget);
+      let goal;
+      if (escape || !candidates.length) {
+        const nodes = navigation.nodes.filter(node => distance(node, body) > 65 && distance(node, body) < 240);
+        goal = (nodes.length ? nodes : navigation.nodes)[Math.floor(Math.random() * (nodes.length || navigation.nodes.length))];
+        driver.target = null;
+      } else {
+        // A few nearby possibilities keep encounters frequent without perfect homing.
+        candidates.sort((a, b) => distance(a, body) - distance(b, body));
+        driver.target = candidates[Math.floor(Math.random() * Math.min(4, candidates.length))];
+        goal = driver.target;
+      }
+      driver.path = routeBetween(body, goal, navigation); driver.nextPlan = autoClock + AUTO.replan; driver.nextSight = 0;
+      driver.phase = escape || !driver.target ? 'roam' : 'chase';
+      driver.until = autoClock + (escape ? 1.2 : 2 + Math.random() * 1.5);
+    }
+    function coolDriver(body, other) {
+      if (!body.auto) return;
+      const driver = body.auto;
+      driver.lastTarget = other; driver.target = null; driver.path = [];
+      driver.phase = 'coast'; driver.until = autoClock + 0.9 + Math.random() * 0.9; driver.stuck = 0;
+    }
+    function automaticImpact(body, other, nx, ny) {
+      const charged = candidate => candidate.auto && candidate.auto.phase === 'charge' && !isManual(candidate);
+      const a = charged(body) && body.vx * nx + body.vy * ny > 8;
+      const b = charged(other) && -(other.vx * nx + other.vy * ny) > 8;
+      if (!a && !b) return false;
+      const key = Math.min(body.index, other.index) + ':' + Math.max(body.index, other.index);
+      if (chargedContacts.has(key)) {
+        if (body.auto) coolDriver(body, other);
+        if (other.auto) coolDriver(other, body);
+        return false;
+      }
+      chargedContacts.set(key, [body, other]);
+      resolveAutoImpact(body, other, nx, ny, impactStrength);
+      // Consume both sides' charge now, before another body/substep can see contact.
+      if (body.auto) coolDriver(body, other);
+      if (other.auto) coolDriver(other, body);
+      const source = a ? body : other, receiver = a ? other : body;
+      if (!receiver.auto && !isManual(receiver) && autoClock - lastRelay > 6 && Math.random() < 0.18) relay = { source, receiver };
+      return true;
+    }
+    function driveBody(body, dt) {
+      const driver = body.auto;
+      if (!driver || isManual(body)) return false;
+      if (driver.phase === 'coast' && autoClock < driver.until) return false;
+      if (driver.phase === 'coast' || !driver.path.length || autoClock >= driver.until) planDriver(body, false);
+      if (driver.target && (!bodies.includes(driver.target) || isManual(driver.target))) planDriver(body, false);
+      if (driver.target && autoClock >= driver.nextPlan) {
+        driver.path = routeBetween(body, driver.target, navigation); driver.nextPlan = autoClock + AUTO.replan;
+      }
+      while (driver.path.length > 1 && distance(body, driver.path[0]) < 12) driver.path.shift();
+      let goal = driver.path[0];
+      if (!goal) { planDriver(body, true); goal = driver.path[0]; }
+      if (!goal) return false;
+      const target = driver.target;
+      if (autoClock >= driver.nextSight) {
+        driver.visible = !!target && distance(body, target) < 180 && clearRoute(body, target, geometry);
+        driver.aim = target ? copy(target) : null;
+        if (driver.visible) {
+          const predicted = { x: target.x + target.vx * 0.18, y: target.y + target.vy * 0.18 };
+          if (geometry.valid(predicted) && clearRoute(body, predicted, geometry)) driver.aim = predicted;
+        }
+        driver.nextSight = autoClock + 0.14;
+      }
+      const visible = target && driver.visible;
+      if (visible && distance(body, target) < 160 && driver.phase === 'chase') {
+        driver.phase = 'charge'; driver.until = autoClock + 1.8;
+      }
+      if (driver.phase === 'charge' && visible) {
+        // Modest prediction and a tiny time-varying miss angle, never through walls.
+        goal = driver.aim || target;
+      }
+      const desired = Math.atan2(goal.y - body.y, goal.x - body.x) + (driver.phase === 'charge' ? Math.sin(autoClock * 2.1 + body.index) * 0.035 : 0);
+      const turn = Math.atan2(Math.sin(desired - body.angle), Math.cos(desired - body.angle));
+      body.angle += clamp(turn, -3.4 * dt, 3.4 * dt);
+      const speed = (MOTION.horizontal + MOTION.vertical) * 0.5 * driver.speed * (driver.phase === 'charge' ? AUTO.burst : 1);
+      const pull = 1 - Math.exp(-2.6 * dt);
+      body.vx += (Math.cos(body.angle) * speed - body.vx) * pull;
+      body.vy += (Math.sin(body.angle) * speed - body.vy) * pull;
+      limitVelocity(body);
+      return true;
+    }
+
     function paint(now) {
       bodies.forEach((body, index) => {
         body.button.style.transform = 'translate3d(' + (body.x - 22).toFixed(2) + 'px,' + (body.y - 22).toFixed(2) + 'px,0)';
         body.button.style.setProperty('--interaction-tilt', (index ? -16 : 13) + 'deg');
         body.button.classList.toggle('is-contact', body.contactUntil > now);
+        body.button.classList.toggle('is-auto-driver', !!body.auto);
+        body.button.classList.toggle('is-auto-charging', !!body.auto && body.auto.phase === 'charge' && !isManual(body) && !paused);
       });
     }
 
@@ -219,7 +422,9 @@
     function moveBody(index, target, now, onStep) {
       const body = bodies[index];
       const before = copy(body);
+      let spentStep = false;
       advance(body, target, geometry, next => {
+        if (spentStep) return false;
         for (const other of bodies) {
           if (other === body) continue;
           const gap = distance(next, other);
@@ -227,14 +432,16 @@
             let nx = (other.x - next.x) / (gap || 1), ny = (other.y - next.y) / (gap || 1);
             if (gap < 0.01) { nx = index ? -1 : 1; ny = 0; }
             const relative = (body.vx - other.vx) * nx + (body.vy - other.vy) * ny;
-            if (gesture && gesture.index === other.index) {
+            if ((gesture && gesture.index === other.index) || (autoEnabled && keyboardActivity && keyboardActivity.index === other.index)) {
               // The held lens is kinematic: a drifting lens bounces off it, never moves the finger.
               if (relative > 0) {
                 body.vx -= (1 + RESTITUTION) * relative * nx;
                 body.vy -= (1 + RESTITUTION) * relative * ny;
                 limitVelocity(body);
               }
+              if (autoEnabled && body.auto) coolDriver(body, other);
               contact(body, other, now);
+              if (autoEnabled) spentStep = true;
               return false;
             }
             const push = RADIUS * 2 - gap + 0.02;
@@ -242,12 +449,19 @@
             advance(pushed, { x: other.x + nx * push, y: other.y + ny * push }, geometry,
               candidate => bodies.every(third => third === body || third === other || distance(candidate, third) >= RADIUS * 2));
             // If the other lens is trapped at the edge, the active lens stops at contact.
-            if (distance(next, pushed) < RADIUS * 2 - 0.01) return false;
+            if (distance(next, pushed) < RADIUS * 2 - 0.01) {
+              if (autoEnabled && relative > 0 && !(gesture && gesture.index === index)) {
+                if (!automaticImpact(body, other, nx, ny)) resolveImpact(body, other, nx, ny, false, impactStrength);
+                contact(body, other, now); spentStep = true;
+              }
+              return false;
+            }
             other.x = pushed.x; other.y = pushed.y;
             if (relative > 0) {
               const held = gesture && gesture.index === index;
-              resolveImpact(body, other, nx, ny, held, impactStrength);
+              if (!autoEnabled || held || !automaticImpact(body, other, nx, ny)) resolveImpact(body, other, nx, ny, held, impactStrength);
             }
+            if (autoEnabled && !(gesture && gesture.index === index)) spentStep = true;
             contact(body, other, now);
           }
         }
@@ -260,6 +474,7 @@
     function finishKeyboard() {
       if (!keyboardActivity) return;
       const current = keyboardActivity; keyboardActivity = null;
+      if (bodies[current.index]) releaseDriver(bodies[current.index]);
       onActivity({ source: 'keyboard', light: current.value });
     }
 
@@ -268,6 +483,7 @@
       if (!gesture) return;
       const current = gesture; gesture = null;
       const body = bodies[current.index];
+      releaseDriver(body);
       body.button.classList.remove('is-dragging');
       body.button.classList.remove('is-held');
       try { if (body.button.hasPointerCapture(current.pointerId)) body.button.releasePointerCapture(current.pointerId); } catch (_) {}
@@ -292,9 +508,14 @@
       if (!canRun()) return;
       if (!isReady() || isPaused()) { syncState(); return; }
       if (!previousTime) previousTime = now;
-      if (now - lastPaint < (gesture ? 15 : 32)) { requestFrame(); return; }
+      if (now - lastPaint < (gesture || autoEnabled ? 15 : 32)) { requestFrame(); return; }
       const dt = clamp((now - previousTime) / 1000, 0, 0.05);
       previousTime = now; lastPaint = now;
+      autoClock += dt;
+      if (autoEnabled) for (const [key, pair] of chargedContacts) {
+        // Cooling down alone cannot recharge a pair that is still pressed together.
+        if (distance(pair[0], pair[1]) > RADIUS * 2 + 6) chargedContacts.delete(key);
+      }
       // Only the grabbed lens is pinned. Its partner keeps drifting and spends collision
       // velocity immediately; animation frames never write wallpaper probability.
       if (gesture && now - gesture.lastTime > 80) {
@@ -304,11 +525,15 @@
           if (gesture && gesture.index === index) {
             return;
           }
+          if (autoEnabled && keyboardActivity && keyboardActivity.index === index) return;
+          const driving = autoEnabled && driveBody(body, dt);
+          if (!driving) {
           body.turn = body.turn * Math.exp(-1.8 * dt) + (Math.random() - 0.5) * 1.6 * Math.sqrt(dt);
           body.angle += body.turn * dt;
           const pull = 1 - Math.exp(-1.3 * dt);
           body.vx += (Math.cos(body.angle) * MOTION.horizontal - body.vx) * pull;
           body.vy += (Math.sin(body.angle) * MOTION.vertical - body.vy) * pull;
+          }
           const old = copy(body), target = { x: body.x + body.vx * dt, y: body.y + body.vy * dt };
           moveBody(index, target, now);
           if (!geometry.valid(target) && (Math.abs(body.x - target.x) > 0.1 || Math.abs(body.y - target.y) > 0.1)) {
@@ -317,18 +542,34 @@
             if (Math.abs(body.y - old.y) < 0.1 && (target.y - old.y) * body.vy > 0) body.vy *= -0.65;
             body.angle = Math.atan2(body.vy, body.vx);
           }
+          if (driving && body.auto) {
+            body.auto.stuck = distance(old, body) < 0.3 ? body.auto.stuck + dt : Math.max(0, body.auto.stuck - dt * 0.5);
+            if (body.auto.stuck > 0.65) {
+              planDriver(body, true); body.auto.stuck = 0;
+              const waypoint = body.auto.path[0];
+              if (waypoint) body.angle = Math.atan2(waypoint.y - body.y, waypoint.x - body.x);
+            }
+          }
       });
+      if (relay) {
+        if (autoEnabled && bodies.includes(relay.source) && bodies.includes(relay.receiver) && relay.source.auto && !relay.receiver.auto && !isManual(relay.source) && !isManual(relay.receiver)) {
+          relay.source.auto = null; newDriver(relay.receiver); coolDriver(relay.receiver, relay.source); lastRelay = autoClock;
+        }
+        relay = null;
+      }
       paint(now); requestFrame();
     }
 
     function syncState() {
       paused = !layoutReady || !isReady() || isPaused() || pageAway || document.hidden;
+      if (autoEnabled && (motion.matches || !bodies.length)) { autoEnabled = false; chargedContacts.clear(); relay = null; bodies.forEach(body => { body.auto = null; }); }
       field.hidden = !available || !bodies.length || !isReady() || !layoutReady || bodies.some(body => !body.positioned);
       field.classList.toggle('is-paused', paused);
       field.setAttribute('aria-hidden', paused || !available || !bodies.length ? 'true' : 'false');
       bodies.forEach(body => { body.button.disabled = paused || !available || !bodies.length; body.button.style.pointerEvents = paused || !available || !bodies.length ? 'none' : 'auto'; });
       if (paused || !available || !bodies.length) { finishGesture(true); stopFrames(); }
       else requestFrame();
+      paint(performance.now()); notifyAuto();
     }
 
     function partnerOf(body) {
@@ -381,6 +622,8 @@
       const nextAvailable = nextSites.length >= 16;
       if (gesture && (!nextAvailable || !geometry || geometry.width !== width || geometry.height !== height || bodies.some(body => !nextGeometry.valid(body)))) finishGesture(true);
       geometry = nextGeometry; sites = nextSites; available = nextAvailable;
+      navigation = autoEnabled && available ? navigationGrid(sites, geometry) : null;
+      bodies.forEach(body => { if (body.auto) { body.auto.path = []; body.auto.nextPlan = 0; body.auto.nextSight = 0; } });
       if (available && layoutReady && isReady()) {
         const placed = [];
         for (const body of bodies) {
@@ -419,6 +662,7 @@
         const selectedIndex = bodies.reduce((best, candidate) => distance(pointer, candidate) + 0.5 < distance(pointer, bodies[best]) ? candidate.index : best, index);
         const selected = bodies[selectedIndex];
         selected.vx = 0; selected.vy = 0;
+        releaseDriver(selected);
         selected.button.classList.add('is-pointer-focused');
         selected.button.classList.add('is-held');
         selected.button.focus({ preventScroll: true });
@@ -463,6 +707,7 @@
         const direction = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[event.key];
         if (!direction) return;
         event.preventDefault();
+        releaseDriver(body);
         const partner = partnerOf(body);
         const model = startModel(getProbability(), body, partner, geometry);
         const step = event.shiftKey ? 48 : 16;
@@ -492,7 +737,7 @@
       const lens = document.createElement('span'); lens.className = 'interaction-lens'; lens.setAttribute('aria-hidden', 'true');
       const glint = document.createElement('span'); glint.className = 'interaction-glint'; glint.setAttribute('aria-hidden', 'true');
       lens.appendChild(glint); button.appendChild(lens); field.appendChild(button);
-      const body = { index, cleanups: [], positioned: false, x: 0, y: 0, vx: (index ? -4 : 5) * MOTION.speedScale, vy: (index ? 3 : -2) * MOTION.speedScale, angle: Math.random() * Math.PI * 2, turn: 0, button, contactUntil: 0 };
+      const body = { index, cleanups: [], positioned: false, x: 0, y: 0, vx: (index ? -4 : 5) * MOTION.speedScale, vy: (index ? 3 : -2) * MOTION.speedScale, angle: Math.random() * Math.PI * 2, turn: 0, button, contactUntil: 0, auto: null, manualUntil: 0 };
       bodies.push(body);
       bindBody(body, index);
     }
@@ -501,11 +746,13 @@
       const count = Number.isFinite(value) ? clamp(Math.round(value), 0, 49) : 2;
       if (count === bodies.length) return;
       finishGesture(true);
+      chargedContacts.clear();
       while (bodies.length > count) {
         const body = bodies.pop();
         body.cleanups.forEach(fn => fn()); body.button.remove();
       }
       while (bodies.length < count) createBody(bodies.length);
+      reconcileDrivers(false);
       refresh();
     }
 
@@ -542,6 +789,8 @@
     const controller = {
       refresh,
       setCount,
+      setAutoDrive,
+      getAutoDrive,
       setCollisionStrength(value) { impactStrength = collisionStrength(value); },
       getCollisionStrength() { return impactStrength; },
       destroy() {
@@ -559,8 +808,8 @@
     return controller;
   }
 
-  return { mount, collision: { max: COLLISION_MAX, normalize: collisionSettings, strength: collisionStrength, draw: randomCollision,
+  return { mount, autoDrive: { bounds: autoBounds, motion: AUTO }, collision: { max: COLLISION_MAX, normalize: collisionSettings, strength: collisionStrength, draw: randomCollision,
     fromSlider: value => collisionStrength(Math.pow(COLLISION_MAX, clamp(Number(value) || 0, 0, 1000) / 1000)),
     toSlider: value => Math.round(Math.log(collisionStrength(value)) / Math.log(COLLISION_MAX) * 1000) },
-    _test: { REGION, WEIGHTS, MOTION, RESTITUTION, MAX_IMPACT_SPEED, resolveImpact, limitVelocity, makeGeometry, inPolygon, segmentDistance, advance, potential, startModel, sampleModel, modelProbability, safeSites } };
+    _test: { REGION, WEIGHTS, MOTION, AUTO, RESTITUTION, MAX_IMPACT_SPEED, resolveImpact, resolveAutoImpact, autoBounds, limitVelocity, makeGeometry, inPolygon, segmentDistance, advance, potential, startModel, sampleModel, modelProbability, safeSites, clearRoute, navigationGrid, routeBetween } };
 });

@@ -273,3 +273,61 @@
 .collision-panel button:focus-visible { outline: 2px solid var(--ink-2); outline-offset: 3px; border-radius: 5px; }
 @media (pointer: coarse) { .wp-random.collision-random, .collision-reset, .collision-retry { min-height: 44px; } }
 @media (prefers-reduced-motion: reduce) { .collision-random, .collision-random .wp-track, .collision-random .wp-knob { transition: none; } }
+
+/* Reserve the invitation's space, so appearing never moves the planet or its neighbours. */
+.topbar-actions { position: relative; padding-left: 49px; }
+@media (min-width: 900px) and (max-width: 1100px) {
+  .topbar-left { align-items: flex-start; }
+  .topbar-left .clock { flex-shrink: 0; }
+  .topbar-actions { align-self: flex-start; }
+}
+.auto-drive-button {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: .3px;
+  color: var(--shell-ink);
+  opacity: .88;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  transition: opacity 240ms ease, transform 240ms ease, background 240ms ease, box-shadow 240ms ease;
+}
+.auto-drive-button[hidden] { display: none; }
+.auto-drive-button.is-appearing { animation: auto-drive-appear 240ms ease-out; }
+.auto-drive-button.is-leaving { opacity: 0; transform: translateX(4px); }
+.auto-drive-button.is-running {
+  opacity: 1;
+  color: #DDF4FF;
+  border-color: rgba(177, 223, 249, .43);
+  background: linear-gradient(145deg, rgba(186, 228, 251, .18), rgba(124, 177, 216, .06)), var(--shell-glass-2);
+  box-shadow: var(--shell-shadow), inset 0 1px 0 rgba(226, 249, 255, .48), 0 0 12px rgba(148, 211, 248, .13);
+  text-shadow: 0 1px 3px rgba(10, 30, 50, .35);
+}
+.auto-drive-button.is-running.is-paused { opacity: .66; }
+.auto-drive-button[aria-disabled="true"] { opacity: .5; }
+.auto-drive-button:focus-visible {
+  outline: none;
+  opacity: 1;
+  box-shadow: var(--shell-shadow), inset 0 0 0 1px rgba(224, 247, 255, .72), 0 0 12px rgba(166, 222, 250, .32);
+}
+.interaction-item.is-auto-driver .interaction-lens::before {
+  background: linear-gradient(90deg, transparent, rgba(180, 231, 255, .96), transparent);
+  box-shadow: 0 0 4px rgba(157, 219, 252, .32);
+}
+.interaction-item.is-auto-charging:not(.is-held) .interaction-lens {
+  opacity: .92;
+  box-shadow: inset .8px .8px 0 rgba(237, 252, 255, .66), 0 0 8px rgba(165, 220, 248, .20);
+}
+@keyframes auto-drive-appear {
+  from { opacity: 0; transform: translateX(4px); }
+  to { opacity: .88; transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .auto-drive-button, .auto-drive-button.is-appearing { animation: none; transition: none; }
+}

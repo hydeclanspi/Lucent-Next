@@ -1980,6 +1980,7 @@
 
   var WP_MODES = ["dark", "light", "random"];
   var interactionController = null;
+  var autoDriveUI = { state: null, hideTimer: 0, fadeTimer: 0, pointerDown: false, keyboardFocus: false };
   var wallpaperLoadRevision = 0;
   var probabilityWriteQueue = Promise.resolve();
 
@@ -2045,11 +2046,106 @@
       setProbability: setWallpaperProbability,
       onActivity: recordStats,
       collisionStrength: state.collisionCurrent,
+      onAutoDriveChange: syncAutoDriveButton,
       isReady: function () { return state.wallpaperProbabilityReady && state.interactionSettingsReady && state.collisionReady; },
       isPaused: function () {
         return !el.sheetRoot.hidden || !!(editRoot && !editRoot.root.hidden);
       }
     });
+    syncAutoDriveButton();
+  }
+
+  function autoDriveState() {
+    return interactionController && interactionController.getAutoDrive
+      ? interactionController.getAutoDrive()
+      : { enabled: false, activeCount: 0, count: state.interactionCount, paused: true, unavailableReason: "not-ready" };
+  }
+
+  function clearAutoDriveTimers() {
+    clearTimeout(autoDriveUI.hideTimer); clearTimeout(autoDriveUI.fadeTimer);
+    autoDriveUI.hideTimer = 0; autoDriveUI.fadeTimer = 0;
+  }
+
+  function scheduleAutoDriveDismiss() {
+    clearAutoDriveTimers();
+    var button = $("btnAutoDrive");
+    if (!button || button.hidden || autoDriveState().enabled || autoDriveUI.pointerDown || autoDriveUI.keyboardFocus) return;
+    autoDriveUI.hideTimer = setTimeout(function () {
+      autoDriveUI.hideTimer = 0;
+      if (autoDriveState().enabled || autoDriveUI.pointerDown || autoDriveUI.keyboardFocus) return;
+      button.classList.add("is-leaving");
+      autoDriveUI.fadeTimer = setTimeout(function () {
+        autoDriveUI.fadeTimer = 0;
+        if (autoDriveState().enabled || autoDriveUI.pointerDown || autoDriveUI.keyboardFocus) return;
+        if (document.activeElement === button) $("btnInteraction").focus({ preventScroll: true });
+        button.hidden = true;
+        button.classList.remove("is-leaving", "is-appearing");
+      }, 240);
+    }, 4250);
+  }
+
+  function revealAutoDrive() {
+    var button = $("btnAutoDrive");
+    if (!button) return;
+    clearAutoDriveTimers();
+    if (button.hidden) button.classList.add("is-appearing");
+    button.hidden = false; button.classList.remove("is-leaving");
+    syncAutoDriveButton();
+    scheduleAutoDriveDismiss();
+  }
+
+  function syncAutoDriveButton(next) {
+    var button = $("btnAutoDrive");
+    if (!button) return;
+    var mode = next || autoDriveState();
+    var wasEnabled = autoDriveUI.state && autoDriveUI.state.enabled;
+    autoDriveUI.state = mode;
+    button.setAttribute("aria-pressed", mode.enabled ? "true" : "false");
+    button.setAttribute("aria-disabled", !mode.enabled && !!mode.unavailableReason ? "true" : "false");
+    button.classList.toggle("is-running", mode.enabled);
+    button.classList.toggle("is-paused", mode.enabled && mode.paused);
+    var label = mode.enabled ? "关闭自动驾驶 · " + mode.activeCount + " 枚主动浮光" + (mode.paused ? " · 已暂停" : "") : "开启自动驾驶";
+    if (!mode.enabled && mode.unavailableReason) {
+      label += " · " + ({ "empty": "请先添加浮光", "reduced-motion": "减少动态效果已开启", "layout": "当前布局没有足够的游动空间", "not-ready": "正在读取设置" }[mode.unavailableReason] || "暂不可用");
+    }
+    button.setAttribute("aria-label", label); button.title = label;
+    if (mode.enabled) {
+      clearAutoDriveTimers(); button.hidden = false; button.classList.remove("is-leaving");
+    } else if (wasEnabled) scheduleAutoDriveDismiss();
+  }
+
+  function bindAutoDrive() {
+    var button = $("btnAutoDrive");
+    button.addEventListener("pointerdown", function () {
+      autoDriveUI.pointerDown = true; autoDriveUI.keyboardFocus = false;
+      clearAutoDriveTimers(); button.classList.remove("is-leaving");
+    });
+    function release() {
+      if (!autoDriveUI.pointerDown) return;
+      autoDriveUI.pointerDown = false; scheduleAutoDriveDismiss();
+    }
+    window.addEventListener("pointerup", release);
+    window.addEventListener("pointercancel", release);
+    button.addEventListener("focus", function () {
+      autoDriveUI.keyboardFocus = !autoDriveUI.pointerDown;
+      clearAutoDriveTimers(); button.classList.remove("is-leaving");
+    });
+    button.addEventListener("blur", function () { autoDriveUI.keyboardFocus = false; scheduleAutoDriveDismiss(); });
+    button.addEventListener("click", function () {
+      var current = autoDriveState();
+      if (!current.enabled && current.unavailableReason) {
+        toast(({ "empty": "先添加一枚浮光，再开启自动驾驶", "reduced-motion": "减少动态效果已开启，自动驾驶暂不可用", "layout": "当前布局没有足够的游动空间", "not-ready": "正在读取设置，请稍候" })[current.unavailableReason] || "自动驾驶暂不可用");
+      } else if (interactionController && interactionController.setAutoDrive) {
+        interactionController.setAutoDrive(!current.enabled);
+      }
+      syncAutoDriveButton(); scheduleAutoDriveDismiss();
+    });
+    window.addEventListener("blur", release);
+    window.addEventListener("pagehide", function () {
+      clearAutoDriveTimers(); autoDriveUI.pointerDown = false; autoDriveUI.keyboardFocus = false;
+      if (!autoDriveState().enabled) { button.hidden = true; button.classList.remove("is-leaving"); }
+    });
+    window.addEventListener("pageshow", function () { syncAutoDriveButton(); scheduleAutoDriveDismiss(); });
   }
 
   function wpMode() {
@@ -2318,7 +2414,7 @@
     var button = $("btnInteraction");
     var enabled = state.interactionSettingsReady && state.interactionCount > 0;
     button.classList.toggle("is-enabled", enabled);
-    button.title = "代号：交互 · " + state.interactionCount + " 枚浮光（单击添加 · 长按设置）";
+    button.title = "代号：交互 · " + state.interactionCount + " 枚浮光（单击添加并唤出自动驾驶 · 长按设置）";
     var slider = $("interactionCount");
     if (!slider) return;
     slider.value = String(state.interactionCount);
@@ -2457,6 +2553,7 @@
       ["一张看不见的地形", "拖动浮光，在隐形势场梯度中改变 Light / Dark 的倾向。方向是主线，局部的弯曲与起伏带来一点难以预料。"],
       ["距离、绕行与碰撞", "每次拖动会选定最近的一枚作为参照：拉开、聚拢、顺逆绕行，以及对方被推动的位移，都参与比例变化。多枚浮光彼此碰撞；只有一枚时，由势场决定。"],
       ["轻拨之后，安静落定", "比例从当前设置出发，随手势变化，松手时保存。自然游动与松手后的惯性只负责氛围；手动滑轨与拖动共用同一个比例。"],
+      ["让浮光自己出发", "单击星球唤出 auto / drive，再轻点开启。部分浮光会追逐、冲撞，偶尔接力；碰撞沿用本次力度。再次轻点即可停下。自动驾驶不改变主图比例，也不计入手动交互次数。"],
       ["一点可知的黑箱", "势场、距离、旋转、连带位移的系数为 62 / 20 / 13 / 5。它把动作映射为抽签权重，不是训练模型，也不猜测心情。"]
     ].forEach(function (entry) {
       var paragraph = document.createElement("p"), title = document.createElement("b");
@@ -2661,6 +2758,7 @@
     node.addEventListener("click", function (event) {
       if (suppressClick && event.detail) { suppressClick = false; event.preventDefault(); return; }
       addItem();
+      revealAutoDrive();
     });
     // Keyboard users can add with Enter/Space and open settings with Shift+Enter or the menu key.
     node.addEventListener("keydown", function (event) {
@@ -2770,6 +2868,7 @@
     });
 
     bindInteractionLauncher();
+    bindAutoDrive();
 
     $("btnScan").addEventListener("click", function () {
       if (a() && typeof a().scanQr === "function") a().scanQr();
