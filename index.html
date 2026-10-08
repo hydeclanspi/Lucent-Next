@@ -62,7 +62,19 @@
     </div>
     <div class="topbar-actions">
       <button class="icon-btn interaction-launcher" id="btnInteraction" type="button" aria-label="代号：交互，单击添加浮光，长按设置" aria-keyshortcuts="Shift+Enter Shift+F10" aria-haspopup="dialog" aria-controls="sheet" aria-expanded="false" title="代号：交互">
-        <span class="interaction-lens" aria-hidden="true"></span>
+        <svg class="interaction-planet" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+          <defs>
+            <radialGradient id="interactionPlanetGlass" cx="28%" cy="20%" r="82%">
+              <stop offset="0" stop-color="#F0FAFF" stop-opacity=".48"/>
+              <stop offset=".5" stop-color="#BCE5F8" stop-opacity=".22"/>
+              <stop offset="1" stop-color="#86BADB" stop-opacity=".06"/>
+            </radialGradient>
+          </defs>
+          <ellipse class="planet-ring-back" cx="12" cy="12" rx="10.5" ry="3.7" transform="rotate(23.5 12 12)"/>
+          <circle class="planet-globe" cx="12" cy="12" r="6.2" fill="url(#interactionPlanetGlass)"/>
+          <path class="planet-shine" d="M8.5 10.2a4 4 0 0 1 3.1-2.3"/>
+          <path class="planet-ring-front" d="M1.5 12a10.5 3.7 0 0 0 21 0" transform="rotate(23.5 12 12)"/>
+        </svg>
         <i class="wp-dot" aria-hidden="true"></i>
       </button>
       <button class="icon-btn" id="btnScan" type="button" aria-label="扫一扫">

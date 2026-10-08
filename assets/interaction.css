@@ -158,16 +158,19 @@
   .interaction-item.is-contact .interaction-glint { animation: none; }
 }
 
-/* Same glass shell as the scan/settings controls, with the lens itself tilted 23.5 degrees. */
+/* A tiny glass planet in the same shell as the scan/settings controls. */
 .interaction-launcher { position: relative; }
-.interaction-launcher > .interaction-lens {
-  width: 12.375px;
-  height: 12.375px;
-  border-radius: 5px 2px 5px 2px;
-  transform: rotate(23.5deg);
-  opacity: 0.9;
+.interaction-launcher > .interaction-planet {
+  width: 22px;
+  height: 22px;
+  overflow: visible;
+  pointer-events: none;
+  color: rgba(229, 246, 255, .94);
 }
-.interaction-launcher > .interaction-lens::before { left: 2px; width: 8px; }
+.interaction-planet .planet-ring-back { stroke: currentColor; stroke-width: 1.1; opacity: .32; }
+.interaction-planet .planet-globe { stroke: currentColor; stroke-width: .85; stroke-opacity: .76; }
+.interaction-planet .planet-shine { stroke: #F3FBFF; stroke-width: 1; stroke-linecap: round; opacity: .66; }
+.interaction-planet .planet-ring-front { stroke: currentColor; stroke-width: 1.15; stroke-linecap: round; opacity: .94; }
 .interaction-launcher > .wp-dot { left: auto; right: 7px; top: 7px; }
 .interaction-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 32px; }
 .sheet.wide .interaction-heading .sheet-title { margin: 0; white-space: nowrap; }
@@ -223,14 +226,13 @@
   .interaction-algorithm summary::after { transition: none; }
 }
 
-/* 3.1: understated quantity track; the icon's dot has its own warm color. */
+/* Understated quantity track; the planet's indicator breathes in pale blue. */
 .interaction-launcher { touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-.interaction-launcher > .interaction-lens::before { width: 6.6px; }
-.interaction-launcher > .wp-dot { background: #E9A365; box-shadow: 0 0 5px rgba(233,163,101,.65); }
-.interaction-launcher.is-enabled > .wp-dot { animation-name: interaction-warm-breathe; }
-@keyframes interaction-warm-breathe {
-  0%, 100% { opacity: .45; box-shadow: 0 0 3px rgba(233,163,101,.4); }
-  50% { opacity: 1; box-shadow: 0 0 7px rgba(233,163,101,.85); }
+.interaction-launcher > .wp-dot { background: #A8D8F4; box-shadow: 0 0 4px rgba(168,216,244,.6); }
+.interaction-launcher.is-enabled > .wp-dot { animation-name: interaction-blue-breathe; }
+@keyframes interaction-blue-breathe {
+  0%, 100% { opacity: .45; box-shadow: 0 0 2px rgba(168,216,244,.32); }
+  50% { opacity: .95; box-shadow: 0 0 5px rgba(168,216,244,.75); }
 }
 .sheet.wide .interaction-title-group .sheet-title { margin-bottom: 18px; }
 .interaction-engine-subtitle { margin-bottom: 0; }
