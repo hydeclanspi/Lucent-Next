@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互加入 auto drive：随机浮光主动追逐、碰撞与接力。保留 1–24 倍碰撞力度、历史统计、玻璃星球入口与淡蓝呼吸灯。"
+  "description": "通透的个人名片主页。代号：交互加入自然碰撞散开、0.25–16 倍自然 pace、独立自定义启动默认与一键出厂恢复；面板内可启停自动驾驶。"
 }

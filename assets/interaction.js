@@ -14,6 +14,7 @@
   const COLLISION_MAX = 24;
   const MAX_IMPACT_SPEED = 640;
   const AUTO = Object.freeze({ cruiseMin: 5, cruiseMax: 8, burst: 1.7, kickLimit: 320, manualGrace: 1.25, replan: 0.75 });
+  const NATURAL = Object.freeze({ neighborRadius: 76, share: 0.30, densityStep: 0.06, cooldown: 0.28 });
   const RADIUS = 11;
   const CLEARANCE = 30; // A 44px touch target plus 8px of space around existing UI.
   const STEP = 4;
@@ -31,7 +32,23 @@
   }
   function collisionSettings(value) {
     const saved = value && typeof value === 'object' ? value : {};
-    return { version: 1, strength: collisionStrength(saved.strength), randomOnLaunch: saved.randomOnLaunch === true, randomUpper: collisionStrength(saved.randomUpper, 12) };
+    return { version: 2, strength: collisionStrength(saved.strength), randomOnLaunch: saved.randomOnLaunch === true };
+  }
+  function naturalPace(value) { return Number.isFinite(value) ? Math.round(clamp(value, 0.25, 16) * 100) / 100 : 1; }
+  function naturalResponse(strength, neighbors) {
+    const share = NATURAL.share + NATURAL.densityStep * clamp(neighbors - 2, 0, 2);
+    return { share, separation: 14 + 7 * Math.max(1, collisionStrength(strength) * share) };
+  }
+  function resolveNaturalImpact(body, other, nx, ny, strength, neighbors, energized) {
+    resolveImpact(body, other, nx, ny, false, strength);
+    if (!energized) return false;
+    const separating = (other.vx - body.vx) * nx + (other.vy - body.vy) * ny;
+    const extra = Math.max(0, (naturalResponse(strength, neighbors).separation - separating) * 0.5);
+    // Top up a slow encounter to a finite separating speed; never multiply a fast chain.
+    body.vx -= extra * nx; body.vy -= extra * ny;
+    other.vx += extra * nx; other.vy += extra * ny;
+    limitVelocity(body); limitVelocity(other);
+    return extra > 0;
   }
   function randomCollision(upper, sample) {
     // Equal room for each multiplicative range: soft encounters stay possible at high ceilings.
@@ -236,6 +253,7 @@
     const onActivity = typeof opts.onActivity === 'function' ? opts.onActivity : () => {};
     const onAutoDriveChange = typeof opts.onAutoDriveChange === 'function' ? opts.onAutoDriveChange : () => {};
     let impactStrength = collisionStrength(opts.collisionStrength);
+    let pace = naturalPace(opts.naturalPace);
     const isReady = typeof opts.isReady === 'function' ? opts.isReady : () => true;
     const isPaused = typeof opts.isPaused === 'function' ? opts.isPaused : () => false;
     const field = document.createElement('div');
@@ -250,6 +268,7 @@
     let keyboardActivity = null;
     let autoEnabled = false, autoClock = 0, navigation = null, autoNotice = '', lastRelay = -10, relay = null;
     const chargedContacts = new Map();
+    const naturalContacts = new Map();
     const motion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
     const cleanups = [];
     const listen = (target, name, fn, settings) => { target.addEventListener(name, fn, settings); cleanups.push(() => target.removeEventListener(name, fn, settings)); };
@@ -394,6 +413,49 @@
       return true;
     }
 
+    function scatterHeading(body, other, neighbors) {
+      let awayX = 0, awayY = 0;
+      for (const neighbor of neighbors) {
+        if (neighbor === body) continue;
+        const d = Math.max(1, distance(body, neighbor)), weight = Math.max(0, 1 - d / NATURAL.neighborRadius);
+        awayX += (body.x - neighbor.x) / d * weight;
+        awayY += (body.y - neighbor.y) / d * weight;
+      }
+      const speed = Math.hypot(body.vx, body.vy);
+      const base = Math.atan2(body.vy + awayY * 12, body.vx + awayX * 12);
+      let best = base, bestScore = -Infinity;
+      for (const offset of [0, 0.6, -0.6, 1.2, -1.2, 2.1, -2.1, Math.PI]) {
+        const angle = base + offset, point = { x: body.x + Math.cos(angle) * 24, y: body.y + Math.sin(angle) * 24 };
+        if (!clearRoute(body, point, geometry)) continue;
+        const clearance = Math.min(100, ...neighbors.filter(n => n !== body).map(n => distance(point, n)));
+        const score = clearance - Math.abs(offset) * 7;
+        if (score > bestScore) { bestScore = score; best = angle; }
+      }
+      body.angle = best; body.turn = 0; body.scatterUntil = autoClock + 0.7;
+      // In groups, a small sideways bias follows the open lane without cancelling recoil.
+      if (neighbors.length > 2 && speed < 140) {
+        const tx = -(other.y - body.y), ty = other.x - body.x, length = Math.hypot(tx, ty) || 1;
+        const lateral = clamp((Math.cos(best) * tx + Math.sin(best) * ty) / length, -1, 1) * Math.min(9, (neighbors.length - 2) * 3);
+        body.vx += tx / length * lateral; body.vy += ty / length * lateral;
+        limitVelocity(body);
+      }
+    }
+    function naturalImpact(body, other, nx, ny) {
+      const key = Math.min(body.index, other.index) + ':' + Math.max(body.index, other.index);
+      const approach = (body.vx - other.vx) * nx + (body.vy - other.vy) * ny;
+      const fresh = !naturalContacts.has(key);
+      const energize = fresh && approach > -1 && !isManual(body) && !isManual(other)
+        && !(body.naturalCooldown > autoClock) && !(other.naturalCooldown > autoClock);
+      const neighbors = bodies.filter(candidate => candidate === body || candidate === other
+        || Math.min(distance(candidate, body), distance(candidate, other)) < NATURAL.neighborRadius);
+      const kicked = resolveNaturalImpact(body, other, nx, ny, impactStrength, neighbors.length, energize);
+      if (kicked) {
+        naturalContacts.set(key, [body, other]);
+        body.naturalCooldown = other.naturalCooldown = autoClock + NATURAL.cooldown;
+        scatterHeading(body, other, neighbors); scatterHeading(other, body, neighbors);
+      }
+    }
+
     function paint(now) {
       bodies.forEach((body, index) => {
         body.button.style.transform = 'translate3d(' + (body.x - 22).toFixed(2) + 'px,' + (body.y - 22).toFixed(2) + 'px,0)';
@@ -441,7 +503,7 @@
               }
               if (autoEnabled && body.auto) coolDriver(body, other);
               contact(body, other, now);
-              if (autoEnabled) spentStep = true;
+              spentStep = true;
               return false;
             }
             const push = RADIUS * 2 - gap + 0.02;
@@ -450,18 +512,17 @@
               candidate => bodies.every(third => third === body || third === other || distance(candidate, third) >= RADIUS * 2));
             // If the other lens is trapped at the edge, the active lens stops at contact.
             if (distance(next, pushed) < RADIUS * 2 - 0.01) {
-              if (autoEnabled && relative > 0 && !(gesture && gesture.index === index)) {
-                if (!automaticImpact(body, other, nx, ny)) resolveImpact(body, other, nx, ny, false, impactStrength);
+              if (!(gesture && gesture.index === index)) {
+                if (!(autoEnabled && relative > 0 && automaticImpact(body, other, nx, ny))) naturalImpact(body, other, nx, ny);
                 contact(body, other, now); spentStep = true;
               }
               return false;
             }
             other.x = pushed.x; other.y = pushed.y;
-            if (relative > 0) {
-              const held = gesture && gesture.index === index;
-              if (!autoEnabled || held || !automaticImpact(body, other, nx, ny)) resolveImpact(body, other, nx, ny, held, impactStrength);
-            }
-            if (autoEnabled && !(gesture && gesture.index === index)) spentStep = true;
+            const held = gesture && gesture.index === index;
+            if (held) resolveImpact(body, other, nx, ny, true, impactStrength);
+            else if (!(autoEnabled && relative > 0 && automaticImpact(body, other, nx, ny))) naturalImpact(body, other, nx, ny);
+            if (!held) spentStep = true;
             contact(body, other, now);
           }
         }
@@ -512,6 +573,9 @@
       const dt = clamp((now - previousTime) / 1000, 0, 0.05);
       previousTime = now; lastPaint = now;
       autoClock += dt;
+      for (const [key, pair] of naturalContacts) {
+        if (distance(pair[0], pair[1]) > RADIUS * 2 + 6) naturalContacts.delete(key);
+      }
       if (autoEnabled) for (const [key, pair] of chargedContacts) {
         // Cooling down alone cannot recharge a pair that is still pressed together.
         if (distance(pair[0], pair[1]) > RADIUS * 2 + 6) chargedContacts.delete(key);
@@ -530,9 +594,10 @@
           if (!driving) {
           body.turn = body.turn * Math.exp(-1.8 * dt) + (Math.random() - 0.5) * 1.6 * Math.sqrt(dt);
           body.angle += body.turn * dt;
-          const pull = 1 - Math.exp(-1.3 * dt);
-          body.vx += (Math.cos(body.angle) * MOTION.horizontal - body.vx) * pull;
-          body.vy += (Math.sin(body.angle) * MOTION.vertical - body.vy) * pull;
+          const pull = 1 - Math.exp(-(body.scatterUntil > autoClock ? 0.7 : 1.3) * dt);
+          const cruisePace = body.auto ? 1 : pace;
+          body.vx += (Math.cos(body.angle) * MOTION.horizontal * cruisePace - body.vx) * pull;
+          body.vy += (Math.sin(body.angle) * MOTION.vertical * cruisePace - body.vy) * pull;
           }
           const old = copy(body), target = { x: body.x + body.vx * dt, y: body.y + body.vy * dt };
           moveBody(index, target, now);
@@ -747,6 +812,7 @@
       if (count === bodies.length) return;
       finishGesture(true);
       chargedContacts.clear();
+      naturalContacts.clear();
       while (bodies.length > count) {
         const body = bodies.pop();
         body.cleanups.forEach(fn => fn()); body.button.remove();
@@ -793,6 +859,8 @@
       getAutoDrive,
       setCollisionStrength(value) { impactStrength = collisionStrength(value); },
       getCollisionStrength() { return impactStrength; },
+      setNaturalPace(value) { pace = naturalPace(value); },
+      getNaturalPace() { return pace; },
       destroy() {
         if (destroyed) return;
         finishGesture(true); destroyed = true; stopFrames();
@@ -808,8 +876,11 @@
     return controller;
   }
 
-  return { mount, autoDrive: { bounds: autoBounds, motion: AUTO }, collision: { max: COLLISION_MAX, normalize: collisionSettings, strength: collisionStrength, draw: randomCollision,
+  return { mount, motion: { normalize: saved => ({ version: 1, pace: naturalPace(saved && saved.pace) }),
+    fromSlider: value => naturalPace(0.25 * Math.pow(64, clamp(Number(value) || 0, 0, 1200) / 1200)),
+    toSlider: value => Math.round(Math.log(naturalPace(value) / 0.25) / Math.log(64) * 1200) },
+    autoDrive: { bounds: autoBounds, motion: AUTO }, collision: { max: COLLISION_MAX, normalize: collisionSettings, strength: collisionStrength, draw: randomCollision,
     fromSlider: value => collisionStrength(Math.pow(COLLISION_MAX, clamp(Number(value) || 0, 0, 1000) / 1000)),
     toSlider: value => Math.round(Math.log(collisionStrength(value)) / Math.log(COLLISION_MAX) * 1000) },
-    _test: { REGION, WEIGHTS, MOTION, AUTO, RESTITUTION, MAX_IMPACT_SPEED, resolveImpact, resolveAutoImpact, autoBounds, limitVelocity, makeGeometry, inPolygon, segmentDistance, advance, potential, startModel, sampleModel, modelProbability, safeSites, clearRoute, navigationGrid, routeBetween } };
+    _test: { REGION, WEIGHTS, MOTION, AUTO, NATURAL, naturalPace, naturalResponse, resolveNaturalImpact, RESTITUTION, MAX_IMPACT_SPEED, resolveImpact, resolveAutoImpact, autoBounds, limitVelocity, makeGeometry, inPolygon, segmentDistance, advance, potential, startModel, sampleModel, modelProbability, safeSites, clearRoute, navigationGrid, routeBetween } };
 });
