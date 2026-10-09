@@ -137,16 +137,14 @@
   opacity: 1;
   transform: translateY(0) rotate(-7deg) scale(1);
 }
-.interaction-id::after {
-  content: "";
+:root[data-id-badge="off"] .interaction-id { display: none; }
+.interaction-id svg {
   position: absolute;
-  top: -5.5px;
-  right: 1.5px;
-  width: 4px;
-  height: 4px;
-  border-top: 1px solid rgba(245, 201, 155, 0.5);
-  border-right: 1px solid rgba(245, 201, 155, 0.5);
-  border-top-right-radius: 4.5px;
+  top: -5px;
+  right: -6px;
+  width: 8px;
+  height: 8px;
+  opacity: .9;
 }
 @media (prefers-reduced-motion: reduce) {
   .interaction-id { transition: none; }
@@ -557,7 +555,7 @@
   color: var(--ink); text-align: right; letter-spacing: 0; font-variant-numeric: tabular-nums;
 }
 .interaction-controls #wallpaperProbabilityValue {
-  min-width: 0; flex: none; font-size: 25px; line-height: 1.2; font-weight: 350;
+  min-width: 0; flex: none; font-size: 20.875px; line-height: 1.2; font-weight: 600; font-style: italic;
   color: var(--ink); text-align: right; letter-spacing: -.2px; font-variant-numeric: tabular-nums;
 }
 .interaction-controls .interaction-count-track { display: flex; margin: 14px 0 0; min-height: 40px; }

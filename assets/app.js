@@ -1428,6 +1428,24 @@
       width: function () { return window.innerWidth; }, height: function () { return window.innerHeight; } });
   }
   var fieldKnownIds = new Set();
+  var idBadgeOn = true;
+  function syncIdBadge() { root.setAttribute("data-id-badge", idBadgeOn ? "" : "off"); }
+  function loadUiPrefs() {
+    var a = api();
+    return Promise.resolve().then(function () {
+      if (a && a.storage) return a.storage.get("uiPrefs", null);
+      var raw = window.localStorage.getItem("aira-profile-card:uiPrefs");
+      return raw == null ? null : JSON.parse(raw);
+    }).then(function (saved) {
+      idBadgeOn = !saved || saved.idBadge !== false;
+      syncIdBadge();
+    }).catch(function () { syncIdBadge(); });
+  }
+  function setIdBadge(on) {
+    idBadgeOn = on === true; syncIdBadge();
+    writeInteractionSetting("uiPrefs", { version: 1, idBadge: idBadgeOn });
+  }
+  var idBadgeOption = { get: function () { return idBadgeOn; }, set: setIdBadge };
   function fieldPulse() {
     if (!fieldStore || !interactionController || !interactionController.fieldSnapshot) return;
     if (document.hidden) return;
@@ -1465,7 +1483,7 @@
       }); }
     };
     statsStore = window.AiraStatsStore.create({ storage: storage });
-    if (statsController) { statsController.destroy(); statsController = window.AiraStatsPanel.mount(el.sheet, { store: statsStore, field: fieldStore, onBack: closeSheet,
+    if (statsController) { statsController.destroy(); statsController = window.AiraStatsPanel.mount(el.sheet, { store: statsStore, field: fieldStore, onBack: closeSheet, idBadge: idBadgeOption,
       activeIds: function () { return interactionController && interactionController.fieldSnapshot ? interactionController.fieldSnapshot().map(function (item) { return item.id; }) : []; } }); }
   }
 
@@ -1476,7 +1494,7 @@
     var parent = { nodes: Array.from(el.sheet.childNodes), classes: el.sheet.className, scroll: el.sheet.scrollTop, label: el.sheet.getAttribute('aria-label') };
     openSheet({ title: '历史统计', center: true, wide: true, stats: true });
     statsParent = parent;
-    statsController = window.AiraStatsPanel.mount(el.sheet, { store: statsStore, field: fieldStore, onBack: closeSheet,
+    statsController = window.AiraStatsPanel.mount(el.sheet, { store: statsStore, field: fieldStore, onBack: closeSheet, idBadge: idBadgeOption,
       activeIds: function () { return interactionController && interactionController.fieldSnapshot ? interactionController.fieldSnapshot().map(function (item) { return item.id; }) : []; } });
     el.sheet.querySelector('.stats-back').focus({ preventScroll: true });
   }
@@ -3458,6 +3476,7 @@
     initStage = stage;
     initStats();
     initField();
+    loadUiPrefs();
     loadCollisionSettings();
     loadPaceSettings();
     loadAutoDriveSettings();

@@ -39,6 +39,10 @@
     selector.addEventListener('change', function () { source = selector.value; render(); }); activity.head.appendChild(selector);
     var heat = makeChart('概率分布', '颜色越深，该时段落在此概率区间的占比越高', 'heat');
     var legend = element('div', 'stats-heat-legend'); legend.appendChild(element('span', '', '少')); legend.appendChild(element('i')); legend.appendChild(element('span', '', '多')); heat.head.appendChild(legend);
+    // 第四格来自场志：两两之间的亲近分排序曲线（没有场志时不占位）。
+    var ties = options.field ? makeChart('关系强度', '两两之间的亲近分，从最亲到最疏：碰撞 × 3 + 亲近分钟', 'ties') : null;
+    var tiesNote = null;
+    if (ties) { tiesNote = element('span', 'stats-ties-note', '仅呈现最亲的 300 对'); tiesNote.hidden = true; ties.head.appendChild(tiesNote); }
     var detail = element('div', 'stats-detail'); detail.setAttribute('aria-live', 'polite'); detail.setAttribute('aria-atomic', 'true');
     var detailTime = element('strong'), detailValues = element('p'), detailExtra = element('p', 'stats-detail-extra');
     var zoom = element('button', 'stats-zoom', '展开此时段'); zoom.type = 'button';
@@ -61,28 +65,33 @@
     var field = options.field || null, fieldView = null, rosterPick = 0;
     var fieldColumns = null;
     if (field) {
+      var intro = element('div', 'stats-field-intro');
+      intro.appendChild(element('p', 'stats-field-intro-text', '浮光不是无名的。#01–#49，四十九位固定居民：每次回到主页，抽签决定谁在场；撞过谁、躲过谁、为谁出过击，都写进各自的档案。名册在此，故事开始。'));
+      var introRow = element('div', 'stats-field-intro-row');
+      var badgeToggle = element('button', 'wp-random collision-random stats-badge-toggle');
+      badgeToggle.type = 'button';
+      badgeToggle.setAttribute('aria-pressed', String(!options.idBadge || options.idBadge.get() !== false));
+      badgeToggle.setAttribute('aria-label', '碰到浮光时显示其对应编号');
+      badgeToggle.innerHTML = '<span>碰到浮光时显示其对应编号</span><i class="wp-track" aria-hidden="true"><i class="wp-knob"></i></i>';
+      badgeToggle.addEventListener('click', function () {
+        if (!options.idBadge) return;
+        var next = badgeToggle.getAttribute('aria-pressed') !== 'true';
+        badgeToggle.setAttribute('aria-pressed', String(next));
+        options.idBadge.set(next);
+      });
+      introRow.appendChild(badgeToggle); intro.appendChild(introRow); root.appendChild(intro);
       fieldColumns = element('div', 'stats-columns'); root.appendChild(fieldColumns);
       var terrainSection = element('section', 'stats-section stats-terrain');
       terrainSection.appendChild(element('h4', '', '浮光地形图'));
       terrainSection.appendChild(element('p', 'stats-caption', '颜色越深，浮光在该区域驻留越久——它们自己走出来的地形'));
-      var terrainHost = element('div', 'stats-chart stats-terrain-host'); terrainSection.appendChild(terrainHost); columns.appendChild(terrainSection);
-      var socialSection = element('section', 'stats-section stats-social');
-      var socialHead = element('div', 'stats-chart-heading');
-      socialHead.appendChild(element('h4', '', '它们的关系'));
-      var socialLegend = element('div', 'stats-social-legend');
-      [['contact', '自然碰撞'], ['bump', '邂逅·撞撞'], ['dodge', '邂逅·回避'], ['autoHit', 'FSD 冲撞']].forEach(function (item) {
-        var chip = element('span', 'stats-social-chip stats-chip-' + item[0], item[1]); socialLegend.appendChild(chip);
-      });
-      socialHead.appendChild(socialLegend); socialSection.appendChild(socialHead);
-      socialSection.appendChild(element('p', 'stats-caption', '浮光之间每天的交往方式，驾驶与邂逅都不惊扰比例'));
-      var socialHost = element('div', 'stats-chart'); socialSection.appendChild(socialHost); fieldColumns.appendChild(socialSection);
+      var terrainHost = element('div', 'stats-chart stats-terrain-host'); terrainSection.appendChild(terrainHost); fieldColumns.appendChild(terrainSection);
       var driveSection = element('section', 'stats-section stats-drive');
       driveSection.appendChild(element('h4', '', '驾驶志'));
       var driveNumbers = element('p', 'stats-caption'); driveSection.appendChild(driveNumbers);
       var driveHost = element('div', 'stats-chart'); driveSection.appendChild(driveHost); fieldColumns.appendChild(driveSection);
       var rosterSection = element('section', 'stats-section stats-roster');
       rosterSection.appendChild(element('h4', '', '名册'));
-      rosterSection.appendChild(element('p', 'stats-caption', '49 位固定居民，累计档案；点亮者为当前在场'));
+      rosterSection.appendChild(element('p', 'stats-caption', '49 位固定居民，累计档案；点亮者为当前在场，颜色越深，在 49 位里越主动'));
       var rosterGrid = element('div', 'stats-roster-grid'); rosterSection.appendChild(rosterGrid);
       var rosterDetail = element('div', 'stats-roster-detail'); rosterSection.appendChild(rosterDetail);
       fieldColumns.appendChild(rosterSection);
@@ -111,6 +120,13 @@
       var width = Math.round(host.getBoundingClientRect().width);
       return width > 0 ? Math.max(200, width) : 480;
     }
+    // 对数纵轴的顶：取 1–2–5 阶里刚好盖住最大值的那一档
+    function logTop(value) {
+      var base = Math.pow(10, Math.floor(Math.log10(Math.max(value, 1)))), steps = [1, 2, 5, 10];
+      for (var i = 0; i < steps.length; i++) if (base * steps[i] >= value) return base * steps[i];
+      return base * 10;
+    }
+    function pad2(n) { return String(n).padStart(2, '0'); }
     function drawField() {
       if (!field) return;
       fieldView = field.getView(range);
@@ -137,25 +153,49 @@
         }
         terrainHost.appendChild(svg);
       })();
-      // 它们的关系
+      // 关系强度：亲近分从最亲排到最疏，纵轴取对数——重尾分布里尾巴才是信息
       (function () {
-        socialHost.textContent = '';
-        var rows = aggregateDays(fieldView.social, function (row) { return [row.contact, row.bump, row.dodge, row.autoHit]; });
-        var w = chartWidth(socialHost), sh = 132, svg = svgNode('svg', { viewBox: '0 0 ' + w + ' ' + sh, width: w, height: sh, role: 'img', 'aria-label': '浮光交往方式随时间变化' });
-        var max = 1;
-        rows.forEach(function (row) { max = Math.max(max, row.values[0] + row.values[1] + row.values[2] + row.values[3]); });
-        var bw = Math.max(1, (w - 10) / rows.length - 2);
-        rows.forEach(function (row, i) {
-          var x = 5 + i / rows.length * (w - 10), y = sh - 22, total = row.values[0] + row.values[1] + row.values[2] + row.values[3];
-          if (!total) return;
-          ['contact', 'bump', 'dodge', 'autoHit'].forEach(function (kind, j) {
-            var h = row.values[j] / max * (sh - 40);
-            if (h <= 0) return;
-            y -= h;
-            svg.appendChild(svgNode('rect', { x: x.toFixed(1), y: y.toFixed(1), width: bw.toFixed(1), height: Math.max(0.6, h).toFixed(1), rx: 0.8, class: 'stats-seg stats-seg-' + kind }));
-          });
+        if (!ties) return;
+        ties.host.textContent = '';
+        var pairs = fieldView.pairs || [], values = pairs.map(function (pair) { return pair.contact * 3 + pair.nearMinutes; });
+        tiesNote.hidden = pairs.length < 300;
+        var w = chartWidth(ties.host), h = 158, g = { left: 44, top: 15, width: w - 54, height: h - 53 };
+        var top = values.length ? logTop(values[0]) : 10, lo = 1;
+        if (top <= lo) top = lo * 10;
+        function y(v) { return g.top + g.height * (1 - (Math.log10(Math.max(v, lo)) - Math.log10(lo)) / (Math.log10(top) - Math.log10(lo))); }
+        function x(i) { return g.left + (values.length < 2 ? g.width / 2 : i / (values.length - 1) * g.width); }
+        var svg = svgNode('svg', { viewBox: '0 0 ' + w + ' ' + h, width: w, height: h, role: 'img',
+          'aria-label': values.length ? '关系强度排序曲线，共 ' + values.length + ' 对；最亲的一对是 #' + pad2(pairs[0].a) + ' 与 #' + pad2(pairs[0].b) + '，亲近分 ' + values[0] : '关系强度排序曲线' });
+        ties.host.appendChild(svg);
+        if (!values.length) {
+          svg.appendChild(svgNode('text', { x: g.left + g.width / 2, y: g.top + g.height / 2, 'text-anchor': 'middle', class: 'stats-empty' }, fieldView.status === 'error' ? '浮光志暂不可用' : '本时段还没有交往记录'));
+          return;
+        }
+        var ladder = [], decade = 1;
+        while (decade <= top) { [1, 2, 5].forEach(function (m) { if (decade * m <= top && decade * m >= lo) ladder.push(decade * m); }); decade *= 10; }
+        var ticks = [], previous = null;
+        ladder.sort(function (a, b) { return b - a; }).forEach(function (v) {
+          if (previous == null || y(v) - y(previous) >= 20) { ticks.push(v); previous = v; }
         });
-        socialHost.appendChild(svg);
+        ticks.forEach(function (v) {
+          svg.appendChild(svgNode('line', { x1: g.left, x2: w - 10, y1: y(v), y2: y(v), class: 'stats-grid' }));
+          svg.appendChild(svgNode('text', { x: g.left - 9, y: y(v) + 4, 'text-anchor': 'end', class: 'stats-axis' }, String(v)));
+        });
+        var defs = svgNode('defs'), gradient = svgNode('linearGradient', { id: 'stats-fill-ties', x1: '0', x2: '0', y1: '0', y2: '1' });
+        gradient.appendChild(svgNode('stop', { offset: '0%', 'stop-color': 'currentColor', 'stop-opacity': '.2' }));
+        gradient.appendChild(svgNode('stop', { offset: '100%', 'stop-color': 'currentColor', 'stop-opacity': '0' })); defs.appendChild(gradient); svg.appendChild(defs);
+        var line = values.map(function (v, i) { return (i ? 'L' : 'M') + x(i).toFixed(2) + ',' + y(v).toFixed(2); }).join(' ');
+        if (values.length > 1) {
+          svg.appendChild(svgNode('path', { d: line + ' L' + x(values.length - 1).toFixed(2) + ',' + (g.top + g.height) + ' L' + x(0).toFixed(2) + ',' + (g.top + g.height) + ' Z', fill: 'url(#stats-fill-ties)', class: 'stats-area' }));
+          svg.appendChild(svgNode('path', { d: line, class: 'stats-line' }));
+        }
+        svg.appendChild(svgNode('circle', { cx: x(0), cy: y(values[0]), r: 2.6, class: 'stats-point' }));
+        var labelCount = w < 440 ? 3 : 5, chosen = [];
+        for (var i = 0; i < labelCount; i++) { var index = values.length < 2 ? 0 : Math.round(i * (values.length - 1) / (labelCount - 1)); if (chosen.indexOf(index) < 0) chosen.push(index); }
+        chosen.forEach(function (index, i) {
+          svg.appendChild(svgNode('text', { x: x(index), y: h - 21, 'text-anchor': i === 0 ? 'start' : i === chosen.length - 1 ? 'end' : 'middle', class: 'stats-axis' }, '第 ' + (index + 1)));
+        });
+        svg.appendChild(svgNode('text', { x: w - 10, y: h - 3, 'text-anchor': 'end', class: 'stats-axis stats-axis-title' }, '名次 · 纵轴对数'));
       })();
       // 驾驶志
       (function () {
@@ -180,16 +220,26 @@
       // 名册
       (function () {
         rosterGrid.textContent = '';
-        var pad2 = function (n) { return String(n).padStart(2, '0'); };
         var active = new Set(typeof options.activeIds === 'function' ? options.activeIds() : []);
+        // 性格星图浓缩成一档深浅：撞人与出击多于回避者更深。
+        // 按 49 位里的分位分档（而不是绝对比例），深浅才有区分度。
+        var keenOf = function (p) { return p.bump + p.hit; }, shyOf = function (p) { return p.dodge; };
+        var ranked = fieldView.profiles.filter(function (p) { return keenOf(p) + shyOf(p) > 0; })
+          .map(function (p) { return keenOf(p) / (keenOf(p) + shyOf(p)); }).sort(function (a, b) { return a - b; });
+        function toneOf(p) {
+          if (!(keenOf(p) + shyOf(p)) || !ranked.length) return -1;
+          return Math.min(3, Math.floor(ranked.indexOf(keenOf(p) / (keenOf(p) + shyOf(p))) / ranked.length * 4));
+        }
         fieldView.profiles.forEach(function (p) {
           var chip = element('button', 'stats-roster-chip', pad2(p.id));
           chip.type = 'button'; chip.dataset.id = p.id;
           var hasData = p.appearances || p.minutes || p.bump || p.taken || p.dodge || p.hit || p.miss;
+          var tone = toneOf(p);
+          if (tone >= 0) chip.classList.add('is-tone-' + tone);
           chip.classList.toggle('is-active', active.has(p.id));
           chip.classList.toggle('is-quiet', !hasData);
           chip.classList.toggle('is-picked', rosterPick === p.id);
-          chip.setAttribute('aria-label', '第 ' + p.id + ' 号浮光的档案');
+          chip.setAttribute('aria-label', '第 ' + p.id + ' 号浮光的档案' + (tone < 0 ? '' : ' · ' + ['最回避', '偏回避', '偏主动', '最主动'][tone]));
           chip.addEventListener('click', function () { rosterPick = rosterPick === p.id ? 0 : p.id; drawField(); });
           rosterGrid.appendChild(chip);
         });

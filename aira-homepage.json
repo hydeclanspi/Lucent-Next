@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "4.0.11",
+  "version": "4.0.12",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互——历史统计改为双栏：Light 倾向与交互次数、概率分布与浮光地形图、它们的关系与驾驶志各占一行左右，名册通栏。"
+  "description": "通透的个人名片主页。代号：交互——统计页场志区新增开场引言，右下角小开关（淡橙、默认开启）控制碰到浮光时显示其编号；编号徽章的小帽为一弯松弛扫弧。"
 }

@@ -1009,6 +1009,7 @@
       lens.appendChild(glint); button.appendChild(lens); button.appendChild(badge); field.appendChild(button);
       const body = { index, identity: drawIdentity(), cleanups: [], positioned: false, x: 0, y: 0, vx: (index ? -4 : 5) * MOTION.speedScale, vy: (index ? 3 : -2) * MOTION.speedScale, angle: Math.random() * Math.PI * 2, turn: 0, button, contactUntil: 0, auto: null, manualUntil: 0 };
       badge.textContent = String(body.identity).padStart(2, '0');
+      badge.insertAdjacentHTML('beforeend', '<svg viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2.2 1.2 Q8.2 2.8 8.8 8.6" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>');
       bodies.push(body);
       bindBody(body, index);
     }
