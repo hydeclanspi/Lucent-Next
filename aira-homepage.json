@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "3.7.0",
+  "version": "3.8.0",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互重排为轻盈的双列参数区，保留标题与默认值管理；Auto 图标下恢复 AUTO，右侧为 Drive。"
+  "description": "通透的个人名片主页。代号：交互设置面板重设计：标题与工具行分层，双列参数格统一节奏，滑轨带淡蓝填充，状态读数升格；几何棱线细节贯穿。"
 }

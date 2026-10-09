@@ -1461,15 +1461,15 @@
     title.className = "sheet-title";
     title.textContent = options.title || "";
     if (options.interaction) {
-      var factoryBar = document.createElement("div"); factoryBar.className = "interaction-factory-bar";
-      var factoryStatus = document.createElement("span"); factoryStatus.id = "interactionFactoryStatus"; factoryStatus.setAttribute("role", "status");
-      var factory = document.createElement("button"); factory.id = "interactionFactoryReset"; factory.type = "button"; factory.className = "btn sm"; factory.textContent = "恢复出厂默认";
-      factory.addEventListener("click", restoreFactoryInteraction);
-      var defaults = document.createElement("button"); defaults.id = "interactionDefaults"; defaults.type = "button"; defaults.className = "btn sm"; defaults.textContent = "设默认值";
-      defaults.setAttribute("aria-haspopup", "dialog"); defaults.addEventListener("click", openDefaultsPanel);
-      factoryBar.appendChild(factoryStatus); factoryBar.appendChild(defaults); factoryBar.appendChild(factory); sheet.appendChild(factoryBar);
       var heading = document.createElement("div");
       heading.className = "interaction-heading";
+      var titleGroup = document.createElement("div");
+      titleGroup.className = "interaction-title-group";
+      var engineSubtitle = document.createElement("p");
+      engineSubtitle.className = "wp-mode-note interaction-engine-subtitle";
+      engineSubtitle.textContent = "beta v0.7 引擎 · 26-10";
+      titleGroup.appendChild(title);
+      titleGroup.appendChild(engineSubtitle);
       var subtitle = document.createElement("div");
       subtitle.className = "interaction-subtitle";
       var motto = document.createElement("span");
@@ -1478,32 +1478,36 @@
       identity.textContent = "鸿蒙hydeclanspi灵感台";
       subtitle.appendChild(motto);
       subtitle.appendChild(identity);
-      var titleGroup = document.createElement("div");
-      titleGroup.className = "interaction-title-group";
-      var engineSubtitle = document.createElement("p");
-      engineSubtitle.className = "wp-mode-note interaction-engine-subtitle";
-      engineSubtitle.textContent = "beta v0.7 引擎 · 26-10";
-      titleGroup.appendChild(title);
-      titleGroup.appendChild(engineSubtitle);
-      var headingLeft = document.createElement("div");
-      headingLeft.className = "interaction-heading-left";
-      headingLeft.appendChild(titleGroup);
+      heading.appendChild(titleGroup);
+      heading.appendChild(subtitle);
+      sheet.appendChild(heading);
+      var toolbar = document.createElement("div");
+      toolbar.className = "interaction-toolbar";
+      var toolbarActions = document.createElement("div");
+      toolbarActions.className = "interaction-toolbar-actions";
       var drive = document.createElement("button");
       drive.id = "btnPanelAutoDrive"; drive.type = "button";
       drive.className = "icon-btn auto-drive-button auto-drive-panel";
       drive.innerHTML = '<span class="auto-drive-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 15.5a8 8 0 0 1 12-10M19.5 8.5a8 8 0 0 1-12 10" opacity=".55"/><path d="m10 5.5 5.5 7-4 .5-3 3.5z" transform="translate(4.08 4.74) scale(.66)"/><circle cx="18.5" cy="5.5" r="1" fill="currentColor" stroke="none"/></svg><small>AUTO</small></span><span class="auto-drive-word" aria-hidden="true">Drive</span>';
       drive.addEventListener("click", toggleAutoDrive);
-      headingLeft.appendChild(drive);
+      toolbarActions.appendChild(drive);
       var statistics = document.createElement("button");
       statistics.id = "btnInteractionStats"; statistics.type = "button";
       statistics.className = "interaction-stats-launcher";
       statistics.setAttribute("aria-haspopup", "dialog");
       statistics.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5v15h16M7 14l4-5 4 3 5-7"/></svg><span>历史统计</span>';
       statistics.addEventListener("click", openStatsPanel);
-      headingLeft.appendChild(statistics);
-      heading.appendChild(headingLeft);
-      heading.appendChild(subtitle);
-      sheet.appendChild(heading);
+      toolbarActions.appendChild(statistics);
+      toolbar.appendChild(toolbarActions);
+      var factoryBar = document.createElement("div"); factoryBar.className = "interaction-factory-bar";
+      var factoryStatus = document.createElement("span"); factoryStatus.id = "interactionFactoryStatus"; factoryStatus.setAttribute("role", "status");
+      var defaults = document.createElement("button"); defaults.id = "interactionDefaults"; defaults.type = "button"; defaults.className = "btn sm"; defaults.textContent = "设默认值";
+      defaults.setAttribute("aria-haspopup", "dialog"); defaults.addEventListener("click", openDefaultsPanel);
+      var factory = document.createElement("button"); factory.id = "interactionFactoryReset"; factory.type = "button"; factory.className = "btn sm"; factory.textContent = "恢复出厂默认";
+      factory.addEventListener("click", restoreFactoryInteraction);
+      factoryBar.appendChild(factoryStatus); factoryBar.appendChild(defaults); factoryBar.appendChild(factory);
+      toolbar.appendChild(factoryBar);
+      sheet.appendChild(toolbar);
     } else if (!options.stats && !options.defaults) sheet.appendChild(title);
 
     if (options.sub) {
@@ -2032,7 +2036,11 @@
     slider.style.setProperty("--probability-light", light + "%");
     $("wallpaperProbabilityValue").textContent = light + " : " + dark;
     $("wallpaperProbabilityValue").setAttribute("aria-label", "Light " + light + "%，Dark " + dark + "%");
-    $("wallpaperInteractionNote").textContent = "代号：交互 功能当前获得的下一次主图随机概率为 " + light + ":" + dark;
+    var interactionNote = $("wallpaperInteractionNote");
+    interactionNote.textContent = "代号：交互 功能当前获得的下一次主图随机概率为 ";
+    var noteRatio = document.createElement("b");
+    noteRatio.textContent = light + " : " + dark;
+    interactionNote.appendChild(noteRatio);
     var liveRatio = $("interactionAlgorithmRatio");
     if (liveRatio) liveRatio.textContent = light + ":" + dark;
     var source = state.wallpaperProbability.source === "interaction" ? "交互生成"
@@ -2591,6 +2599,7 @@
     var slider = $("collisionStrength"); if (!slider) return;
     var settings = state.collision, available = state.collisionReady && !state.collisionReadError;
     slider.value = String(collisionAPI().toSlider(state.collisionCurrent));
+    paintRangeFill(slider);
     slider.disabled = !available || state.factoryBusy;
     slider.setAttribute("aria-valuetext", collisionLabel(state.collisionCurrent));
     $("collisionStrengthValue").textContent = collisionLabel(state.collisionCurrent);
@@ -2633,14 +2642,15 @@
     var text = document.createElement("span"); text.textContent = "每次启动随机";
     var track = document.createElement("i"); track.className = "wp-track";
     var knob = document.createElement("i"); knob.className = "wp-knob"; track.appendChild(knob); track.setAttribute("aria-hidden", "true"); random.appendChild(text); random.appendChild(track); modeRow.appendChild(random);
-    block.appendChild(modeRow);
     random.addEventListener("click", function () {
       state.collision.randomOnLaunch = !state.collision.randomOnLaunch;
       if (state.collision.randomOnLaunch) rollCollisionForEntry();
       else { collisionSessionSample = null; state.collision.strength = state.collisionCurrent; applyCollisionStrength(); }
       state.collisionSaveStatus = ""; syncCollisionPanel();
     });
-    var hint = document.createElement("p"); hint.id = "collisionHint"; hint.className = "collision-hint"; block.appendChild(hint);
+    var hint = document.createElement("p"); hint.id = "collisionHint"; hint.className = "collision-hint";
+    var foot = document.createElement("div"); foot.className = "collision-foot";
+    foot.appendChild(hint); foot.appendChild(modeRow); block.appendChild(foot);
     var saveLine = document.createElement("div"); saveLine.className = "collision-save-line";
     var note = document.createElement("span"); note.id = "collisionSaveNote"; note.setAttribute("role", "status"); saveLine.appendChild(note);
     var retry = document.createElement("button"); retry.type = "button"; retry.id = "collisionRetry"; retry.textContent = "重试"; retry.className = "collision-retry";
@@ -2694,6 +2704,7 @@
     var range = $("naturalPace"); if (!range) return;
     var available = state.paceReady && !state.paceReadError;
     range.value = String(paceAPI().toSlider(state.naturalPace)); range.disabled = !available || state.factoryBusy;
+    paintRangeFill(range);
     range.setAttribute("aria-valuetext", paceLabel(state.naturalPace));
     $("naturalPaceValue").textContent = paceLabel(state.naturalPace);
     $("paceSaveNote").textContent = !state.paceReady ? "正在读取运动设置…" : state.paceReadError ? "运动设置暂未读出，未覆盖原设置。" : "";
@@ -2717,6 +2728,14 @@
     return typeof value === "number" && isFinite(value) ? Math.max(0, Math.min(49, Math.round(value))) : 2;
   }
 
+  function paintRangeFill(range) {
+    if (!range) return;
+    var min = Number(range.min) || 0, max = Number(range.max);
+    if (!(max > min)) return;
+    var pct = ((Number(range.value) - min) / (max - min)) * 100;
+    range.style.setProperty("--fill", Math.max(0, Math.min(100, pct)).toFixed(2) + "%");
+  }
+
   function syncInteractionPanel() {
     syncDefaultsPanel();
     var button = $("btnInteraction");
@@ -2726,6 +2745,7 @@
     var slider = $("interactionCount");
     if (!slider) return;
     slider.value = String(state.interactionCount);
+    paintRangeFill(slider);
     slider.disabled = !state.interactionSettingsReady || state.factoryBusy;
     slider.setAttribute("aria-valuetext", state.interactionCount + " 枚浮光");
     $("interactionCountValue").textContent = state.interactionCount + " 枚";
