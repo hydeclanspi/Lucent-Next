@@ -2316,7 +2316,7 @@
 
   /* ---------- 代号：交互 ---------- */
 
-  var FACTORY_INTERACTION = Object.freeze({ count: 2, light: 0.5, strength: 1, randomOnLaunch: false, pace: 1 });
+  var FACTORY_INTERACTION = Object.freeze({ count: 2, light: 0.63, strength: 11.6, randomOnLaunch: false, pace: 2.41 });
 
   // Current values and startup defaults stay separate. These four groups share
   // the existing storage keys, so opening the manager never migrates or writes data.
@@ -2541,6 +2541,7 @@
     if (state.factoryBusy || state.defaultsBusy) return;
     state.factoryBusy = true; state.factoryStatus = "";
     if (interactionController) interactionController.setAutoDrive(false);
+    autoLaunchTried = true; // Launch-on is a startup policy; restoring it never restarts this session.
     state.autoDriveLaunchOn = true; state.autoDriveReadError = false;
     state.interactionCount = FACTORY_INTERACTION.count;
     if (interactionController) interactionController.setCount(state.interactionCount);

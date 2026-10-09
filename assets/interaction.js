@@ -16,6 +16,9 @@
   // Mutable so tests can shorten the reshuffle cadence; the app never rewrites it.
   const AUTO = { cruiseMin: 5, cruiseMax: 8, burst: 1.7, kickLimit: 320, manualGrace: 1.25, replan: 0.75, reshuffle: 11.5 };
   const NATURAL = Object.freeze({ neighborRadius: 76, share: 0.30, densityStep: 0.06, cooldown: 0.28 });
+  // Placement soft penalties: far separation breaks the shield, closeness is a gentler
+  // nudge that chance may still tolerate; crowding follows the shared neighbor radius.
+  const PLACEMENT = Object.freeze({ farPenalty: 2.4, closePenalty: 0.65, crowdPenalty: 0.9, nearBand: 60, farBand: 180 });
   const COUNT_MAX = 49, COUNT_CURVE = 2.6, COUNT_LOW_CURVE = 1.3, COUNT_MID = 8;
   const RADIUS = 11;
   const CLEARANCE = 30; // A 44px touch target plus 8px of space around existing UI.
@@ -84,6 +87,22 @@
     if (!normal.lower) return normal;
     const n = clamp(Math.floor(count), 0, COUNT_MAX);
     return { lower: Math.min(n, normal.lower * 3), upper: n };
+  }
+  function placementWeight(site, placed, scale) {
+    const gaps = placed.map(other => distance(site, other));
+    if (!gaps.length) return 1;
+    const nearest = Math.min(...gaps);
+    const far = Math.max(0, nearest - PLACEMENT.farBand * scale) / (60 * scale);
+    const close = Math.max(0, PLACEMENT.nearBand * scale - nearest) / (30 * scale);
+    const crowd = Math.max(0, gaps.filter(gap => gap < NATURAL.neighborRadius).length - 2);
+    return Math.exp(-PLACEMENT.farPenalty * far - PLACEMENT.closePenalty * close - PLACEMENT.crowdPenalty * crowd);
+  }
+  function pickSite(candidates, placed, scale) {
+    let total = 0;
+    const weights = candidates.map(site => { const weight = placementWeight(site, placed, scale); total += weight; return weight; });
+    let ticket = Math.random() * total;
+    for (let i = 0; i < candidates.length; i++) { ticket -= weights[i]; if (ticket <= 0) return candidates[i]; }
+    return candidates[candidates.length - 1];
   }
   function resolveAutoImpact(body, other, nx, ny, strength) {
     const closing = (body.vx - other.vx) * nx + (body.vy - other.vy) * ny;
@@ -676,23 +695,20 @@
       const candidates = sites.filter(site => placed.every(other => distance(site, other) >= RADIUS * 2 + 2));
       if (!candidates.length) return false;
       let choices = candidates;
+      const scale = clamp(Math.min(geometry.width / 1560, geometry.height / 1040), 0.7, 1.3);
       if (preserve) {
         choices = [candidates.reduce((a, b) => distance(a, body) < distance(b, body) ? a : b)];
       } else if (placed.length === 1) {
         // A relaxed pair, with a distance independent of the upper band's expanded width.
-        const scale = clamp(Math.min(geometry.width / 1560, geometry.height / 1040), 0.7, 1.3);
         const nearby = candidates.filter(site => distance(site, placed[0]) >= 130 * scale && distance(site, placed[0]) <= 210 * scale);
         if (nearby.length) choices = nearby;
-        else choices = [candidates.reduce((a, b) => Math.abs(distance(a, placed[0]) - 165 * scale) < Math.abs(distance(b, placed[0]) - 165 * scale) ? a : b)];
       } else if (placed.length > 1) {
         // New arrivals stay near an existing lens, while dense populations can fill gaps.
-        const scale = clamp(Math.min(geometry.width / 1560, geometry.height / 1040), 0.7, 1.3);
         const nearestGap = site => Math.min(...placed.map(other => distance(site, other)));
         const nearby = candidates.filter(site => nearestGap(site) >= 60 * scale && nearestGap(site) <= 180 * scale);
         if (nearby.length) choices = nearby;
-        else choices = [candidates.reduce((a, b) => nearestGap(a) < nearestGap(b) ? a : b)];
       }
-      const site = choices[Math.min(choices.length - 1, Math.floor(Math.random() * choices.length))];
+      const site = choices.length === 1 ? choices[0] : pickSite(choices, placed, scale);
       body.x = site.x; body.y = site.y; body.positioned = true;
       return true;
     }
@@ -913,5 +929,5 @@
     autoDrive: { bounds: autoBounds, rageBounds, motion: AUTO }, collision: { max: COLLISION_MAX, normalize: collisionSettings, strength: collisionStrength, draw: randomCollision,
     fromSlider: value => collisionStrength(Math.pow(COLLISION_MAX, clamp(Number(value) || 0, 0, 1000) / 1000)),
     toSlider: value => Math.round(Math.log(collisionStrength(value)) / Math.log(COLLISION_MAX) * 1000) },
-    _test: { REGION, WEIGHTS, MOTION, AUTO, NATURAL, naturalPace, naturalResponse, resolveNaturalImpact, RESTITUTION, MAX_IMPACT_SPEED, resolveImpact, resolveAutoImpact, autoBounds, rageBounds, limitVelocity, makeGeometry, inPolygon, segmentDistance, advance, potential, startModel, sampleModel, modelProbability, safeSites, clearRoute, navigationGrid, routeBetween } };
+    _test: { REGION, WEIGHTS, MOTION, AUTO, NATURAL, PLACEMENT, naturalPace, naturalResponse, resolveNaturalImpact, RESTITUTION, MAX_IMPACT_SPEED, resolveImpact, resolveAutoImpact, autoBounds, rageBounds, placementWeight, pickSite, limitVelocity, makeGeometry, inPolygon, segmentDistance, advance, potential, startModel, sampleModel, modelProbability, safeSites, clearRoute, navigationGrid, routeBetween } };
 });

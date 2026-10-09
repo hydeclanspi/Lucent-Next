@@ -449,7 +449,7 @@
 .defaults-autodrive { margin-top: 6px; }
 .defaults-autodrive-head { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .defaults-autodrive-copy { min-width: 0; }
-.defaults-autodrive-copy .defaults-description { margin-bottom: 0; }
+.defaults-autodrive-copy .defaults-description { margin-top: 10px; margin-bottom: 0; }
 .defaults-autodrive-head .wp-random { position: static; flex: none; display: flex; align-items: center; gap: 9px; padding: 4px 0; min-height: 36px; font-size: 11px; color: var(--ink-2); letter-spacing: .3px; }
 #default-autodrive-feedback { margin-top: 10px; }
 .defaults-list { display: grid; gap: 12px; }
