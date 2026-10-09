@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "3.5.0",
+  "version": "3.6.0",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互加入自然碰撞散开、0.25–16 倍自然 pace、独立自定义启动默认与一键出厂恢复；面板内可启停自动驾驶。"
+  "description": "通透的个人名片主页。代号：交互集中管理自定义默认值，支持逐项保存与恢复、保存当前组合及一键出厂恢复；Drive 采用圆环图标与横向文字。"
 }

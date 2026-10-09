@@ -185,11 +185,10 @@
 .interaction-count-track { display: flex; align-items: center; gap: 14px; margin-top: 12px; min-height: 40px; }
 .interaction-count-track .wp-range { min-width: 0; height: 40px; }
 #interactionCountValue { flex: none; min-width: 39px; font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; text-align: right; }
-#interactionDefaultValue { font-size: 11.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 .btn.interaction-save { flex: none; min-height: 36px; padding: 6px 10px; white-space: nowrap; font-size: 12px; animation: fade 180ms ease; }
-/* Keep the slider's length stable when the save button appears. */
-.interaction-count-track { display: grid; grid-template-columns: minmax(0, 1fr) 39px 92px; }
-.interaction-count-ends { display: flex; justify-content: space-between; margin-right: 159px; margin-top: -3px; font-size: 10px; color: var(--ink-3); }
+/* Give the main panel back its full slider width. */
+.interaction-count-track { display: grid; grid-template-columns: minmax(0, 1fr) 45px; }
+.interaction-count-ends { display: flex; justify-content: space-between; margin-right: 59px; margin-top: -3px; font-size: 10px; color: var(--ink-3); }
 .interaction-count-hint { margin: 14px 0 0; font-size: 11px; color: var(--ink-3); line-height: 1.65; }
 .interaction-panel .wp-probability { margin-top: 32px; }
 .interaction-algorithm {
@@ -218,8 +217,8 @@
   .sheet.wide.interaction-sheet { padding: 26px 20px 22px; }
   .interaction-heading { gap: 12px; }
   .interaction-subtitle { font-size: 15px; }
-  .interaction-count-track { gap: 10px; grid-template-columns: minmax(0, 1fr) 35px 84px; }
-  .interaction-count-ends { margin-right: 139px; }
+  .interaction-count-track { gap: 10px; grid-template-columns: minmax(0, 1fr) 45px; }
+  .interaction-count-ends { margin-right: 55px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .interaction-save, .interaction-launcher.is-enabled .wp-dot { animation: none; }
@@ -332,17 +331,17 @@
   .auto-drive-button, .auto-drive-button.is-appearing { animation: none; transition: none; }
 }
 
-/* The sheet keeps the same driving switch, with a tiny directional orbit and caption. */
+/* A compact orbit mark, with enough room for the Drive wordmark. */
 .auto-drive-button.auto-drive-panel {
-  position: static; flex: none; width: 44px; height: 48px; padding: 5px 0;
-  display: flex; flex-direction: column; justify-content: center; gap: 1px;
+  position: static; flex: none; width: auto; min-width: 96px; height: 42px; padding: 0 12px;
+  display: inline-flex; flex-direction: row; align-items: center; justify-content: center; gap: 7px;
   color: var(--ink-2); opacity: 1;
   background: linear-gradient(145deg, rgba(238,248,255,.33), rgba(190,219,240,.08));
   border-color: rgba(239,250,255,.48);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.50), 0 3px 9px rgba(23,45,63,.07);
 }
-.auto-drive-panel > svg { width: 24px; height: 24px; }
-.auto-drive-panel > span { font-size: 7px; line-height: 1; letter-spacing: 1.1px; padding-left: 1px; }
+.auto-drive-panel > svg { flex: none; width: 25px; height: 25px; }
+.auto-drive-panel > span { font-size: 12px; line-height: 1; font-weight: 500; letter-spacing: .35px; }
 .auto-drive-panel.is-running { color: #367b9e; border-color: rgba(162,218,250,.75); background: linear-gradient(145deg, rgba(187,229,253,.5), rgba(172,220,249,.16)); box-shadow: inset 0 1px 0 rgba(239,252,255,.7), 0 0 12px rgba(128,197,236,.19); text-shadow: none; }
 :root[data-theme="dark"] .auto-drive-panel.is-running { color: #C8EDFF; background: linear-gradient(145deg, rgba(167,217,247,.25), rgba(106,171,210,.09)); }
 .auto-drive-panel[aria-disabled="true"] { opacity: .45; }
@@ -351,8 +350,6 @@
 .interaction-factory-bar { display: flex; justify-content: flex-end; align-items: center; gap: 14px; margin: -3px 0 23px; }
 .interaction-factory-bar > span { color: var(--ink-3); font-size: 10.5px; line-height: 1.5; }
 .interaction-factory-bar > button { flex: none; font-size: 11px; padding: 7px 12px; }
-.interaction-default-row { display: flex; align-items: center; justify-content: flex-end; gap: 14px; margin-top: 12px; }
-.interaction-default-row > span { font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 .pace-panel #naturalPace { width: 100%; height: 40px; }
 .pace-range-ends { display: flex; justify-content: space-between; color: var(--ink-3); font-size: 10px; margin-top: -3px; }
 .pace-description { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
@@ -365,3 +362,47 @@
   .sheet .interaction-title-group { margin-right: 0; flex-basis: 100%; }
   .interaction-factory-bar { flex-wrap: wrap; }
 }
+
+/* Defaults live one level deeper, in the same liquid-glass sheet. */
+.sheet.wide.defaults-sheet { max-height: 86dvh; }
+.defaults-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.defaults-heading { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.defaults-back { display: grid; place-items: center; flex: none; width: 36px; height: 42px; margin-left: -8px; color: var(--ink-2); border-radius: 12px; }
+.defaults-back svg { width: 21px; height: 21px; }
+.defaults-back:hover { background: rgba(179,211,237,.15); }
+.defaults-title { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: .4px; }
+.defaults-subtitle { margin: 9px 0 0; font-size: 11.5px; line-height: 1.6; color: var(--ink-3); }
+.btn.defaults-save-all { flex: none; min-height: 40px; padding: 0 15px; font-size: 11.5px; color: var(--ink); background: linear-gradient(140deg, rgba(236,248,255,.56), rgba(184,217,241,.20)); border-color: rgba(238,250,255,.74); box-shadow: inset 0 1px 0 rgba(255,255,255,.85), 0 3px 10px rgba(31,60,84,.07); }
+.defaults-intro { margin: 24px 0 17px; color: var(--ink-2); font-size: 11.5px; line-height: 1.8; }
+.defaults-status { margin: -3px 0 16px; color: var(--ink-2); font-size: 11.5px; line-height: 1.8; }
+.defaults-list { display: grid; gap: 12px; }
+.defaults-card { padding: 17px 19px 18px; border: 1px solid rgba(239,249,255,.44); border-radius: 18px; background: linear-gradient(135deg, rgba(232,244,255,.22), rgba(201,224,243,.06)); box-shadow: inset 0 1px 0 rgba(255,255,255,.36); }
+.defaults-card h4 { margin: 0; font-size: 13px; font-weight: 600; color: var(--ink); letter-spacing: .5px; }
+.defaults-description { margin: 6px 0 16px; color: var(--ink-2); font-size: 10.5px; line-height: 1.7; }
+.defaults-values { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 22px; }
+.defaults-value-cell { display: grid; grid-template-columns: minmax(0,1fr) auto; column-gap: 12px; align-content: start; align-items: start; }
+.defaults-value-cell + .defaults-value-cell { padding-left: 22px; border-left: 1px solid var(--ink-4); }
+.defaults-value-label { grid-column: 1; color: var(--ink-3); font-size: 10px; line-height: 1.5; }
+.defaults-value-cell output { grid-column: 1; display: block; margin-top: 5px; color: var(--ink); font-size: 20px; font-weight: 400; line-height: 1.3; letter-spacing: .25px; font-variant-numeric: tabular-nums; }
+.defaults-value-cell small { grid-column: 1 / -1; color: var(--ink-2); font-size: 10px; line-height: 1.6; margin-top: 5px; }
+.btn.defaults-action { grid-column: 2; grid-row: 1 / 3; align-self: center; margin: 0; padding: 7px 10px; min-height: 36px; font-size: 11px; white-space: nowrap; color: var(--ink-2); background: rgba(224,239,250,.14); box-shadow: inset 0 1px 0 rgba(255,255,255,.3); border-color: rgba(246,252,255,.40); }
+.defaults-feedback { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: var(--ink-2); font-size: 10.5px; line-height: 1.7; }
+.defaults-panel [hidden], .collision-save-line[hidden] { display: none; }
+.defaults-panel button:disabled, .interaction-factory-bar button:disabled { opacity: .42; cursor: default; }
+.defaults-panel button:focus-visible { outline: 2px solid var(--ink-2); outline-offset: 3px; }
+:root[data-theme="dark"] .defaults-card { background: linear-gradient(135deg, rgba(163,207,240,.09), rgba(124,174,213,.025)); border-color: rgba(220,241,255,.16); box-shadow: inset 0 1px 0 rgba(239,250,255,.10); }
+:root[data-theme="dark"] .btn.defaults-save-all { background: linear-gradient(140deg, rgba(190,225,250,.22), rgba(143,189,222,.08)); border-color: rgba(223,245,255,.36); box-shadow: inset 0 1px 0 rgba(243,252,255,.34); }
+:root[data-theme="dark"] .btn.defaults-action { background: rgba(172,208,235,.055); border-color: rgba(223,243,255,.20); box-shadow: inset 0 1px 0 rgba(243,252,255,.13); }
+@media (max-width: 600px) {
+  .sheet.wide.defaults-sheet { padding: 24px 18px 20px; }
+  .defaults-header { flex-wrap: wrap; gap: 18px; }
+  .defaults-save-all { margin-left: auto; }
+  .defaults-card { padding: 16px; }
+  .defaults-values { gap: 15px; }
+  .defaults-value-cell { grid-template-columns: minmax(0,1fr); }
+  .defaults-value-cell + .defaults-value-cell { padding-left: 15px; }
+  .defaults-value-cell small { min-height: 32px; }
+  .btn.defaults-action { grid-column: 1; grid-row: 4; justify-self: start; margin-top: 12px; padding-inline: 8px; }
+  .defaults-value-cell output { font-size: 19px; }
+}
+@media (pointer: coarse) { .defaults-panel button, .interaction-factory-bar button, .auto-drive-button.auto-drive-panel { min-height: 44px; } }

@@ -80,7 +80,11 @@
     interactionCount: 2,
     interactionDefaultCount: 2,
     interactionSettingsReady: false,
+    interactionReadError: false,
     interactionDefaultSaving: false,
+    interactionSaveStatus: "",
+    defaultsBusy: false,
+    defaultsStatus: "",
     collision: { version: 2, strength: 1, randomOnLaunch: false },
     collisionCurrent: 1,
     collisionReady: false,
@@ -1399,7 +1403,7 @@
 
   /* ---------- 面板 ---------- */
 
-  var statsStore = null, statsController = null, statsParent = null;
+  var statsStore = null, statsController = null, statsParent = null, defaultsParent = null;
 
   function initStats() {
     if (!window.AiraStatsStore) return;
@@ -1443,9 +1447,10 @@
   function openSheet(options) {
     var sheet = el.sheet;
     if (statsController) { statsController.destroy(); statsController = null; }
-    statsParent = null;
+    statsParent = null; defaultsParent = null;
     sheet.textContent = "";
     sheet.classList.toggle("stats-sheet", !!options.stats);
+    sheet.classList.toggle("defaults-sheet", !!options.defaults);
     sheet.setAttribute("aria-label", options.title || "操作面板");
     $("btnInteraction").setAttribute("aria-expanded", options.interaction ? "true" : "false");
     sheet.classList.toggle("center", !!options.center);
@@ -1460,7 +1465,9 @@
       var factoryStatus = document.createElement("span"); factoryStatus.id = "interactionFactoryStatus"; factoryStatus.setAttribute("role", "status");
       var factory = document.createElement("button"); factory.id = "interactionFactoryReset"; factory.type = "button"; factory.className = "btn sm"; factory.textContent = "恢复出厂默认";
       factory.addEventListener("click", restoreFactoryInteraction);
-      factoryBar.appendChild(factoryStatus); factoryBar.appendChild(factory); sheet.appendChild(factoryBar);
+      var defaults = document.createElement("button"); defaults.id = "interactionDefaults"; defaults.type = "button"; defaults.className = "btn sm"; defaults.textContent = "设默认值";
+      defaults.setAttribute("aria-haspopup", "dialog"); defaults.addEventListener("click", openDefaultsPanel);
+      factoryBar.appendChild(factoryStatus); factoryBar.appendChild(defaults); factoryBar.appendChild(factory); sheet.appendChild(factoryBar);
       var heading = document.createElement("div");
       heading.className = "interaction-heading";
       var subtitle = document.createElement("div");
@@ -1484,7 +1491,7 @@
       var drive = document.createElement("button");
       drive.id = "btnPanelAutoDrive"; drive.type = "button";
       drive.className = "icon-btn auto-drive-button auto-drive-panel";
-      drive.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 15.5a8 8 0 0 1 12-10M19.5 8.5a8 8 0 0 1-12 10" opacity=".55"/><path d="m10 5.5 5.5 7-4 .5-3 3.5z"/><circle cx="18.5" cy="5.5" r="1" fill="currentColor" stroke="none"/></svg><span aria-hidden="true">AUTO</span>';
+      drive.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 15.5a8 8 0 0 1 12-10M19.5 8.5a8 8 0 0 1-12 10" opacity=".55"/><path d="m10 5.5 5.5 7-4 .5-3 3.5z" transform="translate(4.08 4.74) scale(.66)"/><circle cx="18.5" cy="5.5" r="1" fill="currentColor" stroke="none"/></svg><span aria-hidden="true">Drive</span>';
       drive.addEventListener("click", toggleAutoDrive);
       headingLeft.appendChild(drive);
       var statistics = document.createElement("button");
@@ -1497,7 +1504,7 @@
       heading.appendChild(headingLeft);
       heading.appendChild(subtitle);
       sheet.appendChild(heading);
-    } else if (!options.stats) sheet.appendChild(title);
+    } else if (!options.stats && !options.defaults) sheet.appendChild(title);
 
     if (options.sub) {
       var sub = document.createElement("p");
@@ -1541,14 +1548,15 @@
       sheet.appendChild(footer);
     }
 
+    sheet.scrollTop = 0;
     el.sheetRoot.hidden = false;
     setBackActive(true);
     refreshInteraction();
   }
 
   function closeSheet() {
-    if (statsParent) {
-      var parent = statsParent; statsParent = null;
+    if (statsParent || defaultsParent) {
+      var isDefaults = !!defaultsParent, parent = defaultsParent || statsParent; statsParent = null; defaultsParent = null;
       if (statsController) { statsController.destroy(); statsController = null; }
       el.sheet.textContent = '';
       parent.nodes.forEach(function (node) { el.sheet.appendChild(node); });
@@ -1556,7 +1564,7 @@
       el.sheet.setAttribute('aria-label', parent.label);
       $("btnInteraction").setAttribute('aria-expanded', 'true');
       syncInteractionPanel(); syncProbabilityPanel(); syncCollisionPanel(); syncPacePanel(); syncAutoDriveButton(); syncFactoryPanel();
-      $("btnInteractionStats").focus({ preventScroll: true });
+      $(isDefaults ? "interactionDefaults" : "btnInteractionStats").focus({ preventScroll: true });
       return;
     }
     el.sheetRoot.hidden = true;
@@ -2013,6 +2021,7 @@
   }
 
   function syncProbabilityPanel() {
+    syncDefaultsPanel();
     var slider = $("wallpaperProbability");
     if (!slider) return;
     var light = Math.round(state.wallpaperProbability.light * 100);
@@ -2027,14 +2036,8 @@
     if (liveRatio) liveRatio.textContent = light + ":" + dark;
     var source = state.wallpaperProbability.source === "interaction" ? "交互生成"
       : state.wallpaperProbability.source === "manual" ? "手动设置" : "初始比例";
-    var defaultButton = $("probabilitySaveDefault");
-    if (defaultButton) {
-      defaultButton.disabled = slider.disabled || state.probabilityDefaultSaveStatus === "saving";
-      $("probabilityDefaultValue").textContent = "默认 " + Math.round(state.probabilityDefault * 100) + ":" + Math.round(100 - state.probabilityDefault * 100);
-      $("probabilityDefaultNote").textContent = state.probabilityDefaultReadError ? "默认比例暂未读出，未覆盖原设置。" : state.probabilityDefaultSaveStatus === "error" ? "默认比例尚未保存成功，请重试。" : state.probabilityDefaultSaveStatus === "saving" ? "正在保存…" : state.probabilityDefaultSaveStatus === "saved" ? "启动默认已保存。" : "";
-      $("probabilityDefaultRetry").hidden = !state.probabilityDefaultReadError && state.probabilityDefaultSaveStatus !== "error";
-    }
     $("wallpaperProbabilityStatus").textContent = !state.wallpaperProbabilityReady ? "正在读取比例…"
+      : state.probabilityDefaultReadError ? "默认比例暂未读出，请在「设默认值」中重试。"
       : source + " · " + (wpMode() === "random" ? "下次随机生效" : "开启随机后生效");
   }
 
@@ -2250,7 +2253,7 @@
   function loadWallpaper() {
     var revision = ++wallpaperLoadRevision;
     state.wallpaperProbabilityReady = false;
-    state.interactionSettingsReady = false;
+    state.interactionSettingsReady = false; state.interactionReadError = false;
     syncInteractionPanel();
     syncProbabilityPanel();
     refreshInteraction();
@@ -2258,7 +2261,7 @@
       storageGet("wallpaper", null),
       storageGet("wallpaperBlur", null),
       storageGet("wallpaperProbability", null),
-      storageGet("interactionSettings", null)
+      readInteractionSetting("interactionSettings").catch(function () { state.interactionReadError = true; return null; })
     ]).then(function (settings) {
       if (revision !== wallpaperLoadRevision) return;
       var saved = settings[0];
@@ -2304,6 +2307,147 @@
   /* ---------- 代号：交互 ---------- */
 
   var FACTORY_INTERACTION = Object.freeze({ count: 2, light: 0.5, strength: 1, randomOnLaunch: false, pace: 1 });
+
+  // Current values and startup defaults stay separate. These four groups share
+  // the existing storage keys, so opening the manager never migrates or writes data.
+  function defaultGroups() {
+    return [
+      { key: "count", name: "浮光数量", description: "进入主页时出现的浮光数量，0 枚可收起浮光。",
+        current: state.interactionCount + " 枚", saved: state.interactionDefaultCount + " 枚",
+        ready: state.interactionSettingsReady, error: state.interactionReadError, status: state.interactionSaveStatus,
+        saveId: "interactionSaveDefault", save: saveInteractionDefault, retry: retryCountDefault },
+      { key: "probability", name: "主图随机比例", description: "Light / Dark 的抽取权重，仅在主图随机模式下生效。",
+        current: ratioLabel(state.wallpaperProbability.light), saved: ratioLabel(state.probabilityDefault),
+        ready: state.probabilityDefaultReady && state.wallpaperProbabilityReady, error: state.probabilityDefaultReadError, status: state.probabilityDefaultSaveStatus,
+        saveId: "probabilitySaveDefault", save: saveProbabilityDefault, retry: loadProbabilityDefault },
+      { key: "collision", name: "碰撞力度", description: "保存力度与启动策略。启用随机时，每次启动或恢复此默认都会重新抽取力度。",
+        current: collisionLabel(state.collisionCurrent), saved: collisionLabel(state.collisionDefault.strength),
+        currentDetail: state.collision.randomOnLaunch ? "启动随机 · 1–24×" : "固定力度",
+        savedDetail: state.collisionDefault.randomOnLaunch ? "启动随机 · 此值作固定备用" : "固定力度",
+        ready: state.collisionReady, error: state.collisionReadError, status: state.collisionSaveStatus,
+        saveId: "collisionSaveDefault", save: saveCollisionSettings, retry: loadCollisionSettings },
+      { key: "pace", name: "自然 pace", description: "自然漂浮的节奏，0.25–16×；自动驾驶的追逐速率独立保持。",
+        current: paceLabel(state.naturalPace), saved: paceLabel(state.paceDefault),
+        ready: state.paceReady, error: state.paceReadError, status: state.paceSaveStatus,
+        saveId: "paceSaveDefault", save: savePaceSettings, retry: loadPaceSettings }
+    ];
+  }
+  function ratioLabel(light) { return Math.round(light * 100) + " : " + Math.round(100 - light * 100); }
+
+  function openDefaultsPanel() {
+    if (!state.defaultsBusy) state.defaultsStatus = "";
+    var parent = { nodes: Array.from(el.sheet.childNodes), classes: el.sheet.className, scroll: el.sheet.scrollTop, label: el.sheet.getAttribute("aria-label") };
+    var body = document.createElement("div"); body.className = "defaults-panel";
+    var header = document.createElement("div"); header.className = "defaults-header";
+    header.innerHTML = '<div class="defaults-heading"><button id="defaultsBack" class="defaults-back" type="button" aria-label="返回代号交互"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button><div><h3 class="defaults-title">设默认值</h3><p class="defaults-subtitle">把喜欢的状态，留给下一次。</p></div></div><button id="defaultsSaveAll" class="btn sm defaults-save-all" type="button">保存当前组合</button>';
+    header.querySelector("#defaultsBack").addEventListener("click", closeSheet);
+    header.querySelector("#defaultsSaveAll").addEventListener("click", function () { saveManagedDefaults(); });
+    body.appendChild(header);
+    var note = document.createElement("p"); note.className = "defaults-intro";
+    note.textContent = "逐项保存，或一次保存全部。恢复默认值仅应用你已保存的偏好。"; body.appendChild(note);
+    var status = document.createElement("p"); status.id = "defaultsStatus"; status.className = "defaults-status"; status.setAttribute("role", "status"); body.appendChild(status);
+    var list = document.createElement("div"); list.className = "defaults-list";
+    defaultGroups().forEach(function (group) {
+      var row = document.createElement("section"); row.className = "defaults-card"; row.dataset.defaultGroup = group.key;
+      var title = document.createElement("h4"); title.id = "default-" + group.key + "-name"; title.textContent = group.name; row.appendChild(title);
+      row.setAttribute("aria-labelledby", title.id);
+      var description = document.createElement("p"); description.className = "defaults-description"; description.textContent = group.description; row.appendChild(description);
+      var values = document.createElement("div"); values.className = "defaults-values";
+      ["current", "saved"].forEach(function (kind) {
+        var cell = document.createElement("div"); cell.className = "defaults-value-cell";
+        var label = document.createElement("span"); label.className = "defaults-value-label"; label.textContent = kind === "current" ? "当前值" : "默认值";
+        var value = document.createElement("output"); value.id = "default-" + group.key + "-" + kind; value.setAttribute("aria-label", group.name + " · " + label.textContent);
+        var detail = document.createElement("small"); detail.id = value.id + "-detail";
+        var button = document.createElement("button"); button.type = "button"; button.className = "btn sm defaults-action";
+        button.id = kind === "current" ? group.saveId : "default-" + group.key + "-restore";
+        button.textContent = kind === "current" ? "设为默认值" : "恢复默认值";
+        button.setAttribute("aria-label", group.name + " · " + button.textContent);
+        button.addEventListener("click", function () { if (kind === "current") saveManagedDefaults(group.key); else restoreManagedDefault(group.key); });
+        cell.appendChild(label); cell.appendChild(value); cell.appendChild(detail); cell.appendChild(button); values.appendChild(cell);
+      });
+      row.appendChild(values);
+      var feedback = document.createElement("div"); feedback.className = "defaults-feedback"; feedback.id = "default-" + group.key + "-feedback";
+      var message = document.createElement("span"); message.setAttribute("role", "status"); feedback.appendChild(message);
+      var retry = document.createElement("button"); retry.type = "button"; retry.className = "collision-retry"; retry.textContent = "重新读取";
+      retry.addEventListener("click", function () { if (!state.defaultsBusy && !state.factoryBusy) group.retry(); }); feedback.appendChild(retry);
+      row.appendChild(feedback); list.appendChild(row);
+    });
+    body.appendChild(list);
+    openSheet({ title: "设默认值", content: body, center: true, wide: true, defaults: true });
+    defaultsParent = parent;
+    syncDefaultsPanel();
+    $("defaultsBack").focus({ preventScroll: true });
+  }
+
+  function syncDefaultsPanel() {
+    var all = $("defaultsSaveAll"); if (!all) return;
+    var groups = defaultGroups(), busy = state.defaultsBusy || state.factoryBusy || groups.some(function (g) { return g.status === "saving"; });
+    all.disabled = busy || groups.some(function (g) { return !g.ready || g.error; });
+    all.textContent = state.defaultsBusy === "all" ? "正在保存…" : "保存当前组合";
+    $("defaultsStatus").textContent = state.defaultsStatus;
+    $("defaultsStatus").hidden = !state.defaultsStatus;
+    groups.forEach(function (g) {
+      $("default-" + g.key + "-current").textContent = g.ready ? g.current : "读取中…";
+      $("default-" + g.key + "-saved").textContent = g.error ? "暂不可用" : g.ready ? g.saved : "读取中…";
+      ["current", "saved"].forEach(function (kind) {
+        var detail = $("default-" + g.key + "-" + kind + "-detail");
+        detail.textContent = g.ready && !g.error ? g[kind + "Detail"] || "" : "";
+        detail.hidden = !detail.textContent;
+      });
+      var save = $(g.saveId); save.disabled = busy || !g.ready || g.error;
+      save.textContent = g.status === "saving" ? "保存中…" : "设为默认值";
+      $("default-" + g.key + "-restore").disabled = busy || !g.ready || g.error;
+      var feedback = $("default-" + g.key + "-feedback");
+      var text = g.error ? "默认值暂未读出，原设置未被覆盖。" : g.status === "error" ? "未能保存，请再点「设为默认值」重试。" : g.status === "saved" ? "已保存，下次启动沿用。" : "";
+      feedback.firstChild.textContent = text; feedback.hidden = !text;
+      feedback.lastChild.hidden = !g.error; feedback.lastChild.disabled = busy;
+    });
+  }
+
+  function saveManagedDefaults(key) {
+    var groups = defaultGroups(), selected = key ? groups.filter(function (g) { return g.key === key; }) : groups;
+    if (state.defaultsBusy || state.factoryBusy || groups.some(function (g) { return g.status === "saving"; }) || selected.some(function (g) { return !g.ready || g.error; })) return;
+    state.defaultsBusy = key || "all"; state.defaultsStatus = ""; syncDefaultsPanel(); syncFactoryPanel();
+    // Each saver captures its value synchronously before its queued write. Saving
+    // never redraws the collision strength or changes the current session.
+    Promise.all(selected.map(function (g) { return g.save(); })).then(function (saved) {
+      var failed = selected.filter(function (_, index) { return !saved[index]; });
+      state.defaultsStatus = failed.length ? "未保存：" + failed.map(function (g) { return g.name; }).join("、") + (failed.length < selected.length ? "。可重试，其余默认值已保存。" : "。请重试，原默认值未被覆盖。")
+        : key ? selected[0].name + "的默认值已更新。" : "当前组合已保存，下次启动沿用。";
+    }).catch(function () { state.defaultsStatus = "保存未完成，请检查各项状态后重试。"; }).then(function () {
+      state.defaultsBusy = false; syncDefaultsPanel(); syncFactoryPanel();
+    });
+  }
+
+  function restoreManagedDefault(key) {
+    var groups = defaultGroups(), group = groups.find(function (g) { return g.key === key; });
+    if (!group || !group.ready || group.error || state.defaultsBusy || state.factoryBusy || groups.some(function (g) { return g.status === "saving"; })) return;
+    if (key === "count") {
+      state.interactionCount = state.interactionDefaultCount;
+      if (interactionController) interactionController.setCount(state.interactionCount);
+      syncInteractionPanel();
+    } else if (key === "probability") {
+      state.wallpaperProbability = { version: 1, light: state.probabilityDefault, source: "default", updatedAt: 0 };
+      syncProbabilityPanel();
+    } else if (key === "collision") {
+      state.collision = collisionAPI().normalize(state.collisionDefault); state.collisionCurrent = state.collision.strength;
+      collisionSessionSample = null;
+      if (state.collision.randomOnLaunch) rollCollisionForEntry(); else applyCollisionStrength();
+    } else if (key === "pace") { state.naturalPace = state.paceDefault; applyPace(); }
+    state.defaultsStatus = "已将" + group.name + "恢复为已保存的默认值。";
+    syncDefaultsPanel(); syncAutoDriveButton();
+  }
+
+  function retryCountDefault() {
+    state.interactionSettingsReady = false; state.interactionReadError = false; syncInteractionPanel(); refreshInteraction();
+    return readInteractionSetting("interactionSettings").then(function (saved) {
+      state.interactionDefaultCount = interactionCountValue(saved && saved.defaultCount);
+      state.interactionCount = state.interactionDefaultCount;
+      if (interactionController) interactionController.setCount(state.interactionCount);
+    }).catch(function () { state.interactionReadError = true; }).then(function () {
+      state.interactionSettingsReady = true; syncInteractionPanel(); refreshInteraction();
+    });
+  }
   function readInteractionSetting(key) {
     var a = api();
     return Promise.resolve().then(function () {
@@ -2318,13 +2462,6 @@
       if (a && a.storage) return a.storage.set(key, value);
       window.localStorage.setItem("aira-profile-card:" + key, JSON.stringify(value));
     });
-  }
-  function defaultRow(id, valueId, save) {
-    var row = document.createElement("div"); row.className = "interaction-default-row";
-    var value = document.createElement("span"); value.id = valueId;
-    var button = document.createElement("button"); button.type = "button"; button.id = id;
-    button.className = "btn sm interaction-save"; button.textContent = "设为默认";
-    button.addEventListener("click", save); row.appendChild(value); row.appendChild(button); return row;
   }
   var probabilityDefaultLoadRevision = 0, probabilityDefaultWriteRevision = 0, probabilityDefaultWriteQueue = Promise.resolve();
   function loadProbabilityDefault() {
@@ -2362,13 +2499,14 @@
     return probabilityDefaultWriteQueue;
   }
   function syncFactoryPanel() {
+    syncDefaultsPanel();
     var button = $("interactionFactoryReset"); if (!button) return;
-    button.disabled = state.factoryBusy || !state.collisionReady || !state.paceReady || !state.probabilityDefaultReady || !state.interactionSettingsReady;
+    button.disabled = state.factoryBusy || state.defaultsBusy || !state.collisionReady || !state.paceReady || !state.probabilityDefaultReady || !state.interactionSettingsReady;
     button.textContent = state.factoryBusy ? "正在恢复…" : "恢复出厂默认";
     $("interactionFactoryStatus").textContent = state.factoryStatus;
   }
   function restoreFactoryInteraction() {
-    if (state.factoryBusy) return;
+    if (state.factoryBusy || state.defaultsBusy) return;
     state.factoryBusy = true; state.factoryStatus = "";
     if (interactionController) interactionController.setAutoDrive(false);
     state.interactionCount = FACTORY_INTERACTION.count;
@@ -2376,7 +2514,7 @@
     state.wallpaperProbability = { version: 1, light: FACTORY_INTERACTION.light, source: "default", updatedAt: 0 };
     state.collision = collisionAPI().normalize(FACTORY_INTERACTION); state.collisionCurrent = FACTORY_INTERACTION.strength;
     state.naturalPace = FACTORY_INTERACTION.pace; collisionSessionSample = null;
-    state.collisionReadError = false; state.paceReadError = false; state.probabilityDefaultReadError = false;
+    state.collisionReadError = false; state.paceReadError = false; state.probabilityDefaultReadError = false; state.interactionReadError = false;
     applyCollisionStrength(); applyPace(); syncInteractionPanel(); syncProbabilityPanel(); syncFactoryPanel();
     Promise.all([saveInteractionDefault(), saveProbabilityDefault(), saveCollisionSettings(), savePaceSettings()]).then(function (saved) {
       state.factoryStatus = saved.every(Boolean) ? "已恢复出厂默认" : "本次已恢复，部分默认值尚未保存，请重试。";
@@ -2433,7 +2571,7 @@
 
   function saveCollisionSettings() {
     if (!state.collisionReady || state.collisionReadError) return;
-    var snapshot = collisionAPI().normalize(state.collision), revision = ++collisionWriteRevision, a = api();
+    var snapshot = collisionAPI().normalize({ strength: state.collisionCurrent, randomOnLaunch: state.collision.randomOnLaunch }), revision = ++collisionWriteRevision, a = api();
     state.collisionSaveStatus = "saving"; syncCollisionPanel();
     collisionWriteQueue = collisionWriteQueue.then(function () {
       if (a && a.storage) return a.storage.set("collisionSettings", snapshot);
@@ -2448,6 +2586,7 @@
   }
 
   function syncCollisionPanel() {
+    syncDefaultsPanel();
     var slider = $("collisionStrength"); if (!slider) return;
     var settings = state.collision, available = state.collisionReady && !state.collisionReadError;
     $("collisionCurrent").textContent = "本次 " + collisionLabel(state.collisionCurrent);
@@ -2457,19 +2596,15 @@
     $("collisionStrengthValue").textContent = collisionLabel(state.collisionCurrent);
     $("collisionRandom").disabled = !available || state.factoryBusy;
     $("collisionRandom").setAttribute("aria-pressed", String(settings.randomOnLaunch));
-    $("collisionReset").disabled = !available || state.factoryBusy;
-    $("collisionSaveDefault").disabled = !available || state.factoryBusy || state.collisionSaveStatus === "saving";
-    $("collisionDefaultValue").textContent = "默认 " + (state.collisionDefault.randomOnLaunch ? "启动随机" : collisionLabel(state.collisionDefault.strength));
     $("collisionHint").textContent = settings.randomOnLaunch
       ? "每次启动在 1–24× 之间随机；随时拖动滑轨接管本次力度，下次启动仍随机。"
       : "手动与自动出击沿用本次力度。自然碰撞取其中约 30%–42%，附近越拥挤，弹开和散开的倾向越明显。";
     var note = $("collisionSaveNote");
     note.textContent = !state.collisionReady ? "正在读取碰撞设置…"
       : state.collisionReadError ? "碰撞设置暂未读出，未覆盖原设置。"
-      : state.collisionSaveStatus === "saving" ? "正在保存…"
-      : state.collisionSaveStatus === "error" ? "本次已生效，但设置尚未保存成功。"
-      : state.collisionSaveStatus === "saved" ? "已保存，下次进入主页沿用。" : "";
-    $("collisionRetry").hidden = !state.collisionReadError && state.collisionSaveStatus !== "error";
+      : "";
+    $("collisionRetry").hidden = !state.collisionReadError;
+    note.parentElement.hidden = state.collisionReady && !state.collisionReadError;
   }
 
   function buildCollisionBlock() {
@@ -2499,23 +2634,18 @@
     var text = document.createElement("span"); text.textContent = "每次启动随机";
     var track = document.createElement("i"); track.className = "wp-track";
     var knob = document.createElement("i"); knob.className = "wp-knob"; track.appendChild(knob); track.setAttribute("aria-hidden", "true"); random.appendChild(text); random.appendChild(track); modeRow.appendChild(random);
-    var reset = document.createElement("button"); reset.type = "button"; reset.id = "collisionReset"; reset.className = "collision-reset"; reset.textContent = "恢复默认"; modeRow.appendChild(reset); block.appendChild(modeRow);
+    block.appendChild(modeRow);
     random.addEventListener("click", function () {
       state.collision.randomOnLaunch = !state.collision.randomOnLaunch;
       if (state.collision.randomOnLaunch) rollCollisionForEntry();
       else { collisionSessionSample = null; state.collision.strength = state.collisionCurrent; applyCollisionStrength(); }
       state.collisionSaveStatus = ""; syncCollisionPanel();
     });
-    reset.addEventListener("click", function () {
-      state.collision = collisionAPI().normalize(null); state.collisionCurrent = 1; collisionSessionSample = null;
-      state.collisionSaveStatus = ""; applyCollisionStrength();
-    });
-    block.appendChild(defaultRow("collisionSaveDefault", "collisionDefaultValue", saveCollisionSettings));
     var hint = document.createElement("p"); hint.id = "collisionHint"; hint.className = "collision-hint"; block.appendChild(hint);
     var saveLine = document.createElement("div"); saveLine.className = "collision-save-line";
     var note = document.createElement("span"); note.id = "collisionSaveNote"; note.setAttribute("role", "status"); saveLine.appendChild(note);
     var retry = document.createElement("button"); retry.type = "button"; retry.id = "collisionRetry"; retry.textContent = "重试"; retry.className = "collision-retry";
-    retry.addEventListener("click", function () { if (state.collisionReadError) loadCollisionSettings(); else saveCollisionSettings(); }); saveLine.appendChild(retry); block.appendChild(saveLine);
+    retry.addEventListener("click", loadCollisionSettings); saveLine.appendChild(retry); block.appendChild(saveLine);
     return block;
   }
 
@@ -2561,31 +2691,26 @@
     return paceWriteQueue;
   }
   function syncPacePanel() {
+    syncDefaultsPanel();
     var range = $("naturalPace"); if (!range) return;
     var available = state.paceReady && !state.paceReadError;
     range.value = String(paceAPI().toSlider(state.naturalPace)); range.disabled = !available || state.factoryBusy;
     range.setAttribute("aria-valuetext", paceLabel(state.naturalPace));
     $("naturalPaceValue").textContent = paceLabel(state.naturalPace);
-    $("paceReset").disabled = !available || state.factoryBusy;
-    $("paceSaveDefault").disabled = !available || state.factoryBusy || state.paceSaveStatus === "saving";
-    $("paceDefaultValue").textContent = "默认 " + paceLabel(state.paceDefault);
-    $("paceSaveNote").textContent = !state.paceReady ? "正在读取运动设置…" : state.paceReadError ? "运动设置暂未读出，未覆盖原设置。"
-      : state.paceSaveStatus === "saving" ? "正在保存…" : state.paceSaveStatus === "error" ? "本次已生效，但设置尚未保存成功。"
-      : state.paceSaveStatus === "saved" ? "已保存，下次进入主页沿用。" : "";
-    $("paceRetry").hidden = !state.paceReadError && state.paceSaveStatus !== "error";
+    $("paceSaveNote").textContent = !state.paceReady ? "正在读取运动设置…" : state.paceReadError ? "运动设置暂未读出，未覆盖原设置。" : "";
+    $("paceRetry").hidden = !state.paceReadError;
+    $("paceSaveNote").parentElement.hidden = state.paceReady && !state.paceReadError;
   }
   function buildPaceBlock() {
     var block = document.createElement("section"); block.className = "pace-panel collision-panel";
-    block.innerHTML = '<div class="wp-probability-head"><label class="collision-title" for="naturalPace">自然 pace</label><output id="naturalPaceValue" for="naturalPace"></output></div><div class="collision-control"><input id="naturalPace" class="wp-range collision-range" type="range" min="0" max="1200" step="1"><div class="pace-range-ends"><span>0.25×</span><span>16×</span></div></div><div class="pace-description"><p class="collision-hint">自然漂浮的节奏，1× 为原速率；自动驾驶的追逐速率独立保持。</p><button id="paceReset" class="collision-reset" type="button">恢复 1×</button></div><div class="collision-save-line"><span id="paceSaveNote" role="status"></span><button id="paceRetry" type="button" class="collision-retry">重试</button></div>';
-    block.appendChild(defaultRow("paceSaveDefault", "paceDefaultValue", savePaceSettings));
+    block.innerHTML = '<div class="wp-probability-head"><label class="collision-title" for="naturalPace">自然 pace</label><output id="naturalPaceValue" for="naturalPace"></output></div><div class="collision-control"><input id="naturalPace" class="wp-range collision-range" type="range" min="0" max="1200" step="1"><div class="pace-range-ends"><span>0.25×</span><span>16×</span></div></div><div class="pace-description"><p class="collision-hint">自然漂浮的节奏，1× 为原速率；自动驾驶的追逐速率独立保持。</p></div><div class="collision-save-line"><span id="paceSaveNote" role="status"></span><button id="paceRetry" type="button" class="collision-retry">重试</button></div>';
     var range = block.querySelector("#naturalPace");
     range.addEventListener("input", function () {
       if (!state.paceReady || state.paceReadError) return;
       state.naturalPace = paceAPI().fromSlider(range.value); applyPace();
     });
     range.addEventListener("change", function () { state.paceSaveStatus = ""; syncPacePanel(); });
-    block.querySelector("#paceReset").addEventListener("click", function () { state.naturalPace = 1; state.paceSaveStatus = ""; applyPace(); });
-    block.querySelector("#paceRetry").addEventListener("click", function () { if (state.paceReadError) loadPaceSettings(); else savePaceSettings(); });
+    block.querySelector("#paceRetry").addEventListener("click", loadPaceSettings);
     return block;
   }
 
@@ -2594,6 +2719,7 @@
   }
 
   function syncInteractionPanel() {
+    syncDefaultsPanel();
     var button = $("btnInteraction");
     var enabled = state.interactionSettingsReady && state.interactionCount > 0;
     button.classList.toggle("is-enabled", enabled);
@@ -2604,23 +2730,19 @@
     slider.disabled = !state.interactionSettingsReady || state.factoryBusy;
     slider.setAttribute("aria-valuetext", state.interactionCount + " 枚浮光");
     $("interactionCountValue").textContent = state.interactionCount + " 枚";
-    $("interactionDefaultValue").textContent = "当前默认值：" + state.interactionDefaultCount;
-    var save = $("interactionSaveDefault");
-    save.hidden = false;
-    save.disabled = !state.interactionSettingsReady || state.interactionDefaultSaving || state.factoryBusy;
-    save.textContent = state.interactionDefaultSaving ? "保存中…" : "设为默认";
     $("interactionCountHint").textContent = !state.interactionSettingsReady ? "正在读取默认数量…"
-      : state.interactionCount === 0 ? "浮光已收起。仍可在这里调整随机比例。" : "即时调整本次数量；设为默认后，下次进入主页沿用。";
+      : state.interactionReadError ? "默认数量暂未读出，请在「设默认值」中重试。"
+      : state.interactionCount === 0 ? "浮光已收起。仍可在这里调整随机比例。" : "本次即时生效；启动偏好统一在「设默认值」中管理。";
   }
 
   var countWriteQueue = Promise.resolve();
   function saveInteractionDefault() {
-    if (!state.interactionSettingsReady) return Promise.resolve(false);
+    if (!state.interactionSettingsReady || state.interactionReadError) return Promise.resolve(false);
     var count = state.interactionCount, ok = false;
-    state.interactionDefaultSaving = true; syncInteractionPanel();
+    state.interactionDefaultSaving = true; state.interactionSaveStatus = "saving"; syncInteractionPanel();
     countWriteQueue = countWriteQueue.then(function () { return writeInteractionSetting("interactionSettings", { version: 1, defaultCount: count }); }).then(function () {
-      state.interactionDefaultCount = count; ok = true;
-    }).catch(function () { toast("默认数量尚未保存成功，请重试"); }).then(function () {
+      state.interactionDefaultCount = count; ok = true; state.interactionSaveStatus = "saved";
+    }).catch(function () { state.interactionSaveStatus = "error"; }).then(function () {
       state.interactionDefaultSaving = false; syncInteractionPanel(); return ok;
     });
     return countWriteQueue;
@@ -2664,11 +2786,6 @@
     probabilityBlock.appendChild(probabilityTrack);
     probabilityBlock.appendChild(probabilityStatus);
     probabilityBlock.appendChild(probabilityNote);
-    probabilityBlock.appendChild(defaultRow("probabilitySaveDefault", "probabilityDefaultValue", saveProbabilityDefault));
-    var defaultStatus = document.createElement("div"); defaultStatus.className = "collision-save-line";
-    defaultStatus.innerHTML = '<span id="probabilityDefaultNote" role="status"></span><button id="probabilityDefaultRetry" class="collision-retry" type="button">重试</button>';
-    defaultStatus.querySelector("button").addEventListener("click", function () { if (state.probabilityDefaultReadError) loadProbabilityDefault(); else saveProbabilityDefault(); });
-    probabilityBlock.appendChild(defaultStatus);
     probabilityRange.addEventListener("input", function () {
       setWallpaperProbability(Number(probabilityRange.value) / 100, { source: "manual", commit: false });
     });
@@ -2689,9 +2806,7 @@
     var label = document.createElement("label");
     label.htmlFor = "interactionCount";
     label.textContent = "浮光数量";
-    var defaultValue = document.createElement("span");
-    defaultValue.id = "interactionDefaultValue";
-    head.appendChild(label); head.appendChild(defaultValue);
+    head.appendChild(label);
     var track = document.createElement("div");
     track.className = "interaction-count-track";
     var slider = document.createElement("input");
@@ -2701,13 +2816,7 @@
     var value = document.createElement("output");
     value.id = "interactionCountValue";
     value.htmlFor = "interactionCount";
-    var save = document.createElement("button");
-    save.id = "interactionSaveDefault";
-    save.className = "btn sm interaction-save";
-    save.type = "button";
-    save.textContent = "设为默认";
-    save.addEventListener("click", saveInteractionDefault);
-    track.appendChild(slider); track.appendChild(value); track.appendChild(save);
+    track.appendChild(slider); track.appendChild(value);
     var ends = document.createElement("div");
     ends.className = "interaction-count-ends";
     var zero = document.createElement("span"), max = document.createElement("span");
@@ -3110,7 +3219,7 @@
     el.sheetMask.addEventListener("click", closeSheet);
     document.addEventListener("keydown", function (event) {
       if (event.key === "Escape" && !el.sheetRoot.hidden) closeSheet();
-      if (event.key === "Tab" && statsParent) {
+      if (event.key === "Tab" && (statsParent || defaultsParent)) {
         var focusable = Array.from(el.sheet.querySelectorAll('button:not(:disabled), select')).filter(function (node) { return !node.hidden && node.getClientRects().length; });
         var first = focusable[0], last = focusable[focusable.length - 1];
         if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
