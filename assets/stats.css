@@ -1,7 +1,7 @@
 /* The same liquid-glass sheet, with precise and quiet data marks. */
 .sheet.wide.stats-sheet { max-width: 960px; max-height: 86dvh; padding: 28px 34px; }
-.stats-panel { --stats-blue: #287aad; --stats-orange: #a65c25; min-width: 0; position: relative; }
-:root[data-theme="dark"] .stats-panel { --stats-blue: #9bd4f4; --stats-orange: #efb587; }
+.stats-panel { --stats-blue: #287aad; --stats-orange: #a65c25; --stats-sage: #4f8371; min-width: 0; position: relative; padding-bottom: 10.5dvh; }
+:root[data-theme="dark"] .stats-panel { --stats-blue: #9bd4f4; --stats-orange: #efb587; --stats-sage: #a8cec0; }
 .stats-header { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 23px; }
 .stats-title { margin: 0; font-size: 19px; letter-spacing: .5px; font-weight: 600; }
 .stats-subtitle { margin: 9px 0 0; font-size: 11.5px; color: var(--ink-2); letter-spacing: .5px; }
@@ -25,6 +25,8 @@
 .stats-chart { width: 100%; min-width: 0; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
 .stats-chart > svg { display: block; max-width: 100%; color: var(--stats-blue); overflow: visible; }
 .stats-activity .stats-chart > svg { color: var(--stats-orange); }
+.stats-ties .stats-chart > svg { color: var(--stats-sage); }
+.stats-ties-note { font-size: 10.5px; color: var(--ink-2); }
 .stats-grid { stroke: var(--ink-4); stroke-width: .6; }
 .stats-midline { stroke-dasharray: 3 5; }
 .stats-axis { font-size: 11px; fill: var(--ink-2); font-family: inherit; }
@@ -53,27 +55,40 @@
 .stats-touch-hint { font-size: 10.5px; color: var(--ink-2); text-align: center; }
 .stats-footnote { margin: 14px 0 0; color: var(--ink-2); font-size: 11px; line-height: 1.7; }
 /* ---- 场志 sections ---- */
+.stats-field-intro { margin: 16px 0 0; padding: 13px 16px 12px; border-radius: 14px; background: linear-gradient(130deg, rgba(147,202,237,.12), rgba(200,228,247,.045)); border: 1px solid rgba(203,230,248,.22); }
+.stats-field-intro-text { margin: 0; font-size: 11.5px; line-height: 1.85; color: var(--ink-2); letter-spacing: .2px; }
+.stats-field-intro-row { display: flex; justify-content: flex-end; margin-top: 8px; }
+.stats-badge-toggle { position: static; display: flex; align-items: center; gap: 8px; min-height: 30px; padding: 2px 0; font-size: 10.5px; color: var(--ink-2); letter-spacing: .2px; }
+.stats-badge-toggle .wp-track { transform: scale(.82); transform-origin: right center; }
+.stats-badge-toggle[aria-pressed="true"] { color: #C08A4E; }
+.stats-badge-toggle[aria-pressed="true"] .wp-track { border-color: rgba(240, 164, 80, .85); }
+.stats-badge-toggle[aria-pressed="true"] .wp-knob { background: #F0A450; }
+:root[data-theme="dark"] .stats-badge-toggle[aria-pressed="true"] { color: #F0C88F; }
+:root[data-theme="dark"] .stats-badge-toggle[aria-pressed="true"] .wp-track { border-color: rgba(240, 164, 80, .6); }
+:root[data-theme="dark"] .stats-badge-toggle[aria-pressed="true"] .wp-knob { background: #F2BC7E; }
 .stats-roster { grid-column: 1 / -1; }
 .stats-terrain-region { fill: rgba(147,202,237,.05); stroke: var(--ink-4); stroke-width: .7; stroke-dasharray: 3 4; }
 .stats-terrain-cell { fill: var(--stats-blue); }
-.stats-social-legend { display: flex; flex-wrap: wrap; gap: 5px 12px; }
-.stats-social-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--ink-2); }
-.stats-social-chip::before { content: ""; width: 8px; height: 8px; border-radius: 3px; }
-.stats-chip-contact::before { background: rgba(140,150,168,.55); }
-.stats-chip-bump::before { background: var(--stats-orange); }
-.stats-chip-dodge::before { background: #5a8f7d; }
-.stats-chip-autoHit::before { background: var(--stats-blue); }
-.stats-seg-contact { fill: rgba(140,150,168,.55); }
+/* 驾驶志仍在用这两支段色；关系堆叠图已由关系强度曲线取代 */
 .stats-seg-bump { fill: var(--stats-orange); }
-.stats-seg-dodge { fill: #5a8f7d; }
 .stats-seg-autoHit { fill: var(--stats-blue); }
 .stats-roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)); gap: 7px; margin-top: 10px; }
 .stats-roster-chip { min-height: 34px; border-radius: 10px; font-size: 11.5px; font-variant-numeric: tabular-nums; color: var(--ink-2); background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.22); }
 :root[data-theme="dark"] .stats-roster-chip { background: rgba(196,222,251,.06); border-color: rgba(230,243,255,.12); }
 .stats-roster-chip.is-quiet { opacity: .45; }
+/* 名册里的性格：撞人与出击多于回避者颜色更深（星图压成一档深浅） */
+.stats-roster-chip.is-tone-0 { background: rgba(140,150,168,.12); }
+.stats-roster-chip.is-tone-1 { background: rgba(166,92,37,.09); }
+.stats-roster-chip.is-tone-2 { background: rgba(166,92,37,.17); }
+.stats-roster-chip.is-tone-3 { background: rgba(166,92,37,.26); }
+:root[data-theme="dark"] .stats-roster-chip.is-tone-0 { background: rgba(196,222,251,.07); }
+:root[data-theme="dark"] .stats-roster-chip.is-tone-1 { background: rgba(239,181,135,.09); }
+:root[data-theme="dark"] .stats-roster-chip.is-tone-2 { background: rgba(239,181,135,.17); }
+:root[data-theme="dark"] .stats-roster-chip.is-tone-3 { background: rgba(239,181,135,.26); }
 .stats-roster-chip.is-active { color: #2f7598; border-color: rgba(126,186,226,.75); box-shadow: 0 0 0 1px rgba(126,186,226,.35), 0 0 8px rgba(126,186,226,.25); }
 :root[data-theme="dark"] .stats-roster-chip.is-active { color: #a8d8f4; }
 .stats-roster-chip.is-picked { background: rgba(187,229,253,.3); border-color: rgba(126,186,226,.8); }
+:root[data-theme="dark"] .stats-roster-chip.is-picked { background: rgba(126,186,226,.26); border-color: rgba(126,186,226,.8); }
 .stats-roster-card { margin-top: 12px; padding: 13px 16px; border-radius: 14px; background: linear-gradient(130deg, rgba(147,202,237,.14), rgba(200,228,247,.05)); border: 1px solid rgba(203,230,248,.26); }
 .stats-roster-card strong { font-size: 12.5px; font-weight: 600; letter-spacing: .4px; }
 .stats-roster-card p { margin: 6px 0 0; font-size: 11.5px; line-height: 1.75; color: var(--ink); font-variant-numeric: tabular-nums; }
