@@ -411,7 +411,8 @@
     }
     var unsubscribe = store.subscribe(render);
     var unsubscribeField = field ? field.subscribe(render) : null;
-    function resized() { if (frame) cancelAnimationFrame(frame); frame = requestAnimationFrame(function () { frame = null; draw(); }); }
+    // 分栏宽度随面板变化：图表与场志都要按新的栏宽重绘。
+    function resized() { if (frame) cancelAnimationFrame(frame); frame = requestAnimationFrame(function () { frame = null; draw(); drawField(); }); }
     var resize = typeof ResizeObserver === 'function' ? new ResizeObserver(resized) : null;
     if (resize) resize.observe(root); else window.addEventListener('resize', resized);
     render();
