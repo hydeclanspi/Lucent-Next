@@ -1530,6 +1530,7 @@
     sheet.classList.toggle("wide", !!options.wide);
     sheet.classList.toggle("interaction-sheet", !!options.interaction);
     sheet.classList.toggle("about-sheet", !!options.about);
+    sheet.classList.toggle("export-sheet", !!options.export);
 
     var title = document.createElement("h3");
     title.className = "sheet-title";
@@ -1556,7 +1557,7 @@
       heading.appendChild(subtitle);
       sheet.appendChild(heading);
       sheet.appendChild(buildInteractionToolbar());
-    } else if (!options.stats && !options.defaults && !options.about) sheet.appendChild(title);
+    } else if (!options.stats && !options.defaults && !options.about && !options.export) sheet.appendChild(title);
 
     if (options.sub) {
       var sub = document.createElement("p");
@@ -1663,7 +1664,7 @@
     meta.className = "about-meta";
     var version = document.createElement("p");
     version.className = "about-version";
-    version.textContent = "名片主页 v4.2.0 · 2026-10 构建";
+    version.textContent = "名片主页 v4.3.0 · 2026-10 构建";
     var build = document.createElement("p");
     build.className = "about-build";
     build.textContent = "鸿蒙 Aira 灵感台 · beta v0.7 引擎 · © 2026";
@@ -1683,6 +1684,18 @@
     sign.className = "about-sign";
     sign.setAttribute("role", "img");
     sign.setAttribute("aria-label", "hydeclanspi 的签名");
+    var signLight = document.createElement("img");
+    signLight.className = "about-sign-light";
+    signLight.src = "./assets/signature.png";
+    signLight.alt = "";
+    signLight.decoding = "async";
+    var signDark = document.createElement("img");
+    signDark.className = "about-sign-dark";
+    signDark.src = "./assets/signature-dark.png";
+    signDark.alt = "";
+    signDark.decoding = "async";
+    sign.appendChild(signLight);
+    sign.appendChild(signDark);
 
     body.appendChild(heading);
     body.appendChild(copy);
@@ -1690,6 +1703,603 @@
     body.appendChild(frame);
     body.appendChild(sign);
     openSheet({ title: "关于", content: body, center: true, wide: true, about: true });
+  }
+
+  /* ---------- 备份与导出（长按右上角扫一扫） ---------- */
+
+  // 备份文本：AIRAPC1:<D|R>:<载荷字符数>:<base64url>:<校验>；D = deflate-raw 压缩，R = 原样。
+  // 分段再包一层：AIRAPC1:P:<i>/<N>:<整串校验>:<切片>；切片按序拼回，就是原始备份文本。
+  var EXPORT_PREFIX = "AIRAPC1";
+  var EXPORT_SEGMENT_CHARS = 4000;    // 每段字符数，对着聊天通道的单条上限取整
+  var EXPORT_CHAT_CHARS = 4000;       // 聊天通道单条文本的经验上限
+  var EXPORT_BIG_CHARS = 64 * 1024;   // 单次复制开始提示静默截断风险的体量
+  var EXPORT_STORE_WAIT = 1600;       // 两个引擎就绪的等待上限，超时只降级，不失败
+
+  var EXPORT_KEYS = ["profile", "icons", "folds", "wallpaper", "wallpaperBlur", "wallpaperProbability",
+    "probabilityDefaults", "interactionSettings", "collisionSettings", "motionSettings", "autoDriveSettings",
+    "uiPrefs", "logs", "signs", "logsBundleVersion", "signsBundleVersion"];
+  var EXPORT_LABELS = {
+    profile: "名片", icons: "图标偏好", folds: "折叠状态", wallpaper: "壁纸模式", wallpaperBlur: "壁纸模糊",
+    wallpaperProbability: "明暗比例", probabilityDefaults: "比例默认值", interactionSettings: "浮光数量",
+    collisionSettings: "碰撞力度", motionSettings: "自然 pace", autoDriveSettings: "自动驾驶", uiPrefs: "编号徽章",
+    logs: "日志", signs: "签名历史", logsBundleVersion: "日志版本", signsBundleVersion: "签名版本"
+  };
+
+  var exportPack = null, exportNodes = null, exportBusy = false;
+
+  function utf8Bytes(text) {
+    if (typeof TextEncoder === "function") return new TextEncoder().encode(text);
+    var escaped = unescape(encodeURIComponent(text)), out = new Uint8Array(escaped.length);
+    for (var i = 0; i < escaped.length; i++) out[i] = escaped.charCodeAt(i) & 0xFF;
+    return out;
+  }
+
+  function utf8Text(bytes) {
+    if (typeof TextDecoder === "function") return new TextDecoder().decode(bytes);
+    var binary = "";
+    for (var i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return decodeURIComponent(escape(binary));
+  }
+
+  function hex8(value) { var text = (value >>> 0).toString(16); while (text.length < 8) text = "0" + text; return text; }
+
+  function crc32(text) {
+    var table = crc32.table;
+    if (!table) {
+      table = crc32.table = new Uint32Array(256);
+      for (var i = 0; i < 256; i++) {
+        var seed = i;
+        for (var bit = 0; bit < 8; bit++) seed = seed & 1 ? (seed >>> 1) ^ 0xEDB88320 : seed >>> 1;
+        table[i] = seed >>> 0;
+      }
+    }
+    var bytes = utf8Bytes(text), value = 0xFFFFFFFF;
+    for (var j = 0; j < bytes.length; j++) value = (value >>> 8) ^ table[(value ^ bytes[j]) & 0xFF];
+    return hex8((value ^ 0xFFFFFFFF) >>> 0);
+  }
+
+  function base64UrlFromBytes(bytes) {
+    var binary = "", step = 0x8000;
+    for (var i = 0; i < bytes.length; i += step) binary += String.fromCharCode.apply(null, bytes.subarray(i, i + step));
+    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+
+  function bytesFromBase64Url(text) {
+    var padded = text.replace(/-/g, "+").replace(/_/g, "/");
+    while (padded.length % 4) padded += "=";
+    var binary = atob(padded), out = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) out[i] = binary.charCodeAt(i) & 0xFF;
+    return out;
+  }
+
+  function streamBytes(bytes, stream) {
+    return new Response(new Blob([bytes]).stream().pipeThrough(stream)).arrayBuffer().then(function (buffer) {
+      return new Uint8Array(buffer);
+    }, function () { return null; });
+  }
+
+  function deflateRaw(bytes) {
+    if (typeof CompressionStream !== "function") return Promise.resolve(null);
+    return streamBytes(bytes, new CompressionStream("deflate-raw"));
+  }
+
+  function inflateRaw(bytes) {
+    if (typeof DecompressionStream !== "function") return Promise.resolve(null);
+    return streamBytes(bytes, new DecompressionStream("deflate-raw"));
+  }
+
+  function sizeText(bytes) { return bytes < 1024 ? bytes + " B" : (bytes / 1024).toFixed(1) + " KB"; }
+  function charText(chars) { return chars < 10000 ? String(chars) : (chars / 1024).toFixed(1) + " K"; }
+
+  function clipboardReport() {
+    var clipboard = navigator.clipboard || {};
+    return {
+      write: typeof clipboard.writeText === "function",
+      read: typeof clipboard.readText === "function",
+      legacy: typeof document.execCommand === "function",
+      compress: typeof CompressionStream === "function"
+    };
+  }
+
+  // 兼容写入：部分 WebView 没有异步剪贴板接口，但 copy 事件仍然可用。
+  function legacyCopy(text) {
+    var area = document.createElement("textarea"), previous = document.activeElement, ok = false;
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.setAttribute("aria-hidden", "true");
+    area.style.cssText = "position:fixed;top:0;left:0;width:1px;height:1px;padding:0;border:0;opacity:0;";
+    document.body.appendChild(area);
+    try {
+      area.focus({ preventScroll: true });
+      area.select();
+      area.setSelectionRange(0, area.value.length);
+      ok = document.execCommand("copy") === true;
+    } catch (error) { ok = false; }
+    document.body.removeChild(area);
+    if (previous && typeof previous.focus === "function") { try { previous.focus({ preventScroll: true }); } catch (error) {} }
+    return ok;
+  }
+
+  function copyBlocked(error) {
+    var failure = new Error("剪贴板写入被拒绝");
+    failure.code = "CLIPBOARD_BLOCKED";
+    failure.detail = (error && (error.name || error.message)) || "无返回";
+    return failure;
+  }
+
+  function copyText(text) {
+    var clipboard = navigator.clipboard;
+    if (clipboard && typeof clipboard.writeText === "function") {
+      return clipboard.writeText(text).then(function () { return "clipboard"; }, function (error) {
+        return legacyCopy(text) ? "legacy" : Promise.reject(copyBlocked(error));
+      });
+    }
+    return Promise.resolve().then(function () {
+      if (legacyCopy(text)) return "legacy";
+      throw copyBlocked(null);
+    });
+  }
+
+  function readExportKey(key) {
+    var a = api();
+    if (a && a.storage && typeof a.storage.get === "function") {
+      return a.storage.get(key, null).then(function (value) {
+        return { value: value, failed: false };
+      }, function () {
+        return { value: localGet(key, null), failed: true };
+      });
+    }
+    return Promise.resolve({ value: localGet(key, null), failed: false });
+  }
+
+  function settleStore(store) {
+    if (!store || typeof store.snapshot !== "function") return Promise.resolve(null);
+    return new Promise(function (resolve) {
+      var timer = setTimeout(function () { resolve({ data: null, status: "timeout" }); }, EXPORT_STORE_WAIT);
+      Promise.resolve(store.ready).then(function () {
+        clearTimeout(timer);
+        try { resolve(store.snapshot()); } catch (error) { resolve({ data: null, status: "error" }); }
+      }, function () {
+        clearTimeout(timer); resolve({ data: null, status: "error" });
+      });
+    });
+  }
+
+  function collectBackup() {
+    var notes = [];
+    var reads = EXPORT_KEYS.map(function (key) {
+      return readExportKey(key).then(function (result) { return { key: key, value: result.value, failed: result.failed }; });
+    });
+    return Promise.all([Promise.all(reads), settleStore(fieldStore), settleStore(statsStore)]).then(function (results) {
+      var list = results[0], field = results[1], stats = results[2];
+      var keys = {}, missing = [];
+      list.forEach(function (item) {
+        if (item.failed) { missing.push(EXPORT_LABELS[item.key] || item.key); return; }
+        if (item.value === null || item.value === undefined) return;
+        keys[item.key] = item.value;
+      });
+      if (missing.length) notes.push("有 " + missing.length + " 项没有读到：" + missing.join("、") + "。这几项没有写进这次备份，原数据没有被改动。");
+      var storeData = { field: null, stats: null };
+      [["field", field, "场志"], ["stats", stats, "历史统计"]].forEach(function (entry) {
+        var name = entry[0], settled = entry[1], label = entry[2];
+        if (!settled) return;
+        if (settled.status === "timeout") notes.push(label + "没有在预期时间内就绪，这次备份不含" + label + "；可以稍后点「重新整理」再试。");
+        else if (settled.status === "error" || !settled.data) notes.push(label + "暂时读不出来（原数据未受影响），这次备份不含" + label + "。");
+        else storeData[name] = settled.data;
+      });
+      var payload = {
+        format: "aira-profile-card",
+        formatVersion: 1,
+        kind: "backup",
+        exportedAt: new Date().toISOString(),
+        timezoneOffsetMinutes: -new Date().getTimezoneOffset(),
+        homepage: { id: "com.example.aira-profile-card", version: "4.3.0" },
+        summary: {
+          keys: Object.keys(keys).length,
+          logs: Array.isArray(keys.logs) ? keys.logs.length : 0,
+          signs: Array.isArray(keys.signs) ? keys.signs.length : 0,
+          fieldProfiles: storeData.field ? Object.keys(storeData.field.profiles || {}).length : 0,
+          fieldPairs: storeData.field ? Object.keys(storeData.field.pairs || {}).length : 0,
+          fieldEvents: storeData.field && Array.isArray(storeData.field.events) ? storeData.field.events.length : 0,
+          statsRows: storeData.stats && Array.isArray(storeData.stats.rows) ? storeData.stats.rows.length : 0
+        },
+        notes: notes,
+        data: { keys: keys, field: storeData.field, stats: storeData.stats }
+      };
+      return { payload: payload, notes: notes };
+    });
+  }
+
+  function encodeBackup(json) {
+    return deflateRaw(utf8Bytes(json)).then(function (deflated) {
+      var mode = deflated ? "D" : "R";
+      var body = deflated || utf8Bytes(json);
+      var base = base64UrlFromBytes(body);
+      return { text: EXPORT_PREFIX + ":" + mode + ":" + base.length + ":" + base + ":" + crc32(base), mode: mode, jsonBytes: utf8Bytes(json).length };
+    });
+  }
+
+  // 打包后立刻按同一份格式回读一遍：宁可拒绝复制，也不交出一份坏数据。
+  function verifyBackup(backup, json) {
+    return Promise.resolve().then(function () {
+      var parts = backup.text.split(":");
+      if (parts.length < 5 || parts[0] !== EXPORT_PREFIX) throw new Error("格式头不对");
+      if (Number(parts[2]) !== parts[3].length) throw new Error("长度对不上");
+      if (crc32(parts[3]) !== parts[4]) throw new Error("校验对不上");
+      var body = bytesFromBase64Url(parts[3]);
+      if (parts[1] !== "D") {
+        if (utf8Text(body) !== json) throw new Error("回读内容不一致");
+        return true;
+      }
+      return inflateRaw(body).then(function (output) {
+        if (!output) return true;   // 这台机器读不回压缩流时，只保留长度与校验两道关
+        if (utf8Text(output) !== json) throw new Error("回读内容不一致");
+        return true;
+      });
+    });
+  }
+
+  function chunkBackup(text) {
+    var chunks = [], total = Math.max(1, Math.ceil(text.length / EXPORT_SEGMENT_CHARS)), digest = crc32(text);
+    for (var i = 0; i < total; i++) {
+      chunks.push(EXPORT_PREFIX + ":P:" + (i + 1) + "/" + total + ":" + digest + ":" + text.slice(i * EXPORT_SEGMENT_CHARS, (i + 1) * EXPORT_SEGMENT_CHARS));
+    }
+    return chunks;
+  }
+
+  function exportRows(pack) {
+    var data = pack.payload.data, keys = data.keys || {}, preference = {}, history = {};
+    EXPORT_KEYS.forEach(function (key) {
+      if (!(key in keys)) return;
+      if (key === "logs" || key === "signs" || key === "logsBundleVersion" || key === "signsBundleVersion") history[key] = keys[key];
+      else preference[key] = keys[key];
+    });
+    function bytesOf(value) { return value === null || value === undefined ? 0 : utf8Bytes(JSON.stringify(value)).length; }
+    var rows = [{ label: "全部数据", value: sizeText(pack.jsonBytes) + " → 备份文本 " + charText(pack.backup.text.length) + " 字" }];
+    rows.push({ label: "名片与偏好", value: Object.keys(preference).length + " 项 · " + sizeText(bytesOf(preference)) });
+    rows.push({ label: "日志 / 签名", value: (pack.payload.summary.logs + " + " + pack.payload.summary.signs) + " 条 · " + sizeText(bytesOf(history)) });
+    rows.push({ label: "场志", value: data.field ? (pack.payload.summary.fieldProfiles + " 位 · " + pack.payload.summary.fieldPairs + " 对 · " + pack.payload.summary.fieldEvents + " 事件 · " + sizeText(bytesOf(data.field))) : "本次没有" });
+    rows.push({ label: "历史统计", value: data.stats ? (pack.payload.summary.statsRows + " 行 · " + sizeText(bytesOf(data.stats))) : "本次没有" });
+    return rows;
+  }
+
+  function sizeWarning(chars) {
+    if (chars > EXPORT_BIG_CHARS) {
+      return "这次备份有 " + charText(chars) + " 字，超过 64 K：部分系统在写入或粘贴时会静默截断。建议用下面的分段复制，或者粘到备忘录、邮件这类不限长度的应用里。备份文本自带长度与校验，粘贴后能立刻查出有没有被截断。";
+    }
+    if (chars > EXPORT_CHAT_CHARS) {
+      return "这次备份有 " + charText(chars) + " 字，超过聊天应用的单条上限（约 4000 字）。发微信这类通道请用下面的分段复制；备忘录、邮件可以直接整段粘贴。";
+    }
+    return "";
+  }
+
+  function setExportStatus(text, tone) {
+    if (!exportNodes) return;
+    exportNodes.status.textContent = text || "";
+    exportNodes.status.hidden = !text;
+    exportNodes.status.classList.toggle("is-error", tone === "error");
+    exportNodes.status.classList.toggle("is-note", tone === "note");
+  }
+
+  function setExportBusy(busy) {
+    if (!exportNodes) return;
+    exportNodes.body.classList.toggle("is-busy", busy);
+    exportNodes.backupButton.disabled = busy || !exportPack;
+    exportNodes.jsonButton.disabled = busy || !exportPack;
+    if (exportNodes.retry) exportNodes.retry.hidden = !exportPack || !exportPack.broken;
+  }
+
+  function copyFromSheet(text, options) {
+    copyText(text).then(function (method) {
+      if (options && options.onSuccess) options.onSuccess();
+      var tail = " · " + charText(text.length) + " 字";
+      toast("已复制" + tail);
+      setExportStatus(method === "legacy"
+        ? "已用兼容方式写入剪贴板" + tail + "。若粘贴后发现内容不完整，请改用分段复制。"
+        : "已写入系统剪贴板" + tail + "。去粘贴吧。", "ok");
+    }).catch(function (error) {
+      toast("复制没有成功");
+      setExportStatus("剪贴板写入被拒绝了。这是这台机器的环境限制（例如把主页复制限制在应用内），和你的数据无关。可以：① 再点一次复制；② 改用下面的分段复制；③ 若一直失败，说明这台机器关闭了主页复制，请把这一行反馈给主页作者（" + (error && error.detail ? error.detail : error && error.code) + "）。", "error");
+    });
+  }
+
+  function renderExport() {
+    var pack = exportPack;
+    if (!pack || !exportNodes) return;
+    var nodes = exportNodes, warnings = pack.notes.slice();
+    var over = sizeWarning(pack.backup.text.length);
+    if (over) warnings.push(over);
+    if (pack.backup.mode === "R") warnings.push("这台机器没有可用的压缩接口，备份文本改用未压缩编码，字符数偏多（大约 1.3 倍）。");
+
+    nodes.summary.textContent = "";
+    exportRows(pack).forEach(function (row) {
+      var line = document.createElement("div");
+      line.className = "export-row";
+      var label = document.createElement("span");
+      label.className = "export-row-label";
+      label.textContent = row.label;
+      var value = document.createElement("span");
+      value.className = "export-row-value";
+      value.textContent = row.value;
+      line.appendChild(label);
+      line.appendChild(value);
+      nodes.summary.appendChild(line);
+    });
+
+    nodes.notes.textContent = "";
+    nodes.notes.hidden = !warnings.length;
+    warnings.forEach(function (text) {
+      var item = document.createElement("p");
+      item.className = "export-warning";
+      item.textContent = text;
+      nodes.notes.appendChild(item);
+    });
+
+    nodes.backupSize.textContent = charText(pack.backup.text.length) + " 字 · " + pack.chunks.length + " 段";
+    nodes.backupButton.textContent = "复制备份文本";
+    nodes.jsonSize.textContent = sizeText(utf8Bytes(pack.readable).length) + " · 未压缩";
+    nodes.jsonButton.textContent = "复制可读 JSON";
+
+    nodes.segmentNote.textContent = pack.chunks.length > 1
+      ? "每段不超过 " + EXPORT_SEGMENT_CHARS + " 字，段头带编号与整串校验。挨个复制，粘到同一个地方；电脑端按段号重排后校验。"
+      : "这次只需一段，直接用上面的备份文本即可。";
+    nodes.segmentList.textContent = "";
+    pack.chunks.forEach(function (chunk, index) {
+      var row = document.createElement("div");
+      row.className = "export-segment";
+      var label = document.createElement("span");
+      label.className = "export-segment-label";
+      label.textContent = "第 " + (index + 1) + "/" + pack.chunks.length + " 段 · " + chunk.length + " 字";
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "btn sm export-copy";
+      button.textContent = "复制";
+      button.addEventListener("click", function () {
+        copyFromSheet(chunk, { onSuccess: function () {
+          row.classList.add("is-copied");
+          button.textContent = "已复制";
+        } });
+      });
+      row.appendChild(label);
+      row.appendChild(button);
+      nodes.segmentList.appendChild(row);
+    });
+
+    var report = clipboardReport();
+    nodes.diag.textContent = "本机能力：剪贴板写入 " + (report.write ? "✓" : "✗")
+      + " · 兼容写入 " + (report.legacy ? "✓" : "✗")
+      + " · 压缩 " + (report.compress ? "✓" : "✗")
+      + " · 剪贴板读取 " + (report.read ? "✓" : "✗");
+    nodes.diagNote.textContent = report.write || report.legacy
+      ? "剪贴板读取需要 Aira 授权，只影响以后把备份贴回来，不影响这次导出。"
+      : "这台机器既没有异步剪贴板接口，也没有兼容写入接口，导出可能只能靠截屏。";
+
+    if (!pack.payload.data.field || !pack.payload.data.stats) {
+      nodes.segmentNote.textContent += " 这次备份不完整，先别用它覆盖任何旧备份。";
+    }
+    if (!warnings.length) setExportStatus("已整理完成。数据只写剪贴板，复制后请自行粘贴保存。", "note");
+    else setExportStatus("已整理完成，但有几处要留意（见上方提示）。", "note");
+  }
+
+  function renderExportFailure(error) {
+    if (!exportNodes) return;
+    var nodes = exportNodes;
+    nodes.summary.textContent = "";
+    nodes.notes.hidden = true;
+    nodes.segmentList.textContent = "";
+    nodes.segmentNote.textContent = "";
+    nodes.backupSize.textContent = "—";
+    nodes.jsonSize.textContent = "—";
+    nodes.backupButton.textContent = "复制备份文本";
+    nodes.jsonButton.textContent = "复制可读 JSON";
+    nodes.retry.hidden = false;
+    setExportStatus(error && error.code === "SELF_CHECK"
+      ? "打包自检没有通过（" + (error.detail || "回读不一致") + "）。为避免给你一份坏数据，这次没有写入剪贴板。请点「重新整理」再试一次。"
+      : "打包没有完成（" + ((error && (error.message || error.detail)) || "未知原因") + "）。这次没有写入剪贴板。请点「重新整理」；若反复出现，请把这句反馈给主页作者。", "error");
+  }
+
+  function prepareExport() {
+    if (exportBusy) return;
+    exportBusy = true;
+    exportPack = null;
+    if (exportNodes) exportNodes.retry.hidden = true;
+    setExportBusy(true);
+    setExportStatus("正在整理数据…");
+    collectBackup().then(function (result) {
+      var json = JSON.stringify(result.payload);
+      var readable = JSON.stringify(result.payload, null, 2);
+      return encodeBackup(json).then(function (backup) {
+        return verifyBackup(backup, json).then(function () {
+          return { payload: result.payload, notes: result.notes, json: json, readable: readable, backup: backup, chunks: chunkBackup(backup.text), jsonBytes: utf8Bytes(json).length };
+        });
+      });
+    }).then(function (pack) {
+      exportPack = pack;
+      exportBusy = false;
+      if (pack.payload.summary.keys === 0 && !pack.payload.data.field && !pack.payload.data.stats) pack.notes.push("这台机器上还没有可以备份的内容，这份备份是空壳。");
+      renderExport();
+      setExportBusy(false);
+    }).catch(function (error) {
+      exportBusy = false;
+      exportPack = null;
+      if (error && error.message && error.message.indexOf("回读") >= 0) error.code = "SELF_CHECK";
+      renderExportFailure(error);
+      setExportBusy(false);
+    });
+  }
+
+  function openExportSheet() {
+    var body = document.createElement("div");
+    body.className = "export-panel";
+
+    var header = document.createElement("div");
+    header.className = "export-header";
+    var back = document.createElement("button");
+    back.type = "button";
+    back.className = "export-back";
+    back.setAttribute("aria-label", "关闭备份与导出");
+    back.appendChild(icon("m14 6-6 6 6 6"));
+    var heading = document.createElement("div");
+    heading.className = "export-heading";
+    var title = document.createElement("h3");
+    title.className = "export-title";
+    title.textContent = "备份与导出";
+    var subtitle = document.createElement("p");
+    subtitle.className = "export-subtitle";
+    subtitle.textContent = "离线打包，只写剪贴板；不上传、不追踪。";
+    heading.appendChild(title);
+    heading.appendChild(subtitle);
+    header.appendChild(back);
+    header.appendChild(heading);
+    back.addEventListener("click", closeSheet);
+
+    var intro = document.createElement("p");
+    intro.className = "export-intro";
+    intro.textContent = "把灵感台的全部数据整理成一段文本：名片与偏好、日志与签名、场志与历史统计。复制之后放在哪里，由你决定。";
+
+    var status = document.createElement("p");
+    status.className = "export-status";
+    status.setAttribute("role", "status");
+    var retry = document.createElement("button");
+    retry.type = "button";
+    retry.className = "btn sm export-retry";
+    retry.textContent = "重新整理";
+    retry.hidden = true;
+    retry.addEventListener("click", prepareExport);
+    var statusRow = document.createElement("div");
+    statusRow.className = "export-status-row";
+    statusRow.appendChild(status);
+    statusRow.appendChild(retry);
+
+    var summary = document.createElement("div");
+    summary.className = "export-summary";
+
+    var notes = document.createElement("div");
+    notes.className = "export-notes";
+    notes.hidden = true;
+
+    function card(kind, label, note) {
+      var section = document.createElement("section");
+      section.className = "export-card export-" + kind;
+      var head = document.createElement("div");
+      head.className = "export-card-head";
+      var name = document.createElement("h4");
+      name.textContent = label;
+      var size = document.createElement("span");
+      size.className = "export-card-size";
+      head.appendChild(name);
+      head.appendChild(size);
+      var description = document.createElement("p");
+      description.className = "export-card-note";
+      description.textContent = note;
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "btn sm export-copy";
+      section.appendChild(head);
+      section.appendChild(description);
+      section.appendChild(button);
+      return { section: section, size: size, button: button };
+    }
+
+    var backupCard = card("backup", "备份文本 · 推荐", "单行、压缩、带长度与校验；没有引号和换行，最扛复制，也方便以后贴回来。");
+    var jsonCard = card("json", "可读 JSON", "缩进排版，适合直接看或写脚本；体积更大，个别编辑器会把直引号换成弯引号。");
+    var segments = document.createElement("section");
+    segments.className = "export-card export-segments";
+    var segmentHead = document.createElement("div");
+    segmentHead.className = "export-card-head";
+    var segmentTitle = document.createElement("h4");
+    segmentTitle.textContent = "分段复制";
+    segmentHead.appendChild(segmentTitle);
+    var segmentNote = document.createElement("p");
+    segmentNote.className = "export-card-note";
+    var segmentList = document.createElement("div");
+    segmentList.className = "export-segment-list";
+    segments.appendChild(segmentHead);
+    segments.appendChild(segmentNote);
+    segments.appendChild(segmentList);
+
+    var diag = document.createElement("p");
+    diag.className = "export-diag";
+    var diagNote = document.createElement("p");
+    diagNote.className = "export-diag-note";
+
+    body.appendChild(header);
+    body.appendChild(intro);
+    body.appendChild(statusRow);
+    body.appendChild(summary);
+    body.appendChild(notes);
+    body.appendChild(backupCard.section);
+    body.appendChild(jsonCard.section);
+    body.appendChild(segments);
+    body.appendChild(diag);
+    body.appendChild(diagNote);
+
+    backupCard.button.addEventListener("click", function () {
+      if (!exportPack) return;
+      copyFromSheet(exportPack.backup.text);
+    });
+    jsonCard.button.addEventListener("click", function () {
+      if (!exportPack) return;
+      copyFromSheet(exportPack.readable);
+    });
+
+    exportNodes = {
+      body: body, status: status, retry: retry, summary: summary, notes: notes,
+      backupSize: backupCard.size, backupButton: backupCard.button,
+      jsonSize: jsonCard.size, jsonButton: jsonCard.button,
+      segmentNote: segmentNote, segmentList: segmentList,
+      diag: diag, diagNote: diagNote
+    };
+
+    openSheet({ title: "备份与导出", content: body, center: true, wide: true, export: true });
+    back.focus({ preventScroll: true });
+    prepareExport();
+  }
+
+  // 长按扫一扫：单击不变（系统扫码），长按浮出备份与导出。
+  // 与太阳图标同一套兜底：松手时的兼容点击会被吞掉，避免落到刚浮出的遮罩上。
+  function bindScanLauncher() {
+    var node = $("btnScan");
+    if (!node) return;
+    var timer = null, start = null, suppressClick = false, longPressPoint = null;
+    function clear() { if (timer) clearTimeout(timer); timer = null; }
+    function cancel() { clear(); start = null; suppressClick = true; }
+    document.addEventListener("pointerdown", function () { longPressPoint = null; }, true);
+    document.addEventListener("click", function (event) {
+      if (longPressPoint && event.detail && Math.hypot(event.clientX - longPressPoint.x, event.clientY - longPressPoint.y) < 32) {
+        longPressPoint = null; suppressClick = false;
+        event.preventDefault(); event.stopImmediatePropagation();
+      }
+    }, true);
+    node.addEventListener("pointerdown", function (event) {
+      if (!event.isPrimary || (event.pointerType === "mouse" && event.button !== 0)) return;
+      clear(); suppressClick = false;
+      start = { x: event.clientX, y: event.clientY };
+      timer = setTimeout(function () {
+        timer = null; suppressClick = true; longPressPoint = start; start = null;
+        openExportSheet();
+      }, 480);
+    });
+    node.addEventListener("pointermove", function (event) {
+      if (start && Math.hypot(event.clientX - start.x, event.clientY - start.y) > 10) cancel();
+    });
+    node.addEventListener("pointerup", function () { clear(); start = null; });
+    node.addEventListener("pointercancel", cancel);
+    node.addEventListener("pointerleave", function () { if (start) cancel(); });
+    node.addEventListener("contextmenu", function (event) { event.preventDefault(); });
+    node.addEventListener("click", function (event) {
+      if (suppressClick && event.detail) { suppressClick = false; event.preventDefault(); return; }
+      var a = api();
+      if (a && typeof a.scanQr === "function") a.scanQr();
+      else toast("预览模式：这里会打开 Aira 扫一扫");
+    });
+    node.addEventListener("keydown", function (event) {
+      if ((event.key === "Enter" && event.shiftKey) || event.key === "ContextMenu" || (event.key === "F10" && event.shiftKey)) {
+        event.preventDefault(); cancel(); openExportSheet();
+      }
+    });
+    window.addEventListener("blur", cancel);
+    document.addEventListener("visibilitychange", function () { if (document.hidden) cancel(); });
   }
 
   function field(labelText, value, placeholder) {
@@ -3479,11 +4089,7 @@
     bindInteractionLauncher();
     bindSettingsLauncher();
     bindAutoDrive();
-
-    $("btnScan").addEventListener("click", function () {
-      if (a() && typeof a().scanQr === "function") a().scanQr();
-      else toast("预览模式：这里会打开 Aira 扫一扫");
-    });
+    bindScanLauncher();
 
     $("btnSearch").addEventListener("click", function () {
       if (a() && typeof a().openSearch === "function") a().openSearch();
