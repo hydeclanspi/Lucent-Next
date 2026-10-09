@@ -173,9 +173,10 @@
       // 名册
       (function () {
         rosterGrid.textContent = '';
+        var pad2 = function (n) { return String(n).padStart(2, '0'); };
         var active = new Set(typeof options.activeIds === 'function' ? options.activeIds() : []);
         fieldView.profiles.forEach(function (p) {
-          var chip = element('button', 'stats-roster-chip', String(p.id));
+          var chip = element('button', 'stats-roster-chip', pad2(p.id));
           chip.type = 'button'; chip.dataset.id = p.id;
           var hasData = p.appearances || p.minutes || p.bump || p.taken || p.dodge || p.hit || p.miss;
           chip.classList.toggle('is-active', active.has(p.id));
@@ -189,24 +190,62 @@
         if (rosterPick) {
           var p = fieldView.profiles[rosterPick - 1], shots = p.hit + p.miss;
           var card = element('div', 'stats-roster-card');
-          card.appendChild(element('strong', '', '#' + rosterPick + ' 号浮光'));
+          card.appendChild(element('strong', '', '#' + pad2(rosterPick) + ' 号浮光'));
           card.appendChild(element('p', '', '出场 ' + p.appearances + ' 次 · 在场 ' + fmtDuration(p.minutes * 60)
             + ' · 撞人 ' + p.bump + ' · 被撞 ' + p.taken + ' · 回避 ' + p.dodge));
           card.appendChild(element('p', '', '出击 ' + shots + ' · 命中 ' + p.hit + (shots ? ' · 扑空率 ' + Math.round(100 * p.miss / shots) + '%' : ' · 尚未出击')
             + ' · 得舵 ' + p.pilot + ' · 接力 ' + p.relayIn + '/' + p.relayOut));
-          var friends = fieldView.pairs.filter(function (pair) { return pair.a === rosterPick || pair.b === rosterPick; }).slice(0, 3);
-          if (friends.length) {
-            card.appendChild(element('p', 'stats-roster-friends', '密友榜：' + friends.map(function (pair) {
+          var friendsAll = fieldView.pairs.filter(function (pair) { return pair.a === rosterPick || pair.b === rosterPick; });
+          if (friendsAll.length) {
+            card.appendChild(element('p', 'stats-roster-friends', '密友榜：' + friendsAll.slice(0, 3).map(function (pair) {
               var other = pair.a === rosterPick ? pair.b : pair.a;
-              return '#' + other + '（亲近 ' + pair.nearMinutes + ' 分钟 · 碰撞 ' + pair.contact + '）';
+              return '#' + pad2(other) + '（亲近 ' + pair.nearMinutes + ' 分钟 · 碰撞 ' + pair.contact + '）';
             }).join('、')));
+            // 关系网：居中是它，四周是它最亲的几位
+            var top = friendsAll.slice(0, 6), maxScore = top[0] ? top[0].contact * 3 + top[0].nearMinutes : 1;
+            var web = svgNode('svg', { viewBox: '0 0 240 150', class: 'stats-web', role: 'img', 'aria-label': '关系网' });
+            var cx = 120, cy = 78, radius = 52;
+            top.forEach(function (pair, i) {
+              var other = pair.a === rosterPick ? pair.b : pair.a;
+              var angle = -Math.PI / 2 + i * (Math.PI * 2 / top.length);
+              var nx = cx + Math.cos(angle) * radius, ny = cy + Math.sin(angle) * radius;
+              var score = pair.contact * 3 + pair.nearMinutes, hits = pair.hitAB + pair.hitBA, dodges = pair.dodgeAB + pair.dodgeBA;
+              var tone = hits > 0 ? 'stats-web-blue' : dodges * 2 > pair.contact ? 'stats-web-sage' : 'stats-web-gray';
+              var mx = (cx + nx) / 2, my = (cy + ny) / 2, dx = nx - cx, dy = ny - cy, len = Math.hypot(dx, dy) || 1;
+              web.appendChild(svgNode('path', { d: 'M' + cx + ',' + cy + ' Q' + (mx - dy / len * 10).toFixed(1) + ',' + (my + dx / len * 10).toFixed(1) + ' ' + nx.toFixed(1) + ',' + ny.toFixed(1),
+                class: 'stats-web-link ' + tone, 'stroke-width': (0.8 + 2.6 * score / (maxScore || 1)).toFixed(2) }));
+              web.appendChild(svgNode('circle', { cx: nx.toFixed(1), cy: ny.toFixed(1), r: 11, class: 'stats-web-node' }));
+              web.appendChild(svgNode('text', { x: nx.toFixed(1), y: (ny + 3).toFixed(1), 'text-anchor': 'middle', class: 'stats-web-id' }, pad2(other)));
+            });
+            web.appendChild(svgNode('circle', { cx: cx, cy: cy, r: 12.5, class: 'stats-web-self' }));
+            web.appendChild(svgNode('text', { x: cx, y: cy + 3, 'text-anchor': 'middle', class: 'stats-web-id stats-web-self-id' }, pad2(rosterPick)));
+            card.appendChild(web);
+          }
+          // 三角：与它互亲最强的一组三驾马车，读取时即时计算，不落存储
+          var byKey = new Map();
+          fieldView.pairs.forEach(function (pair) { byKey.set(pair.a + ',' + pair.b, pair); });
+          var scoreOf = function (a, b) { var pr = byKey.get(Math.min(a, b) + ',' + Math.max(a, b)); return pr ? pr.contact * 3 + pr.nearMinutes : 0; };
+          var bestTrio = null;
+          for (var fi = 0; fi < friendsAll.length; fi++) for (var fj = fi + 1; fj < friendsAll.length; fj++) {
+            var tx = friendsAll[fi].a === rosterPick ? friendsAll[fi].b : friendsAll[fi].a;
+            var ty = friendsAll[fj].a === rosterPick ? friendsAll[fj].b : friendsAll[fj].a;
+            var ts = scoreOf(rosterPick, tx) + scoreOf(rosterPick, ty) + scoreOf(tx, ty);
+            if (ts > 0 && (!bestTrio || ts > bestTrio.s)) bestTrio = { x: tx, y: ty, s: ts };
+          }
+          if (bestTrio) {
+            var nearSum = 0, contactSum = 0;
+            [[rosterPick, bestTrio.x], [rosterPick, bestTrio.y], [bestTrio.x, bestTrio.y]].forEach(function (edge) {
+              var pr = byKey.get(Math.min(edge[0], edge[1]) + ',' + Math.max(edge[0], edge[1]));
+              if (pr) { nearSum += pr.nearMinutes; contactSum += pr.contact; }
+            });
+            card.appendChild(element('p', 'stats-roster-trio', '三角：#' + pad2(rosterPick) + ' · #' + pad2(bestTrio.x) + ' · #' + pad2(bestTrio.y) + '（亲近合计 ' + nearSum + ' 分钟 · 互撞 ' + contactSum + ' 次）'));
           }
           var events = fieldView.events.filter(function (event) { return event[2] === rosterPick || event[3] === rosterPick; }).slice(0, 3);
           if (events.length) {
             card.appendChild(element('p', 'stats-roster-events', '最近：' + events.map(function (event) {
               return fmtEventTime(event[0]) + ' ' + (event[1] === 'bump' || event[1] === 'dodge' || event[1] === 'autoHit' || event[1] === 'charge' || event[1] === 'miss'
-                ? (event[2] === rosterPick ? fieldEventNames[event[1]] + ' → #' + event[3] : '#' + event[3] + ' ' + fieldEventNames[event[1]] + ' → 我')
-                : fieldEventNames[event[1]] + (event[3] ? ' · #' + event[3] : ''));
+                ? (event[2] === rosterPick ? fieldEventNames[event[1]] + ' → #' + pad2(event[3]) : '#' + pad2(event[3]) + ' ' + fieldEventNames[event[1]] + ' → 我')
+                : fieldEventNames[event[1]] + (event[3] ? ' · #' + pad2(event[3]) : ''));
             }).join('；')));
           }
           rosterDetail.appendChild(card);

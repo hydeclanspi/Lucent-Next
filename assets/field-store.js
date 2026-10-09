@@ -234,7 +234,7 @@
       social.forEach(function (day) { totals.contact += day.contact; totals.bump += day.bump; totals.dodge += day.dodge; totals.autoHit += day.autoHit; });
       drive.forEach(function (day) { totals.blue += day.blue; totals.rage += day.rage; });
       return { status: status, message: message, range: range || '7d', grid: grid, gridW: GRID_W, gridH: GRID_H,
-        social: social, drive: drive, profiles: profiles, pairs: pairs.slice(0, 60), events: data.events.slice(-60).reverse(),
+        social: social, drive: drive, profiles: profiles, pairs: pairs.slice(0, 300), events: data.events.slice(-60).reverse(),
         totals: totals, coverageStart: data.events.length ? data.events[0][0] : null };
     }
     var controller = { record: record, recordSummon: recordSummon, recordAppearance: recordAppearance, recordDrive: recordDrive, recordResidency: recordResidency, recordNear: recordNear,
