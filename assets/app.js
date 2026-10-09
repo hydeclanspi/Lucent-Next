@@ -1403,7 +1403,49 @@
 
   /* ---------- 面板 ---------- */
 
-  var statsStore = null, statsController = null, statsParent = null, defaultsParent = null;
+  var statsStore = null, statsController = null, statsParent = null, defaultsParent = null, fieldStore = null;
+
+  function fieldStorageBackend() {
+    var native = api();
+    return native && native.storage ? {
+      get: function (key, fallback) { return native.storage.get(key, fallback); },
+      set: function (key, value) { return native.storage.set(key, value); }
+    } : {
+      get: function (key, fallback) { return Promise.resolve().then(function () {
+        var raw = window.localStorage.getItem('aira-profile-card:preview-field:' + key);
+        return raw == null ? fallback : JSON.parse(raw);
+      }); },
+      set: function (key, value) { return Promise.resolve().then(function () {
+        window.localStorage.setItem('aira-profile-card:preview-field:' + key, JSON.stringify(value));
+      }); }
+    };
+  }
+  function initField() {
+    if (!window.AiraFieldStore) return;
+    var previous = fieldStore;
+    if (previous) previous.flush().then(function () { previous.destroy(); });
+    fieldStore = window.AiraFieldStore.create({ storage: fieldStorageBackend(),
+      width: function () { return window.innerWidth; }, height: function () { return window.innerHeight; } });
+  }
+  var fieldKnownIds = new Set(), fieldDriveTick = { blue: 0, rage: 0 };
+  function fieldPulse() {
+    if (!fieldStore || !interactionController || !interactionController.fieldSnapshot) return;
+    if (document.hidden) return;
+    var snapshot = interactionController.fieldSnapshot(), ids = [], near = [], width = window.innerWidth || 1560, height = window.innerHeight || 1040;
+    snapshot.forEach(function (item) {
+      ids.push(item.id);
+      if (!fieldKnownIds.has(item.id)) { fieldKnownIds.add(item.id); fieldStore.recordSummon([item.id]); }
+    });
+    for (var i = 0; i < snapshot.length; i++) for (var j = i + 1; j < snapshot.length; j++) {
+      if (Math.hypot(snapshot[i].x - snapshot[j].x, snapshot[i].y - snapshot[j].y) < 92) near.push([snapshot[i].id, snapshot[j].id]);
+    }
+    fieldStore.recordAppearance(ids, 4);
+    fieldStore.recordNear(near, 4);
+    fieldStore.recordResidency(snapshot.map(function (item) { return { x: item.x / width * 1560, y: item.y / height * 1040 }; }), 4);
+    var mode = autoDriveState();
+    fieldStore.recordDrive(mode.enabled && !mode.rage ? 4 : 0, mode.rage ? 4 : 0);
+  }
+  setInterval(fieldPulse, 4000);
 
   function initStats() {
     if (!window.AiraStatsStore) return;
@@ -1423,7 +1465,7 @@
       }); }
     };
     statsStore = window.AiraStatsStore.create({ storage: storage });
-    if (statsController) { statsController.destroy(); statsController = window.AiraStatsPanel.mount(el.sheet, { store: statsStore, onBack: closeSheet }); }
+    if (statsController) { statsController.destroy(); statsController = window.AiraStatsPanel.mount(el.sheet, { store: statsStore, field: fieldStore, onBack: closeSheet }); }
   }
 
   function recordStats(event) { if (statsStore) statsStore.record(event); }
@@ -1481,30 +1523,6 @@
       heading.appendChild(titleGroup);
       heading.appendChild(subtitle);
       sheet.appendChild(heading);
-      var toolbar = document.createElement("div");
-      toolbar.className = "interaction-toolbar";
-      var toolbarActions = document.createElement("div");
-      toolbarActions.className = "interaction-toolbar-actions";
-      var drive = document.createElement("button");
-      drive.id = "btnPanelAutoDrive"; drive.type = "button";
-      drive.className = "icon-btn auto-drive-button auto-drive-panel";
-      drive.innerHTML = '<span class="auto-drive-mark fsd-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M6.2 19.2 V4.8 H13 M6.2 11.5 H11" stroke-width="1.7"/><path d="M18.9 5.3c-.5-.9-2-1-2.6-.2-.5.7 0 1.4 1.1 1.8 1.3.5 1.8 1.1 1.3 2-.6.9-2.2.8-2.8-.2" stroke-width="1.2"/><path d="M14.9 14.3v5m0-5h.9c1.8 0 2.9 1.1 2.9 2.5s-1.1 2.5-2.9 2.5h-.9" stroke-width="1.2"/><circle cx="13.6" cy="11.5" r="1.05" fill="currentColor" stroke="none"/></svg></span><span class="auto-drive-word" aria-hidden="true">Drive</span>';
-      drive.addEventListener("click", toggleAutoDrive);
-      toolbarActions.appendChild(drive);
-      var statistics = document.createElement("button");
-      statistics.id = "btnInteractionStats"; statistics.type = "button";
-      statistics.className = "interaction-stats-launcher";
-      statistics.setAttribute("aria-haspopup", "dialog");
-      statistics.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5v15h16M7 14l4-5 4 3 5-7"/></svg><span>历史统计</span>';
-      statistics.addEventListener("click", openStatsPanel);
-      toolbarActions.appendChild(statistics);
-      toolbar.appendChild(toolbarActions);
-      var factoryBar = document.createElement("div"); factoryBar.className = "interaction-factory-bar";
-      var defaults = document.createElement("button"); defaults.id = "interactionDefaults"; defaults.type = "button"; defaults.className = "btn sm"; defaults.textContent = "设默认值";
-      defaults.setAttribute("aria-haspopup", "dialog"); defaults.addEventListener("click", openDefaultsPanel);
-      factoryBar.appendChild(defaults);
-      toolbar.appendChild(factoryBar);
-      sheet.appendChild(toolbar);
     } else if (!options.stats && !options.defaults) sheet.appendChild(title);
 
     if (options.sub) {
@@ -2160,6 +2178,9 @@
       panelButton.setAttribute("aria-label", label); panelButton.title = label;
       panelButton.classList.toggle("is-running", mode.enabled);
       panelButton.classList.toggle("is-rage", !!mode.rage);
+      panelButton.classList.toggle("is-paused", mode.enabled && mode.paused);
+      var modeText = $("panelAutoDriveState");
+      if (modeText) modeText.textContent = mode.enabled ? (mode.rage ? "增强" : "巡航") : mode.unavailableReason ? "不可用" : "关闭";
     }
     if (mode.enabled) {
       clearAutoDriveTimers(); button.hidden = false; button.classList.remove("is-leaving");
@@ -2908,6 +2929,38 @@
     return probabilityBlock;
   }
 
+  function buildInteractionToolbar() {
+    var toolbar = document.createElement("div");
+    toolbar.className = "interaction-toolbar";
+    toolbar.setAttribute("role", "group");
+    toolbar.setAttribute("aria-label", "交互工具");
+    var drive = document.createElement("button");
+    drive.id = "btnPanelAutoDrive"; drive.type = "button";
+    drive.className = "interaction-utility-button interaction-drive";
+    drive.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.2"/><path d="M4 10.5h4.2l2 2.8v6.6m9.8-9.4h-4.2l-2 2.8v6.6M8.2 10.5c1.9-1.4 5.7-1.4 7.6 0"/></svg><span>Drive</span><span class="interaction-drive-state" aria-hidden="true"><i></i><span id="panelAutoDriveState">关闭</span></span>';
+    drive.addEventListener("click", toggleAutoDrive);
+    toolbar.appendChild(drive);
+
+    var actions = document.createElement("div");
+    actions.className = "interaction-toolbar-actions";
+    var statistics = document.createElement("button");
+    statistics.id = "btnInteractionStats"; statistics.type = "button";
+    statistics.className = "interaction-utility-button";
+    statistics.setAttribute("aria-haspopup", "dialog");
+    statistics.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5v15h16M7 14l4-5 4 3 5-7"/></svg><span>历史统计</span>';
+    statistics.addEventListener("click", openStatsPanel);
+    actions.appendChild(statistics);
+    var defaults = document.createElement("button");
+    defaults.id = "interactionDefaults"; defaults.type = "button";
+    defaults.className = "interaction-utility-button";
+    defaults.setAttribute("aria-haspopup", "dialog");
+    defaults.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 4h11v16l-5.5-3.5L6.5 20z"/></svg><span>设默认值</span>';
+    defaults.addEventListener("click", openDefaultsPanel);
+    actions.appendChild(defaults);
+    toolbar.appendChild(actions);
+    return toolbar;
+  }
+
   function openInteractionPanel() {
     var body = document.createElement("div");
     body.className = "interaction-panel";
@@ -2953,6 +3006,7 @@
     // A single quiet live readout below the controls, separate from the sliders.
     var probabilityNote = probabilityBlock.querySelector("#wallpaperInteractionNote");
     body.appendChild(probabilityNote);
+    body.appendChild(buildInteractionToolbar());
 
     var explanation = document.createElement("details");
     explanation.className = "interaction-algorithm";
