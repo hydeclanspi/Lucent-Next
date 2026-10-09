@@ -52,17 +52,77 @@
     if (resMonths.length > 18) resMonths.slice(0, resMonths.length - 18).forEach(function (key) { delete data.residency.m[key]; });
     if (data.events.length > EVENT_CAP) data.events = data.events.slice(data.events.length - EVENT_CAP);
   }
+  // 把任意形状的驻留数组重采样到当前网格：形状一致就原样返回，否则按比例摊开，
+  // 宁可承认"旧热区只保留大致分布"，也不写出越界的空洞。
+  function currentGrid(values) {
+    if (Array.isArray(values) && values.length === GRID_W * GRID_H) return values;
+    var source = Array.isArray(values) ? values : [], out = new Array(GRID_W * GRID_H).fill(0);
+    for (var i = 0; i < out.length; i++) {
+      var from = Math.floor(i * source.length / out.length);
+      var to = Math.max(from + 1, Math.floor((i + 1) * source.length / out.length));
+      var sum = 0, cells = 0;
+      for (var j = from; j < to && j < source.length; j++) if (Number.isFinite(source[j])) { sum += source[j]; cells++; }
+      out[i] = cells ? Math.round(sum / cells) : 0;
+    }
+    return out;
+  }
   function impactBucket(power) {
     for (var i = 0; i < IMPACT_EDGES.length; i++) if (power < IMPACT_EDGES[i]) return i;
     return IMPACT_BUCKETS - 1;
   }
-  // 旧快照没有这两项，读回来时补成空表，后面的写入照常累计。
+  // 4.0.13–4.0.15 用的是这 7 条边界（8 档，像素/秒）。老快照按区间重叠摊进当前档位，
+  // 而不是整张清零：清零会让整段历史静默消失，峰值却还留着，面板上看起来自相矛盾。
+  var LEGACY_IMPACT_EDGES = [10, 20, 30, 45, 60, 80, 100];
+  function uniformEdges(count) {
+    var edges = [];
+    for (var i = 1; i < count; i++) edges.push(i / count);
+    return edges;
+  }
+  function isImpactCounts(values) {
+    return Array.isArray(values) && values.length > 0 && values.every(function (n) { return Number.isSafeInteger(n) && n >= 0; });
+  }
+  // 把 values 按区间重叠摊到 targetEdges 定义的档位上；两边的最后一段都视为无上界。
+  function redistributeCounts(values, sourceEdges, targetEdges) {
+    var out = new Array(targetEdges.length + 1).fill(0);
+    values.forEach(function (count, index) {
+      if (!count) return;
+      var low = index === 0 ? 0 : sourceEdges[index - 1];
+      var high = index < sourceEdges.length ? sourceEdges[index] : Infinity;
+      if (!Number.isFinite(high)) {
+        var merged = false;
+        for (var t = 0; t < out.length && !merged; t++) if ((t === 0 ? 0 : targetEdges[t - 1]) === low) { out[t] += count; merged = true; }
+        if (!merged) out[out.length - 1] += count;
+        return;
+      }
+      var span = high - low;
+      for (var j = 0; j < out.length; j++) {
+        var floorEdge = j === 0 ? 0 : targetEdges[j - 1];
+        var ceilEdge = j < targetEdges.length ? targetEdges[j] : Infinity;
+        var overlap = Math.min(high, ceilEdge) - Math.max(low, floorEdge);
+        if (overlap > 0) out[j] += count * overlap / span;
+      }
+    });
+    var target = Math.round(out.reduce(function (a, b) { return a + b; }, 0));
+    var rounded = out.map(function (n) { return Math.floor(n); });
+    // 最大余额法补足差额：小数部分大的先补，保证总量与摊开的比例都说得通。
+    var order = out.map(function (n, i) { return { index: i, fraction: n - Math.floor(n) }; })
+      .sort(function (a, b) { return b.fraction - a.fraction || a.index - b.index; });
+    var short = target - rounded.reduce(function (a, b) { return a + b; }, 0);
+    for (var k = 0; k < short && k < order.length; k++) rounded[order[k].index] += 1;
+    return rounded;
+  }
+  // 旧快照没有这两项，读回来时补成空表；档位定义变过时把旧分布重投影进来。返回是否改写过。
   function normalizeImpact(data) {
-    var filled = Array.isArray(data.impacts) && data.impacts.length === IMPACT_BUCKETS ? data.impacts : [];
-    data.impacts = new Array(IMPACT_BUCKETS).fill(0).map(function (_, i) { return Number.isSafeInteger(filled[i]) && filled[i] >= 0 ? filled[i] : 0; });
+    var values = isImpactCounts(data.impacts) ? data.impacts : null, migrated = false;
+    if (values && values.length === IMPACT_BUCKETS) data.impacts = values.slice();
+    else if (values) {
+      data.impacts = redistributeCounts(values, values.length === LEGACY_IMPACT_EDGES.length + 1 ? LEGACY_IMPACT_EDGES : uniformEdges(values.length), IMPACT_EDGES);
+      migrated = true;
+    } else data.impacts = new Array(IMPACT_BUCKETS).fill(0);
     var peak = Array.isArray(data.impactPeak) ? data.impactPeak : [];
     data.impactPeak = [Number.isFinite(peak[0]) && peak[0] >= 0 ? peak[0] : 0, Number.isInteger(peak[1]) ? peak[1] : 0,
       Number.isInteger(peak[2]) ? peak[2] : 0, Number.isFinite(peak[3]) ? peak[3] : 0];
+    return migrated;
   }
   function quantize(data) {
     var snap = copy(data);
@@ -99,7 +159,8 @@
         if (!candidates.length && corrupt) { fail('场志快照校验失败，尚未覆盖原数据。'); return; }
         if (candidates.length) {
           candidates.sort(function (a, b) { return b.data.rev - a.data.rev; });
-          data = candidates[0].data; activeSlot = candidates[0].slot; normalizeImpact(data);
+          data = candidates[0].data; activeSlot = candidates[0].slot;
+          if (normalizeImpact(data)) dirty = true;   // 迁移过的分布尽快落盘，别再被旧形状盖回来
         } else dirty = true;
         loaded = true; recoveryNotice = corrupt > 0;
         status = recoveryNotice ? 'recovered' : 'ready';
@@ -200,8 +261,10 @@
       var w = typeof options.width === 'function' ? options.width() : (options.width || 1560);
       var h = typeof options.height === 'function' ? options.height() : (options.height || 1040);
       var dk = dayKey(now(), data.offset), mk = monthKey(now(), data.offset);
-      if (!data.residency.d[dk]) data.residency.d[dk] = new Array(GRID_W * GRID_H).fill(0);
-      if (!data.residency.m[mk]) data.residency.m[mk] = new Array(GRID_W * GRID_H).fill(0);
+      // 网格尺寸在版本间变过时，旧的驻留数组要先按比例重采样到当前网格；
+      // 直接往越界下标上累加会写出空洞与 NaN，落盘后静默变成 0。
+      data.residency.d[dk] = currentGrid(data.residency.d[dk]);
+      data.residency.m[mk] = currentGrid(data.residency.m[mk]);
       snapshot.forEach(function (item) {
         if (!item || !Number.isFinite(item.x) || !Number.isFinite(item.y)) return;
         var gx = Math.max(0, Math.min(GRID_W - 1, Math.floor(item.x / w * GRID_W)));
