@@ -1223,12 +1223,14 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   background: var(--glass);
 }
 :root[data-theme="dark"] .about-shot { border-color: rgba(255, 255, 255, 0.16); box-shadow: 0 12px 28px rgba(0, 0, 0, 0.36); }
-/* 右下角落款：明暗两张亲笔图随主题换；与主标题同一抹金，直接落图不走 mask */
+/* 右下角落款：明暗两张亲笔图随主题换，普通金（标题的 #BD9A3E / #D5B564），直接落图不走 mask */
 .about-sign {
   grid-area: sign;
   justify-self: end;
   align-self: end;
-  width: 132px;
+  width: 152px;
+  margin-right: 10px;
+  margin-bottom: 18px;
 }
 .about-sign img { display: block; width: 100%; height: auto; }
 .about-sign .about-sign-dark { display: none; }
