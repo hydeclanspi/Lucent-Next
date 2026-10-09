@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "3.9.4",
+  "version": "3.9.5",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互——面板按钮换为浅透玻璃，AUTO 标志升级为 FSD Drive；「出厂值」并入设默认值；新增进入主页自动开启自动驾驶；浮光数量滑轨低段细分，2–5 枚更紧凑。"
+  "description": "通透的个人名片主页。代号：交互——自动驾驶阵容重抽加快至 11.5 秒；设默认值新增「自动驾驶 (FSD)」卡片与查询出厂值，面板底部留出下降空间避让系统搜索框；算法说明文本回到 3.4.0 版本。"
 }

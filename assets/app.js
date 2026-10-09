@@ -2349,7 +2349,7 @@
     var parent = { nodes: Array.from(el.sheet.childNodes), classes: el.sheet.className, scroll: el.sheet.scrollTop, label: el.sheet.getAttribute("aria-label") };
     var body = document.createElement("div"); body.className = "defaults-panel";
     var header = document.createElement("div"); header.className = "defaults-header";
-    header.innerHTML = '<div class="defaults-heading"><button id="defaultsBack" class="defaults-back" type="button" aria-label="返回代号交互"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button><div><h3 class="defaults-title">设默认值</h3><p class="defaults-subtitle">把喜欢的状态，留给下一次。</p></div></div><div class="defaults-actions"><button id="defaultsFactory" class="btn sm defaults-factory" type="button">出厂值</button><button id="defaultsSaveAll" class="btn sm defaults-save-all" type="button">保存当前组合</button></div>';
+    header.innerHTML = '<div class="defaults-heading"><button id="defaultsBack" class="defaults-back" type="button" aria-label="返回代号交互"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button><div><h3 class="defaults-title">设默认值</h3><p class="defaults-subtitle">把喜欢的状态，留给下一次。</p></div></div><div class="defaults-actions"><button id="defaultsFactory" class="btn sm defaults-factory" type="button">查询出厂值</button><button id="defaultsSaveAll" class="btn sm defaults-save-all" type="button">保存当前组合</button></div>';
     header.querySelector("#defaultsBack").addEventListener("click", closeSheet);
     header.querySelector("#defaultsFactory").addEventListener("click", restoreFactoryInteraction);
     header.querySelector("#defaultsSaveAll").addEventListener("click", function () { saveManagedDefaults(); });
@@ -2384,16 +2384,16 @@
       retry.addEventListener("click", function () { if (!state.defaultsBusy && !state.factoryBusy) group.retry(); }); feedback.appendChild(retry);
       row.appendChild(feedback); list.appendChild(row);
     });
-    body.appendChild(list);
     var autoCard = document.createElement("section"); autoCard.className = "defaults-card defaults-autodrive";
     autoCard.setAttribute("aria-labelledby", "default-autodrive-name");
-    autoCard.innerHTML = '<h4 id="default-autodrive-name">自动驾驶</h4><p class="defaults-description">进入主页时自动以淡蓝档开启，阵容仍会定时重抽；运行后再点一次 FSD 进入橙光增强。</p><div class="defaults-autodrive-row"><span>进入主页时开启</span><button id="autoDriveLaunch" type="button" class="wp-random collision-random" aria-pressed="false"><i class="wp-track" aria-hidden="true"><i class="wp-knob"></i></i></button></div><div class="defaults-feedback" id="default-autodrive-feedback"><span role="status" id="autoDriveSaveNote"></span><button id="autoDriveRetry" type="button" class="collision-retry" hidden>重新读取</button></div>';
+    autoCard.innerHTML = '<h4 id="default-autodrive-name">自动驾驶 (FSD)</h4><p class="defaults-description">进入主页时自动以淡蓝档开启，阵容仍会定时重抽；运行后再点一次 FSD 进入橙光增强。</p><div class="defaults-autodrive-row"><span>进入主页时开启</span><button id="autoDriveLaunch" type="button" class="wp-random collision-random" aria-pressed="false"><i class="wp-track" aria-hidden="true"><i class="wp-knob"></i></i></button></div><div class="defaults-feedback" id="default-autodrive-feedback"><span role="status" id="autoDriveSaveNote"></span><button id="autoDriveRetry" type="button" class="collision-retry" hidden>重新读取</button></div>';
     autoCard.querySelector("#autoDriveLaunch").addEventListener("click", function () {
       if (!state.autoDriveReady || state.autoDriveReadError || state.factoryBusy) return;
       state.autoDriveLaunchOn = !state.autoDriveLaunchOn; saveAutoDriveSettings(); syncAutoDriveLaunch();
     });
     autoCard.querySelector("#autoDriveRetry").addEventListener("click", function () { if (!state.defaultsBusy && !state.factoryBusy) loadAutoDriveSettings(); });
-    body.appendChild(autoCard);
+    list.appendChild(autoCard);
+    body.appendChild(list);
     openSheet({ title: "设默认值", content: body, center: true, wide: true, defaults: true });
     defaultsParent = parent;
     syncDefaultsPanel();
@@ -2535,7 +2535,7 @@
     }
     var button = $("defaultsFactory"); if (!button) return;
     button.disabled = state.factoryBusy || state.defaultsBusy || !state.collisionReady || !state.paceReady || !state.probabilityDefaultReady || !state.interactionSettingsReady;
-    button.textContent = state.factoryBusy ? "正在恢复…" : "出厂值";
+    button.textContent = state.factoryBusy ? "正在恢复…" : "查询出厂值";
   }
   function restoreFactoryInteraction() {
     if (state.factoryBusy || state.defaultsBusy) return;
