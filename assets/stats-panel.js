@@ -318,13 +318,19 @@
         rosterGrid.textContent = '';
         var active = new Set(typeof options.activeIds === 'function' ? options.activeIds() : []);
         // 性格星图浓缩成一档深浅：撞人与出击多于回避者更深。
-        // 按 49 位里的分位分档（而不是绝对比例），深浅才有区分度。
+        // 深浅看 49 位里的相对名次，不看绝对比例：排序时比例并列的再看活跃总量与编号，
+        // 每个档案拿到唯一名次，四等分后每档人数均等，长期累积也不会挤成一色。
         var keenOf = function (p) { return p.bump + p.hit; }, shyOf = function (p) { return p.dodge; };
-        var ranked = fieldView.profiles.filter(function (p) { return keenOf(p) + shyOf(p) > 0; })
-          .map(function (p) { return keenOf(p) / (keenOf(p) + shyOf(p)); }).sort(function (a, b) { return a - b; });
+        var depthRank = {}, depthCount = 0;
+        fieldView.profiles.map(function (p) {
+          var keen = keenOf(p), shy = shyOf(p), total = keen + shy;
+          return { id: p.id, total: total, ratio: total ? keen / total : 0 };
+        }).filter(function (d) { return d.total > 0; })
+          .sort(function (a, b) { return a.ratio - b.ratio || a.total - b.total || a.id - b.id; })
+          .forEach(function (d) { depthRank[d.id] = depthCount; depthCount++; });
         function toneOf(p) {
-          if (!(keenOf(p) + shyOf(p)) || !ranked.length) return -1;
-          return Math.min(3, Math.floor(ranked.indexOf(keenOf(p) / (keenOf(p) + shyOf(p))) / ranked.length * 4));
+          if (depthRank[p.id] == null || !depthCount) return -1;
+          return Math.min(3, Math.floor(depthRank[p.id] / depthCount * 4));
         }
         fieldView.profiles.forEach(function (p) {
           var chip = element('button', 'stats-roster-chip', pad2(p.id));
