@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "4.0.1",
+  "version": "4.0.2",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互——Drive (FSD)、历史统计与设默认值组成等宽共享玻璃操作栏；三辐方向盘标记，参数区底边以右端蓝色菱形与镜像渐变收束。"
+  "description": "通透的个人名片主页。代号：交互——共享玻璃操作栏回到标题下方，标题与 beta 信息留出更舒展的间距；参数区底边保留右端蓝色菱形。"
 }
