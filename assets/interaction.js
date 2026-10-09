@@ -16,9 +16,10 @@
   // Mutable so tests can shorten the reshuffle cadence; the app never rewrites it.
   const AUTO = { cruiseMin: 5, cruiseMax: 8, burst: 1.7, kickLimit: 320, manualGrace: 1.25, replan: 0.75, reshuffle: 11.5 };
   const NATURAL = Object.freeze({ neighborRadius: 76, share: 0.30, densityStep: 0.06, cooldown: 0.28 });
-  // Placement soft penalties: far separation breaks the shield, closeness is a gentler
-  // nudge that chance may still tolerate; crowding follows the shared neighbor radius.
-  const PLACEMENT = Object.freeze({ farPenalty: 2.4, closePenalty: 0.65, crowdPenalty: 0.9, nearBand: 60, farBand: 180 });
+  // Placement soft penalties: closeness is a weak nudge chance may tolerate, separation a
+  // medium pull, and a desert left behind is the strong one. Per-arrival jitters and a
+  // random anchor keep constellations from settling into a few formulaic shapes.
+  const PLACEMENT = Object.freeze({ closePenalty: 0.65, farPenalty: 1.6, crowdPenalty: 0.9, voidPenalty: 1.8, nearBand: 60, farBand: 200, voidRadius: 220, voidSpan: 260 });
   const COUNT_MAX = 49, COUNT_CURVE = 2.6, COUNT_LOW_CURVE = 1.3, COUNT_MID = 8;
   const RADIUS = 11;
   const CLEARANCE = 30; // A 44px touch target plus 8px of space around existing UI.
@@ -88,18 +89,29 @@
     const n = clamp(Math.floor(count), 0, COUNT_MAX);
     return { lower: Math.min(n, normal.lower * 3), upper: n };
   }
-  function placementWeight(site, placed, scale) {
-    const gaps = placed.map(other => distance(site, other));
-    if (!gaps.length) return 1;
-    const nearest = Math.min(...gaps);
-    const far = Math.max(0, nearest - PLACEMENT.farBand * scale) / (60 * scale);
-    const close = Math.max(0, PLACEMENT.nearBand * scale - nearest) / (30 * scale);
-    const crowd = Math.max(0, gaps.filter(gap => gap < NATURAL.neighborRadius).length - 2);
-    return Math.exp(-PLACEMENT.farPenalty * far - PLACEMENT.closePenalty * close - PLACEMENT.crowdPenalty * crowd);
+  function placementWeights(candidates, placed, scale, mood, field) {
+    const jitter = mood || { nearJitter: 1, farJitter: 1, voidJitter: 1 };
+    const space = field || candidates;
+    return candidates.map(site => {
+      const gaps = placed.map(other => distance(site, other));
+      if (!gaps.length) return 1;
+      const nearest = Math.min(...gaps);
+      const close = Math.max(0, PLACEMENT.nearBand * scale * jitter.nearJitter - nearest) / (30 * scale);
+      const far = Math.max(0, nearest - PLACEMENT.farBand * scale * jitter.farJitter) / (80 * scale);
+      const crowd = Math.max(0, gaps.filter(gap => gap < NATURAL.neighborRadius).length - 2);
+      // The desert this choice would leave behind: the largest distance-to-nearest-lens remaining.
+      let voidAfter = 0;
+      for (const spot of space) {
+        const d = Math.min(distance(spot, site), ...placed.map(other => distance(spot, other)));
+        if (d > voidAfter) voidAfter = d;
+      }
+      const voidOver = Math.max(0, voidAfter - PLACEMENT.voidRadius * scale * jitter.voidJitter) / (PLACEMENT.voidSpan * scale);
+      return Math.exp(-PLACEMENT.closePenalty * close - PLACEMENT.farPenalty * far - PLACEMENT.crowdPenalty * crowd - PLACEMENT.voidPenalty * voidOver);
+    });
   }
-  function pickSite(candidates, placed, scale) {
+  function pickSite(candidates, weights) {
     let total = 0;
-    const weights = candidates.map(site => { const weight = placementWeight(site, placed, scale); total += weight; return weight; });
+    for (const weight of weights) total += weight;
     let ticket = Math.random() * total;
     for (let i = 0; i < candidates.length; i++) { ticket -= weights[i]; if (ticket <= 0) return candidates[i]; }
     return candidates[candidates.length - 1];
@@ -694,21 +706,30 @@
     function placeBody(body, placed, preserve) {
       const candidates = sites.filter(site => placed.every(other => distance(site, other) >= RADIUS * 2 + 2));
       if (!candidates.length) return false;
-      let choices = candidates;
       const scale = clamp(Math.min(geometry.width / 1560, geometry.height / 1040), 0.7, 1.3);
       if (preserve) {
-        choices = [candidates.reduce((a, b) => distance(a, body) < distance(b, body) ? a : b)];
-      } else if (placed.length === 1) {
-        // A relaxed pair, with a distance independent of the upper band's expanded width.
-        const nearby = candidates.filter(site => distance(site, placed[0]) >= 130 * scale && distance(site, placed[0]) <= 210 * scale);
-        if (nearby.length) choices = nearby;
-      } else if (placed.length > 1) {
-        // New arrivals stay near an existing lens, while dense populations can fill gaps.
-        const nearestGap = site => Math.min(...placed.map(other => distance(site, other)));
-        const nearby = candidates.filter(site => nearestGap(site) >= 60 * scale && nearestGap(site) <= 180 * scale);
-        if (nearby.length) choices = nearby;
+        const site = candidates.reduce((a, b) => distance(a, body) < distance(b, body) ? a : b);
+        body.x = site.x; body.y = site.y; body.positioned = true;
+        return true;
       }
-      const site = choices.length === 1 ? choices[0] : pickSite(choices, placed, scale);
+      if (!placed.length) {
+        const site = candidates[Math.floor(Math.random() * candidates.length)];
+        body.x = site.x; body.y = site.y; body.positioned = true;
+        return true;
+      }
+      // Constellation mood: every arrival redraws its cluster bias, band jitters and anchor.
+      // Sessions drift between clumpy and exploratory instead of repeating a few shapes.
+      const anchor = placed[Math.floor(Math.random() * placed.length)];
+      const mood = { nearJitter: 0.85 + Math.random() * 0.3, farJitter: 0.85 + Math.random() * 0.45, voidJitter: 0.9 + Math.random() * 0.25 };
+      let choices = candidates;
+      if (Math.random() < 0.35 + Math.random() * 0.45) {
+        const halo = candidates.filter(site => {
+          const d = distance(site, anchor);
+          return d >= PLACEMENT.nearBand * scale * mood.nearJitter && d <= PLACEMENT.farBand * scale * mood.farJitter;
+        });
+        if (halo.length) choices = halo;
+      }
+      const site = pickSite(choices, placementWeights(choices, placed, scale, mood, sites));
       body.x = site.x; body.y = site.y; body.positioned = true;
       return true;
     }
@@ -929,5 +950,5 @@
     autoDrive: { bounds: autoBounds, rageBounds, motion: AUTO }, collision: { max: COLLISION_MAX, normalize: collisionSettings, strength: collisionStrength, draw: randomCollision,
     fromSlider: value => collisionStrength(Math.pow(COLLISION_MAX, clamp(Number(value) || 0, 0, 1000) / 1000)),
     toSlider: value => Math.round(Math.log(collisionStrength(value)) / Math.log(COLLISION_MAX) * 1000) },
-    _test: { REGION, WEIGHTS, MOTION, AUTO, NATURAL, PLACEMENT, naturalPace, naturalResponse, resolveNaturalImpact, RESTITUTION, MAX_IMPACT_SPEED, resolveImpact, resolveAutoImpact, autoBounds, rageBounds, placementWeight, pickSite, limitVelocity, makeGeometry, inPolygon, segmentDistance, advance, potential, startModel, sampleModel, modelProbability, safeSites, clearRoute, navigationGrid, routeBetween } };
+    _test: { REGION, WEIGHTS, MOTION, AUTO, NATURAL, PLACEMENT, naturalPace, naturalResponse, resolveNaturalImpact, RESTITUTION, MAX_IMPACT_SPEED, resolveImpact, resolveAutoImpact, autoBounds, rageBounds, placementWeights, pickSite, limitVelocity, makeGeometry, inPolygon, segmentDistance, advance, potential, startModel, sampleModel, modelProbability, safeSites, clearRoute, navigationGrid, routeBetween } };
 });
