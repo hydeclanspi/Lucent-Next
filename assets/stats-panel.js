@@ -45,6 +45,9 @@
     if (impacts) { impactsNote = element('span', 'stats-impacts-note', ''); impactsNote.hidden = true; impacts.head.appendChild(impactsNote); }
     // 碰撞力度也能点选：按住某一档看它的详情。
     var impactsSel = -1;
+    // 地形图同样可点选；terrainGeo 由绘图时写入，供命中判定用。
+    var terrainSel = null, terrainGeo = null;
+    function terrainCode(col, row) { return String.fromCharCode(65 + col) + (row ? row + 1 : ''); }
     var detail = element('div', 'stats-detail'); detail.setAttribute('aria-live', 'polite'); detail.setAttribute('aria-atomic', 'true');
     var detailTime = element('strong'), detailValues = element('p'), detailExtra = element('p', 'stats-detail-extra');
     var zoom = element('button', 'stats-zoom', '展开此时段'); zoom.type = 'button';
@@ -158,6 +161,8 @@
     function drawField() {
       if (!field) return;
       fieldView = field.getView(range);
+      // 场志这一侧两块图共用一块浮层：谁都没选就收起。
+      if (!terrainSel && impactsSel < 0) fieldTip.hidden = true;
       var tw = chartWidth(terrainHost);
       // 浮光地形图
       (function () {
@@ -175,13 +180,30 @@
           x0 = minX - FIT_CELLS / gw; x1 = maxX + FIT_CELLS / gw; y0 = minY - FIT_CELLS / gh; y1 = maxY + FIT_CELLS / gh;
         }
         var cw = x1 - x0, ch = y1 - y0;
-        // 格子保持正方：画布高 = 宽 × 列数比 × 图幅的纵横比
-        var th = Math.max(120, Math.round(tw * gh * ch / (gw * cw))), cell = tw / (gw * cw);
-        function px(n) { return ((n - x0) / cw * tw).toFixed(1); }
-        function py(n) { return ((n - y0) / ch * th).toFixed(1); }
-        var svg = svgNode('svg', { viewBox: '0 0 ' + tw + ' ' + th, width: tw, height: th, role: 'img', 'aria-label': '浮光常驻热力图' });
+        // 左边 12px 留给行号、上边 10px 留给列字母；格子仍保持正方。
+        var refX = 12, refY = 10;
+        var mapW = tw - refX, th = Math.max(120, Math.round(mapW * gh * ch / (gw * cw))) + refY, mapH = th - refY;
+        var cell = mapW / (gw * cw);
+        function px(n) { return (refX + (n - x0) / cw * mapW).toFixed(1); }
+        function py(n) { return (refY + (n - y0) / ch * mapH).toFixed(1); }
+        var totalHeat = 0;
+        fieldView.grid.forEach(function (n) { totalHeat += n; });
+        var svg = svgNode('svg', { viewBox: '0 0 ' + tw + ' ' + th, width: tw, height: th, role: 'img',
+          'aria-label': '浮光常驻热力图，列 A–Z、行 1–12，每格以字母加行号称呼；轻点格子看它占总驻留的比例' });
+        // 参考框：上边列字母、左边行号。每格的名字就是「字母 + 行号」，第一行不带数字，A 用完一轮就 A2、B2。
+        var firstCol = Math.max(0, Math.floor(x0 * gw)), lastCol = Math.min(gw - 1, Math.ceil(x1 * gw) - 1);
+        var firstRow = Math.max(0, Math.floor(y0 * gh)), lastRow = Math.min(gh - 1, Math.ceil(y1 * gh) - 1);
+        var roomy = mapW / (gw * cw) >= 14;
+        for (var refC = firstCol; refC <= lastCol; refC++) {
+          if (!roomy && (refC - firstCol) % 2) continue;
+          svg.appendChild(svgNode('text', { x: px((refC + .5) / gw), y: refY - 2.5, 'text-anchor': 'middle', class: 'stats-terrain-ref' }, String.fromCharCode(65 + refC)));
+        }
+        for (var refR = firstRow; refR <= lastRow; refR++) {
+          if (!roomy && (refR - firstRow) % 2) continue;
+          svg.appendChild(svgNode('text', { x: refX - 3, y: (Number(py((refR + .5) / gh)) + 2.5).toFixed(1), 'text-anchor': 'end', class: 'stats-terrain-ref' }, String(refR + 1)));
+        }
         if (region) {
-          var outline = offsetOutline(region.map(function (p) { return [(p[0] / REGION_W - x0) / cw * tw, (p[1] / REGION_H - y0) / ch * th]; }), cell * FRAME_CELLS);
+          var outline = offsetOutline(region.map(function (p) { return [Number(px(p[0] / REGION_W)), Number(py(p[1] / REGION_H))]; }), cell * FRAME_CELLS);
           svg.appendChild(svgNode('polygon', { points: outline.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' '), class: 'stats-terrain-region' }));
         }
         // 深浅看分位，不看绝对值：日子久了每个格子都会被踩深，只有相对深度一直读得出来。
@@ -198,6 +220,20 @@
           if (!n) continue;
           svg.appendChild(svgNode('rect', { x: px(gx / gw), y: py(gy / gh), width: (cell - 0.7).toFixed(1), height: (cell - 0.7).toFixed(1), rx: 1.5,
             class: 'stats-terrain-cell', opacity: (0.08 + 0.85 * shade(n)).toFixed(3) }));
+        }
+        terrainGeo = { left: refX, top: refY, width: mapW, height: mapH, x0: x0, y0: y0, cw: cw, ch: ch, gw: gw, gh: gh, total: totalHeat };
+        if (terrainSel) {
+          var selCol = Math.max(0, Math.min(gw - 1, terrainSel.col)), selRow = Math.max(0, Math.min(gh - 1, terrainSel.row));
+          var selN = fieldView.grid[selRow * gw + selCol] || 0;
+          svg.appendChild(svgNode('rect', { x: px(selCol / gw), y: py(selRow / gh), width: (cell - 0.7).toFixed(1), height: (cell - 0.7).toFixed(1), rx: 1.5, class: 'stats-terrain-pick' }));
+          fieldTip.hidden = false;
+          fieldTipTitle.textContent = terrainCode(selCol, selRow);
+          fieldTipValue.textContent = selN ? '占全部驻留的 ' + fmt(100 * selN / (totalHeat || 1)) + '%' : '本格暂无驻留';
+          fieldTipExtra.textContent = selN ? '本格驻留约 ' + fmtDuration(selN * 4) : '换一块格子看';
+          var rootRect = root.getBoundingClientRect(), hostRect = terrainHost.getBoundingClientRect();
+          fieldTip.style.width = Math.min(270, rootRect.width) + 'px';
+          fieldTip.style.left = Math.max(0, Math.min(rootRect.width - fieldTip.offsetWidth, hostRect.left - rootRect.left + Number(px((selCol + .5) / gw)) + 8)) + 'px';
+          fieldTip.style.top = Math.max(0, Math.min(rootRect.height - 40, hostRect.top - rootRect.top + Number(py((selRow + 1) / gh)) - 6)) + 'px';
         }
         terrainHost.appendChild(svg);
       })();
@@ -241,15 +277,15 @@
         });
         svg.appendChild(svgNode('text', { x: w - 10, y: h - 3, 'text-anchor': 'end', class: 'stats-axis stats-axis-title' }, '相对速度 · 像素/秒'));
         if (impactsSel >= buckets.length) impactsSel = -1;
-        impactsTip.hidden = impactsSel < 0;
         if (impactsSel >= 0) {
-          impactsTipTitle.textContent = '相对速度 ' + (impactsSel < edges.length ? (impactsSel ? edges[impactsSel - 1] : 0) + '–' + edges[impactsSel] : edges[edges.length - 1] + '+') + ' 像素/秒';
-          impactsTipValue.textContent = buckets[impactsSel] + ' 次（占 ' + fmt(100 * buckets[impactsSel] / total) + '%）';
-          impactsTipExtra.textContent = '自然碰撞、FSD 冲撞与手拨的合计';
+          fieldTip.hidden = false;
+          fieldTipTitle.textContent = '相对速度 ' + (impactsSel < edges.length ? (impactsSel ? edges[impactsSel - 1] : 0) + '–' + edges[impactsSel] : edges[edges.length - 1] + '+') + ' 像素/秒';
+          fieldTipValue.textContent = buckets[impactsSel] + ' 次（占 ' + fmt(100 * buckets[impactsSel] / total) + '%）';
+          fieldTipExtra.textContent = '自然碰撞、FSD 冲撞与手拨的合计';
           var rootRect = root.getBoundingClientRect(), chartRect = impacts.host.getBoundingClientRect();
-          impactsTip.style.width = Math.min(270, rootRect.width) + 'px';
-          impactsTip.style.left = Math.max(0, Math.min(rootRect.width - impactsTip.offsetWidth, chartRect.left - rootRect.left + g.left + (impactsSel + .5) * slot + 10)) + 'px';
-          impactsTip.style.top = chartRect.top - rootRect.top + 6 + 'px';
+          fieldTip.style.width = Math.min(270, rootRect.width) + 'px';
+          fieldTip.style.left = Math.max(0, Math.min(rootRect.width - fieldTip.offsetWidth, chartRect.left - rootRect.left + g.left + (impactsSel + .5) * slot + 10)) + 'px';
+          fieldTip.style.top = chartRect.top - rootRect.top + 6 + 'px';
         }
       })();
       // 驾驶志
@@ -395,9 +431,9 @@
     var tooltip = element('div', 'stats-tooltip'); tooltip.hidden = true; tooltip.setAttribute('aria-hidden', 'true');
     var tooltipTitle = element('strong'), tooltipValue = element('p'), tooltipExtra = element('p');
     tooltip.appendChild(tooltipTitle); tooltip.appendChild(tooltipValue); tooltip.appendChild(tooltipExtra); root.appendChild(tooltip);
-    var impactsTip = element('div', 'stats-tooltip'); impactsTip.hidden = true; impactsTip.setAttribute('aria-hidden', 'true');
-    var impactsTipTitle = element('strong'), impactsTipValue = element('p'), impactsTipExtra = element('p');
-    impactsTip.appendChild(impactsTipTitle); impactsTip.appendChild(impactsTipValue); impactsTip.appendChild(impactsTipExtra); root.appendChild(impactsTip);
+    var fieldTip = element('div', 'stats-tooltip'); fieldTip.hidden = true; fieldTip.setAttribute('aria-hidden', 'true');
+    var fieldTipTitle = element('strong'), fieldTipValue = element('p'), fieldTipExtra = element('p');
+    fieldTip.appendChild(fieldTipTitle); fieldTip.appendChild(fieldTipValue); fieldTip.appendChild(fieldTipExtra); root.appendChild(fieldTip);
     var charts = [probability, activity, heat];
     function formatted(time, type) {
       var d = new Date(time + view.offsetMinutes * 60000), pad = function (v) { return String(v).padStart(2, '0'); };
@@ -439,7 +475,7 @@
         var g = impacts.g, count = fieldView && fieldView.impacts ? fieldView.impacts.length : 0;
         if (!g || !count) return;
         impactsSel = Math.max(0, Math.min(count - 1, Math.floor((event.clientX - impacts.host.getBoundingClientRect().left - g.left) / g.width * count)));
-        activeChart = null; draw(); drawField();
+        terrainSel = null; activeChart = null; draw(); drawField();
       }
       impacts.host.addEventListener('pointerdown', function (event) {
         if (event.pointerType === 'mouse' && event.button !== 0) return;
@@ -449,12 +485,33 @@
       impacts.host.addEventListener('pointerup', function () { impactsHeld = false; });
       impacts.host.addEventListener('pointercancel', function () { impactsHeld = false; });
     }
+    // 地形图的点选：按住任意一格（含空格）看它占总驻留的比例。
+    if (terrainHost) {
+      var terrainHeld = false;
+      function chooseTerrain(event) {
+        var g = terrainGeo; if (!g) return;
+        var rect = terrainHost.getBoundingClientRect();
+        var nx = (event.clientX - rect.left - g.left) / g.width, ny = (event.clientY - rect.top - g.top) / g.height;
+        terrainSel = {
+          col: Math.max(0, Math.min(g.gw - 1, Math.floor((g.x0 + nx * g.cw) * g.gw))),
+          row: Math.max(0, Math.min(g.gh - 1, Math.floor((g.y0 + ny * g.ch) * g.gh)))
+        };
+        impactsSel = -1; activeChart = null; draw(); drawField();
+      }
+      terrainHost.addEventListener('pointerdown', function (event) {
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        terrainHeld = true; terrainHost.setPointerCapture(event.pointerId); chooseTerrain(event);
+      });
+      terrainHost.addEventListener('pointermove', function (event) { if (terrainHeld) chooseTerrain(event); });
+      terrainHost.addEventListener('pointerup', function () { terrainHeld = false; });
+      terrainHost.addEventListener('pointercancel', function () { terrainHeld = false; });
+    }
     // Tap anywhere outside the charts to let the floating card go. Capture phase:
     // choose() re-renders and detaches the original target before it bubbles up.
     root.addEventListener('pointerdown', function (event) {
-      if (!activeChart && impactsSel < 0) return;
+      if (!activeChart && impactsSel < 0 && !terrainSel) return;
       if (event.target && event.target.closest && event.target.closest('.stats-chart')) return;
-      activeChart = null; impactsSel = -1; draw(); drawField();
+      activeChart = null; impactsSel = -1; terrainSel = null; draw(); drawField();
     }, true);
     function drawChart(chart) {
       var w = Math.max(220, Math.round(chart.host.getBoundingClientRect().width)), h = chart.kind === 'probability' ? 192 : chart.kind === 'heat' ? 158 : 152;
