@@ -23,11 +23,13 @@
     var meta = element('p', 'stats-meta'), status = element('div', 'stats-status'); status.setAttribute('role', 'status');
     var statusText = element('span'), retry = element('button', 'stats-retry', '重试'); retry.type = 'button'; retry.addEventListener('click', function () { store.retry(); });
     status.appendChild(statusText); status.appendChild(retry); root.appendChild(meta); root.appendChild(status);
+    // Wide sheets pair the marks two per row; narrow sheets fall back to one column.
+    var columns = element('div', 'stats-columns'); root.appendChild(columns);
     function makeChart(title, note, kind) {
       var section = element('section', 'stats-section stats-' + kind), head = element('div', 'stats-chart-heading');
       var h = element('h4', '', title); head.appendChild(h); section.appendChild(head);
       var caption = element('p', 'stats-caption', note); section.appendChild(caption);
-      var host = element('div', 'stats-chart'); host.dataset.chart = kind; section.appendChild(host); root.appendChild(section);
+      var host = element('div', 'stats-chart'); host.dataset.chart = kind; section.appendChild(host); columns.appendChild(section);
       return { section: section, head: head, host: host, kind: kind, caption: caption };
     }
     var probability = makeChart('Light 倾向', '每个时段内，主动调节后的平均概率', 'probability');
@@ -55,14 +57,15 @@
     navigation.appendChild(previous); navigation.appendChild(element('span', 'stats-touch-hint', '轻点图表，或横向滑动查看')); navigation.appendChild(next); root.appendChild(navigation);
     var foot = element('p', 'stats-footnote', '仅保存时段汇总；Light 倾向是随机权重，并非壁纸实际出现频率。'); root.appendChild(foot);
 
-    /* ---- 场志：浮光地形图、它们的关系、驾驶志、名册 ---- */
+    /* ---- 场志：地形图与概率分布同排，关系与驾驶志同排，名册通栏 ---- */
     var field = options.field || null, fieldView = null, rosterPick = 0;
-    var fieldRoot = element('div', 'stats-field'); root.appendChild(fieldRoot);
+    var fieldColumns = null;
     if (field) {
+      fieldColumns = element('div', 'stats-columns'); root.appendChild(fieldColumns);
       var terrainSection = element('section', 'stats-section stats-terrain');
       terrainSection.appendChild(element('h4', '', '浮光地形图'));
       terrainSection.appendChild(element('p', 'stats-caption', '颜色越深，浮光在该区域驻留越久——它们自己走出来的地形'));
-      var terrainHost = element('div', 'stats-chart stats-terrain-host'); terrainSection.appendChild(terrainHost); fieldRoot.appendChild(terrainSection);
+      var terrainHost = element('div', 'stats-chart stats-terrain-host'); terrainSection.appendChild(terrainHost); columns.appendChild(terrainSection);
       var socialSection = element('section', 'stats-section stats-social');
       var socialHead = element('div', 'stats-chart-heading');
       socialHead.appendChild(element('h4', '', '它们的关系'));
@@ -72,17 +75,17 @@
       });
       socialHead.appendChild(socialLegend); socialSection.appendChild(socialHead);
       socialSection.appendChild(element('p', 'stats-caption', '浮光之间每天的交往方式，驾驶与邂逅都不惊扰比例'));
-      var socialHost = element('div', 'stats-chart'); socialSection.appendChild(socialHost); fieldRoot.appendChild(socialSection);
+      var socialHost = element('div', 'stats-chart'); socialSection.appendChild(socialHost); fieldColumns.appendChild(socialSection);
       var driveSection = element('section', 'stats-section stats-drive');
       driveSection.appendChild(element('h4', '', '驾驶志'));
       var driveNumbers = element('p', 'stats-caption'); driveSection.appendChild(driveNumbers);
-      var driveHost = element('div', 'stats-chart'); driveSection.appendChild(driveHost); fieldRoot.appendChild(driveSection);
+      var driveHost = element('div', 'stats-chart'); driveSection.appendChild(driveHost); fieldColumns.appendChild(driveSection);
       var rosterSection = element('section', 'stats-section stats-roster');
       rosterSection.appendChild(element('h4', '', '名册'));
       rosterSection.appendChild(element('p', 'stats-caption', '49 位固定居民，累计档案；点亮者为当前在场'));
       var rosterGrid = element('div', 'stats-roster-grid'); rosterSection.appendChild(rosterGrid);
       var rosterDetail = element('div', 'stats-roster-detail'); rosterSection.appendChild(rosterDetail);
-      fieldRoot.appendChild(rosterSection);
+      fieldColumns.appendChild(rosterSection);
     }
     function fmtDuration(seconds) {
       seconds = Math.round(seconds);
@@ -103,15 +106,19 @@
       }
       return out;
     }
+    // 每张图按自己所在的栏宽绘制：宽屏两栏时不再借用地形图的宽度。
+    function chartWidth(host) {
+      var width = Math.round(host.getBoundingClientRect().width);
+      return width > 0 ? Math.max(200, width) : 480;
+    }
     function drawField() {
-      if (!field) { fieldRoot.hidden = true; return; }
-      fieldRoot.hidden = false;
+      if (!field) return;
       fieldView = field.getView(range);
-      var w = Math.max(240, Math.round(terrainHost.getBoundingClientRect().width) || 480);
+      var tw = chartWidth(terrainHost);
       // 浮光地形图
       (function () {
         terrainHost.textContent = '';
-        var tw = w, th = Math.round(tw * fieldView.gridH / fieldView.gridW);
+        var th = Math.round(tw * fieldView.gridH / fieldView.gridW);
         var svg = svgNode('svg', { viewBox: '0 0 ' + tw + ' ' + th, width: tw, height: th, role: 'img', 'aria-label': '浮光常驻热力图' });
         var region = window.AiraInteraction && AiraInteraction._test ? AiraInteraction._test.REGION : null;
         if (region) {
@@ -134,7 +141,7 @@
       (function () {
         socialHost.textContent = '';
         var rows = aggregateDays(fieldView.social, function (row) { return [row.contact, row.bump, row.dodge, row.autoHit]; });
-        var sh = 132, svg = svgNode('svg', { viewBox: '0 0 ' + w + ' ' + sh, width: w, height: sh, role: 'img', 'aria-label': '浮光交往方式随时间变化' });
+        var w = chartWidth(socialHost), sh = 132, svg = svgNode('svg', { viewBox: '0 0 ' + w + ' ' + sh, width: w, height: sh, role: 'img', 'aria-label': '浮光交往方式随时间变化' });
         var max = 1;
         rows.forEach(function (row) { max = Math.max(max, row.values[0] + row.values[1] + row.values[2] + row.values[3]); });
         var bw = Math.max(1, (w - 10) / rows.length - 2);
@@ -158,7 +165,7 @@
           + ' · 接力 ' + t.relay + ' 次 · 得舵 ' + t.pilot + ' 次';
         driveHost.textContent = '';
         var rows = aggregateDays(fieldView.drive, function (row) { return [row.blue, row.rage]; });
-        var dh = 56, svg = svgNode('svg', { viewBox: '0 0 ' + w + ' ' + dh, width: w, height: dh, role: 'img', 'aria-label': '蓝橙驾驶时长随时间变化' });
+        var dh = 56, w = chartWidth(driveHost), svg = svgNode('svg', { viewBox: '0 0 ' + w + ' ' + dh, width: w, height: dh, role: 'img', 'aria-label': '蓝橙驾驶时长随时间变化' });
         var max = 1;
         rows.forEach(function (row) { max = Math.max(max, row.values[0] + row.values[1]); });
         rows.forEach(function (row, i) {
