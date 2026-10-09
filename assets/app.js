@@ -2386,7 +2386,7 @@
     });
     var autoCard = document.createElement("section"); autoCard.className = "defaults-card defaults-autodrive";
     autoCard.setAttribute("aria-labelledby", "default-autodrive-name");
-    autoCard.innerHTML = '<h4 id="default-autodrive-name">自动驾驶 (FSD)</h4><p class="defaults-description">进入主页时自动以淡蓝档开启，阵容仍会定时重抽；运行后再点一次 FSD 进入橙光增强。</p><div class="defaults-autodrive-row"><span>进入主页时开启</span><button id="autoDriveLaunch" type="button" class="wp-random collision-random" aria-pressed="false"><i class="wp-track" aria-hidden="true"><i class="wp-knob"></i></i></button></div><div class="defaults-feedback" id="default-autodrive-feedback"><span role="status" id="autoDriveSaveNote"></span><button id="autoDriveRetry" type="button" class="collision-retry" hidden>重新读取</button></div>';
+    autoCard.innerHTML = '<div class="defaults-autodrive-head"><div class="defaults-autodrive-copy"><h4 id="default-autodrive-name">自动驾驶 (FSD)</h4><p class="defaults-description">进入主页时自动以淡蓝档开启，阵容仍会定时重抽；运行后再点一次 FSD 进入橙光增强。</p></div><button id="autoDriveLaunch" type="button" class="wp-random collision-random" aria-pressed="false"><span>默认开启</span><i class="wp-track" aria-hidden="true"><i class="wp-knob"></i></i></button></div><div class="defaults-feedback" id="default-autodrive-feedback" hidden><span role="status" id="autoDriveSaveNote"></span><button id="autoDriveRetry" type="button" class="collision-retry" hidden>重新读取</button></div>';
     autoCard.querySelector("#autoDriveLaunch").addEventListener("click", function () {
       if (!state.autoDriveReady || state.autoDriveReadError || state.factoryBusy) return;
       state.autoDriveLaunchOn = !state.autoDriveLaunchOn; saveAutoDriveSettings(); syncAutoDriveLaunch();
@@ -2396,7 +2396,7 @@
     body.appendChild(list);
     openSheet({ title: "设默认值", content: body, center: true, wide: true, defaults: true });
     defaultsParent = parent;
-    syncDefaultsPanel();
+    syncDefaultsPanel(); syncAutoDriveLaunch();
     $("defaultsBack").focus({ preventScroll: true });
   }
 
@@ -2541,7 +2541,7 @@
     if (state.factoryBusy || state.defaultsBusy) return;
     state.factoryBusy = true; state.factoryStatus = "";
     if (interactionController) interactionController.setAutoDrive(false);
-    state.autoDriveLaunchOn = false; state.autoDriveReadError = false;
+    state.autoDriveLaunchOn = true; state.autoDriveReadError = false;
     state.interactionCount = FACTORY_INTERACTION.count;
     if (interactionController) interactionController.setCount(state.interactionCount);
     state.wallpaperProbability = { version: 1, light: FACTORY_INTERACTION.light, source: "default", updatedAt: 0 };
@@ -2566,6 +2566,8 @@
     var note = $("autoDriveSaveNote");
     if (note) note.textContent = !state.autoDriveReady ? "正在读取自动驾驶设置…" : state.autoDriveReadError ? "自动驾驶设置暂未读出，未覆盖原设置。" : "";
     var retry = $("autoDriveRetry"); if (retry) retry.hidden = !state.autoDriveReadError;
+    var feedback = $("default-autodrive-feedback");
+    if (feedback) feedback.hidden = !((note && note.textContent) || (retry && !retry.hidden));
   }
   function maybeAutoLaunch() {
     if (autoLaunchTried || state.autoDriveLaunchOn !== true || state.autoDriveReadError) return;
@@ -2582,7 +2584,7 @@
       var raw = window.localStorage.getItem("aira-profile-card:autoDriveSettings");
       return raw == null ? null : JSON.parse(raw);
     }).then(function (saved) {
-      state.autoDriveLaunchOn = !!(saved && saved.launchOn === true);
+      state.autoDriveLaunchOn = saved ? saved.launchOn === true : true;
       state.autoDriveReady = true; syncAutoDriveLaunch(); maybeAutoLaunch();
     }).catch(function () {
       state.autoDriveReady = true; state.autoDriveReadError = true; syncAutoDriveLaunch();
