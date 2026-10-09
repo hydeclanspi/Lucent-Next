@@ -189,34 +189,53 @@
 }
 .interaction-subtitle > span:last-child { font-size: 0.67em; letter-spacing: 0.3px; }
 
-/* One quiet action row on the sheet's existing glass, below the parameters. */
+/* Three key actions share one glass outline, with equal visual weight. */
 .interaction-toolbar {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 12px 24px; margin: 13px -6px 0;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  align-items: stretch; gap: 0; margin: 18px 4px 0; padding: 4px;
+  border: 1px solid rgba(255,255,255,.42); border-radius: 22px;
+  background: linear-gradient(155deg, rgba(255,255,255,.24), rgba(231,241,250,.10));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.34), 0 3px 12px rgba(26,40,56,.045);
+  --utility-ink: rgba(22,24,31,.80);
+  --utility-rule: rgba(22,24,31,.12);
   --drive-tint: #326885;
 }
-:root[data-theme="dark"] .interaction-toolbar { --drive-tint: #AED5EB; }
-.interaction-toolbar-actions { display: flex; align-items: center; gap: 6px; }
+:root[data-theme="dark"] .interaction-toolbar {
+  border-color: rgba(226,240,252,.21);
+  background: linear-gradient(155deg, rgba(212,232,249,.10), rgba(163,192,221,.045));
+  box-shadow: inset 0 1px 0 rgba(245,251,255,.09), 0 3px 12px rgba(0,0,0,.08);
+  --utility-ink: rgba(238,241,248,.88);
+  --utility-rule: rgba(238,241,248,.14);
+  --drive-tint: #AED5EB;
+}
+.interaction-toolbar-actions {
+  position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); min-width: 0;
+}
 .interaction-utility-button {
-  display: inline-flex; align-items: center; justify-content: center; flex: none;
-  gap: 7px; min-height: 44px; padding: 0 12px;
-  border: 0; border-radius: 22px; background: transparent; box-shadow: none;
-  color: var(--ink-2); font-size: 12px; font-weight: 500; line-height: 1.4;
-  letter-spacing: .2px; white-space: nowrap; touch-action: manipulation;
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  gap: 9px; min-width: 0; min-height: 50px; padding: 0 12px;
+  border: 0; border-radius: 17px; background: transparent; box-shadow: none;
+  color: var(--utility-ink); font-size: 13px; font-weight: 500; line-height: 1.4;
+  letter-spacing: .3px; white-space: nowrap; touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   transition: color 160ms ease, background-color 160ms ease;
 }
-.interaction-utility-button > svg { width: 17px; height: 17px; flex: none; opacity: .82; }
-.interaction-utility-button:focus-visible { outline: 2px solid var(--ink-2); outline-offset: 2px; }
-.interaction-utility-button:active { background-color: rgba(139,171,197,.16); }
-@media (hover: hover) {
-  .interaction-utility-button:hover { color: var(--ink); background-color: rgba(255,255,255,.16); }
-  :root[data-theme="dark"] .interaction-utility-button:hover { background-color: rgba(214,235,251,.07); }
+.interaction-toolbar-actions::before,
+.interaction-toolbar-actions > .interaction-utility-button + .interaction-utility-button::before {
+  content: ""; position: absolute; z-index: 1; left: 0; top: 50%; transform: translateY(-50%);
+  width: 1px; height: 22px; background: var(--utility-rule); pointer-events: none;
 }
-.interaction-drive { gap: 7px; }
+.interaction-utility-button > svg { width: 19px; height: 19px; flex: none; opacity: .92; }
+.interaction-utility-button:focus-visible { outline: 2px solid var(--ink-2); outline-offset: -2px; }
+.interaction-utility-button:active { background-color: rgba(139,171,197,.20); }
+@media (hover: hover) {
+  .interaction-utility-button:hover { color: var(--ink); background-color: rgba(255,255,255,.23); }
+  :root[data-theme="dark"] .interaction-utility-button:hover { background-color: rgba(214,235,251,.10); }
+}
+.interaction-drive { gap: 8px; }
 .interaction-drive-state {
-  display: inline-flex; align-items: center; gap: 5px; margin-left: 3px;
-  color: var(--ink-2); font-size: 10px; font-weight: 400; letter-spacing: .3px;
+  display: inline-flex; align-items: center; gap: 5px; margin-left: 2px;
+  color: var(--ink-2); font-size: 10.5px; font-weight: 400; letter-spacing: .3px;
 }
 .interaction-drive-state i { width: 5px; height: 5px; flex: none; border-radius: 50%; border: 1px solid currentColor; }
 .interaction-drive.is-running .interaction-drive-state { color: var(--drive-tint); }
@@ -225,13 +244,18 @@
 .interaction-drive.is-rage { --drive-tint: #865326; }
 :root[data-theme="dark"] .interaction-drive.is-rage { --drive-tint: #E8BE94; }
 .interaction-drive[aria-disabled="true"] { color: var(--ink-3); }
-@media (max-width: 420px) {
-  .interaction-toolbar { gap: 4px; margin-inline: -8px; }
-  .interaction-toolbar-actions { gap: 0; }
-  .interaction-utility-button { padding-inline: 8px; font-size: 11.5px; }
-  .interaction-toolbar-actions .interaction-utility-button > svg { display: none; }
-  .interaction-drive { gap: 5px; }
-  .interaction-drive-state { margin-left: 1px; gap: 4px; }
+@media (max-width: 639px) {
+  .interaction-toolbar { margin-inline: 0; padding: 4px; border-radius: 20px; }
+  .interaction-utility-button {
+    display: grid; grid-template-rows: 20px 18px; align-content: center; justify-items: center;
+    gap: 5px; min-height: 68px; padding: 6px 2px; border-radius: 15px; font-size: 12px;
+  }
+  .interaction-utility-button > svg { grid-row: 1; }
+  .interaction-utility-button > span { grid-row: 2; }
+  .interaction-drive > .interaction-drive-state { grid-area: auto; position: absolute; top: 15px; left: calc(50% + 12px); margin: 0; }
+  .interaction-drive-state > span { display: none; }
+  .interaction-toolbar-actions::before,
+  .interaction-toolbar-actions > .interaction-utility-button + .interaction-utility-button::before { height: 30px; }
 }
 @media (prefers-reduced-motion: reduce) { .interaction-utility-button { transition: none; } }
 .interaction-count { padding: 0 4px; }
@@ -542,15 +566,22 @@
 .interaction-controls .collision-random[aria-pressed="true"] { color: #467896; }
 :root[data-theme="dark"] .interaction-controls .collision-random[aria-pressed="true"] { color: #A8D8F4; }
 .interaction-panel > .wp-interaction-note {
-  position: relative; margin: 27px 4px 0; padding: 15px 0 0 19px; border-top: 1px solid var(--ink-4);
+  position: relative; margin: 27px 4px 0; padding: 15px 0 0; border-top: 0;
   font-size: 11.5px; line-height: 1.8; letter-spacing: .25px; color: var(--ink-3); text-align: left;
 }
 .interaction-panel > .wp-interaction-note::before {
-  content: ""; position: absolute; left: 2px; top: 21.5px; width: 6px; height: 6px;
-  transform: rotate(45deg); background: rgba(148,199,232,.9); box-shadow: 0 0 6px rgba(148,199,232,.45);
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px;
+  background: linear-gradient(270deg, rgba(148,199,232,.62), var(--ink-4) 110px, var(--ink-4));
+  opacity: .85; pointer-events: none;
+}
+.interaction-panel > .wp-interaction-note::after {
+  content: ""; position: absolute; right: -1px; top: -3px; width: 7px; height: 7px;
+  transform: rotate(45deg); background: rgba(148,199,232,.95);
+  box-shadow: 0 0 7px rgba(148,199,232,.4); pointer-events: none;
 }
 .interaction-panel > .wp-interaction-note b { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: .3px; }
-:root[data-theme="dark"] .interaction-panel > .wp-interaction-note::before { background: rgba(150,205,240,.85); }
+:root[data-theme="dark"] .interaction-panel > .wp-interaction-note::before { background: linear-gradient(270deg, rgba(150,205,240,.5), var(--ink-4) 110px, var(--ink-4)); }
+:root[data-theme="dark"] .interaction-panel > .wp-interaction-note::after { background: rgba(150,205,240,.9); }
 .interaction-panel .interaction-algorithm { margin-top: 24px; border-color: rgba(230,247,255,.24); box-shadow: inset 0 1px 0 rgba(245,252,255,.20); background: linear-gradient(130deg, rgba(184,220,255,.15), rgba(214,237,255,.05)); }
 .interaction-panel .interaction-algorithm summary { padding: 17px 20px; }
 .interaction-panel .interaction-algorithm-copy { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); column-gap: 28px; row-gap: 20px; padding: 3px 20px 22px; font-size: 11px; line-height: 1.85; }
