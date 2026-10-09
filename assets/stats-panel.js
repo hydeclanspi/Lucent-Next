@@ -91,6 +91,13 @@
       chart.host.addEventListener('pointerup', function () { held = false; });
       chart.host.addEventListener('pointercancel', function () { held = false; });
     });
+    // Tap anywhere outside the charts to let the floating card go. Capture phase:
+    // choose() re-renders and detaches the original target before it bubbles up.
+    root.addEventListener('pointerdown', function (event) {
+      if (!activeChart) return;
+      if (event.target && event.target.closest && event.target.closest('.stats-chart')) return;
+      activeChart = null; draw();
+    }, true);
     function drawChart(chart) {
       var w = Math.max(220, Math.round(chart.host.getBoundingClientRect().width)), h = chart.kind === 'probability' ? 192 : chart.kind === 'heat' ? 158 : 152;
       var g = { left: 44, top: 15, width: w - 54, height: h - 53 }; chart.geometry = g;

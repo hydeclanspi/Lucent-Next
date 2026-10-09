@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "3.10.1",
+  "version": "3.10.2",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互——邂逅判定圈由 110k 扩至 150k，放行冷却与触发冷却分离（3s / 9s），碰碰车与回避明显更常出现。"
+  "description": "通透的个人名片主页。代号：交互——历史统计的浮动详情卡支持点击图表外任意处收起；卡片材质改浅透玻璃，不再白色厚重。"
 }
