@@ -9,8 +9,8 @@
   var DAY = 86400000, LIMIT = 96 * 1024, EVENT_CAP = 200, GRID_W = 26, GRID_H = 12;
   var KEYS = ['interaction.field.v1.a', 'interaction.field.v1.b'];
   var KINDS = { contact: 1, bump: 1, dodge: 1, charge: 1, miss: 1, autoHit: 1, relay: 1, pilot: 1, push: 1 };
-  // 相对碰撞速度的分档（像素/秒）：自然碰撞、FSD 冲撞与手拨推挤各记一次
-  var IMPACT_EDGES = [10, 20, 30, 45, 60, 80, 100], IMPACT_BUCKETS = IMPACT_EDGES.length + 1;
+  // 相对碰撞速度的分档（像素/秒）：开口向上的曲线——底部一档宽、高频段 5 一档、往上逐步放大、顶端开口。
+  var IMPACT_EDGES = [10, 15, 20, 25, 30, 36, 42, 50, 60, 75, 100, 140, 220], IMPACT_BUCKETS = IMPACT_EDGES.length + 1;
   function blank() {
     return { v: 1, rev: 0, offset: 0, profiles: {}, pairs: {}, events: [], drive: {}, social: {}, residency: { d: {}, m: {} },
       impacts: new Array(IMPACT_BUCKETS).fill(0), impactPeak: [0, 0, 0, 0] };

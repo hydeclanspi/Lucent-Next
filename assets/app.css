@@ -1181,12 +1181,12 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 .sheet-title { margin: 0 0 4px; font-size: 16.5px; font-weight: 700; letter-spacing: 0.4px; }
 .sheet-sub { margin: 0 0 14px; font-size: 12px; color: var(--ink-3); line-height: 1.55; letter-spacing: 0.3px; }
 
-/* 长按太阳图标浮出的「关于」窗口：左上两行题词，右侧主页预览，左侧产品自述 */
+/* 长按太阳图标浮出的「关于」窗口：左上两行题词，右侧主页预览，左侧产品自述，右下落款签名 */
 #btnSettings { touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .about-body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(200px, 42%);
-  grid-template-areas: "head frame" "copy frame" "meta frame";
+  grid-template-areas: "head frame" "copy frame" "meta sign";
   column-gap: 30px;
   row-gap: 16px;
   align-items: start;
@@ -1223,10 +1223,28 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   background: var(--glass);
 }
 :root[data-theme="dark"] .about-shot { border-color: rgba(255, 255, 255, 0.16); box-shadow: 0 12px 28px rgba(0, 0, 0, 0.36); }
+/* 右下角落款：素材只留笔画 alpha，白底不留；底色是同主标题的 158° 烫金 */
+.about-sign {
+  grid-area: sign;
+  justify-self: end;
+  align-self: end;
+  width: 132px;
+  height: 33px;
+  background-image: linear-gradient(158deg, #DFC47E 2%, #C7A347 52%, #A9822A 98%);
+  -webkit-mask-image: url("signature.png");
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  mask-image: url("signature.png");
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+}
+:root[data-theme="dark"] .about-sign { background-image: linear-gradient(158deg, #F0DCA4 2%, #D8B966 52%, #C09A45 98%); }
 
 @media (max-width: 520px) {
   .sheet.wide.about-sheet { padding: 24px 20px 20px; }
-  .about-body { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "frame" "copy" "meta"; }
+  .about-body { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "frame" "sign" "copy" "meta"; }
   .about-copy p { font-size: 13px; line-height: 1.85; }
 }
 
