@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "3.9.9",
+  "version": "3.9.10",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互——落位算法 v2：远距改连续软惩罚（无硬环带），新增沙漠半径强惩罚防半场空，聚落/探索双模抽签加逐次抖动，分布有性格且每次不同。"
+  "description": "通透的个人名片主页。代号：交互——落位 v2.1 修偏聚：远距惩罚给沙漠填补让路，双模按沙漠门控，锚点按孤立度加权，聚落光环放宽；抽样沙漠半径中位 345→250px。"
 }
