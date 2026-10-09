@@ -123,8 +123,8 @@
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.3px;
-  color: rgba(245, 201, 155, 0.85);
-  text-shadow: 0 1px 4px rgba(10, 24, 40, 0.35);
+  color: rgba(245, 201, 155, 0.45);
+  text-shadow: 0 1px 3px rgba(10, 24, 40, 0.25);
   font-variant-numeric: tabular-nums;
   opacity: 0;
   transform: translateY(2px) rotate(-7deg) scale(0.92);
@@ -140,12 +140,12 @@
 .interaction-id::after {
   content: "";
   position: absolute;
-  top: -3.5px;
-  right: 0.5px;
+  top: -5.5px;
+  right: 1.5px;
   width: 4px;
   height: 4px;
-  border-top: 1px solid rgba(245, 201, 155, 0.75);
-  border-right: 1px solid rgba(245, 201, 155, 0.75);
+  border-top: 1px solid rgba(245, 201, 155, 0.5);
+  border-right: 1px solid rgba(245, 201, 155, 0.5);
   border-top-right-radius: 4.5px;
 }
 @media (prefers-reduced-motion: reduce) {
