@@ -26,8 +26,11 @@
 .stats-chart > svg { display: block; max-width: 100%; color: var(--stats-blue); overflow: visible; }
 .stats-activity .stats-chart > svg { color: var(--stats-orange); }
 .stats-impacts .stats-chart > svg { color: var(--stats-sage); }
+/* 这一栏的标题与说明往右 2.4px，与左侧邻栏的留白对齐 */
+.stats-impacts > .stats-chart-heading, .stats-impacts > .stats-caption { margin-left: 2.4px; }
 .stats-impacts-note { font-size: 10.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .stats-impact-bar { fill: currentColor; opacity: .55; }
+.stats-impact-bar.is-selected { opacity: .9; }
 .stats-grid { stroke: var(--ink-4); stroke-width: .6; }
 .stats-midline { stroke-dasharray: 3 5; }
 .stats-axis { font-size: 11px; fill: var(--ink-2); font-family: inherit; }
