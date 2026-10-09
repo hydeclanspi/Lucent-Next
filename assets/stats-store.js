@@ -218,6 +218,8 @@
         totals: publicCounts(totals), coverageStart: data.coverageStart, compacted: unit !== preferredUnit };
     }
     var controller = { record: record, flush: flush, getView: getView,
+      // 只读副本：备份与导出专用，不改动内部状态，也不触发写入。
+      snapshot: function () { return { data: copy(data), status: status, message: message, loaded: loaded }; },
       subscribe: function (fn) { listeners.add(fn); return function () { listeners.delete(fn); }; },
       retry: async function () { if (!loaded) await load(); return flush(); },
       destroy: function () { if (timer) clearTimeout(timer); listeners.clear(); },
