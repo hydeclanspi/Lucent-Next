@@ -8,9 +8,12 @@
   'use strict';
   var DAY = 86400000, LIMIT = 96 * 1024, EVENT_CAP = 200, GRID_W = 26, GRID_H = 12;
   var KEYS = ['interaction.field.v1.a', 'interaction.field.v1.b'];
-  var KINDS = { contact: 1, bump: 1, dodge: 1, charge: 1, miss: 1, autoHit: 1, relay: 1, pilot: 1 };
+  var KINDS = { contact: 1, bump: 1, dodge: 1, charge: 1, miss: 1, autoHit: 1, relay: 1, pilot: 1, push: 1 };
+  // 相对碰撞速度的分档（像素/秒）：自然碰撞、FSD 冲撞与手拨推挤各记一次
+  var IMPACT_EDGES = [10, 20, 30, 45, 60, 80, 100], IMPACT_BUCKETS = IMPACT_EDGES.length + 1;
   function blank() {
-    return { v: 1, rev: 0, offset: 0, profiles: {}, pairs: {}, events: [], drive: {}, social: {}, residency: { d: {}, m: {} } };
+    return { v: 1, rev: 0, offset: 0, profiles: {}, pairs: {}, events: [], drive: {}, social: {}, residency: { d: {}, m: {} },
+      impacts: new Array(IMPACT_BUCKETS).fill(0), impactPeak: [0, 0, 0, 0] };
   }
   function copy(value) { return JSON.parse(JSON.stringify(value)); }
   function bytes(value) {
@@ -49,6 +52,18 @@
     if (resMonths.length > 18) resMonths.slice(0, resMonths.length - 18).forEach(function (key) { delete data.residency.m[key]; });
     if (data.events.length > EVENT_CAP) data.events = data.events.slice(data.events.length - EVENT_CAP);
   }
+  function impactBucket(power) {
+    for (var i = 0; i < IMPACT_EDGES.length; i++) if (power < IMPACT_EDGES[i]) return i;
+    return IMPACT_BUCKETS - 1;
+  }
+  // 旧快照没有这两项，读回来时补成空表，后面的写入照常累计。
+  function normalizeImpact(data) {
+    var filled = Array.isArray(data.impacts) && data.impacts.length === IMPACT_BUCKETS ? data.impacts : [];
+    data.impacts = new Array(IMPACT_BUCKETS).fill(0).map(function (_, i) { return Number.isSafeInteger(filled[i]) && filled[i] >= 0 ? filled[i] : 0; });
+    var peak = Array.isArray(data.impactPeak) ? data.impactPeak : [];
+    data.impactPeak = [Number.isFinite(peak[0]) && peak[0] >= 0 ? peak[0] : 0, Number.isInteger(peak[1]) ? peak[1] : 0,
+      Number.isInteger(peak[2]) ? peak[2] : 0, Number.isFinite(peak[3]) ? peak[3] : 0];
+  }
   function quantize(data) {
     var snap = copy(data);
     Object.keys(snap.profiles).forEach(function (id) { snap.profiles[id] = snap.profiles[id].map(function (n) { return Math.min(65535, Math.round(n)); }); });
@@ -59,6 +74,8 @@
       });
     });
     Object.keys(snap.drive).forEach(function (key) { snap.drive[key] = snap.drive[key].map(function (n) { return Math.min(65535, Math.round(n)); }); });
+    snap.impacts = snap.impacts.map(function (n) { return Math.min(65535, Math.round(n)); });
+    snap.impactPeak = [Math.round(snap.impactPeak[0] * 10) / 10, snap.impactPeak[1], snap.impactPeak[2], Math.round(snap.impactPeak[3])];
     return snap;
   }
   function create(options) {
@@ -82,7 +99,7 @@
         if (!candidates.length && corrupt) { fail('场志快照校验失败，尚未覆盖原数据。'); return; }
         if (candidates.length) {
           candidates.sort(function (a, b) { return b.data.rev - a.data.rev; });
-          data = candidates[0].data; activeSlot = candidates[0].slot;
+          data = candidates[0].data; activeSlot = candidates[0].slot; normalizeImpact(data);
         } else dirty = true;
         loaded = true; recoveryNotice = corrupt > 0;
         status = recoveryNotice ? 'recovered' : 'ready';
@@ -150,7 +167,13 @@
         }
       else if (kind === 'relay') { pa[8]++; if (b) profile(b)[9]++; }
       else if (kind === 'pilot') { pa[7]++; }
+      else if (kind === 'push') { /* 手拨推挤只进力度分布与事件环，不进个体档案 */ }
       if (kind === 'contact') socialRow()[0]++;
+      // 只有物理碰撞记相对速度：自然碰撞（contact）、FSD 冲撞（autoHit）与手拨推挤（push）
+      if ((kind === 'contact' || kind === 'autoHit' || kind === 'push') && Number.isFinite(event.power) && event.power >= 0) {
+        data.impacts[impactBucket(event.power)]++;
+        if (event.power > data.impactPeak[0]) data.impactPeak = [event.power, a, b, now()];
+      }
       data.events.push([now(), kind, a, b]);
       if (data.events.length > EVENT_CAP) data.events.shift();
       dirty = true; notify(); schedule();
@@ -235,6 +258,7 @@
       drive.forEach(function (day) { totals.blue += day.blue; totals.rage += day.rage; });
       return { status: status, message: message, range: range || '7d', grid: grid, gridW: GRID_W, gridH: GRID_H,
         social: social, drive: drive, profiles: profiles, pairs: pairs.slice(0, 300), events: data.events.slice(-60).reverse(),
+        impacts: data.impacts.slice(), impactPeak: data.impactPeak.slice(), impactEdges: IMPACT_EDGES.slice(),
         totals: totals, coverageStart: data.events.length ? data.events[0][0] : null };
     }
     var controller = { record: record, recordSummon: recordSummon, recordAppearance: recordAppearance, recordDrive: recordDrive, recordResidency: recordResidency, recordNear: recordNear,
@@ -246,5 +270,6 @@
     controller.ready = load();
     return controller;
   }
-  return { create: create, _test: { encode: encode, decode: decode, bytes: bytes, prune: prune, quantize: quantize, blank: blank, keys: KEYS, limit: LIMIT, gridW: GRID_W, gridH: GRID_H } };
+  return { create: create, _test: { encode: encode, decode: decode, bytes: bytes, prune: prune, quantize: quantize, blank: blank, normalizeImpact: normalizeImpact,
+    impactBucket: impactBucket, impactEdges: IMPACT_EDGES, keys: KEYS, limit: LIMIT, gridW: GRID_W, gridH: GRID_H } };
 });

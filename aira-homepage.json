@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "4.0.12",
+  "version": "4.0.13",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互——统计页场志区新增开场引言，右下角小开关（淡橙、默认开启）控制碰到浮光时显示其编号；编号徽章的小帽为一弯松弛扫弧。"
+  "description": "通透的个人名片主页。长按右上角太阳图标浮出「关于」窗口：左上角烫金主标题、右侧主页预览、左侧整段产品自述；统计名册性格改蓝阶，驾驶志橙档改淡橙。"
 }

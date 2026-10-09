@@ -555,7 +555,7 @@
   color: var(--ink); text-align: right; letter-spacing: 0; font-variant-numeric: tabular-nums;
 }
 .interaction-controls #wallpaperProbabilityValue {
-  min-width: 0; flex: none; font-size: 20.875px; line-height: 1.2; font-weight: 600; font-style: italic;
+  min-width: 0; flex: none; font-size: 18px; line-height: 1.2; font-weight: 520; font-style: italic;
   color: var(--ink); text-align: right; letter-spacing: -.2px; font-variant-numeric: tabular-nums;
 }
 .interaction-controls .interaction-count-track { display: flex; margin: 14px 0 0; min-height: 40px; }
