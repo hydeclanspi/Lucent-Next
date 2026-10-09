@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "4.0.5",
+  "version": "4.0.6",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互——浮光成为 49 位有固定编号的居民，每次回主页随机抽选在场；新增场志：浮光地形图、它们的关系、驾驶志与名册，个体与关系数据逐日累积。"
+  "description": "通透的个人名片主页。代号：交互——抓住浮光时右上角浮现橙色编号（01–49）；名册个体卡新增关系网弧线与三角关系即时计算，密友、三驾马车一目了然。"
 }

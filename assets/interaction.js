@@ -1005,8 +1005,10 @@
       button.setAttribute('aria-keyshortcuts', 'ArrowUp ArrowDown ArrowLeft ArrowRight');
       const lens = document.createElement('span'); lens.className = 'interaction-lens'; lens.setAttribute('aria-hidden', 'true');
       const glint = document.createElement('span'); glint.className = 'interaction-glint'; glint.setAttribute('aria-hidden', 'true');
-      lens.appendChild(glint); button.appendChild(lens); field.appendChild(button);
+      const badge = document.createElement('span'); badge.className = 'interaction-id'; badge.setAttribute('aria-hidden', 'true');
+      lens.appendChild(glint); button.appendChild(lens); button.appendChild(badge); field.appendChild(button);
       const body = { index, identity: drawIdentity(), cleanups: [], positioned: false, x: 0, y: 0, vx: (index ? -4 : 5) * MOTION.speedScale, vy: (index ? 3 : -2) * MOTION.speedScale, angle: Math.random() * Math.PI * 2, turn: 0, button, contactUntil: 0, auto: null, manualUntil: 0 };
+      badge.textContent = String(body.identity).padStart(2, '0');
       bodies.push(body);
       bindBody(body, index);
     }

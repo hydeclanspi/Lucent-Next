@@ -2417,7 +2417,8 @@
       state.autoDriveLaunchOn = !state.autoDriveLaunchOn; saveAutoDriveSettings(); syncAutoDriveLaunch();
     });
     autoCard.querySelector("#autoDriveRetry").addEventListener("click", function () { if (!state.defaultsBusy && !state.factoryBusy) loadAutoDriveSettings(); });
-    list.appendChild(autoCard);
+    // The drive switch leads the manager list.
+    list.prepend(autoCard);
     body.appendChild(list);
     openSheet({ title: "设默认值", content: body, center: true, wide: true, defaults: true });
     defaultsParent = parent;
