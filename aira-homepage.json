@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "id": "com.example.aira-profile-card",
-  "name": "名片 · Profile Card",
-  "version": "4.5.3",
+  "id": "com.example.aira-profile-card.beta",
+  "name": "名片 · v5.0 beta",
+  "version": "5.0.0-beta.1",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。长按右上角太阳浮出「关于」窗口；长按扫一扫浮出「备份与导出」，全部数据打包成一段可粘贴的备份文本，离线、不上传。历史统计宽屏双栏，第四格碰撞力度为 14 档非线性阶梯、可点选看详情；浮光地形图带 A–Z 与 1–12 参考框，点格子看它占总驻留的比例。"
+  "description": "v5.0 beta 液态玻璃试验。仅调整主页主搜索大面板与「代号：交互」面板的玻璃材质及局部光感；独立安装身份，保留正式版。"
 }

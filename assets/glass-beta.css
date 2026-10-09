@@ -1,0 +1,159 @@
+/* v5.0 beta.1 — two opt-in surfaces, all layout belongs to the original CSS.
+   No global glass/ink tokens: child windows and unrelated controls keep 4.5.3.
+   The optical rim is an illustration of thickness, not a refraction shader. */
+
+.page > .card,
+#sheet.interaction-sheet {
+  --beta-warm: 250, 218, 177;
+  --beta-cool: 172, 211, 236;
+  --beta-face: 243, 248, 253;
+  --beta-rim-light: .88;
+  --beta-glow-strength: .18;
+  background:
+    radial-gradient(ellipse at 46% 45%, rgba(var(--beta-face), .35), rgba(var(--beta-face), .11) 73%, transparent 100%),
+    linear-gradient(123deg, rgba(255, 255, 255, .29), rgba(236, 245, 253, .14) 42%, rgba(222, 237, 249, .21));
+  border-color: rgba(242, 250, 255, .55);
+  box-shadow:
+    0 22px 60px -15px rgba(7, 19, 35, .32),
+    0 4px 12px -5px rgba(6, 18, 32, .18),
+    inset 0 1px 0 rgba(255, 255, 255, .90),
+    inset 1px 0 0 rgba(255, 255, 255, .32),
+    inset 0 -1px 0 rgba(137, 175, 205, .32),
+    inset 0 0 0 2px rgba(246, 252, 255, .075);
+  -webkit-backdrop-filter: blur(18px) saturate(132%) brightness(1.13);
+  backdrop-filter: blur(18px) saturate(132%) brightness(1.13);
+}
+
+/* The interaction sheet has a steadier reading bed than the home surface. */
+#sheet.interaction-sheet {
+  background:
+    radial-gradient(ellipse at 45% 44%, rgba(250, 252, 255, .43), rgba(245, 250, 255, .13) 80%, transparent),
+    linear-gradient(123deg, rgba(254, 254, 255, .38), rgba(232, 244, 254, .23) 48%, rgba(229, 241, 251, .28));
+  -webkit-backdrop-filter: blur(26px) saturate(124%) brightness(1.19);
+  backdrop-filter: blur(26px) saturate(124%) brightness(1.19);
+}
+
+:root[data-beta-wallpaper="light"] .page > .card,
+:root[data-beta-wallpaper="light"] #sheet.interaction-sheet {
+  --beta-warm: 222, 242, 249;
+  --beta-cool: 167, 199, 240;
+}
+
+/* A broad reflection and gentle environment color — anchored, never spinning. */
+.page > .card::before,
+#sheet.interaction-sheet::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 72% 52% at 0% 0%, rgba(var(--beta-warm), .22), transparent 80%),
+    radial-gradient(ellipse 70% 62% at 100% 100%, rgba(var(--beta-cool), .15), transparent 76%),
+    linear-gradient(116deg, rgba(255, 255, 255, .14), transparent 29%, transparent 73%, rgba(245, 251, 255, .07));
+}
+
+/* Kept separate from the container so the external history tab is never clipped. */
+@supports ((mask-composite: exclude) or (-webkit-mask-composite: xor)) {
+  .page > .card::after,
+  #sheet.interaction-sheet::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 1.5px;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(130deg,
+      rgba(255, 255, 255, var(--beta-rim-light)) 0%,
+      rgba(255, 252, 242, .58) 13%,
+      rgba(255, 255, 255, .09) 32%,
+      rgba(178, 214, 242, .19) 51%,
+      rgba(241, 252, 255, .58) 74%,
+      rgba(255, 255, 255, .12) 89%,
+      rgba(255, 255, 255, .62) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+}
+
+/* Only these direct material decorations are added by glass-beta.js. */
+.page > .card > .beta-glass-sheen,
+#sheet.interaction-sheet > .beta-glass-sheen {
+  display: block;
+  position: absolute;
+  inset: 2px;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+.beta-glass-sheen > .beta-glass-point {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 255, 255, var(--beta-glow-strength)) 0%, rgba(245, 252, 255, .035) 43%, transparent 70%);
+  opacity: 0;
+  transition: opacity 230ms ease;
+}
+.beta-glass-sheen > .beta-glass-point.is-lit { opacity: 1; }
+
+#sheet.interaction-sheet > :not(.beta-glass-sheen) {
+  position: relative;
+  z-index: 1;
+}
+
+:root[data-theme="dark"] .page > .card,
+:root[data-theme="dark"] #sheet.interaction-sheet {
+  --beta-rim-light: .50;
+  --beta-glow-strength: .105;
+  background:
+    radial-gradient(ellipse at 45% 44%, rgba(17, 26, 40, .26), rgba(17, 26, 40, .08) 76%, transparent),
+    linear-gradient(123deg, rgba(49, 62, 78, .35), rgba(17, 25, 39, .30) 45%, rgba(33, 48, 68, .36));
+  border-color: rgba(224, 242, 255, .23);
+  box-shadow:
+    0 24px 66px -14px rgba(0, 3, 10, .55),
+    0 4px 14px -5px rgba(0, 0, 0, .30),
+    inset 0 1px 0 rgba(241, 249, 255, .35),
+    inset 1px 0 0 rgba(230, 245, 255, .13),
+    inset 0 -1px 0 rgba(135, 174, 210, .15),
+    inset 0 0 0 2px rgba(219, 240, 255, .028);
+  -webkit-backdrop-filter: blur(18px) saturate(124%) brightness(.88);
+  backdrop-filter: blur(18px) saturate(124%) brightness(.88);
+}
+:root[data-theme="dark"] #sheet.interaction-sheet {
+  background:
+    radial-gradient(ellipse at 45% 44%, rgba(14, 24, 38, .37), rgba(14, 24, 38, .12) 80%, transparent),
+    linear-gradient(123deg, rgba(45, 61, 80, .39), rgba(15, 24, 39, .39) 45%, rgba(29, 44, 66, .41));
+  -webkit-backdrop-filter: blur(26px) saturate(122%) brightness(.91);
+  backdrop-filter: blur(26px) saturate(122%) brightness(.91);
+}
+:root[data-theme="dark"] .page > .card::before,
+:root[data-theme="dark"] #sheet.interaction-sheet::before {
+  background:
+    radial-gradient(ellipse 72% 52% at 0% 0%, rgba(var(--beta-warm), .075), transparent 80%),
+    radial-gradient(ellipse 70% 62% at 100% 100%, rgba(var(--beta-cool), .08), transparent 76%),
+    linear-gradient(116deg, rgba(243, 249, 255, .045), transparent 32%, transparent 73%, rgba(215, 235, 252, .025));
+}
+
+/* A complete, readable fallback if the host has no backdrop-filter support. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .page > .card, #sheet.interaction-sheet { background: rgba(230, 239, 247, .96); }
+  :root[data-theme="dark"] .page > .card,
+  :root[data-theme="dark"] #sheet.interaction-sheet { background: rgba(24, 34, 49, .97); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .beta-glass-sheen { display: none !important; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .page > .card, #sheet.interaction-sheet { background: rgba(235, 242, 249, .96); }
+  :root[data-theme="dark"] .page > .card,
+  :root[data-theme="dark"] #sheet.interaction-sheet { background: rgba(24, 34, 49, .97); }
+}
