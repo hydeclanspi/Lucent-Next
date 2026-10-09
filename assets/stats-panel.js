@@ -196,11 +196,15 @@
         var roomy = mapW / (gw * cw) >= 14;
         for (var refC = firstCol; refC <= lastCol; refC++) {
           if (!roomy && (refC - firstCol) % 2) continue;
-          svg.appendChild(svgNode('text', { x: px((refC + .5) / gw), y: refY - 2.5, 'text-anchor': 'middle', class: 'stats-terrain-ref' }, String.fromCharCode(65 + refC)));
+          var refX2 = Number(px((refC + .5) / gw));
+          if (refX2 < refX + 3 || refX2 > tw - 3) continue;   // 被裁掉一半的首末列不标，免得字母越出画布
+          svg.appendChild(svgNode('text', { x: refX2.toFixed(1), y: refY - 2.5, 'text-anchor': 'middle', class: 'stats-terrain-ref' }, String.fromCharCode(65 + refC)));
         }
         for (var refR = firstRow; refR <= lastRow; refR++) {
           if (!roomy && (refR - firstRow) % 2) continue;
-          svg.appendChild(svgNode('text', { x: refX - 3, y: (Number(py((refR + .5) / gh)) + 2.5).toFixed(1), 'text-anchor': 'end', class: 'stats-terrain-ref' }, String(refR + 1)));
+          var refY2 = Number(py((refR + .5) / gh));
+          if (refY2 < refY + 3 || refY2 > th - 3) continue;
+          svg.appendChild(svgNode('text', { x: refX - 3, y: (refY2 + 2.5).toFixed(1), 'text-anchor': 'end', class: 'stats-terrain-ref' }, String(refR + 1)));
         }
         if (region) {
           var outline = offsetOutline(region.map(function (p) { return [Number(px(p[0] / REGION_W)), Number(py(p[1] / REGION_H))]; }), cell * FRAME_CELLS);
