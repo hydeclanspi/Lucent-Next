@@ -2175,7 +2175,7 @@
     if (panelButton) {
       panelButton.setAttribute("aria-pressed", String(mode.enabled));
       panelButton.setAttribute("aria-disabled", String(!mode.enabled && !!mode.unavailableReason));
-      panelButton.setAttribute("aria-label", label); panelButton.title = label;
+      panelButton.setAttribute("aria-label", "Drive (FSD) · " + label); panelButton.title = "Drive (FSD) · " + label;
       panelButton.classList.toggle("is-running", mode.enabled);
       panelButton.classList.toggle("is-rage", !!mode.rage);
       panelButton.classList.toggle("is-paused", mode.enabled && mode.paused);
@@ -2937,7 +2937,7 @@
     var drive = document.createElement("button");
     drive.id = "btnPanelAutoDrive"; drive.type = "button";
     drive.className = "interaction-utility-button interaction-drive";
-    drive.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.2"/><path d="M4 10.5h4.2l2 2.8v6.6m9.8-9.4h-4.2l-2 2.8v6.6M8.2 10.5c1.9-1.4 5.7-1.4 7.6 0"/></svg><span>Drive</span><span class="interaction-drive-state" aria-hidden="true"><i></i><span id="panelAutoDriveState">关闭</span></span>';
+    drive.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.25"/><path d="m4.2 8.7 5.7 2.5m9.9-2.5-5.7 2.5M12 14.25v6.25"/></svg><span>Drive (FSD)</span><span class="interaction-drive-state" aria-hidden="true"><i></i><span id="panelAutoDriveState">关闭</span></span>';
     drive.addEventListener("click", toggleAutoDrive);
     toolbar.appendChild(drive);
 
