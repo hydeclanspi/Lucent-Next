@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "3.9.6",
+  "version": "3.9.7",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互——主页默认开启蓝色一级 FSD（可在设默认值中关闭）；「自动驾驶 (FSD)」卡片精简为标题、副标题与默认开关；卡片间距与底部留白微调，避让系统搜索框。"
+  "description": "通透的个人名片主页。代号：交互——出厂默认更新为 63:37 / 11.6× / 2.41×；落位新增加权抽签：远距强惩罚、近距可容忍的软惩罚、邻居数量密度惩罚；面板滚动条隐藏。"
 }
