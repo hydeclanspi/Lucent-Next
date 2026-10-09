@@ -8,7 +8,7 @@
     name: "hydeclanspi",
     meta: "17 · 上海",
     level: 14,
-    sign: "把今天过成想要的样子。",
+    sign: "我真的是活着玩的。都别压力我。",
     tags: ["学生", "技术宅", "乐观", "完美主义"]
   };
 
@@ -2316,7 +2316,7 @@
 
   /* ---------- 代号：交互 ---------- */
 
-  var FACTORY_INTERACTION = Object.freeze({ count: 2, light: 0.63, strength: 11.6, randomOnLaunch: false, pace: 2.41 });
+  var FACTORY_INTERACTION = Object.freeze({ count: 2, light: 0.71, strength: 11.6, randomOnLaunch: false, pace: 2.41 });
 
   // Current values and startup defaults stay separate. These four groups share
   // the existing storage keys, so opening the manager never migrates or writes data.
@@ -2540,19 +2540,40 @@
   function restoreFactoryInteraction() {
     if (state.factoryBusy || state.defaultsBusy) return;
     state.factoryBusy = true; state.factoryStatus = "";
-    if (interactionController) interactionController.setAutoDrive(false);
-    autoLaunchTried = true; // Launch-on is a startup policy; restoring it never restarts this session.
+    // Only the saved defaults take factory values; current live values and the running session stay untouched.
     state.autoDriveLaunchOn = true; state.autoDriveReadError = false;
-    state.interactionCount = FACTORY_INTERACTION.count;
-    if (interactionController) interactionController.setCount(state.interactionCount);
-    state.wallpaperProbability = { version: 1, light: FACTORY_INTERACTION.light, source: "default", updatedAt: 0 };
-    state.collision = collisionAPI().normalize(FACTORY_INTERACTION); state.collisionCurrent = FACTORY_INTERACTION.strength;
-    state.naturalPace = FACTORY_INTERACTION.pace; collisionSessionSample = null;
-    state.collisionReadError = false; state.paceReadError = false; state.probabilityDefaultReadError = false; state.interactionReadError = false;
-    applyCollisionStrength(); applyPace(); syncInteractionPanel(); syncProbabilityPanel(); syncAutoDriveLaunch(); syncFactoryPanel();
-    Promise.all([saveInteractionDefault(), saveProbabilityDefault(), saveCollisionSettings(), savePaceSettings(), saveAutoDriveSettings()]).then(function (saved) {
-      state.factoryStatus = saved.every(Boolean) ? "已恢复出厂默认" : "本次已恢复，部分默认值尚未保存，请重试。";
-    }).catch(function () { state.factoryStatus = "本次已恢复，部分默认值尚未保存，请重试。"; }).then(function () {
+    autoLaunchTried = true;
+    state.interactionReadError = false; state.probabilityDefaultReadError = false; state.collisionReadError = false; state.paceReadError = false;
+    syncInteractionPanel(); syncProbabilityPanel(); syncCollisionPanel(); syncPacePanel(); syncAutoDriveLaunch(); syncFactoryPanel();
+    var a = api(), writes = [];
+    var countSnapshot = { version: 1, defaultCount: FACTORY_INTERACTION.count };
+    countWriteQueue = countWriteQueue.then(function () { return writeInteractionSetting("interactionSettings", countSnapshot); })
+      .then(function () { state.interactionDefaultCount = countSnapshot.defaultCount; return true; })
+      .catch(function () { return false; });
+    writes.push(countWriteQueue);
+    var probabilitySnapshot = { version: 1, light: FACTORY_INTERACTION.light };
+    probabilityDefaultWriteQueue = probabilityDefaultWriteQueue.then(function () { return writeInteractionSetting("probabilityDefaults", probabilitySnapshot); })
+      .then(function () { state.probabilityDefault = probabilitySnapshot.light; return true; })
+      .catch(function () { return false; });
+    writes.push(probabilityDefaultWriteQueue);
+    var collisionSnapshot = collisionAPI().normalize({ strength: FACTORY_INTERACTION.strength, randomOnLaunch: FACTORY_INTERACTION.randomOnLaunch });
+    collisionWriteQueue = collisionWriteQueue.then(function () {
+      if (a && a.storage) return a.storage.set("collisionSettings", collisionSnapshot);
+      window.localStorage.setItem("aira-profile-card:collisionSettings", JSON.stringify(collisionSnapshot));
+    }).then(function () { state.collisionDefault = collisionSnapshot; return true; })
+      .catch(function () { return false; });
+    writes.push(collisionWriteQueue);
+    var paceSnapshot = paceAPI().normalize({ pace: FACTORY_INTERACTION.pace });
+    paceWriteQueue = paceWriteQueue.then(function () {
+      if (a && a.storage) return a.storage.set("motionSettings", paceSnapshot);
+      window.localStorage.setItem("aira-profile-card:motionSettings", JSON.stringify(paceSnapshot));
+    }).then(function () { state.paceDefault = paceSnapshot.pace; return true; })
+      .catch(function () { return false; });
+    writes.push(paceWriteQueue);
+    writes.push(saveAutoDriveSettings());
+    Promise.all(writes).then(function (saved) {
+      state.factoryStatus = saved.every(Boolean) ? "已填入出厂默认值" : "部分出厂值尚未保存，请重试。";
+    }).catch(function () { state.factoryStatus = "部分出厂值尚未保存，请重试。"; }).then(function () {
       state.factoryBusy = false; syncInteractionPanel(); syncProbabilityPanel(); syncCollisionPanel(); syncPacePanel(); syncAutoDriveLaunch(); syncFactoryPanel(); syncAutoDriveButton();
     });
   }

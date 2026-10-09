@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "3.9.7",
+  "version": "3.9.8",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互——出厂默认更新为 63:37 / 11.6× / 2.41×；落位新增加权抽签：远距强惩罚、近距可容忍的软惩罚、邻居数量密度惩罚；面板滚动条隐藏。"
+  "description": "通透的个人名片主页。代号：交互——「查询出厂值」现在只把出厂值写入各项默认值，当前值与运行状态不再被打断；出厂比例为 71:29；默认个签更新。"
 }
