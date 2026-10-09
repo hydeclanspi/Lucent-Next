@@ -19,7 +19,7 @@
   // Placement soft penalties: closeness is a weak nudge chance may tolerate, separation a
   // medium pull, and a desert left behind is the strong one. Per-arrival jitters and a
   // random anchor keep constellations from settling into a few formulaic shapes.
-  const PLACEMENT = Object.freeze({ closePenalty: 0.8, farPenalty: 1.6, crowdPenalty: 0.9, voidPenalty: 1.8, nearBand: 60, farBand: 220, voidRadius: 220, voidSpan: 260, haloNear: 110, haloFar: 220, topBoost: 1.0, verticalBoost: 0.35, pairRange: 92 });
+  const PLACEMENT = Object.freeze({ closePenalty: 0.8, farPenalty: 1.6, crowdPenalty: 0.9, voidPenalty: 1.8, nearBand: 120, farBand: 220, voidRadius: 220, voidSpan: 260, haloNear: 120, haloFar: 220, topBoost: 1.0, verticalBoost: 0.35, pairRange: 92 });
   const COUNT_MAX = 49, COUNT_CURVE = 2.6, COUNT_LOW_CURVE = 1.3, COUNT_MID = 8;
   const RADIUS = 11;
   const CLEARANCE = 30; // A 44px touch target plus 8px of space around existing UI.

@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "3.9.12",
+  "version": "3.9.13",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互——密友得舵阈值升至 92k 并独立于近距惩罚；上沿鼓励改为平台式（区内无偏好）加边界羽化；新增纵向舒展项防止扁平，上限 1.35。"
+  "description": "通透的个人名片主页。代号：交互——近距离软惩罚区从 60k 翻倍至 120k，贴脸对更少见；聚落光环下沿同步对齐。"
 }
