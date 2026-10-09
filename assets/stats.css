@@ -17,8 +17,10 @@
 .stats-section { margin-top: 25px; }
 /* 宽屏时数据 section 一行左右两个；窄屏回到单栏 */
 .stats-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 26px; align-items: start; min-width: 0; }
-.stats-chart-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 24px; }
-.stats-chart-heading h4 { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: .6px; }
+.stats-chart-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 24px; flex-wrap: wrap; }
+.stats-chart-heading h4 { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: .6px; white-space: nowrap; }
+/* 场志的裸标题与图表标题同高同号，两栏并排时才不会一高一矮 */
+.stats-section > h4 { margin: 0; min-height: 24px; line-height: 24px; font-size: 13px; font-weight: 600; letter-spacing: .6px; }
 .stats-caption { margin: 5px 0 8px; font-size: 11px; color: var(--ink-2); line-height: 1.6; }
 .stats-chart { width: 100%; min-width: 0; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
 .stats-chart > svg { display: block; max-width: 100%; color: var(--stats-blue); overflow: visible; }
@@ -94,7 +96,7 @@
 .stats-tooltip p { margin: 6px 0 0; line-height: 1.65; font-size: 11px; }
 .stats-tooltip p:last-child { color: var(--ink-2); }
 .stats-panel button:focus-visible, .stats-source:focus-visible { outline: 2px solid var(--ink-2); outline-offset: 3px; }
-@media (max-width: 820px) {
+@media (max-width: 760px) {
   .stats-columns { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 640px) {
