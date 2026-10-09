@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "3.8.0",
+  "version": "3.9.0",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互设置面板重设计：标题与工具行分层，双列参数格统一节奏，滑轨带淡蓝填充，状态读数升格；几何棱线细节贯穿。"
+  "description": "通透的个人名片主页。代号：交互——自动驾驶升级为三段循环：开启、增强（橙光、阵容约三倍）再点关闭，阵容每约 18 秒重抽；主界面小按钮改为 FSD 标志；浮光数量滑轨换用非线性映射；设置按钮轻量化；恢复提示自动消失。"
 }
