@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "4.3.2",
+  "version": "4.3.3",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。长按右上角太阳浮出「关于」窗口：烫金主标题、主页预览与亲笔落款；长按扫一扫浮出「备份与导出」，全部数据打包成一段可粘贴的备份文本，离线、不上传。历史统计宽屏双栏，第四格为碰撞力度分布：14 档非线性阶梯，且与其他三张图一样可点选看详情；名册关系网按关系分疏密站位。"
+  "description": "通透的个人名片主页。长按右上角太阳浮出「关于」窗口：烫金主标题、主页预览与亲笔落款；长按扫一扫浮出「备份与导出」，全部数据打包成一段可粘贴的备份文本，离线、不上传。历史统计宽屏双栏，第四格碰撞力度 14 档非线性阶梯、可点选看详情；浮光地形图带 A–Z 与 1–12 的参考框，每格以「字母+行号」称呼，点格子看它占总驻留的比例。"
 }

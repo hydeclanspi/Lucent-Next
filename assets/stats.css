@@ -26,6 +26,9 @@
 .stats-chart > svg { display: block; max-width: 100%; color: var(--stats-blue); overflow: visible; }
 .stats-activity .stats-chart > svg { color: var(--stats-orange); }
 .stats-impacts .stats-chart > svg { color: var(--stats-sage); }
+/* 地形图的参考框：上边列字母、左边行号；选中的格子只描边，不盖住深浅 */
+.stats-terrain-ref { font-size: 8px; fill: var(--ink-2); font-family: inherit; }
+.stats-terrain-pick { fill: none; stroke: var(--ink-2); stroke-width: 1; }
 /* 这一栏的标题与说明往右 2.4px，与左侧邻栏的留白对齐 */
 .stats-impacts > .stats-chart-heading, .stats-impacts > .stats-caption { margin-left: 2.4px; }
 .stats-impacts-note { font-size: 10.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
