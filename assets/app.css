@@ -1191,7 +1191,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   row-gap: 16px;
   align-items: start;
 }
-.about-heading { grid-area: head; display: grid; gap: 5px; }
+.about-heading { grid-area: head; display: grid; gap: 7.25px; }
 /* 主标题：中等偏淡的金，一点点烫金 */
 .about-brand { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: 0.4px; color: #BD9A3E; }
 :root[data-theme="dark"] .about-brand { color: #D5B564; }

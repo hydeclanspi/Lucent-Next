@@ -1664,7 +1664,7 @@
     meta.className = "about-meta";
     var version = document.createElement("p");
     version.className = "about-version";
-    version.textContent = "名片主页 v4.3.0 · 2026-10 构建";
+    version.textContent = "名片主页 v4.5.0 · 2026-10 构建";
     var build = document.createElement("p");
     build.className = "about-build";
     build.textContent = "鸿蒙 Aira 灵感台 · beta v0.7 引擎 · © 2026";
