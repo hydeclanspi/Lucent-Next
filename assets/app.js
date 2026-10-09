@@ -1488,7 +1488,7 @@
       var drive = document.createElement("button");
       drive.id = "btnPanelAutoDrive"; drive.type = "button";
       drive.className = "icon-btn auto-drive-button auto-drive-panel";
-      drive.innerHTML = '<span class="auto-drive-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 15.5a8 8 0 0 1 12-10M19.5 8.5a8 8 0 0 1-12 10" opacity=".55"/><path d="m10 5.5 5.5 7-4 .5-3 3.5z" transform="translate(4.08 4.74) scale(.66)"/><circle cx="18.5" cy="5.5" r="1" fill="currentColor" stroke="none"/></svg><small>AUTO</small></span><span class="auto-drive-word" aria-hidden="true">Drive</span>';
+      drive.innerHTML = '<span class="auto-drive-mark fsd-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M6.2 19.2 V4.8 H13 M6.2 11.5 H11" stroke-width="1.7"/><path d="M18.9 5.3c-.5-.9-2-1-2.6-.2-.5.7 0 1.4 1.1 1.8 1.3.5 1.8 1.1 1.3 2-.6.9-2.2.8-2.8-.2" stroke-width="1.2"/><path d="M14.9 14.3v5m0-5h.9c1.8 0 2.9 1.1 2.9 2.5s-1.1 2.5-2.9 2.5h-.9" stroke-width="1.2"/><circle cx="13.6" cy="11.5" r="1.05" fill="currentColor" stroke="none"/></svg></span><span class="auto-drive-word" aria-hidden="true">Drive</span>';
       drive.addEventListener("click", toggleAutoDrive);
       toolbarActions.appendChild(drive);
       var statistics = document.createElement("button");
@@ -1500,12 +1500,9 @@
       toolbarActions.appendChild(statistics);
       toolbar.appendChild(toolbarActions);
       var factoryBar = document.createElement("div"); factoryBar.className = "interaction-factory-bar";
-      var factoryStatus = document.createElement("span"); factoryStatus.id = "interactionFactoryStatus"; factoryStatus.setAttribute("role", "status");
       var defaults = document.createElement("button"); defaults.id = "interactionDefaults"; defaults.type = "button"; defaults.className = "btn sm"; defaults.textContent = "设默认值";
       defaults.setAttribute("aria-haspopup", "dialog"); defaults.addEventListener("click", openDefaultsPanel);
-      var factory = document.createElement("button"); factory.id = "interactionFactoryReset"; factory.type = "button"; factory.className = "btn sm"; factory.textContent = "恢复出厂默认";
-      factory.addEventListener("click", restoreFactoryInteraction);
-      factoryBar.appendChild(factoryStatus); factoryBar.appendChild(defaults); factoryBar.appendChild(factory);
+      factoryBar.appendChild(defaults);
       toolbar.appendChild(factoryBar);
       sheet.appendChild(toolbar);
     } else if (!options.stats && !options.defaults) sheet.appendChild(title);
@@ -2352,10 +2349,12 @@
     var parent = { nodes: Array.from(el.sheet.childNodes), classes: el.sheet.className, scroll: el.sheet.scrollTop, label: el.sheet.getAttribute("aria-label") };
     var body = document.createElement("div"); body.className = "defaults-panel";
     var header = document.createElement("div"); header.className = "defaults-header";
-    header.innerHTML = '<div class="defaults-heading"><button id="defaultsBack" class="defaults-back" type="button" aria-label="返回代号交互"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button><div><h3 class="defaults-title">设默认值</h3><p class="defaults-subtitle">把喜欢的状态，留给下一次。</p></div></div><button id="defaultsSaveAll" class="btn sm defaults-save-all" type="button">保存当前组合</button>';
+    header.innerHTML = '<div class="defaults-heading"><button id="defaultsBack" class="defaults-back" type="button" aria-label="返回代号交互"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button><div><h3 class="defaults-title">设默认值</h3><p class="defaults-subtitle">把喜欢的状态，留给下一次。</p></div></div><div class="defaults-actions"><button id="defaultsFactory" class="btn sm defaults-factory" type="button">出厂值</button><button id="defaultsSaveAll" class="btn sm defaults-save-all" type="button">保存当前组合</button></div>';
     header.querySelector("#defaultsBack").addEventListener("click", closeSheet);
+    header.querySelector("#defaultsFactory").addEventListener("click", restoreFactoryInteraction);
     header.querySelector("#defaultsSaveAll").addEventListener("click", function () { saveManagedDefaults(); });
     body.appendChild(header);
+    var factoryNote = document.createElement("p"); factoryNote.id = "defaultsFactoryStatus"; factoryNote.className = "defaults-status"; factoryNote.setAttribute("role", "status"); factoryNote.hidden = true; body.appendChild(factoryNote);
     var note = document.createElement("p"); note.className = "defaults-intro";
     note.textContent = "逐项保存，或一次保存全部。恢复默认值仅应用你已保存的偏好。"; body.appendChild(note);
     var status = document.createElement("p"); status.id = "defaultsStatus"; status.className = "defaults-status"; status.setAttribute("role", "status"); body.appendChild(status);
@@ -2386,6 +2385,15 @@
       row.appendChild(feedback); list.appendChild(row);
     });
     body.appendChild(list);
+    var autoCard = document.createElement("section"); autoCard.className = "defaults-card defaults-autodrive";
+    autoCard.setAttribute("aria-labelledby", "default-autodrive-name");
+    autoCard.innerHTML = '<h4 id="default-autodrive-name">自动驾驶</h4><p class="defaults-description">进入主页时自动以淡蓝档开启，阵容仍会定时重抽；运行后再点一次 FSD 进入橙光增强。</p><div class="defaults-autodrive-row"><span>进入主页时开启</span><button id="autoDriveLaunch" type="button" class="wp-random collision-random" aria-pressed="false"><i class="wp-track" aria-hidden="true"><i class="wp-knob"></i></i></button></div><div class="defaults-feedback" id="default-autodrive-feedback"><span role="status" id="autoDriveSaveNote"></span><button id="autoDriveRetry" type="button" class="collision-retry" hidden>重新读取</button></div>';
+    autoCard.querySelector("#autoDriveLaunch").addEventListener("click", function () {
+      if (!state.autoDriveReady || state.autoDriveReadError || state.factoryBusy) return;
+      state.autoDriveLaunchOn = !state.autoDriveLaunchOn; saveAutoDriveSettings(); syncAutoDriveLaunch();
+    });
+    autoCard.querySelector("#autoDriveRetry").addEventListener("click", function () { if (!state.defaultsBusy && !state.factoryBusy) loadAutoDriveSettings(); });
+    body.appendChild(autoCard);
     openSheet({ title: "设默认值", content: body, center: true, wide: true, defaults: true });
     defaultsParent = parent;
     syncDefaultsPanel();
@@ -2514,34 +2522,80 @@
   var factoryStatusTimer = 0;
   function syncFactoryPanel() {
     syncDefaultsPanel();
-    var button = $("interactionFactoryReset"); if (!button) return;
-    button.disabled = state.factoryBusy || state.defaultsBusy || !state.collisionReady || !state.paceReady || !state.probabilityDefaultReady || !state.interactionSettingsReady;
-    button.textContent = state.factoryBusy ? "正在恢复…" : "恢复出厂默认";
-    $("interactionFactoryStatus").textContent = state.factoryStatus;
-    clearTimeout(factoryStatusTimer); factoryStatusTimer = 0;
-    if (state.factoryStatus && !state.factoryBusy) {
-      factoryStatusTimer = setTimeout(function () {
-        factoryStatusTimer = 0; state.factoryStatus = "";
-        var status = $("interactionFactoryStatus"); if (status) status.textContent = "";
-      }, 4600);
+    var status = $("defaultsFactoryStatus");
+    if (status) {
+      status.textContent = state.factoryStatus; status.hidden = !state.factoryStatus;
+      clearTimeout(factoryStatusTimer); factoryStatusTimer = 0;
+      if (state.factoryStatus && !state.factoryBusy) {
+        factoryStatusTimer = setTimeout(function () {
+          factoryStatusTimer = 0; state.factoryStatus = "";
+          var note = $("defaultsFactoryStatus"); if (note) { note.textContent = ""; note.hidden = true; }
+        }, 4600);
+      }
     }
+    var button = $("defaultsFactory"); if (!button) return;
+    button.disabled = state.factoryBusy || state.defaultsBusy || !state.collisionReady || !state.paceReady || !state.probabilityDefaultReady || !state.interactionSettingsReady;
+    button.textContent = state.factoryBusy ? "正在恢复…" : "出厂值";
   }
   function restoreFactoryInteraction() {
     if (state.factoryBusy || state.defaultsBusy) return;
     state.factoryBusy = true; state.factoryStatus = "";
     if (interactionController) interactionController.setAutoDrive(false);
+    state.autoDriveLaunchOn = false; state.autoDriveReadError = false;
     state.interactionCount = FACTORY_INTERACTION.count;
     if (interactionController) interactionController.setCount(state.interactionCount);
     state.wallpaperProbability = { version: 1, light: FACTORY_INTERACTION.light, source: "default", updatedAt: 0 };
     state.collision = collisionAPI().normalize(FACTORY_INTERACTION); state.collisionCurrent = FACTORY_INTERACTION.strength;
     state.naturalPace = FACTORY_INTERACTION.pace; collisionSessionSample = null;
     state.collisionReadError = false; state.paceReadError = false; state.probabilityDefaultReadError = false; state.interactionReadError = false;
-    applyCollisionStrength(); applyPace(); syncInteractionPanel(); syncProbabilityPanel(); syncFactoryPanel();
-    Promise.all([saveInteractionDefault(), saveProbabilityDefault(), saveCollisionSettings(), savePaceSettings()]).then(function (saved) {
+    applyCollisionStrength(); applyPace(); syncInteractionPanel(); syncProbabilityPanel(); syncAutoDriveLaunch(); syncFactoryPanel();
+    Promise.all([saveInteractionDefault(), saveProbabilityDefault(), saveCollisionSettings(), savePaceSettings(), saveAutoDriveSettings()]).then(function (saved) {
       state.factoryStatus = saved.every(Boolean) ? "已恢复出厂默认" : "本次已恢复，部分默认值尚未保存，请重试。";
     }).catch(function () { state.factoryStatus = "本次已恢复，部分默认值尚未保存，请重试。"; }).then(function () {
-      state.factoryBusy = false; syncInteractionPanel(); syncProbabilityPanel(); syncCollisionPanel(); syncPacePanel(); syncFactoryPanel(); syncAutoDriveButton();
+      state.factoryBusy = false; syncInteractionPanel(); syncProbabilityPanel(); syncCollisionPanel(); syncPacePanel(); syncAutoDriveLaunch(); syncFactoryPanel(); syncAutoDriveButton();
     });
+  }
+
+  var autoDriveWriteQueue = Promise.resolve(), autoLaunchTried = false;
+  function syncAutoDriveLaunch() {
+    var toggle = $("autoDriveLaunch");
+    if (toggle) {
+      toggle.setAttribute("aria-pressed", String(state.autoDriveLaunchOn === true));
+      toggle.disabled = !state.autoDriveReady || state.autoDriveReadError || state.factoryBusy;
+    }
+    var note = $("autoDriveSaveNote");
+    if (note) note.textContent = !state.autoDriveReady ? "正在读取自动驾驶设置…" : state.autoDriveReadError ? "自动驾驶设置暂未读出，未覆盖原设置。" : "";
+    var retry = $("autoDriveRetry"); if (retry) retry.hidden = !state.autoDriveReadError;
+  }
+  function maybeAutoLaunch() {
+    if (autoLaunchTried || state.autoDriveLaunchOn !== true || state.autoDriveReadError) return;
+    if (!interactionController || !state.paceReady || !state.collisionReady || !state.interactionSettingsReady || !state.wallpaperProbabilityReady || !state.probabilityDefaultReady) return;
+    autoLaunchTried = true;
+    // A refusal (layout not measured yet, small screen) re-arms the next scheduled attempt.
+    if (!interactionController.setAutoDrive(true)) autoLaunchTried = false;
+  }
+  function loadAutoDriveSettings() {
+    var a = api();
+    state.autoDriveReady = false; state.autoDriveReadError = false; syncAutoDriveLaunch();
+    return Promise.resolve().then(function () {
+      if (a && a.storage) return a.storage.get("autoDriveSettings", null);
+      var raw = window.localStorage.getItem("aira-profile-card:autoDriveSettings");
+      return raw == null ? null : JSON.parse(raw);
+    }).then(function (saved) {
+      state.autoDriveLaunchOn = !!(saved && saved.launchOn === true);
+      state.autoDriveReady = true; syncAutoDriveLaunch(); maybeAutoLaunch();
+    }).catch(function () {
+      state.autoDriveReady = true; state.autoDriveReadError = true; syncAutoDriveLaunch();
+    });
+  }
+  function saveAutoDriveSettings() {
+    if (!state.autoDriveReady || state.autoDriveReadError) return Promise.resolve(false);
+    var snapshot = { version: 1, launchOn: state.autoDriveLaunchOn === true }, a = api();
+    autoDriveWriteQueue = autoDriveWriteQueue.then(function () {
+      if (a && a.storage) return a.storage.set("autoDriveSettings", snapshot);
+      window.localStorage.setItem("aira-profile-card:autoDriveSettings", JSON.stringify(snapshot));
+    }).then(function () { return true; }).catch(function () { return false; });
+    return autoDriveWriteQueue;
   }
 
   var collisionLoadRevision = 0, collisionWriteRevision = 0;
@@ -2886,9 +2940,9 @@
     copy.className = "interaction-algorithm-copy";
     [
       ["一张看不见的地形", "拖动浮光，在隐形势场梯度中改变 Light / Dark 的倾向。方向是主线，局部的弯曲与起伏带来一点难以预料。"],
-      ["距离、绕行与碰撞", "每次拖动会选定最近的一枚作为参照：拉开、聚拢、顺逆绕行，以及对方被推动的位移，都参与比例变化。多枚浮光彼此碰撞；只有一枚时，由势场决定。自然碰撞采用约 30%–42% 的力度，越拥挤越倾向散开。"],
+      ["距离、绕行与碰撞", "每次拖动会选定最近的一枚作为参照：拉开、聚拢、顺逆绕行，以及对方被推动的位移，都参与比例变化。多枚浮光彼此碰撞；只有一枚时，由势场决定。"],
       ["轻拨之后，安静落定", "比例从当前设置出发，随手势变化，松手时保存。自然游动与松手后的惯性只负责氛围；手动滑轨与拖动共用同一个比例。"],
-      ["让浮光自己出发", "单击星球唤出 auto / drive，再轻点开启。部分浮光会追逐、冲撞，偶尔接力；再次轻点即可停下。自然 pace 只改变自然漂浮的速率。自动驾驶不改变主图比例，也不计入手动交互次数。"],
+      ["让浮光自己出发", "单击星球唤出 auto / drive，再轻点开启。部分浮光会追逐、冲撞，偶尔接力；碰撞沿用本次力度。再次轻点即可停下。自动驾驶不改变主图比例，也不计入手动交互次数。"],
       ["一点可知的黑箱", "势场、距离、旋转、连带位移的系数为 62 / 20 / 13 / 5。它把动作映射为抽签权重，不是训练模型，也不猜测心情。"]
     ].forEach(function (entry) {
       var paragraph = document.createElement("p"), title = document.createElement("b");
@@ -3321,6 +3375,8 @@
     initStats();
     loadCollisionSettings();
     loadPaceSettings();
+    loadAutoDriveSettings();
+    [700, 1600, 3000].forEach(function (delay) { setTimeout(maybeAutoLaunch, delay); });
 
     loadProfile();
     bindInteractions();

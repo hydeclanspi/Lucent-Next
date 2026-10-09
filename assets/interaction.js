@@ -16,7 +16,7 @@
   // Mutable so tests can shorten the reshuffle cadence; the app never rewrites it.
   const AUTO = { cruiseMin: 5, cruiseMax: 8, burst: 1.7, kickLimit: 320, manualGrace: 1.25, replan: 0.75, reshuffle: 18 };
   const NATURAL = Object.freeze({ neighborRadius: 76, share: 0.30, densityStep: 0.06, cooldown: 0.28 });
-  const COUNT_MAX = 49, COUNT_CURVE = 2.6;
+  const COUNT_MAX = 49, COUNT_CURVE = 2.6, COUNT_LOW_CURVE = 1.3, COUNT_MID = 8;
   const RADIUS = 11;
   const CLEARANCE = 30; // A 44px touch target plus 8px of space around existing UI.
   const STEP = 4;
@@ -906,8 +906,10 @@
     fromSlider: value => naturalPace(0.25 * Math.pow(64, clamp(Number(value) || 0, 0, 1200) / 1200)),
     toSlider: value => Math.round(Math.log(naturalPace(value) / 0.25) / Math.log(64) * 1200) },
     count: { max: COUNT_MAX, curve: COUNT_CURVE,
-    fromSlider: value => Math.round(COUNT_MAX * Math.pow(clamp((Number(value) || 0) / 1000, 0, 1), COUNT_CURVE)),
-    toSlider: value => Math.round(1000 * Math.pow(clamp((Number(value) || 0) / COUNT_MAX, 0, 1), 1 / COUNT_CURVE)) },
+    fromSlider: value => { const t = clamp((Number(value) || 0) / 1000, 0, 1);
+      return t <= 0.5 ? Math.round(COUNT_MID * Math.pow(t / 0.5, COUNT_LOW_CURVE)) : Math.round(COUNT_MAX * Math.pow(t, COUNT_CURVE)); },
+    toSlider: value => { const c = clamp(Math.round(Number(value) || 0), 0, COUNT_MAX);
+      return c <= COUNT_MID ? Math.round(500 * Math.pow(c / COUNT_MID, 1 / COUNT_LOW_CURVE)) : Math.round(1000 * Math.pow(c / COUNT_MAX, 1 / COUNT_CURVE)); } },
     autoDrive: { bounds: autoBounds, rageBounds, motion: AUTO }, collision: { max: COLLISION_MAX, normalize: collisionSettings, strength: collisionStrength, draw: randomCollision,
     fromSlider: value => collisionStrength(Math.pow(COLLISION_MAX, clamp(Number(value) || 0, 0, 1000) / 1000)),
     toSlider: value => Math.round(Math.log(collisionStrength(value)) / Math.log(COLLISION_MAX) * 1000) },
