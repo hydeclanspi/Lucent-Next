@@ -62,7 +62,7 @@
     var foot = element('p', 'stats-footnote', '仅保存时段汇总；Light 倾向是随机权重，并非壁纸实际出现频率。'); root.appendChild(foot);
 
     /* ---- 场志：地形图与概率分布同排，关系与驾驶志同排，名册通栏 ---- */
-    var field = options.field || null, fieldView = null, rosterPick = 0;
+    var field = options.field || null, fieldView = null, rosterPick = 0, rosterSpin = 0;
     var fieldColumns = null;
     if (field) {
       var intro = element('div', 'stats-field-intro');
@@ -133,6 +133,26 @@
       return base * 10;
     }
     function pad2(n) { return String(n).padStart(2, '0'); }
+    // 取景：区域按 1560×1040 的设计坐标给出，图幅在区域外留 FIT_CELLS 格，虚框外推 FRAME_CELLS 格
+    var REGION_W = 1560, REGION_H = 1040, FIT_CELLS = 1.6, FRAME_CELLS = 1;
+    // 区域整体向外挪 distance 像素：顶点沿两条邻边的外法线角平分线外推，尖角限幅，凹角自动收
+    function offsetOutline(points, distance) {
+      var n = points.length, area = 0, out = [], i;
+      for (i = 0; i < n; i++) { var a = points[i], b = points[(i + 1) % n]; area += a[0] * b[1] - b[0] * a[1]; }
+      var flip = area > 0 ? 1 : -1;
+      function outward(a, b) {
+        var dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy) || 1;
+        return [dy / len * flip, -dx / len * flip];
+      }
+      for (i = 0; i < n; i++) {
+        var cur = points[i], u = outward(points[(i + n - 1) % n], cur), v = outward(cur, points[(i + 1) % n]);
+        var mx = u[0] + v[0], my = u[1] + v[1], len = Math.hypot(mx, my);
+        if (len < 1e-6) { out.push([cur[0] + u[0] * distance, cur[1] + u[1] * distance]); continue; }
+        var cos = (u[0] * mx + u[1] * my) / len, reach = distance / (cos > 0.78 ? cos : 0.78);
+        out.push([cur[0] + mx / len * reach, cur[1] + my / len * reach]);
+      }
+      return out;
+    }
     function drawField() {
       if (!field) return;
       fieldView = field.getView(range);
@@ -140,22 +160,42 @@
       // 浮光地形图
       (function () {
         terrainHost.textContent = '';
-        var th = Math.round(tw * fieldView.gridH / fieldView.gridW);
-        var svg = svgNode('svg', { viewBox: '0 0 ' + tw + ' ' + th, width: tw, height: th, role: 'img', 'aria-label': '浮光常驻热力图' });
+        var gw = fieldView.gridW, gh = fieldView.gridH;
         var region = window.AiraInteraction && AiraInteraction._test ? AiraInteraction._test.REGION : null;
+        // 图幅跟着待命区域走：区域只占场地的中段，整块场地铺开会把图缩得很小。
+        var x0 = 0, y0 = 0, x1 = 1, y1 = 1;
         if (region) {
-          var points = region.map(function (p) { return (p[0] / 1560 * tw).toFixed(1) + ',' + (p[1] / 1040 * th).toFixed(1); }).join(' ');
-          svg.appendChild(svgNode('polygon', { points: points, class: 'stats-terrain-region' }));
+          var minX = 1, minY = 1, maxX = 0, maxY = 0;
+          region.forEach(function (p) {
+            var nx = p[0] / REGION_W, ny = p[1] / REGION_H;
+            minX = Math.min(minX, nx); maxX = Math.max(maxX, nx); minY = Math.min(minY, ny); maxY = Math.max(maxY, ny);
+          });
+          x0 = minX - FIT_CELLS / gw; x1 = maxX + FIT_CELLS / gw; y0 = minY - FIT_CELLS / gh; y1 = maxY + FIT_CELLS / gh;
         }
-        var max = 0;
-        fieldView.grid.forEach(function (n) { max = Math.max(max, n); });
-        for (var gy = 0; gy < fieldView.gridH; gy++) for (var gx = 0; gx < fieldView.gridW; gx++) {
-          var n = fieldView.grid[gy * fieldView.gridW + gx];
+        var cw = x1 - x0, ch = y1 - y0;
+        // 格子保持正方：画布高 = 宽 × 列数比 × 图幅的纵横比
+        var th = Math.max(120, Math.round(tw * gh * ch / (gw * cw))), cell = tw / (gw * cw);
+        function px(n) { return ((n - x0) / cw * tw).toFixed(1); }
+        function py(n) { return ((n - y0) / ch * th).toFixed(1); }
+        var svg = svgNode('svg', { viewBox: '0 0 ' + tw + ' ' + th, width: tw, height: th, role: 'img', 'aria-label': '浮光常驻热力图' });
+        if (region) {
+          var outline = offsetOutline(region.map(function (p) { return [(p[0] / REGION_W - x0) / cw * tw, (p[1] / REGION_H - y0) / ch * th]; }), cell * FRAME_CELLS);
+          svg.appendChild(svgNode('polygon', { points: outline.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' '), class: 'stats-terrain-region' }));
+        }
+        // 深浅看分位，不看绝对值：日子久了每个格子都会被踩深，只有相对深度一直读得出来。
+        var depth = [];
+        fieldView.grid.forEach(function (n) { if (n > 0) depth.push(n); });
+        function shade(n) {
+          if (depth.length < 2) return 1;
+          var reached = 0;
+          depth.forEach(function (v) { if (v <= n) reached++; });
+          return reached / depth.length;
+        }
+        for (var gy = 0; gy < gh; gy++) for (var gx = 0; gx < gw; gx++) {
+          var n = fieldView.grid[gy * gw + gx];
           if (!n) continue;
-          var intensity = max ? Math.log1p(n) / Math.log1p(max) : 0;
-          svg.appendChild(svgNode('rect', { x: (gx / fieldView.gridW * tw).toFixed(1), y: (gy / fieldView.gridH * th).toFixed(1),
-            width: (tw / fieldView.gridW - 0.7).toFixed(1), height: (th / fieldView.gridH - 0.7).toFixed(1), rx: 1.5,
-            class: 'stats-terrain-cell', opacity: (0.08 + 0.85 * intensity).toFixed(3) }));
+          svg.appendChild(svgNode('rect', { x: px(gx / gw), y: py(gy / gh), width: (cell - 0.7).toFixed(1), height: (cell - 0.7).toFixed(1), rx: 1.5,
+            class: 'stats-terrain-cell', opacity: (0.08 + 0.85 * shade(n)).toFixed(3) }));
         }
         terrainHost.appendChild(svg);
       })();
@@ -183,17 +223,19 @@
           svg.appendChild(svgNode('line', { x1: g.left, x2: w - 10, y1: y(v), y2: y(v), class: 'stats-grid' }));
           svg.appendChild(svgNode('text', { x: g.left - 9, y: y(v) + 4, 'text-anchor': 'end', class: 'stats-axis' }, String(v)));
         });
-        var slot = g.width / buckets.length, gap = Math.min(5, slot * .16), every = slot >= 44 ? 1 : 2;
+        var slot = g.width / buckets.length, gap = Math.min(5, slot * .16);
+        // 档位标签：按栏宽等距取几个，两端始终在场，窄栏减半。
+        var labelCount = w < 440 ? 4 : 7, chosen = [];
+        for (var i = 0; i < labelCount; i++) { var index = Math.round(i * (buckets.length - 1) / (labelCount - 1)); if (chosen.indexOf(index) < 0) chosen.push(index); }
         buckets.forEach(function (n, i) {
           var bar = g.height * Math.min(1, n / top);
           svg.appendChild(svgNode('rect', { x: (g.left + i * slot + gap).toFixed(2), y: (g.top + g.height - bar).toFixed(2),
             width: (slot - gap * 2).toFixed(2), height: Math.max(n ? 1.2 : 0, bar).toFixed(2), rx: 2, class: 'stats-impact-bar' }));
-          // 窄栏隔一标一，免得标签互相压住；最后一档始终留标签。
-          if (i % every && i !== buckets.length - 1) return;
+          if (chosen.indexOf(i) < 0) return;
           svg.appendChild(svgNode('text', { x: (g.left + (i + .5) * slot).toFixed(2), y: h - 21, 'text-anchor': 'middle', class: 'stats-axis' },
             i < edges.length ? (i ? edges[i - 1] : 0) + '–' + edges[i] : edges[edges.length - 1] + '+'));
         });
-        svg.appendChild(svgNode('text', { x: w - 10, y: h - 3, 'text-anchor': 'end', class: 'stats-axis stats-axis-title' }, '自记录以来 · 像素/秒'));
+        svg.appendChild(svgNode('text', { x: w - 10, y: h - 3, 'text-anchor': 'end', class: 'stats-axis stats-axis-title' }, '相对速度 · 像素/秒'));
       })();
       // 驾驶志
       (function () {
@@ -238,7 +280,11 @@
           chip.classList.toggle('is-quiet', !hasData);
           chip.classList.toggle('is-picked', rosterPick === p.id);
           chip.setAttribute('aria-label', '第 ' + p.id + ' 号浮光的档案' + (tone < 0 ? '' : ' · ' + ['最回避', '偏回避', '偏主动', '最主动'][tone]));
-          chip.addEventListener('click', function () { rosterPick = rosterPick === p.id ? 0 : p.id; drawField(); });
+          chip.addEventListener('click', function () {
+            rosterPick = rosterPick === p.id ? 0 : p.id;
+            if (rosterPick) rosterSpin = Math.random() * Math.PI * 2;
+            drawField();
+          });
           rosterGrid.appendChild(chip);
         });
         rosterDetail.textContent = '';
@@ -256,24 +302,48 @@
               var other = pair.a === rosterPick ? pair.b : pair.a;
               return '#' + pad2(other) + '（亲近 ' + pair.nearMinutes + ' 分钟 · 碰撞 ' + pair.contact + '）';
             }).join('、')));
-            // 关系网：居中是它，四周是它最亲的几位
+            // 关系网：居中是它，四周是它最亲的几位。弧线停在圆外 gap 处，点到即止，不插进圆里。
+            // 越亲的邻居站得越远：基础半径留给最疏的一位，最亲的向外多走 reach，一圈等距的正多边形不再。
+            // 邻居按关系分顺时针渐疏，但每次点开整体转一个随机起角：同一编号点两次就是两张图。
             var top = friendsAll.slice(0, 6), maxScore = top[0] ? top[0].contact * 3 + top[0].nearMinutes : 1;
-            var web = svgNode('svg', { viewBox: '0 0 240 150', class: 'stats-web', role: 'img', 'aria-label': '关系网' });
-            var cx = 120, cy = 78, radius = 52;
+            var nearMin = top.length ? top[top.length - 1].contact * 3 + top[top.length - 1].nearMinutes : 1;
+            var web = svgNode('svg', { viewBox: '0 0 260 180', class: 'stats-web', role: 'img', 'aria-label': '关系网' });
+            var cx = 130, cy = 90, radius = 55, reach = 16, nodeR = 13, selfR = 15, gap = 3, bow = 10;
+            // 二分收笔参数：让曲线端点离该端圆心恰为半径+gap。副曲线控制点用 blossom 求得，线形与整条弧一致。
+            function webCut(p0, p1, p2, center, clear, fromStart) {
+              var lo = 0, hi = 1, t, s, px, py, d;
+              for (var k = 0; k < 26; k++) {
+                t = (lo + hi) / 2; s = 1 - t;
+                px = s * s * p0[0] + 2 * t * s * p1[0] + t * t * p2[0];
+                py = s * s * p0[1] + 2 * t * s * p1[1] + t * t * p2[1];
+                d = Math.hypot(px - center[0], py - center[1]);
+                if (fromStart ? d < clear : d > clear) lo = t; else hi = t;
+              }
+              return (lo + hi) / 2;
+            }
+            function webAt(t, p0, p1, p2) {
+              var s = 1 - t;
+              return [s * s * p0[0] + 2 * t * s * p1[0] + t * t * p2[0], s * s * p0[1] + 2 * t * s * p1[1] + t * t * p2[1]];
+            }
             top.forEach(function (pair, i) {
               var other = pair.a === rosterPick ? pair.b : pair.a;
-              var angle = -Math.PI / 2 + i * (Math.PI * 2 / top.length);
-              var nx = cx + Math.cos(angle) * radius, ny = cy + Math.sin(angle) * radius;
+              var angle = rosterSpin - Math.PI / 2 + i * (Math.PI * 2 / top.length);
               var score = pair.contact * 3 + pair.nearMinutes, hits = pair.hitAB + pair.hitBA, dodges = pair.dodgeAB + pair.dodgeBA;
+              var rad = radius + (maxScore > nearMin ? reach * (score - nearMin) / (maxScore - nearMin) : 0);
+              var nx = cx + Math.cos(angle) * rad, ny = cy + Math.sin(angle) * rad;
               var tone = hits > 0 ? 'stats-web-blue' : dodges * 2 > pair.contact ? 'stats-web-sage' : 'stats-web-gray';
-              var mx = (cx + nx) / 2, my = (cy + ny) / 2, dx = nx - cx, dy = ny - cy, len = Math.hypot(dx, dy) || 1;
-              web.appendChild(svgNode('path', { d: 'M' + cx + ',' + cy + ' Q' + (mx - dy / len * 10).toFixed(1) + ',' + (my + dx / len * 10).toFixed(1) + ' ' + nx.toFixed(1) + ',' + ny.toFixed(1),
+              var p0 = [cx, cy], dx = nx - cx, dy = ny - cy, len = Math.hypot(dx, dy) || 1;
+              var p1 = [(cx + nx) / 2 - dy / len * bow, (cy + ny) / 2 + dx / len * bow], p2 = [nx, ny];
+              var t0 = webCut(p0, p1, p2, p0, selfR + gap, true), t1 = webCut(p0, p1, p2, p2, nodeR + gap, false);
+              var start = webAt(t0, p0, p1, p2), end = webAt(t1, p0, p1, p2), s0 = 1 - t0, s1 = 1 - t1;
+              var qx = s0 * s1 * cx + (t0 * s1 + t1 * s0) * p1[0] + t0 * t1 * nx, qy = s0 * s1 * cy + (t0 * s1 + t1 * s0) * p1[1] + t0 * t1 * ny;
+              web.appendChild(svgNode('path', { d: 'M' + start[0].toFixed(1) + ',' + start[1].toFixed(1) + ' Q' + qx.toFixed(1) + ',' + qy.toFixed(1) + ' ' + end[0].toFixed(1) + ',' + end[1].toFixed(1),
                 class: 'stats-web-link ' + tone, 'stroke-width': (0.8 + 2.6 * score / (maxScore || 1)).toFixed(2) }));
-              web.appendChild(svgNode('circle', { cx: nx.toFixed(1), cy: ny.toFixed(1), r: 11, class: 'stats-web-node' }));
-              web.appendChild(svgNode('text', { x: nx.toFixed(1), y: (ny + 3).toFixed(1), 'text-anchor': 'middle', class: 'stats-web-id' }, pad2(other)));
+              web.appendChild(svgNode('circle', { cx: nx.toFixed(1), cy: ny.toFixed(1), r: nodeR, class: 'stats-web-node' }));
+              web.appendChild(svgNode('text', { x: nx.toFixed(1), y: (ny + 3.2).toFixed(1), 'text-anchor': 'middle', class: 'stats-web-id' }, pad2(other)));
             });
-            web.appendChild(svgNode('circle', { cx: cx, cy: cy, r: 12.5, class: 'stats-web-self' }));
-            web.appendChild(svgNode('text', { x: cx, y: cy + 3, 'text-anchor': 'middle', class: 'stats-web-id stats-web-self-id' }, pad2(rosterPick)));
+            web.appendChild(svgNode('circle', { cx: cx, cy: cy, r: selfR, class: 'stats-web-self' }));
+            web.appendChild(svgNode('text', { x: cx, y: cy + 3.2, 'text-anchor': 'middle', class: 'stats-web-id stats-web-self-id' }, pad2(rosterPick)));
             card.appendChild(web);
           }
           // 三角：与它互亲最强的一组三驾马车，读取时即时计算，不落存储

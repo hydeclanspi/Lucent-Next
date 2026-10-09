@@ -1679,10 +1679,16 @@
     shot.decoding = "async";
     frame.appendChild(shot);
 
+    var sign = document.createElement("span");
+    sign.className = "about-sign";
+    sign.setAttribute("role", "img");
+    sign.setAttribute("aria-label", "hydeclanspi 的签名");
+
     body.appendChild(heading);
     body.appendChild(copy);
     body.appendChild(meta);
     body.appendChild(frame);
+    body.appendChild(sign);
     openSheet({ title: "关于", content: body, center: true, wide: true, about: true });
   }
 
