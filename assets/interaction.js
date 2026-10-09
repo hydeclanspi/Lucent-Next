@@ -19,7 +19,7 @@
   // Placement soft penalties: closeness is a weak nudge chance may tolerate, separation a
   // medium pull, and a desert left behind is the strong one. Per-arrival jitters and a
   // random anchor keep constellations from settling into a few formulaic shapes.
-  const PLACEMENT = Object.freeze({ closePenalty: 0.8, farPenalty: 1.6, crowdPenalty: 0.9, voidPenalty: 1.8, nearBand: 60, farBand: 220, voidRadius: 220, voidSpan: 260, haloNear: 110, haloFar: 220, topBoost: 1.0 });
+  const PLACEMENT = Object.freeze({ closePenalty: 0.8, farPenalty: 1.6, crowdPenalty: 0.9, voidPenalty: 1.8, nearBand: 60, farBand: 220, voidRadius: 220, voidSpan: 260, haloNear: 110, haloFar: 220, topBoost: 1.0, verticalBoost: 0.35, pairRange: 92 });
   const COUNT_MAX = 49, COUNT_CURVE = 2.6, COUNT_LOW_CURVE = 1.3, COUNT_MID = 8;
   const RADIUS = 11;
   const CLEARANCE = 30; // A 44px touch target plus 8px of space around existing UI.
@@ -99,10 +99,25 @@
       if (spot.y < topEdge) topEdge = spot.y;
       if (spot.y > bottomEdge) bottomEdge = spot.y;
     }
-    // A gentle pull toward the upper band; the sunken channel simply gets no bonus.
+    // A gentle pull toward the upper band as a plateau (never flatter toward the very top),
+    // with a cosine feather at the boundary; the sunken channel simply gets no bonus.
     const horizon = topEdge + (bottomEdge - topEdge) * 0.38;
     const topBias = PLACEMENT.topBoost * (jitter.topJitter || 1);
-    const topFactor = site => site.y < horizon ? 1 + topBias * (horizon - site.y) / Math.max(1, horizon - topEdge) : 1;
+    const feather = 48 * scale;
+    const flat = !(bottomEdge > topEdge + 1);
+    const topFactor = site => {
+      if (flat || site.y <= horizon - feather) return flat ? 1 : 1 + topBias;
+      if (site.y >= horizon + feather) return 1;
+      return 1 + topBias * 0.5 * (1 + Math.cos(Math.PI * (site.y - (horizon - feather)) / (2 * feather)));
+    };
+    // Vertical stretch: within the upper zone, extending the occupied y-range earns a mild bonus.
+    const upperYs = placed.filter(p => p.y < horizon).map(p => p.y);
+    const verticalFactor = site => {
+      if (upperYs.length < 2 || site.y >= horizon) return 1;
+      const rangeNow = Math.max(...upperYs) - Math.min(...upperYs);
+      const rangeAfter = Math.max(Math.max(...upperYs), site.y) - Math.min(Math.min(...upperYs), site.y);
+      return 1 + PLACEMENT.verticalBoost * Math.min(1, (rangeAfter - rangeNow) / Math.max(1, horizon - topEdge));
+    };
     return candidates.map(site => {
       const gaps = placed.map(other => distance(site, other));
       if (!gaps.length) return topFactor(site);
@@ -120,7 +135,7 @@
       // Distance is a virtue when it shrinks the biggest desert: the far penalty yields.
       const fillsDesert = voidNow > PLACEMENT.voidRadius * scale && voidAfter < voidNow - 20 * scale;
       const farWeight = Math.exp(-PLACEMENT.farPenalty * far * (fillsDesert ? 0.15 : 1));
-      return Math.exp(-PLACEMENT.closePenalty * close - PLACEMENT.crowdPenalty * crowd - PLACEMENT.voidPenalty * voidOver) * farWeight * topFactor(site);
+      return Math.exp(-PLACEMENT.closePenalty * close - PLACEMENT.crowdPenalty * crowd - PLACEMENT.voidPenalty * voidOver) * farWeight * topFactor(site) * verticalFactor(site);
     });
   }
   function pickSite(candidates, weights) {
@@ -373,7 +388,7 @@
       // A driverless close pair earns the wheel: one member takes over from a
       // driver that has no close partner of its own, keeping the lineup size.
       if (bodies.length > 1) {
-        const range = PLACEMENT.nearBand * placementScale();
+        const range = PLACEMENT.pairRange * placementScale();
         const partnered = new Set();
         bodies.forEach((body, i) => {
           if (bodies.some((other, j) => j !== i && distance(body, other) < range)) partnered.add(i);
