@@ -2102,7 +2102,7 @@
   function autoDriveState() {
     return interactionController && interactionController.getAutoDrive
       ? interactionController.getAutoDrive()
-      : { enabled: false, activeCount: 0, count: state.interactionCount, paused: true, unavailableReason: "not-ready" };
+      : { enabled: false, rage: false, activeCount: 0, count: state.interactionCount, paused: true, unavailableReason: "not-ready" };
   }
 
   function clearAutoDriveTimers() {
@@ -2147,8 +2147,11 @@
     button.setAttribute("aria-pressed", mode.enabled ? "true" : "false");
     button.setAttribute("aria-disabled", !mode.enabled && !!mode.unavailableReason ? "true" : "false");
     button.classList.toggle("is-running", mode.enabled);
+    button.classList.toggle("is-rage", !!mode.rage);
     button.classList.toggle("is-paused", mode.enabled && mode.paused);
-    var label = mode.enabled ? "关闭自动驾驶 · " + mode.activeCount + " 枚主动浮光" + (mode.paused ? " · 已暂停" : "") : "开启自动驾驶";
+    var label = !mode.enabled ? "开启自动驾驶"
+      : mode.rage ? "自动驾驶增强 · " + mode.activeCount + " 枚主动浮光（再点关闭）" + (mode.paused ? " · 已暂停" : "")
+      : "自动驾驶 · " + mode.activeCount + " 枚主动浮光（再点增强）" + (mode.paused ? " · 已暂停" : "");
     if (!mode.enabled && mode.unavailableReason) {
       label += " · " + ({ "empty": "请先添加浮光", "reduced-motion": "减少动态效果已开启", "layout": "当前布局没有足够的游动空间", "not-ready": "正在读取设置" }[mode.unavailableReason] || "暂不可用");
     }
@@ -2159,6 +2162,7 @@
       panelButton.setAttribute("aria-disabled", String(!mode.enabled && !!mode.unavailableReason));
       panelButton.setAttribute("aria-label", label); panelButton.title = label;
       panelButton.classList.toggle("is-running", mode.enabled);
+      panelButton.classList.toggle("is-rage", !!mode.rage);
     }
     if (mode.enabled) {
       clearAutoDriveTimers(); button.hidden = false; button.classList.remove("is-leaving");
@@ -2170,7 +2174,7 @@
       if (!current.enabled && current.unavailableReason) {
         toast(({ "empty": "先添加一枚浮光，再开启自动驾驶", "reduced-motion": "减少动态效果已开启，自动驾驶暂不可用", "layout": "当前布局没有足够的游动空间", "not-ready": "正在读取设置，请稍候" })[current.unavailableReason] || "自动驾驶暂不可用");
       } else if (interactionController && interactionController.setAutoDrive) {
-        interactionController.setAutoDrive(!current.enabled);
+        interactionController.setAutoDrive(!current.enabled ? true : current.rage ? false : "rage");
       }
       syncAutoDriveButton(); scheduleAutoDriveDismiss();
   }
@@ -2507,12 +2511,20 @@
     }).then(function () { syncProbabilityPanel(); return state.probabilityDefaultSaveStatus !== "error"; });
     return probabilityDefaultWriteQueue;
   }
+  var factoryStatusTimer = 0;
   function syncFactoryPanel() {
     syncDefaultsPanel();
     var button = $("interactionFactoryReset"); if (!button) return;
     button.disabled = state.factoryBusy || state.defaultsBusy || !state.collisionReady || !state.paceReady || !state.probabilityDefaultReady || !state.interactionSettingsReady;
     button.textContent = state.factoryBusy ? "正在恢复…" : "恢复出厂默认";
     $("interactionFactoryStatus").textContent = state.factoryStatus;
+    clearTimeout(factoryStatusTimer); factoryStatusTimer = 0;
+    if (state.factoryStatus && !state.factoryBusy) {
+      factoryStatusTimer = setTimeout(function () {
+        factoryStatusTimer = 0; state.factoryStatus = "";
+        var status = $("interactionFactoryStatus"); if (status) status.textContent = "";
+      }, 4600);
+    }
   }
   function restoreFactoryInteraction() {
     if (state.factoryBusy || state.defaultsBusy) return;
@@ -2536,6 +2548,7 @@
   var collisionWriteQueue = Promise.resolve(), collisionSessionSample = null;
 
   function collisionAPI() { return window.AiraInteraction.collision; }
+  function countAPI() { return window.AiraInteraction.count; }
   function collisionLabel(value) { return value.toFixed(1) + "×"; }
 
   function applyCollisionStrength() {
@@ -2736,7 +2749,7 @@
     range.style.setProperty("--fill", Math.max(0, Math.min(100, pct)).toFixed(2) + "%");
   }
 
-  function syncInteractionPanel() {
+  function syncInteractionPanel(options) {
     syncDefaultsPanel();
     var button = $("btnInteraction");
     var enabled = state.interactionSettingsReady && state.interactionCount > 0;
@@ -2744,8 +2757,10 @@
     button.title = "代号：交互 · " + state.interactionCount + " 枚浮光（单击添加并唤出自动驾驶 · 长按设置）";
     var slider = $("interactionCount");
     if (!slider) return;
-    slider.value = String(state.interactionCount);
-    paintRangeFill(slider);
+    if (!options || !options.keepSlider) {
+      slider.value = String(countAPI().toSlider(state.interactionCount));
+      paintRangeFill(slider);
+    }
     slider.disabled = !state.interactionSettingsReady || state.factoryBusy;
     slider.setAttribute("aria-valuetext", state.interactionCount + " 枚浮光");
     $("interactionCountValue").textContent = state.interactionCount + " 枚";
@@ -2831,7 +2846,7 @@
     var slider = document.createElement("input");
     slider.id = "interactionCount";
     slider.className = "wp-range";
-    slider.type = "range"; slider.min = "0"; slider.max = "49"; slider.step = "1";
+    slider.type = "range"; slider.min = "0"; slider.max = "1000"; slider.step = "1";
     var value = document.createElement("output");
     value.id = "interactionCountValue";
     value.htmlFor = "interactionCount";
@@ -2847,9 +2862,10 @@
     countBlock.appendChild(head); countBlock.appendChild(track); countBlock.appendChild(ends); countBlock.appendChild(hint);
     slider.addEventListener("input", function () {
       if (!state.interactionSettingsReady) return;
-      state.interactionCount = interactionCountValue(Number(slider.value));
+      state.interactionCount = interactionCountValue(countAPI().fromSlider(Number(slider.value)));
       if (interactionController) interactionController.setCount(state.interactionCount);
-      syncInteractionPanel();
+      paintRangeFill(slider);
+      syncInteractionPanel({ keepSlider: true });
     });
     var controls = document.createElement("div"); controls.className = "interaction-controls";
     var probabilityBlock = buildProbabilityBlock();

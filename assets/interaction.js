@@ -13,8 +13,10 @@
   const RESTITUTION = 0.64;
   const COLLISION_MAX = 24;
   const MAX_IMPACT_SPEED = 640;
-  const AUTO = Object.freeze({ cruiseMin: 5, cruiseMax: 8, burst: 1.7, kickLimit: 320, manualGrace: 1.25, replan: 0.75 });
+  // Mutable so tests can shorten the reshuffle cadence; the app never rewrites it.
+  const AUTO = { cruiseMin: 5, cruiseMax: 8, burst: 1.7, kickLimit: 320, manualGrace: 1.25, replan: 0.75, reshuffle: 18 };
   const NATURAL = Object.freeze({ neighborRadius: 76, share: 0.30, densityStep: 0.06, cooldown: 0.28 });
+  const COUNT_MAX = 49, COUNT_CURVE = 2.6;
   const RADIUS = 11;
   const CLEARANCE = 30; // A 44px touch target plus 8px of space around existing UI.
   const STEP = 4;
@@ -72,9 +74,16 @@
   }
 
   function autoBounds(count) {
-    const n = Number.isFinite(count) ? clamp(Math.floor(count), 0, 49) : 0;
+    const n = Number.isFinite(count) ? clamp(Math.floor(count), 0, COUNT_MAX) : 0;
     const lower = n ? Math.max(1, Math.ceil(n / 5)) : 0;
     return { lower, upper: Math.max(lower, Math.floor(n / 2)) };
+  }
+  // Boosted mode triples a normal roll, taking the whole field when that overflows.
+  function rageBounds(count) {
+    const normal = autoBounds(count);
+    if (!normal.lower) return normal;
+    const n = clamp(Math.floor(count), 0, COUNT_MAX);
+    return { lower: Math.min(n, normal.lower * 3), upper: n };
   }
   function resolveAutoImpact(body, other, nx, ny, strength) {
     const closing = (body.vx - other.vx) * nx + (body.vy - other.vy) * ny;
@@ -266,7 +275,7 @@
     let destroyed = false, geometry = null, sites = [], available = false, paused = true, layoutReady = true;
     let frameId = 0, refreshId = 0, contactTimer = 0, settleTimer = 0, previousTime = 0, lastPaint = 0, gesture = null, pageAway = false;
     let keyboardActivity = null;
-    let autoEnabled = false, autoClock = 0, navigation = null, autoNotice = '', lastRelay = -10, relay = null;
+    let autoEnabled = false, autoRage = false, autoClock = 0, navigation = null, autoNotice = '', lastRelay = -10, relay = null, nextReshuffle = 0, lastReshuffle = -1;
     const chargedContacts = new Map();
     const naturalContacts = new Map();
     const motion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
@@ -285,8 +294,9 @@
       return '';
     }
     function getAutoDrive() {
-      return { enabled: autoEnabled, activeCount: bodies.filter(body => body.auto).length, count: bodies.length,
-        paused: autoEnabled && (paused || !!autoUnavailable()), unavailableReason: autoUnavailable() };
+      return { enabled: autoEnabled, rage: autoEnabled && autoRage, activeCount: bodies.filter(body => body.auto).length, count: bodies.length,
+        paused: autoEnabled && (paused || !!autoUnavailable()), unavailableReason: autoUnavailable(),
+        nextReshuffle: autoEnabled ? nextReshuffle : 0, lastReshuffle };
     }
     function notifyAuto() {
       const state = getAutoDrive(), next = JSON.stringify(state);
@@ -296,24 +306,33 @@
       body.auto = { phase: 'roam', until: autoClock + 0.5 + Math.random(), nextPlan: 0, target: null, lastTarget: null,
         path: [], speed: AUTO.cruiseMin + Math.random() * (AUTO.cruiseMax - AUTO.cruiseMin), stuck: 0, nextSight: 0, aim: null };
     }
+    function rollLineup() {
+      const normal = autoBounds(bodies.length);
+      const roll = normal.lower + Math.floor(Math.random() * (normal.upper - normal.lower + 1));
+      return autoRage ? Math.min(bodies.length, roll * 3) : roll;
+    }
     function reconcileDrivers(redraw) {
       if (!autoEnabled) return;
-      const bounds = autoBounds(bodies.length);
-      if (!bounds.lower) { autoEnabled = false; bodies.forEach(body => { body.auto = null; }); return; }
+      const bounds = autoRage ? rageBounds(bodies.length) : autoBounds(bodies.length);
+      if (!bounds.lower) { autoEnabled = false; autoRage = false; bodies.forEach(body => { body.auto = null; }); return; }
       const active = bodies.filter(body => body.auto);
-      const desired = redraw ? bounds.lower + Math.floor(Math.random() * (bounds.upper - bounds.lower + 1)) : clamp(active.length, bounds.lower, bounds.upper);
+      const desired = redraw ? rollLineup() : clamp(active.length, bounds.lower, bounds.upper);
       while (active.length > desired) active.splice(Math.floor(Math.random() * active.length), 1)[0].auto = null;
       const idle = bodies.filter(body => !body.auto);
       while (active.length < desired && idle.length) {
         const body = idle.splice(Math.floor(Math.random() * idle.length), 1)[0]; newDriver(body); active.push(body);
       }
     }
+    function scheduleReshuffle() {
+      nextReshuffle = autoClock + AUTO.reshuffle * (0.8 + Math.random() * 0.4);
+    }
     function setAutoDrive(value) {
+      const rage = value === 'rage';
       const enable = !!value;
       if (enable && autoUnavailable()) { notifyAuto(); return false; }
-      if (enable === autoEnabled) return autoEnabled;
-      autoEnabled = enable; relay = null; chargedContacts.clear();
-      if (enable) { if (!navigation) navigation = navigationGrid(sites, geometry); reconcileDrivers(true); }
+      if (enable === autoEnabled && rage === autoRage) return autoEnabled;
+      autoEnabled = enable; autoRage = enable && rage; relay = null; chargedContacts.clear();
+      if (enable) { if (!navigation) navigation = navigationGrid(sites, geometry); reconcileDrivers(true); scheduleReshuffle(); }
       else bodies.forEach(body => { body.auto = null; });
       paint(performance.now()); notifyAuto(); requestFrame();
       return autoEnabled;
@@ -457,6 +476,7 @@
     }
 
     function paint(now) {
+      field.classList.toggle('is-rage', autoEnabled && autoRage);
       bodies.forEach((body, index) => {
         body.button.style.transform = 'translate3d(' + (body.x - 22).toFixed(2) + 'px,' + (body.y - 22).toFixed(2) + 'px,0)';
         body.button.style.setProperty('--interaction-tilt', (index ? -16 : 13) + 'deg');
@@ -573,6 +593,12 @@
       const dt = clamp((now - previousTime) / 1000, 0, 0.05);
       previousTime = now; lastPaint = now;
       autoClock += dt;
+      if (autoEnabled && autoClock >= nextReshuffle) {
+        lastReshuffle = autoClock;
+        reconcileDrivers(true);
+        scheduleReshuffle();
+        notifyAuto();
+      }
       for (const [key, pair] of naturalContacts) {
         if (distance(pair[0], pair[1]) > RADIUS * 2 + 6) naturalContacts.delete(key);
       }
@@ -879,8 +905,11 @@
   return { mount, motion: { normalize: saved => ({ version: 1, pace: naturalPace(saved && saved.pace) }),
     fromSlider: value => naturalPace(0.25 * Math.pow(64, clamp(Number(value) || 0, 0, 1200) / 1200)),
     toSlider: value => Math.round(Math.log(naturalPace(value) / 0.25) / Math.log(64) * 1200) },
-    autoDrive: { bounds: autoBounds, motion: AUTO }, collision: { max: COLLISION_MAX, normalize: collisionSettings, strength: collisionStrength, draw: randomCollision,
+    count: { max: COUNT_MAX, curve: COUNT_CURVE,
+    fromSlider: value => Math.round(COUNT_MAX * Math.pow(clamp((Number(value) || 0) / 1000, 0, 1), COUNT_CURVE)),
+    toSlider: value => Math.round(1000 * Math.pow(clamp((Number(value) || 0) / COUNT_MAX, 0, 1), 1 / COUNT_CURVE)) },
+    autoDrive: { bounds: autoBounds, rageBounds, motion: AUTO }, collision: { max: COLLISION_MAX, normalize: collisionSettings, strength: collisionStrength, draw: randomCollision,
     fromSlider: value => collisionStrength(Math.pow(COLLISION_MAX, clamp(Number(value) || 0, 0, 1000) / 1000)),
     toSlider: value => Math.round(Math.log(collisionStrength(value)) / Math.log(COLLISION_MAX) * 1000) },
-    _test: { REGION, WEIGHTS, MOTION, AUTO, NATURAL, naturalPace, naturalResponse, resolveNaturalImpact, RESTITUTION, MAX_IMPACT_SPEED, resolveImpact, resolveAutoImpact, autoBounds, limitVelocity, makeGeometry, inPolygon, segmentDistance, advance, potential, startModel, sampleModel, modelProbability, safeSites, clearRoute, navigationGrid, routeBetween } };
+    _test: { REGION, WEIGHTS, MOTION, AUTO, NATURAL, naturalPace, naturalResponse, resolveNaturalImpact, RESTITUTION, MAX_IMPACT_SPEED, resolveImpact, resolveAutoImpact, autoBounds, rageBounds, limitVelocity, makeGeometry, inPolygon, segmentDistance, advance, potential, startModel, sampleModel, modelProbability, safeSites, clearRoute, navigationGrid, routeBetween } };
 });
