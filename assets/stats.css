@@ -59,14 +59,13 @@
 .stats-field-intro { margin: 16px 0 0; padding: 13px 16px 12px; border-radius: 14px; background: linear-gradient(130deg, rgba(147,202,237,.12), rgba(200,228,247,.045)); border: 1px solid rgba(203,230,248,.22); }
 .stats-field-intro-text { margin: 0; font-size: 11.5px; line-height: 1.85; color: var(--ink-2); letter-spacing: .2px; }
 .stats-field-intro-row { display: flex; justify-content: flex-end; margin-top: 8px; }
-.stats-badge-toggle { position: static; display: flex; align-items: center; gap: 8px; min-height: 30px; padding: 2px 0; font-size: 10.5px; color: var(--ink-2); letter-spacing: .2px; }
-.stats-badge-toggle .wp-track { transform: scale(.82); transform-origin: right center; }
-.stats-badge-toggle[aria-pressed="true"] { color: #C08A4E; }
-.stats-badge-toggle[aria-pressed="true"] .wp-track { border-color: rgba(240, 164, 80, .85); }
-.stats-badge-toggle[aria-pressed="true"] .wp-knob { background: #F0A450; }
-:root[data-theme="dark"] .stats-badge-toggle[aria-pressed="true"] { color: #F0C88F; }
-:root[data-theme="dark"] .stats-badge-toggle[aria-pressed="true"] .wp-track { border-color: rgba(240, 164, 80, .6); }
-:root[data-theme="dark"] .stats-badge-toggle[aria-pressed="true"] .wp-knob { background: #F2BC7E; }
+.stats-badge-toggle { position: static; display: flex; align-items: center; gap: 8px; min-height: 30px; padding: 2px 0; font-size: 10.5px; font-weight: 700; color: var(--stats-blue); letter-spacing: .2px; }
+.stats-badge-toggle .wp-track { transform: scale(.82); transform-origin: right center; border-color: var(--stats-blue); }
+.stats-badge-toggle .wp-knob { background: var(--stats-blue); }
+.stats-badge-toggle[aria-pressed="true"] { color: var(--stats-blue); }
+.stats-badge-toggle[aria-pressed="true"] .wp-track { border-color: var(--stats-blue); }
+.stats-badge-toggle[aria-pressed="true"] .wp-knob { background: var(--stats-blue); }
+:root[data-theme="dark"] .stats-badge-toggle[aria-pressed="true"] { color: var(--stats-blue); }
 .stats-roster { grid-column: 1 / -1; }
 .stats-terrain-region { fill: rgba(147,202,237,.05); stroke: var(--ink-4); stroke-width: .7; stroke-dasharray: 3 4; }
 .stats-terrain-cell { fill: var(--stats-blue); }
