@@ -1181,6 +1181,55 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 .sheet-title { margin: 0 0 4px; font-size: 16.5px; font-weight: 700; letter-spacing: 0.4px; }
 .sheet-sub { margin: 0 0 14px; font-size: 12px; color: var(--ink-3); line-height: 1.55; letter-spacing: 0.3px; }
 
+/* 长按太阳图标浮出的「关于」窗口：左上两行题词，右侧主页预览，左侧产品自述 */
+#btnSettings { touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.about-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 42%);
+  grid-template-areas: "head frame" "copy frame" "meta frame";
+  column-gap: 30px;
+  row-gap: 16px;
+  align-items: start;
+}
+.about-heading { grid-area: head; display: grid; gap: 5px; }
+/* 主标题：中等偏淡的金，一点点烫金 */
+.about-brand { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: 0.4px; color: #BD9A3E; }
+:root[data-theme="dark"] .about-brand { color: #D5B564; }
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .about-brand {
+    background-image: linear-gradient(158deg, #DFC47E 2%, #C7A347 52%, #A9822A 98%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  :root[data-theme="dark"] .about-brand { background-image: linear-gradient(158deg, #F0DCA4 2%, #D8B966 52%, #C09A45 98%); }
+}
+.about-motto { margin: 0; font-size: 11px; letter-spacing: 0.3px; color: var(--ink-3); }
+.about-copy { grid-area: copy; display: grid; gap: 10px; }
+.about-kicker { margin: 0 0 1px; font-size: 10.5px; font-weight: 500; letter-spacing: 5px; color: var(--ink-3); }
+.about-copy p { margin: 0; font-size: 13.5px; line-height: 1.95; letter-spacing: 0.3px; color: var(--ink-2); }
+.about-meta { grid-area: meta; display: grid; gap: 6px; margin-top: 2px; padding-top: 14px; border-top: 1px solid var(--ink-4); }
+.about-version { margin: 0; font-size: 13px; letter-spacing: 0.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.about-build { margin: 0; font-size: 10.5px; letter-spacing: 1px; color: var(--ink-3); }
+.about-frame { grid-area: frame; margin: 0; }
+.about-shot {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  box-shadow: 0 12px 28px rgba(18, 30, 45, 0.18);
+  background: var(--glass);
+}
+:root[data-theme="dark"] .about-shot { border-color: rgba(255, 255, 255, 0.16); box-shadow: 0 12px 28px rgba(0, 0, 0, 0.36); }
+
+@media (max-width: 520px) {
+  .sheet.wide.about-sheet { padding: 24px 20px 20px; }
+  .about-body { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "frame" "copy" "meta"; }
+  .about-copy p { font-size: 13px; line-height: 1.85; }
+}
+
 .sheet-list { display: flex; flex-direction: column; margin: 0 -6px; }
 
 .act {

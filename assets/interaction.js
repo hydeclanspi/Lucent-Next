@@ -464,6 +464,8 @@
       const a = charged(body) && body.vx * nx + body.vy * ny > 8;
       const b = charged(other) && -(other.vx * nx + other.vy * ny) > 8;
       if (!a && !b) return false;
+      // 相对速度要在施加冲量之前取，否则量到的是撞完之后的速度。
+      const closing = Math.max(0, (body.vx - other.vx) * nx + (body.vy - other.vy) * ny);
       const key = Math.min(body.index, other.index) + ':' + Math.max(body.index, other.index);
       if (chargedContacts.has(key)) {
         if (body.auto) coolDriver(body, other);
@@ -473,7 +475,7 @@
       chargedContacts.set(key, [body, other]);
       resolveAutoImpact(body, other, nx, ny, impactStrength);
       const charger = a ? body : other;
-      emitField({ kind: 'autoHit', a: charger.identity, b: (a ? other : body).identity });
+      emitField({ kind: 'autoHit', a: charger.identity, b: (a ? other : body).identity, power: closing });
       // Consume both sides' charge now, before another body/substep can see contact.
       if (body.auto) coolDriver(body, other);
       if (other.auto) coolDriver(other, body);
@@ -617,7 +619,7 @@
         && !(body.naturalCooldown > autoClock) && !(other.naturalCooldown > autoClock);
       const neighbors = bodies.filter(candidate => candidate === body || candidate === other
         || Math.min(distance(candidate, body), distance(candidate, other)) < NATURAL.neighborRadius);
-      if (energize) emitField({ kind: 'contact', a: body.identity, b: other.identity });
+      if (energize) emitField({ kind: 'contact', a: body.identity, b: other.identity, power: Math.max(0, approach) });
       const kicked = resolveNaturalImpact(body, other, nx, ny, impactStrength, neighbors.length, energize);
       if (kicked) {
         naturalContacts.set(key, [body, other]);
@@ -691,7 +693,16 @@
             }
             other.x = pushed.x; other.y = pushed.y;
             const held = gesture && gesture.index === index;
-            if (held) resolveImpact(body, other, nx, ny, true, impactStrength);
+            if (held) {
+              // 手拨推挤也算一次碰撞：新鲜接触才记，一直顶住不重复计数。
+              const key = Math.min(index, other.index) + ':' + Math.max(index, other.index);
+              if (!naturalContacts.has(key) && !(body.naturalCooldown > autoClock)) {
+                emitField({ kind: 'push', a: body.identity, b: other.identity, power: Math.max(0, relative) });
+                body.naturalCooldown = autoClock + NATURAL.cooldown;
+              }
+              naturalContacts.set(key, [body, other]);
+              resolveImpact(body, other, nx, ny, true, impactStrength);
+            }
             else if (!(autoEnabled && relative > 0 && automaticImpact(body, other, nx, ny))) naturalImpact(body, other, nx, ny);
             if (!held) spentStep = true;
             contact(body, other, now);

@@ -39,6 +39,10 @@
     { key: "settings", label: "设置", hint: "Aira 设置中心", method: "openSettings", entry: "settings", icon: "M12 8.8a3.2 3.2 0 1 0 0 6.4 3.2 3.2 0 0 0 0-6.4zM12 2.8v2.4M12 18.8v2.4M4.6 7.2l2 1.2M17.4 15.6l2 1.2M4.6 16.8l2-1.2M17.4 8.4l2-1.2" }
   ];
 
+  // 「代号：交互」面板右上角的两行，同时作关于窗口左上角的标题
+  var BRAND_MOTTO = "灵感与犀利并存";
+  var BRAND_IDENTITY = "鸿蒙hydeclanspi灵感台";
+
   var ICONS = {
     open: "M14 4h6v6M20 4l-9 9M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4",
     copy: "M9 9h11v11H9zM15 5.5A2.5 2.5 0 0 0 12.5 3h-6A2.5 2.5 0 0 0 4 5.5v6A2.5 2.5 0 0 0 6.5 14",
@@ -1040,6 +1044,13 @@
     });
   }
 
+  function entryByKey(key) {
+    for (var i = 0; i < ENTRIES.length; i++) {
+      if (ENTRIES[i].key === key) return ENTRIES[i];
+    }
+    return null;
+  }
+
   function openEntry(entry) {
     var a = api();
     if (!a) {
@@ -1518,6 +1529,7 @@
     sheet.classList.toggle("center", !!options.center);
     sheet.classList.toggle("wide", !!options.wide);
     sheet.classList.toggle("interaction-sheet", !!options.interaction);
+    sheet.classList.toggle("about-sheet", !!options.about);
 
     var title = document.createElement("h3");
     title.className = "sheet-title";
@@ -1535,16 +1547,16 @@
       var subtitle = document.createElement("div");
       subtitle.className = "interaction-subtitle";
       var motto = document.createElement("span");
-      motto.textContent = "灵感与犀利并存";
+      motto.textContent = BRAND_MOTTO;
       var identity = document.createElement("span");
-      identity.textContent = "鸿蒙hydeclanspi灵感台";
+      identity.textContent = BRAND_IDENTITY;
       subtitle.appendChild(motto);
       subtitle.appendChild(identity);
       heading.appendChild(titleGroup);
       heading.appendChild(subtitle);
       sheet.appendChild(heading);
       sheet.appendChild(buildInteractionToolbar());
-    } else if (!options.stats && !options.defaults) sheet.appendChild(title);
+    } else if (!options.stats && !options.defaults && !options.about) sheet.appendChild(title);
 
     if (options.sub) {
       var sub = document.createElement("p");
@@ -1611,6 +1623,67 @@
     $("btnInteraction").setAttribute("aria-expanded", "false");
     setBackActive(false);
     refreshInteraction();
+  }
+
+  /* ---------- 关于（长按右上角太阳图标） ---------- */
+
+  var ABOUT_COPY = [
+    "灵感台是一张属于你的主页：时钟与问候开场，个签替你自我介绍，日志记录每刻所念所想，搜索、快捷方式与直达各就各位，壁纸在明暗之间呼吸。",
+    "四十九枚浮光在留白里安身，各自有名；它们相遇、碰撞、结伴巡游，故事都记进场志。不上传、不追踪，一切只留在悄然之间。"
+  ];
+
+  function openAboutSheet() {
+    var body = document.createElement("div");
+    body.className = "about-body";
+
+    var heading = document.createElement("div");
+    heading.className = "about-heading";
+    var brand = document.createElement("h3");
+    brand.className = "about-brand";
+    brand.textContent = BRAND_IDENTITY;
+    var motto = document.createElement("p");
+    motto.className = "about-motto";
+    motto.textContent = BRAND_MOTTO;
+    heading.appendChild(brand);
+    heading.appendChild(motto);
+
+    var copy = document.createElement("div");
+    copy.className = "about-copy";
+    var kicker = document.createElement("h4");
+    kicker.className = "about-kicker";
+    kicker.textContent = "关于";
+    copy.appendChild(kicker);
+    ABOUT_COPY.forEach(function (line) {
+      var paragraph = document.createElement("p");
+      paragraph.textContent = line;
+      copy.appendChild(paragraph);
+    });
+
+    var meta = document.createElement("div");
+    meta.className = "about-meta";
+    var version = document.createElement("p");
+    version.className = "about-version";
+    version.textContent = "名片主页 v4.0.13 · 2026-10 构建";
+    var build = document.createElement("p");
+    build.className = "about-build";
+    build.textContent = "鸿蒙 Aira 灵感台 · beta v0.7 引擎 · © 2026";
+    meta.appendChild(version);
+    meta.appendChild(build);
+
+    var frame = document.createElement("figure");
+    frame.className = "about-frame";
+    var shot = document.createElement("img");
+    shot.className = "about-shot";
+    shot.src = "./assets/about-preview.jpg";
+    shot.alt = "灵感台主页预览";
+    shot.decoding = "async";
+    frame.appendChild(shot);
+
+    body.appendChild(heading);
+    body.appendChild(copy);
+    body.appendChild(meta);
+    body.appendChild(frame);
+    openSheet({ title: "关于", content: body, center: true, wide: true, about: true });
   }
 
   function field(labelText, value, placeholder) {
@@ -3261,6 +3334,52 @@
     document.addEventListener("visibilitychange", function () { if (document.hidden) cancel(); });
   }
 
+  function bindSettingsLauncher() {
+    var node = $("btnSettings");
+    if (!node) return;
+    var timer = null, start = null, suppressClick = false, longPressPoint = null;
+    function clear() { if (timer) clearTimeout(timer); timer = null; }
+    function cancel() { clear(); start = null; suppressClick = true; }
+    // 与星球长按同一套兜底：部分触摸 WebView 会把松手时的兼容点击改派到刚浮出的遮罩上，
+    // 只吞掉这一次延续；下一次真实 pointerdown 立即复位。
+    document.addEventListener("pointerdown", function () { longPressPoint = null; }, true);
+    document.addEventListener("click", function (event) {
+      if (longPressPoint && event.detail && Math.hypot(event.clientX - longPressPoint.x, event.clientY - longPressPoint.y) < 32) {
+        longPressPoint = null; suppressClick = false;
+        event.preventDefault(); event.stopImmediatePropagation();
+      }
+    }, true);
+    node.addEventListener("pointerdown", function (event) {
+      if (!event.isPrimary || (event.pointerType === "mouse" && event.button !== 0)) return;
+      clear(); suppressClick = false;
+      start = { x: event.clientX, y: event.clientY };
+      timer = setTimeout(function () {
+        timer = null; suppressClick = true; longPressPoint = start; start = null;
+        openAboutSheet();
+      }, 480);
+    });
+    node.addEventListener("pointermove", function (event) {
+      if (start && Math.hypot(event.clientX - start.x, event.clientY - start.y) > 10) cancel();
+    });
+    node.addEventListener("pointerup", function () { clear(); start = null; });
+    node.addEventListener("pointercancel", cancel);
+    node.addEventListener("pointerleave", function () { if (start) cancel(); });
+    node.addEventListener("contextmenu", function (event) { event.preventDefault(); });
+    node.addEventListener("click", function (event) {
+      if (suppressClick && event.detail) { suppressClick = false; event.preventDefault(); return; }
+      var entry = entryByKey("settings");
+      if (entry) openEntry(entry);
+    });
+    // 键盘：Enter / 空格照旧进设置中心，Shift+Enter 或菜单键等价于长按。
+    node.addEventListener("keydown", function (event) {
+      if ((event.key === "Enter" && event.shiftKey) || event.key === "ContextMenu" || (event.key === "F10" && event.shiftKey)) {
+        event.preventDefault(); cancel(); openAboutSheet();
+      }
+    });
+    window.addEventListener("blur", cancel);
+    document.addEventListener("visibilitychange", function () { if (document.hidden) cancel(); });
+  }
+
   function bindWallpaper() {
     var node = el.wallpaperBtn;
     if (!node) return;
@@ -3346,29 +3465,18 @@
 
     var a = function () { return api(); };
 
-    function entryByKey(key) {
-      for (var i = 0; i < ENTRIES.length; i++) {
-        if (ENTRIES[i].key === key) return ENTRIES[i];
-      }
-      return null;
-    }
-
     $("btnHistory").addEventListener("click", function () {
       if (a() && typeof a().openHistory === "function") a().openHistory();
       else toast("预览模式：这里会打开 Aira 历史记录");
     });
 
     bindInteractionLauncher();
+    bindSettingsLauncher();
     bindAutoDrive();
 
     $("btnScan").addEventListener("click", function () {
       if (a() && typeof a().scanQr === "function") a().scanQr();
       else toast("预览模式：这里会打开 Aira 扫一扫");
-    });
-
-    $("btnSettings").addEventListener("click", function () {
-      var entry = entryByKey("settings");
-      if (entry) openEntry(entry);
     });
 
     $("btnSearch").addEventListener("click", function () {

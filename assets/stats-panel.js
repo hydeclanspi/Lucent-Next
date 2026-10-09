@@ -39,10 +39,10 @@
     selector.addEventListener('change', function () { source = selector.value; render(); }); activity.head.appendChild(selector);
     var heat = makeChart('概率分布', '颜色越深，该时段落在此概率区间的占比越高', 'heat');
     var legend = element('div', 'stats-heat-legend'); legend.appendChild(element('span', '', '少')); legend.appendChild(element('i')); legend.appendChild(element('span', '', '多')); heat.head.appendChild(legend);
-    // 第四格来自场志：两两之间的亲近分排序曲线（没有场志时不占位）。
-    var ties = options.field ? makeChart('关系强度', '两两之间的亲近分，从最亲到最疏：碰撞 × 3 + 亲近分钟', 'ties') : null;
-    var tiesNote = null;
-    if (ties) { tiesNote = element('span', 'stats-ties-note', '仅呈现最亲的 300 对'); tiesNote.hidden = true; ties.head.appendChild(tiesNote); }
+    // 第四格来自场志：碰撞力度的分布（没有场志时不占位；力度是累计值，不随时段变化）。
+    var impacts = options.field ? makeChart('碰撞力度', '碰撞瞬间两枚的相对速度：自然碰撞、FSD 冲撞与手拨推挤', 'impacts') : null;
+    var impactsNote = null;
+    if (impacts) { impactsNote = element('span', 'stats-impacts-note', ''); impactsNote.hidden = true; impacts.head.appendChild(impactsNote); }
     var detail = element('div', 'stats-detail'); detail.setAttribute('aria-live', 'polite'); detail.setAttribute('aria-atomic', 'true');
     var detailTime = element('strong'), detailValues = element('p'), detailExtra = element('p', 'stats-detail-extra');
     var zoom = element('button', 'stats-zoom', '展开此时段'); zoom.type = 'button';
@@ -86,7 +86,13 @@
       terrainSection.appendChild(element('p', 'stats-caption', '颜色越深，浮光在该区域驻留越久——它们自己走出来的地形'));
       var terrainHost = element('div', 'stats-chart stats-terrain-host'); terrainSection.appendChild(terrainHost); fieldColumns.appendChild(terrainSection);
       var driveSection = element('section', 'stats-section stats-drive');
-      driveSection.appendChild(element('h4', '', '驾驶志'));
+      var driveHead = element('div', 'stats-chart-heading');
+      driveHead.appendChild(element('h4', '', '驾驶志'));
+      var driveLegend = element('div', 'stats-social-legend');
+      [['contact', '自然碰撞'], ['bump', '邂逅·撞撞'], ['dodge', '邂逅·回避'], ['autoHit', 'FSD 冲撞']].forEach(function (item) {
+        driveLegend.appendChild(element('span', 'stats-social-chip stats-chip-' + item[0], item[1]));
+      });
+      driveHead.appendChild(driveLegend); driveSection.appendChild(driveHead);
       var driveNumbers = element('p', 'stats-caption'); driveSection.appendChild(driveNumbers);
       var driveHost = element('div', 'stats-chart'); driveSection.appendChild(driveHost); fieldColumns.appendChild(driveSection);
       var rosterSection = element('section', 'stats-section stats-roster');
@@ -120,8 +126,8 @@
       var width = Math.round(host.getBoundingClientRect().width);
       return width > 0 ? Math.max(200, width) : 480;
     }
-    // 对数纵轴的顶：取 1–2–5 阶里刚好盖住最大值的那一档
-    function logTop(value) {
+    // 纵轴的顶：取 1–2–5 阶里刚好盖住最大值的那一档
+    function niceTop(value) {
       var base = Math.pow(10, Math.floor(Math.log10(Math.max(value, 1)))), steps = [1, 2, 5, 10];
       for (var i = 0; i < steps.length; i++) if (base * steps[i] >= value) return base * steps[i];
       return base * 10;
@@ -153,49 +159,41 @@
         }
         terrainHost.appendChild(svg);
       })();
-      // 关系强度：亲近分从最亲排到最疏，纵轴取对数——重尾分布里尾巴才是信息
+      // 碰撞力度：横轴是碰撞瞬间两枚的相对速度（像素/秒），纵轴是次数。
+      // 相对速度对「自然碰撞」与「FSD 冲撞」才有意义，手拨推挤不计入。
       (function () {
-        if (!ties) return;
-        ties.host.textContent = '';
-        var pairs = fieldView.pairs || [], values = pairs.map(function (pair) { return pair.contact * 3 + pair.nearMinutes; });
-        tiesNote.hidden = pairs.length < 300;
-        var w = chartWidth(ties.host), h = 158, g = { left: 44, top: 15, width: w - 54, height: h - 53 };
-        var top = values.length ? logTop(values[0]) : 10, lo = 1;
-        if (top <= lo) top = lo * 10;
-        function y(v) { return g.top + g.height * (1 - (Math.log10(Math.max(v, lo)) - Math.log10(lo)) / (Math.log10(top) - Math.log10(lo))); }
-        function x(i) { return g.left + (values.length < 2 ? g.width / 2 : i / (values.length - 1) * g.width); }
+        if (!impacts) return;
+        impacts.host.textContent = '';
+        var buckets = fieldView.impacts || [], edges = fieldView.impactEdges || [], peak = fieldView.impactPeak || [0, 0, 0, 0];
+        var total = buckets.reduce(function (sum, n) { return sum + n; }, 0);
+        var w = chartWidth(impacts.host), h = 158, g = { left: 44, top: 15, width: w - 54, height: h - 53 };
+        var top = niceTop(Math.max.apply(null, buckets.concat([1])));
+        function y(v) { return g.top + g.height * (1 - v / top); }
         var svg = svgNode('svg', { viewBox: '0 0 ' + w + ' ' + h, width: w, height: h, role: 'img',
-          'aria-label': values.length ? '关系强度排序曲线，共 ' + values.length + ' 对；最亲的一对是 #' + pad2(pairs[0].a) + ' 与 #' + pad2(pairs[0].b) + '，亲近分 ' + values[0] : '关系强度排序曲线' });
-        ties.host.appendChild(svg);
-        if (!values.length) {
-          svg.appendChild(svgNode('text', { x: g.left + g.width / 2, y: g.top + g.height / 2, 'text-anchor': 'middle', class: 'stats-empty' }, fieldView.status === 'error' ? '浮光志暂不可用' : '本时段还没有交往记录'));
+          'aria-label': total ? '碰撞力度分布，共 ' + total + ' 次；最狠的一次 #' + pad2(peak[1]) + ' 与 #' + pad2(peak[2]) + '，' + Math.round(peak[0]) + ' 像素/秒' : '碰撞力度分布' });
+        impacts.host.appendChild(svg);
+        impactsNote.hidden = !peak[0];
+        impactsNote.textContent = peak[0] ? '最狠 #' + pad2(peak[1]) + ' × #' + pad2(peak[2]) + ' · ' + Math.round(peak[0]) + ' 像素/秒' : '';
+        if (!total) {
+          svg.appendChild(svgNode('text', { x: g.left + g.width / 2, y: g.top + g.height / 2, 'text-anchor': 'middle', class: 'stats-empty' }, fieldView.status === 'error' ? '浮光志暂不可用' : '还没有碰撞记录'));
           return;
         }
-        var ladder = [], decade = 1;
-        while (decade <= top) { [1, 2, 5].forEach(function (m) { if (decade * m <= top && decade * m >= lo) ladder.push(decade * m); }); decade *= 10; }
-        var ticks = [], previous = null;
-        ladder.sort(function (a, b) { return b - a; }).forEach(function (v) {
-          if (previous == null || y(v) - y(previous) >= 20) { ticks.push(v); previous = v; }
-        });
-        ticks.forEach(function (v) {
+        [0, Math.round(top / 2), top].forEach(function (v, i, all) {
+          if (all.indexOf(v) !== i) return;
           svg.appendChild(svgNode('line', { x1: g.left, x2: w - 10, y1: y(v), y2: y(v), class: 'stats-grid' }));
           svg.appendChild(svgNode('text', { x: g.left - 9, y: y(v) + 4, 'text-anchor': 'end', class: 'stats-axis' }, String(v)));
         });
-        var defs = svgNode('defs'), gradient = svgNode('linearGradient', { id: 'stats-fill-ties', x1: '0', x2: '0', y1: '0', y2: '1' });
-        gradient.appendChild(svgNode('stop', { offset: '0%', 'stop-color': 'currentColor', 'stop-opacity': '.2' }));
-        gradient.appendChild(svgNode('stop', { offset: '100%', 'stop-color': 'currentColor', 'stop-opacity': '0' })); defs.appendChild(gradient); svg.appendChild(defs);
-        var line = values.map(function (v, i) { return (i ? 'L' : 'M') + x(i).toFixed(2) + ',' + y(v).toFixed(2); }).join(' ');
-        if (values.length > 1) {
-          svg.appendChild(svgNode('path', { d: line + ' L' + x(values.length - 1).toFixed(2) + ',' + (g.top + g.height) + ' L' + x(0).toFixed(2) + ',' + (g.top + g.height) + ' Z', fill: 'url(#stats-fill-ties)', class: 'stats-area' }));
-          svg.appendChild(svgNode('path', { d: line, class: 'stats-line' }));
-        }
-        svg.appendChild(svgNode('circle', { cx: x(0), cy: y(values[0]), r: 2.6, class: 'stats-point' }));
-        var labelCount = w < 440 ? 3 : 5, chosen = [];
-        for (var i = 0; i < labelCount; i++) { var index = values.length < 2 ? 0 : Math.round(i * (values.length - 1) / (labelCount - 1)); if (chosen.indexOf(index) < 0) chosen.push(index); }
-        chosen.forEach(function (index, i) {
-          svg.appendChild(svgNode('text', { x: x(index), y: h - 21, 'text-anchor': i === 0 ? 'start' : i === chosen.length - 1 ? 'end' : 'middle', class: 'stats-axis' }, '第 ' + (index + 1)));
+        var slot = g.width / buckets.length, gap = Math.min(5, slot * .16), every = slot >= 44 ? 1 : 2;
+        buckets.forEach(function (n, i) {
+          var bar = g.height * Math.min(1, n / top);
+          svg.appendChild(svgNode('rect', { x: (g.left + i * slot + gap).toFixed(2), y: (g.top + g.height - bar).toFixed(2),
+            width: (slot - gap * 2).toFixed(2), height: Math.max(n ? 1.2 : 0, bar).toFixed(2), rx: 2, class: 'stats-impact-bar' }));
+          // 窄栏隔一标一，免得标签互相压住；最后一档始终留标签。
+          if (i % every && i !== buckets.length - 1) return;
+          svg.appendChild(svgNode('text', { x: (g.left + (i + .5) * slot).toFixed(2), y: h - 21, 'text-anchor': 'middle', class: 'stats-axis' },
+            i < edges.length ? (i ? edges[i - 1] : 0) + '–' + edges[i] : edges[edges.length - 1] + '+'));
         });
-        svg.appendChild(svgNode('text', { x: w - 10, y: h - 3, 'text-anchor': 'end', class: 'stats-axis stats-axis-title' }, '名次 · 纵轴对数'));
+        svg.appendChild(svgNode('text', { x: w - 10, y: h - 3, 'text-anchor': 'end', class: 'stats-axis stats-axis-title' }, '自记录以来 · 像素/秒'));
       })();
       // 驾驶志
       (function () {
@@ -213,7 +211,7 @@
           var x = 5 + i / rows.length * (w - 10), bw = Math.max(1, (w - 10) / rows.length - 2);
           var hb = row.values[0] / max * (dh - 18), hr = row.values[1] / max * (dh - 18);
           svg.appendChild(svgNode('rect', { x: x.toFixed(1), y: (dh - 14 - hb - hr).toFixed(1), width: bw.toFixed(1), height: Math.max(0.6, hb).toFixed(1), rx: 0.8, class: 'stats-seg stats-seg-autoHit' }));
-          svg.appendChild(svgNode('rect', { x: x.toFixed(1), y: (dh - 14 - hr).toFixed(1), width: bw.toFixed(1), height: Math.max(0.6, hr).toFixed(1), rx: 0.8, class: 'stats-seg stats-seg-bump' }));
+          svg.appendChild(svgNode('rect', { x: x.toFixed(1), y: (dh - 14 - hr).toFixed(1), width: bw.toFixed(1), height: Math.max(0.6, hr).toFixed(1), rx: 0.8, class: 'stats-seg stats-seg-rage' }));
         });
         driveHost.appendChild(svg);
       })();
