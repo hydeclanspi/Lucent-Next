@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "4.0.6",
+  "version": "4.0.7",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互——抓住浮光时右上角浮现橙色编号（01–49）；名册个体卡新增关系网弧线与三角关系即时计算，密友、三驾马车一目了然。"
+  "description": "通透的个人名片主页。代号：交互——抓住浮光时浮现的编号改为淡杏色，离本体更远、字号更小更淡。"
 }
