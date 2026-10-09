@@ -19,7 +19,7 @@
   // Placement soft penalties: closeness is a weak nudge chance may tolerate, separation a
   // medium pull, and a desert left behind is the strong one. Per-arrival jitters and a
   // random anchor keep constellations from settling into a few formulaic shapes.
-  const PLACEMENT = Object.freeze({ closePenalty: 0.65, farPenalty: 1.6, crowdPenalty: 0.9, voidPenalty: 1.8, nearBand: 60, farBand: 200, voidRadius: 220, voidSpan: 260 });
+  const PLACEMENT = Object.freeze({ closePenalty: 0.65, farPenalty: 1.6, crowdPenalty: 0.9, voidPenalty: 1.8, nearBand: 60, farBand: 220, voidRadius: 220, voidSpan: 260, haloNear: 110, haloFar: 220 });
   const COUNT_MAX = 49, COUNT_CURVE = 2.6, COUNT_LOW_CURVE = 1.3, COUNT_MID = 8;
   const RADIUS = 11;
   const CLEARANCE = 30; // A 44px touch target plus 8px of space around existing UI.
@@ -92,6 +92,11 @@
   function placementWeights(candidates, placed, scale, mood, field) {
     const jitter = mood || { nearJitter: 1, farJitter: 1, voidJitter: 1 };
     const space = field || candidates;
+    let voidNow = 0;
+    for (const spot of space) {
+      const gap = placed.length ? Math.min(...placed.map(other => distance(spot, other))) : 0;
+      if (gap > voidNow) voidNow = gap;
+    }
     return candidates.map(site => {
       const gaps = placed.map(other => distance(site, other));
       if (!gaps.length) return 1;
@@ -106,7 +111,10 @@
         if (d > voidAfter) voidAfter = d;
       }
       const voidOver = Math.max(0, voidAfter - PLACEMENT.voidRadius * scale * jitter.voidJitter) / (PLACEMENT.voidSpan * scale);
-      return Math.exp(-PLACEMENT.closePenalty * close - PLACEMENT.farPenalty * far - PLACEMENT.crowdPenalty * crowd - PLACEMENT.voidPenalty * voidOver);
+      // Distance is a virtue when it shrinks the biggest desert: the far penalty yields.
+      const fillsDesert = voidNow > PLACEMENT.voidRadius * scale && voidAfter < voidNow - 20 * scale;
+      const farWeight = Math.exp(-PLACEMENT.farPenalty * far * (fillsDesert ? 0.15 : 1));
+      return Math.exp(-PLACEMENT.closePenalty * close - PLACEMENT.crowdPenalty * crowd - PLACEMENT.voidPenalty * voidOver) * farWeight;
     });
   }
   function pickSite(candidates, weights) {
@@ -719,13 +727,23 @@
       }
       // Constellation mood: every arrival redraws its cluster bias, band jitters and anchor.
       // Sessions drift between clumpy and exploratory instead of repeating a few shapes.
-      const anchor = placed[Math.floor(Math.random() * placed.length)];
+      // The desert gates the dice: the larger the void, the rarer cluster draws become.
+      let voidNow = 0;
+      for (const spot of sites) {
+        const gap = Math.min(...placed.map(other => distance(spot, other)));
+        if (gap > voidNow) voidNow = gap;
+      }
       const mood = { nearJitter: 0.85 + Math.random() * 0.3, farJitter: 0.85 + Math.random() * 0.45, voidJitter: 0.9 + Math.random() * 0.25 };
+      const voidOver = Math.max(0, voidNow - PLACEMENT.voidRadius * scale * mood.voidJitter) / (PLACEMENT.voidSpan * scale);
+      const clusterBias = (0.35 + Math.random() * 0.45) * clamp(1 - voidOver, 0.15, 1);
+      // Lonely lenses attract company; crowded ones stop being anchors.
+      const anchorWeights = placed.map(other => 1 / (1 + placed.filter(rest => rest !== other && distance(rest, other) < NATURAL.neighborRadius).length));
+      const anchor = pickSite(placed, anchorWeights);
       let choices = candidates;
-      if (Math.random() < 0.35 + Math.random() * 0.45) {
+      if (Math.random() < clusterBias) {
         const halo = candidates.filter(site => {
           const d = distance(site, anchor);
-          return d >= PLACEMENT.nearBand * scale * mood.nearJitter && d <= PLACEMENT.farBand * scale * mood.farJitter;
+          return d >= PLACEMENT.haloNear * scale * mood.nearJitter && d <= PLACEMENT.haloFar * scale * mood.farJitter;
         });
         if (halo.length) choices = halo;
       }
