@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "3.10.0",
+  "version": "3.10.1",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互——算法卡片新增「落子与星座」「有记忆的航向」；自然漂移加入邂逅判定：两枚进入判定圈时 70% 立案，五五开一者加速相碰或一者调头避让，氛围不惊扰比例。"
+  "description": "通透的个人名片主页。代号：交互——邂逅判定圈由 110k 扩至 150k，放行冷却与触发冷却分离（3s / 9s），碰碰车与回避明显更常出现。"
 }
