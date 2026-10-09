@@ -19,7 +19,7 @@
   // Placement soft penalties: closeness is a weak nudge chance may tolerate, separation a
   // medium pull, and a desert left behind is the strong one. Per-arrival jitters and a
   // random anchor keep constellations from settling into a few formulaic shapes.
-  const PLACEMENT = Object.freeze({ closePenalty: 0.65, farPenalty: 1.6, crowdPenalty: 0.9, voidPenalty: 1.8, nearBand: 60, farBand: 220, voidRadius: 220, voidSpan: 260, haloNear: 110, haloFar: 220 });
+  const PLACEMENT = Object.freeze({ closePenalty: 0.8, farPenalty: 1.6, crowdPenalty: 0.9, voidPenalty: 1.8, nearBand: 60, farBand: 220, voidRadius: 220, voidSpan: 260, haloNear: 110, haloFar: 220, topBoost: 1.0 });
   const COUNT_MAX = 49, COUNT_CURVE = 2.6, COUNT_LOW_CURVE = 1.3, COUNT_MID = 8;
   const RADIUS = 11;
   const CLEARANCE = 30; // A 44px touch target plus 8px of space around existing UI.
@@ -90,20 +90,26 @@
     return { lower: Math.min(n, normal.lower * 3), upper: n };
   }
   function placementWeights(candidates, placed, scale, mood, field) {
-    const jitter = mood || { nearJitter: 1, farJitter: 1, voidJitter: 1 };
+    const jitter = mood || { nearJitter: 1, farJitter: 1, voidJitter: 1, topJitter: 1 };
     const space = field || candidates;
-    let voidNow = 0;
+    let voidNow = 0, topEdge = Infinity, bottomEdge = -Infinity;
     for (const spot of space) {
       const gap = placed.length ? Math.min(...placed.map(other => distance(spot, other))) : 0;
       if (gap > voidNow) voidNow = gap;
+      if (spot.y < topEdge) topEdge = spot.y;
+      if (spot.y > bottomEdge) bottomEdge = spot.y;
     }
+    // A gentle pull toward the upper band; the sunken channel simply gets no bonus.
+    const horizon = topEdge + (bottomEdge - topEdge) * 0.38;
+    const topBias = PLACEMENT.topBoost * (jitter.topJitter || 1);
+    const topFactor = site => site.y < horizon ? 1 + topBias * (horizon - site.y) / Math.max(1, horizon - topEdge) : 1;
     return candidates.map(site => {
       const gaps = placed.map(other => distance(site, other));
-      if (!gaps.length) return 1;
+      if (!gaps.length) return topFactor(site);
       const nearest = Math.min(...gaps);
       const close = Math.max(0, PLACEMENT.nearBand * scale * jitter.nearJitter - nearest) / (30 * scale);
       const far = Math.max(0, nearest - PLACEMENT.farBand * scale * jitter.farJitter) / (80 * scale);
-      const crowd = Math.max(0, gaps.filter(gap => gap < NATURAL.neighborRadius).length - 2);
+      const crowd = Math.max(0, gaps.filter(gap => gap < NATURAL.neighborRadius).length - 1);
       // The desert this choice would leave behind: the largest distance-to-nearest-lens remaining.
       let voidAfter = 0;
       for (const spot of space) {
@@ -114,7 +120,7 @@
       // Distance is a virtue when it shrinks the biggest desert: the far penalty yields.
       const fillsDesert = voidNow > PLACEMENT.voidRadius * scale && voidAfter < voidNow - 20 * scale;
       const farWeight = Math.exp(-PLACEMENT.farPenalty * far * (fillsDesert ? 0.15 : 1));
-      return Math.exp(-PLACEMENT.closePenalty * close - PLACEMENT.crowdPenalty * crowd - PLACEMENT.voidPenalty * voidOver) * farWeight;
+      return Math.exp(-PLACEMENT.closePenalty * close - PLACEMENT.crowdPenalty * crowd - PLACEMENT.voidPenalty * voidOver) * farWeight * topFactor(site);
     });
   }
   function pickSite(candidates, weights) {
@@ -350,6 +356,9 @@
       const roll = normal.lower + Math.floor(Math.random() * (normal.upper - normal.lower + 1));
       return autoRage ? Math.min(bodies.length, roll * 3) : roll;
     }
+    function placementScale() {
+      return clamp(Math.min(geometry.width / 1560, geometry.height / 1040), 0.7, 1.3);
+    }
     function reconcileDrivers(redraw) {
       if (!autoEnabled) return;
       const bounds = autoRage ? rageBounds(bodies.length) : autoBounds(bodies.length);
@@ -360,6 +369,24 @@
       const idle = bodies.filter(body => !body.auto);
       while (active.length < desired && idle.length) {
         const body = idle.splice(Math.floor(Math.random() * idle.length), 1)[0]; newDriver(body); active.push(body);
+      }
+      // A driverless close pair earns the wheel: one member takes over from a
+      // driver that has no close partner of its own, keeping the lineup size.
+      if (bodies.length > 1) {
+        const range = PLACEMENT.nearBand * placementScale();
+        const partnered = new Set();
+        bodies.forEach((body, i) => {
+          if (bodies.some((other, j) => j !== i && distance(body, other) < range)) partnered.add(i);
+        });
+        bodies.forEach((body, i) => {
+          if (!partnered.has(i) || body.auto || isManual(body)) return;
+          const partner = bodies.find((other, j) => j !== i && partnered.has(j) && distance(body, other) < range);
+          if (!partner || partner.auto || isManual(partner)) return;
+          const index = bodies.findIndex(candidate => candidate.auto && !partnered.has(bodies.indexOf(candidate)));
+          if (index < 0) return;
+          bodies[index].auto = null;
+          newDriver(Math.random() < 0.5 ? body : partner);
+        });
       }
     }
     function scheduleReshuffle() {
@@ -733,7 +760,7 @@
         const gap = Math.min(...placed.map(other => distance(spot, other)));
         if (gap > voidNow) voidNow = gap;
       }
-      const mood = { nearJitter: 0.85 + Math.random() * 0.3, farJitter: 0.85 + Math.random() * 0.45, voidJitter: 0.9 + Math.random() * 0.25 };
+      const mood = { nearJitter: 0.85 + Math.random() * 0.3, farJitter: 0.85 + Math.random() * 0.45, voidJitter: 0.9 + Math.random() * 0.25, topJitter: 0.85 + Math.random() * 0.3 };
       const voidOver = Math.max(0, voidNow - PLACEMENT.voidRadius * scale * mood.voidJitter) / (PLACEMENT.voidSpan * scale);
       const clusterBias = (0.35 + Math.random() * 0.45) * clamp(1 - voidOver, 0.15, 1);
       // Lonely lenses attract company; crowded ones stop being anchors.

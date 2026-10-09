@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "3.9.10",
+  "version": "3.9.11",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互——落位 v2.1 修偏聚：远距惩罚给沙漠填补让路，双模按沙漠门控，锚点按孤立度加权，聚落光环放宽；抽样沙漠半径中位 345→250px。"
+  "description": "通透的个人名片主页。代号：交互——落位加上沿鼓励（适度偏爱上方、下陷通道无加成）；免罚邻居降为 1 个、近距惩罚微升；落位出现密友对时，其中一员自动获得 FSD 驾驶员身份。"
 }
