@@ -43,6 +43,8 @@
     var impacts = options.field ? makeChart('碰撞力度', '碰撞瞬间两枚的相对速度：自然碰撞、FSD 冲撞与手拨推挤', 'impacts') : null;
     var impactsNote = null;
     if (impacts) { impactsNote = element('span', 'stats-impacts-note', ''); impactsNote.hidden = true; impacts.head.appendChild(impactsNote); }
+    // 碰撞力度也能点选：按住某一档看它的详情。
+    var impactsSel = -1;
     var detail = element('div', 'stats-detail'); detail.setAttribute('aria-live', 'polite'); detail.setAttribute('aria-atomic', 'true');
     var detailTime = element('strong'), detailValues = element('p'), detailExtra = element('p', 'stats-detail-extra');
     var zoom = element('button', 'stats-zoom', '展开此时段'); zoom.type = 'button';
@@ -207,6 +209,7 @@
         var buckets = fieldView.impacts || [], edges = fieldView.impactEdges || [], peak = fieldView.impactPeak || [0, 0, 0, 0];
         var total = buckets.reduce(function (sum, n) { return sum + n; }, 0);
         var w = chartWidth(impacts.host), h = 158, g = { left: 44, top: 15, width: w - 54, height: h - 53 };
+        impacts.g = g;
         var top = niceTop(Math.max.apply(null, buckets.concat([1])));
         function y(v) { return g.top + g.height * (1 - v / top); }
         var svg = svgNode('svg', { viewBox: '0 0 ' + w + ' ' + h, width: w, height: h, role: 'img',
@@ -230,12 +233,24 @@
         buckets.forEach(function (n, i) {
           var bar = g.height * Math.min(1, n / top);
           svg.appendChild(svgNode('rect', { x: (g.left + i * slot + gap).toFixed(2), y: (g.top + g.height - bar).toFixed(2),
-            width: (slot - gap * 2).toFixed(2), height: Math.max(n ? 1.2 : 0, bar).toFixed(2), rx: 2, class: 'stats-impact-bar' }));
+            width: (slot - gap * 2).toFixed(2), height: Math.max(n ? 1.2 : 0, bar).toFixed(2), rx: 2,
+            class: 'stats-impact-bar' + (i === impactsSel ? ' is-selected' : '') }));
           if (chosen.indexOf(i) < 0) return;
           svg.appendChild(svgNode('text', { x: (g.left + (i + .5) * slot).toFixed(2), y: h - 21, 'text-anchor': 'middle', class: 'stats-axis' },
             i < edges.length ? (i ? edges[i - 1] : 0) + '–' + edges[i] : edges[edges.length - 1] + '+'));
         });
         svg.appendChild(svgNode('text', { x: w - 10, y: h - 3, 'text-anchor': 'end', class: 'stats-axis stats-axis-title' }, '相对速度 · 像素/秒'));
+        if (impactsSel >= buckets.length) impactsSel = -1;
+        impactsTip.hidden = impactsSel < 0;
+        if (impactsSel >= 0) {
+          impactsTipTitle.textContent = '相对速度 ' + (impactsSel < edges.length ? (impactsSel ? edges[impactsSel - 1] : 0) + '–' + edges[impactsSel] : edges[edges.length - 1] + '+') + ' 像素/秒';
+          impactsTipValue.textContent = buckets[impactsSel] + ' 次（占 ' + fmt(100 * buckets[impactsSel] / total) + '%）';
+          impactsTipExtra.textContent = '自然碰撞、FSD 冲撞与手拨的合计';
+          var rootRect = root.getBoundingClientRect(), chartRect = impacts.host.getBoundingClientRect();
+          impactsTip.style.width = Math.min(270, rootRect.width) + 'px';
+          impactsTip.style.left = Math.max(0, Math.min(rootRect.width - impactsTip.offsetWidth, chartRect.left - rootRect.left + g.left + (impactsSel + .5) * slot + 10)) + 'px';
+          impactsTip.style.top = chartRect.top - rootRect.top + 6 + 'px';
+        }
       })();
       // 驾驶志
       (function () {
@@ -380,6 +395,9 @@
     var tooltip = element('div', 'stats-tooltip'); tooltip.hidden = true; tooltip.setAttribute('aria-hidden', 'true');
     var tooltipTitle = element('strong'), tooltipValue = element('p'), tooltipExtra = element('p');
     tooltip.appendChild(tooltipTitle); tooltip.appendChild(tooltipValue); tooltip.appendChild(tooltipExtra); root.appendChild(tooltip);
+    var impactsTip = element('div', 'stats-tooltip'); impactsTip.hidden = true; impactsTip.setAttribute('aria-hidden', 'true');
+    var impactsTipTitle = element('strong'), impactsTipValue = element('p'), impactsTipExtra = element('p');
+    impactsTip.appendChild(impactsTipTitle); impactsTip.appendChild(impactsTipValue); impactsTip.appendChild(impactsTipExtra); root.appendChild(impactsTip);
     var charts = [probability, activity, heat];
     function formatted(time, type) {
       var d = new Date(time + view.offsetMinutes * 60000), pad = function (v) { return String(v).padStart(2, '0'); };
@@ -401,8 +419,8 @@
       var rect = chart.host.getBoundingClientRect(), g = chart.geometry;
       selected = Math.max(0, Math.min(view.buckets.length - 1, Math.floor((event.clientX - rect.left - g.left) / g.width * view.buckets.length)));
       selectedBin = chart.kind === 'heat' ? Math.max(0, Math.min(19, Math.floor((g.top + g.height - (event.clientY - rect.top)) / g.height * 20))) : null;
-      activeChart = chart;
-      draw();
+      activeChart = chart; impactsSel = -1;
+      draw(); drawField();
     }
     charts.forEach(function (chart) {
       var held = false;
@@ -414,12 +432,29 @@
       chart.host.addEventListener('pointerup', function () { held = false; });
       chart.host.addEventListener('pointercancel', function () { held = false; });
     });
+    // 碰撞力度的点选：按住某一档看它的详情，与时间图表共用一套互斥与收起逻辑。
+    if (impacts) {
+      var impactsHeld = false;
+      function chooseImpacts(event) {
+        var g = impacts.g, count = fieldView && fieldView.impacts ? fieldView.impacts.length : 0;
+        if (!g || !count) return;
+        impactsSel = Math.max(0, Math.min(count - 1, Math.floor((event.clientX - impacts.host.getBoundingClientRect().left - g.left) / g.width * count)));
+        activeChart = null; draw(); drawField();
+      }
+      impacts.host.addEventListener('pointerdown', function (event) {
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        impactsHeld = true; impacts.host.setPointerCapture(event.pointerId); chooseImpacts(event);
+      });
+      impacts.host.addEventListener('pointermove', function (event) { if (impactsHeld) chooseImpacts(event); });
+      impacts.host.addEventListener('pointerup', function () { impactsHeld = false; });
+      impacts.host.addEventListener('pointercancel', function () { impactsHeld = false; });
+    }
     // Tap anywhere outside the charts to let the floating card go. Capture phase:
     // choose() re-renders and detaches the original target before it bubbles up.
     root.addEventListener('pointerdown', function (event) {
-      if (!activeChart) return;
+      if (!activeChart && impactsSel < 0) return;
       if (event.target && event.target.closest && event.target.closest('.stats-chart')) return;
-      activeChart = null; draw();
+      activeChart = null; impactsSel = -1; draw(); drawField();
     }, true);
     function drawChart(chart) {
       var w = Math.max(220, Math.round(chart.host.getBoundingClientRect().width)), h = chart.kind === 'probability' ? 192 : chart.kind === 'heat' ? 158 : 152;
