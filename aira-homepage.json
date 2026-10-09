@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "3.10.2",
+  "version": "4.0.0",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互——历史统计的浮动详情卡支持点击图表外任意处收起；卡片材质改浅透玻璃，不再白色厚重。"
+  "description": "通透的个人名片主页。代号：交互——辅助操作下移，Drive、历史统计与设默认值融入面板玻璃；简洁方向盘与轻量状态标记，让参数与留白回到视觉中心。"
 }
