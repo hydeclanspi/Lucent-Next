@@ -1523,6 +1523,7 @@
       heading.appendChild(titleGroup);
       heading.appendChild(subtitle);
       sheet.appendChild(heading);
+      sheet.appendChild(buildInteractionToolbar());
     } else if (!options.stats && !options.defaults) sheet.appendChild(title);
 
     if (options.sub) {
@@ -3006,7 +3007,6 @@
     // A single quiet live readout below the controls, separate from the sliders.
     var probabilityNote = probabilityBlock.querySelector("#wallpaperInteractionNote");
     body.appendChild(probabilityNote);
-    body.appendChild(buildInteractionToolbar());
 
     var explanation = document.createElement("details");
     explanation.className = "interaction-algorithm";
