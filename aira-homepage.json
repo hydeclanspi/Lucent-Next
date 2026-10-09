@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "4.0.19",
+  "version": "4.2.0",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。长按右上角太阳浮出「关于」窗口；统计面板第四格为碰撞力度分布：相对速度的分档加密为非线性阶梯，低位宽、高频段细、100 以上再分几档；自然碰撞、FSD 冲撞与手拨都记入。"
+  "description": "通透的个人名片主页。长按右上角太阳浮出「关于」窗口：烫金主标题、主页预览与亲笔落款；历史统计宽屏双栏，第四格为碰撞力度分布的 14 档非线性阶梯，自然碰撞、FSD 冲撞与手拨都记入；名册个体卡的关系网按关系分疏密站位，每次打开随机起角。"
 }
