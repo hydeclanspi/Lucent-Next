@@ -18,7 +18,7 @@
   const NATURAL = Object.freeze({ neighborRadius: 76, share: 0.30, densityStep: 0.06, cooldown: 0.28 });
   // Natural encounter adjudication: two drifters entering the circle face a 70% roll;
   // even odds then send one to bump or send one dodging away. Ambient only, never writes.
-  const ENCOUNTER = Object.freeze({ radius: 110, trigger: 0.7, bumpBoost: 2.4, dodgeBoost: 1.7, bumpTime: 1.4, dodgeTime: 1.3, cooldown: 9, maxActive: 3 });
+  const ENCOUNTER = Object.freeze({ radius: 150, trigger: 0.7, bumpBoost: 2.4, dodgeBoost: 1.7, bumpTime: 1.4, dodgeTime: 1.3, cooldown: 9, passCooldown: 3, maxActive: 3 });
   // Placement soft penalties: closeness is a weak nudge chance may tolerate, separation a
   // medium pull, and a desert left behind is the strong one. Per-arrival jitters and a
   // random anchor keep constellations from settling into a few formulaic shapes.
@@ -562,8 +562,8 @@
           if (other.auto || isManual(other) || other.encounter || other.naturalCooldown > autoClock) continue;
           const key = body.index + ':' + other.index;
           if (encounters.has(key) || distance(body, other) >= ENCOUNTER.radius) continue;
+          if (Math.random() >= ENCOUNTER.trigger) { encounters.set(key, { pair: [body, other], until: autoClock + ENCOUNTER.passCooldown }); continue; }
           encounters.set(key, { pair: [body, other], until: autoClock + ENCOUNTER.cooldown });
-          if (Math.random() >= ENCOUNTER.trigger) continue;
           const actor = Math.random() < 0.5 ? body : other, partner = actor === body ? other : body;
           if (Math.random() < 0.5) {
             actor.encounter = { mode: 'bump', partner, until: autoClock + ENCOUNTER.bumpTime };
