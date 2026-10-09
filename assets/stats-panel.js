@@ -110,7 +110,7 @@
       return m ? h + ' 小时 ' + m + ' 分' : h + ' 小时';
     }
     function fmtEventTime(time) { var d = new Date(time); return (d.getMonth() + 1) + '月' + d.getDate() + '日'; }
-    var fieldEventNames = { contact: '自然碰撞', bump: '撞撞', dodge: '回避', charge: '出击', miss: '扑空', autoHit: '命中', relay: '接力', pilot: '得舵' };
+    var fieldEventNames = { contact: '自然碰撞', bump: '撞撞', dodge: '回避', charge: '出击', miss: '扑空', autoHit: '命中', relay: '接力', pilot: '得舵', push: '手拨' };
     function aggregateDays(rows, pick) {
       if (rows.length <= 60) return rows.map(function (row) { return { day: row.day, values: pick(row) }; });
       var per = Math.ceil(rows.length / 52), out = [];
