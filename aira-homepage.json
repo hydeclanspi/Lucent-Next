@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "4.0.13",
+  "version": "4.0.14",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。长按右上角太阳图标浮出「关于」窗口：左上角烫金主标题、右侧主页预览、左侧整段产品自述；统计名册性格改蓝阶，驾驶志橙档改淡橙。"
+  "description": "通透的个人名片主页。长按右上角太阳浮出「关于」窗口；历史统计宽屏双栏，第四格为碰撞力度分布——自然碰撞、FSD 冲撞与手拨的相对速度；名册性格以蓝色深浅标注。"
 }
