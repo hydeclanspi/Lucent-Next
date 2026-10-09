@@ -229,9 +229,10 @@
           fieldTip.hidden = false;
           fieldTipTitle.textContent = terrainCode(selCol, selRow);
           fieldTipValue.textContent = selN ? '占全部驻留的 ' + fmt(100 * selN / (totalHeat || 1)) + '%' : '本格暂无驻留';
-          fieldTipExtra.textContent = selN ? '本格驻留约 ' + fmtDuration(selN * 4) : '换一块格子看';
+          fieldTipExtra.textContent = selN ? '本格驻留约 ' + fmtDuration(selN * 4) : '';
           var rootRect = root.getBoundingClientRect(), hostRect = terrainHost.getBoundingClientRect();
-          fieldTip.style.width = Math.min(270, rootRect.width) + 'px';
+          // 地形图的浮层内容短，随内容收窄即可。
+          fieldTip.style.width = 'auto'; fieldTip.style.maxWidth = Math.min(190, rootRect.width) + 'px';
           fieldTip.style.left = Math.max(0, Math.min(rootRect.width - fieldTip.offsetWidth, hostRect.left - rootRect.left + Number(px((selCol + .5) / gw)) + 8)) + 'px';
           fieldTip.style.top = Math.max(0, Math.min(rootRect.height - 40, hostRect.top - rootRect.top + Number(py((selRow + 1) / gh)) - 6)) + 'px';
         }
@@ -283,7 +284,7 @@
           fieldTipValue.textContent = buckets[impactsSel] + ' 次（占 ' + fmt(100 * buckets[impactsSel] / total) + '%）';
           fieldTipExtra.textContent = '自然碰撞、FSD 冲撞与手拨的合计';
           var rootRect = root.getBoundingClientRect(), chartRect = impacts.host.getBoundingClientRect();
-          fieldTip.style.width = Math.min(270, rootRect.width) + 'px';
+          fieldTip.style.width = Math.min(270, rootRect.width) + 'px'; fieldTip.style.maxWidth = Math.min(270, rootRect.width) + 'px';
           fieldTip.style.left = Math.max(0, Math.min(rootRect.width - fieldTip.offsetWidth, chartRect.left - rootRect.left + g.left + (impactsSel + .5) * slot + 10)) + 'px';
           fieldTip.style.top = chartRect.top - rootRect.top + 6 + 'px';
         }
