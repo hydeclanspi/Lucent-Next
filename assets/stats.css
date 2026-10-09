@@ -100,9 +100,9 @@
 :root[data-theme="dark"] .stats-roster-chip.is-tone-1 { background: rgba(155,212,244,.17); }
 :root[data-theme="dark"] .stats-roster-chip.is-tone-2 { background: rgba(126,196,240,.26); }
 :root[data-theme="dark"] .stats-roster-chip.is-tone-3 { background: rgba(96,178,232,.38); }
-/* 在场高光只留描边与光晕：把性格深浅整枚压掉，两种信息不叠在一起 */
-.stats-roster-chip.is-active { background: transparent; color: #2f7598; border-color: rgba(126,186,226,.75); box-shadow: 0 0 0 1px rgba(126,186,226,.35), 0 0 8px rgba(126,186,226,.25); }
-:root[data-theme="dark"] .stats-roster-chip.is-active { background: transparent; color: #a8d8f4; }
+/* 在场高光退回未上蓝之前的浅色底，只留描边与光晕：深浅与在场两种信息不叠在一起 */
+.stats-roster-chip.is-active { background: rgba(255,255,255,.10); color: #2f7598; border-color: rgba(126,186,226,.75); box-shadow: 0 0 0 1px rgba(126,186,226,.35), 0 0 8px rgba(126,186,226,.25); }
+:root[data-theme="dark"] .stats-roster-chip.is-active { background: rgba(196,222,251,.06); color: #a8d8f4; }
 .stats-roster-chip.is-picked { background: rgba(187,229,253,.3); border-color: rgba(126,186,226,.8); }
 :root[data-theme="dark"] .stats-roster-chip.is-picked { background: rgba(126,186,226,.26); border-color: rgba(126,186,226,.8); }
 .stats-roster-card { margin-top: 12px; padding: 13px 16px; border-radius: 14px; background: linear-gradient(130deg, rgba(147,202,237,.14), rgba(200,228,247,.05)); border: 1px solid rgba(203,230,248,.26); }
