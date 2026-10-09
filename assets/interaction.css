@@ -406,3 +406,93 @@
   .defaults-value-cell output { font-size: 19px; }
 }
 @media (pointer: coarse) { .defaults-panel button, .interaction-factory-bar button, .auto-drive-button.auto-drive-panel { min-height: 44px; } }
+
+/* Settings form one open glass surface: aligned controls, no nested card frames. */
+.auto-drive-panel > .auto-drive-mark {
+  display: flex; flex: none; flex-direction: column; align-items: center;
+  width: 25px; gap: 1px; line-height: 1;
+}
+.auto-drive-mark svg { display: block; width: 22px; height: 22px; }
+.auto-drive-mark small { display: block; font-size: 7px; line-height: 1; letter-spacing: 1px; padding-left: 1px; font-weight: 500; }
+.auto-drive-panel > .auto-drive-word { font-size: 12px; letter-spacing: .35px; }
+.interaction-controls {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 44px; row-gap: 27px; padding: 2px 4px 0;
+  --control-rule: rgba(22,24,31,.12);
+}
+.interaction-controls > section {
+  position: relative; min-width: 0; margin: 0; padding: 0; border: 0;
+  background: none; box-shadow: none;
+}
+.interaction-controls > .wp-probability { margin: 0; padding: 0; border: 0; }
+:root[data-theme="dark"] .interaction-controls { --control-rule: rgba(238,241,248,.12); }
+.interaction-controls > section:nth-child(n + 3) { border-top: 1px solid var(--control-rule); padding-top: 26px; }
+.interaction-controls > section:nth-child(even)::before {
+  content: ""; position: absolute; left: -22px; top: 4px; bottom: 4px; width: 1px;
+  background: linear-gradient(180deg, transparent, var(--control-rule) 22%, var(--control-rule) 78%, transparent);
+  opacity: .55; pointer-events: none;
+}
+.interaction-controls .wp-probability-head { min-height: 32px; flex-wrap: nowrap; align-items: center; gap: 12px; }
+.interaction-controls .wp-probability-head label { font-size: 12.5px; font-weight: 500; letter-spacing: .55px; color: var(--ink-2); }
+.interaction-controls #interactionCountValue,
+.interaction-controls #wallpaperProbabilityValue,
+.interaction-controls #collisionStrengthValue,
+.interaction-controls #naturalPaceValue {
+  min-width: 0; flex: none; font-size: 23px; line-height: 1.25; font-weight: 350;
+  color: var(--ink); text-align: right; letter-spacing: -.35px; font-variant-numeric: tabular-nums;
+}
+.interaction-controls .interaction-count-track { display: flex; margin: 14px 0 0; min-height: 40px; }
+.interaction-controls .interaction-count-ends,
+.interaction-controls .collision-range-ends,
+.interaction-controls .pace-range-ends {
+  margin: -2px 0 0; display: flex; justify-content: space-between;
+  color: var(--ink-3); font-size: 10px; line-height: 1.5; letter-spacing: .3px;
+}
+.interaction-controls .wp-range { width: 100%; height: 40px; }
+.interaction-controls .wp-range::-webkit-slider-runnable-track { height: 3px; border: 0; box-shadow: inset 0 .5px 1px rgba(15,32,48,.12); }
+.interaction-controls .wp-range::-moz-range-track { height: 3px; border: 0; box-shadow: inset 0 .5px 1px rgba(15,32,48,.12); }
+.interaction-controls .wp-range::-webkit-slider-thumb {
+  width: 18px; height: 18px; margin-top: -7.5px;
+  background: linear-gradient(145deg, rgba(248,253,255,.86), rgba(203,226,241,.58));
+  border: 1px solid rgba(250,254,255,.68);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 2px 5px rgba(20,38,55,.12);
+}
+.interaction-controls .wp-range::-moz-range-thumb {
+  width: 18px; height: 18px;
+  background: linear-gradient(145deg, rgba(248,253,255,.86), rgba(203,226,241,.58));
+  border: 1px solid rgba(250,254,255,.68);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 2px 5px rgba(20,38,55,.12);
+}
+.interaction-controls .wp-range:focus-visible { outline: 1px solid var(--ink-2); outline-offset: 2px; border-radius: 7px; }
+.interaction-controls .wp-probability-track { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0; margin-top: 14px; }
+.interaction-controls .wp-probability-track .wp-range { grid-column: 1 / -1; grid-row: 1; }
+.interaction-controls .wp-probability-track > span { grid-row: 2; width: auto; font-size: 10px; line-height: 1.5; color: var(--ink-3); margin-top: -2px; letter-spacing: .3px; }
+.interaction-controls .wp-probability-status,
+.interaction-controls .interaction-count-hint,
+.interaction-controls .collision-hint { margin: 13px 0 0; color: var(--ink-3); font-size: 11px; line-height: 1.75; letter-spacing: .1px; }
+.interaction-controls .collision-control { margin-top: 14px; }
+.interaction-controls .collision-range-row { gap: 0; }
+.interaction-controls .collision-mode-row { margin-top: 9px; }
+.interaction-controls .collision-random { justify-content: space-between; width: 100%; min-height: 36px; font-size: 11px; color: var(--ink-2); }
+.interaction-controls .collision-random[aria-pressed="true"] { color: #467896; }
+:root[data-theme="dark"] .interaction-controls .collision-random[aria-pressed="true"] { color: #A8D8F4; }
+.interaction-controls .collision-mode-row + .collision-hint { margin-top: 4px; }
+.interaction-panel > .wp-interaction-note {
+  margin: 24px 4px 0; padding: 13px 0 0; border-top: 1px solid var(--ink-4);
+  font-size: 11px; line-height: 1.8; letter-spacing: .2px; color: var(--ink-3); text-align: right;
+}
+.interaction-panel .interaction-algorithm { margin-top: 24px; border-color: rgba(230,247,255,.24); box-shadow: inset 0 1px 0 rgba(245,252,255,.20); background: linear-gradient(130deg, rgba(184,220,255,.15), rgba(214,237,255,.05)); }
+.interaction-panel .interaction-algorithm summary { padding: 17px 20px; }
+.interaction-panel .interaction-algorithm-copy { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); column-gap: 28px; row-gap: 20px; padding: 3px 20px 22px; font-size: 11px; line-height: 1.85; }
+.interaction-panel .interaction-algorithm-copy p { margin: 0; }
+.interaction-panel .interaction-algorithm-copy p:last-child { grid-column: 1 / -1; padding-top: 15px; border-top: 1px solid var(--ink-4); }
+.interaction-panel .interaction-algorithm-copy b { margin-bottom: 6px; font-size: 11.5px; font-weight: 500; }
+:root[data-theme="dark"] .interaction-panel .interaction-algorithm { background: linear-gradient(130deg, rgba(101,170,222,.10), rgba(136,195,236,.025)); border-color: rgba(202,229,251,.12); }
+@media (max-width: 639px) {
+  .interaction-controls { grid-template-columns: minmax(0,1fr); row-gap: 24px; padding: 0; }
+  .interaction-controls > section:nth-child(n + 2) { border-top: 1px solid var(--control-rule); padding-top: 24px; }
+  .interaction-controls > section:nth-child(even)::before { display: none; }
+  .interaction-panel > .wp-interaction-note { text-align: left; margin-inline: 0; }
+  .interaction-panel .interaction-algorithm-copy { grid-template-columns: minmax(0,1fr); gap: 18px; }
+}
+@media (pointer: coarse) { .interaction-controls .wp-range, .interaction-controls .collision-random { min-height: 44px; } }

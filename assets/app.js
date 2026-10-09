@@ -1491,7 +1491,7 @@
       var drive = document.createElement("button");
       drive.id = "btnPanelAutoDrive"; drive.type = "button";
       drive.className = "icon-btn auto-drive-button auto-drive-panel";
-      drive.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 15.5a8 8 0 0 1 12-10M19.5 8.5a8 8 0 0 1-12 10" opacity=".55"/><path d="m10 5.5 5.5 7-4 .5-3 3.5z" transform="translate(4.08 4.74) scale(.66)"/><circle cx="18.5" cy="5.5" r="1" fill="currentColor" stroke="none"/></svg><span aria-hidden="true">Drive</span>';
+      drive.innerHTML = '<span class="auto-drive-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 15.5a8 8 0 0 1 12-10M19.5 8.5a8 8 0 0 1-12 10" opacity=".55"/><path d="m10 5.5 5.5 7-4 .5-3 3.5z" transform="translate(4.08 4.74) scale(.66)"/><circle cx="18.5" cy="5.5" r="1" fill="currentColor" stroke="none"/></svg><small>AUTO</small></span><span class="auto-drive-word" aria-hidden="true">Drive</span>';
       drive.addEventListener("click", toggleAutoDrive);
       headingLeft.appendChild(drive);
       var statistics = document.createElement("button");
@@ -2030,7 +2030,8 @@
     slider.disabled = !state.wallpaperProbabilityReady || !state.probabilityDefaultReady || state.probabilityDefaultReadError || state.factoryBusy;
     slider.setAttribute("aria-valuetext", "Light " + light + "%，Dark " + dark + "%");
     slider.style.setProperty("--probability-light", light + "%");
-    $("wallpaperProbabilityValue").textContent = "Light " + light + "% · Dark " + dark + "%";
+    $("wallpaperProbabilityValue").textContent = light + " : " + dark;
+    $("wallpaperProbabilityValue").setAttribute("aria-label", "Light " + light + "%，Dark " + dark + "%");
     $("wallpaperInteractionNote").textContent = "代号：交互 功能当前获得的下一次主图随机概率为 " + light + ":" + dark;
     var liveRatio = $("interactionAlgorithmRatio");
     if (liveRatio) liveRatio.textContent = light + ":" + dark;
@@ -2589,7 +2590,6 @@
     syncDefaultsPanel();
     var slider = $("collisionStrength"); if (!slider) return;
     var settings = state.collision, available = state.collisionReady && !state.collisionReadError;
-    $("collisionCurrent").textContent = "本次 " + collisionLabel(state.collisionCurrent);
     slider.value = String(collisionAPI().toSlider(state.collisionCurrent));
     slider.disabled = !available || state.factoryBusy;
     slider.setAttribute("aria-valuetext", collisionLabel(state.collisionCurrent));
@@ -2597,8 +2597,8 @@
     $("collisionRandom").disabled = !available || state.factoryBusy;
     $("collisionRandom").setAttribute("aria-pressed", String(settings.randomOnLaunch));
     $("collisionHint").textContent = settings.randomOnLaunch
-      ? "每次启动在 1–24× 之间随机；随时拖动滑轨接管本次力度，下次启动仍随机。"
-      : "手动与自动出击沿用本次力度。自然碰撞取其中约 30%–42%，附近越拥挤，弹开和散开的倾向越明显。";
+      ? "1–24×，每次启动重新抽取；也可手动调节。"
+      : "自然碰撞更轻，拥挤时会顺势散开。";
     var note = $("collisionSaveNote");
     note.textContent = !state.collisionReady ? "正在读取碰撞设置…"
       : state.collisionReadError ? "碰撞设置暂未读出，未覆盖原设置。"
@@ -2610,20 +2610,19 @@
   function buildCollisionBlock() {
     var block = document.createElement("section"); block.className = "collision-panel";
     var head = document.createElement("div"); head.className = "wp-probability-head";
-    var heading = document.createElement("span"); heading.className = "collision-title"; heading.textContent = "碰撞力度";
-    var current = document.createElement("span"); current.id = "collisionCurrent"; head.appendChild(heading); head.appendChild(current); block.appendChild(head);
-    function rangeRow(id, labelText, outputId) {
+    var heading = document.createElement("label"); heading.className = "collision-title"; heading.htmlFor = "collisionStrength"; heading.textContent = "碰撞力度";
+    var current = document.createElement("output"); current.id = "collisionStrengthValue"; current.htmlFor = "collisionStrength"; head.appendChild(heading); head.appendChild(current); block.appendChild(head);
+    function rangeRow(id) {
       var wrap = document.createElement("div"); wrap.className = "collision-control";
-      var label = document.createElement("label"); label.htmlFor = id; label.textContent = labelText; wrap.appendChild(label);
       var row = document.createElement("div"); row.className = "collision-range-row";
       var range = document.createElement("input"); range.type = "range"; range.id = id; range.className = "wp-range collision-range";
       range.min = "0"; range.max = "1000"; range.step = "1";
-      var output = document.createElement("output"); output.id = outputId; output.htmlFor = id; row.appendChild(range); row.appendChild(output); wrap.appendChild(row);
+      row.appendChild(range); wrap.appendChild(row);
       var ends = document.createElement("div"); ends.className = "collision-range-ends";
       var low = document.createElement("span"), high = document.createElement("span"); low.textContent = "1×"; high.textContent = "24×"; ends.appendChild(low); ends.appendChild(high); wrap.appendChild(ends);
       block.appendChild(wrap); return { wrap: wrap, range: range };
     }
-    var manual = rangeRow("collisionStrength", "固定力度", "collisionStrengthValue");
+    var manual = rangeRow("collisionStrength");
     manual.range.addEventListener("input", function () {
       if (!state.collisionReady || state.collisionReadError) return;
       state.collision.strength = collisionAPI().fromSlider(manual.range.value); state.collisionCurrent = state.collision.strength; applyCollisionStrength();
@@ -2703,7 +2702,7 @@
   }
   function buildPaceBlock() {
     var block = document.createElement("section"); block.className = "pace-panel collision-panel";
-    block.innerHTML = '<div class="wp-probability-head"><label class="collision-title" for="naturalPace">自然 pace</label><output id="naturalPaceValue" for="naturalPace"></output></div><div class="collision-control"><input id="naturalPace" class="wp-range collision-range" type="range" min="0" max="1200" step="1"><div class="pace-range-ends"><span>0.25×</span><span>16×</span></div></div><div class="pace-description"><p class="collision-hint">自然漂浮的节奏，1× 为原速率；自动驾驶的追逐速率独立保持。</p></div><div class="collision-save-line"><span id="paceSaveNote" role="status"></span><button id="paceRetry" type="button" class="collision-retry">重试</button></div>';
+    block.innerHTML = '<div class="wp-probability-head"><label class="collision-title" for="naturalPace">自然 pace</label><output id="naturalPaceValue" for="naturalPace"></output></div><div class="collision-control"><input id="naturalPace" class="wp-range collision-range" type="range" min="0" max="1200" step="1"><div class="pace-range-ends"><span>0.25×</span><span>16×</span></div></div><div class="pace-description"><p class="collision-hint">1× 为原速率，自动驾驶的追逐节奏独立。</p></div><div class="collision-save-line"><span id="paceSaveNote" role="status"></span><button id="paceRetry" type="button" class="collision-retry">重试</button></div>';
     var range = block.querySelector("#naturalPace");
     range.addEventListener("input", function () {
       if (!state.paceReady || state.paceReadError) return;
@@ -2732,7 +2731,7 @@
     $("interactionCountValue").textContent = state.interactionCount + " 枚";
     $("interactionCountHint").textContent = !state.interactionSettingsReady ? "正在读取默认数量…"
       : state.interactionReadError ? "默认数量暂未读出，请在「设默认值」中重试。"
-      : state.interactionCount === 0 ? "浮光已收起。仍可在这里调整随机比例。" : "本次即时生效；启动偏好统一在「设默认值」中管理。";
+      : state.interactionCount === 0 ? "浮光已收起。仍可在这里调整随机比例。" : "轻点星球，也能添一枚浮光。";
   }
 
   var countWriteQueue = Promise.resolve();
@@ -2756,8 +2755,8 @@
     var probabilityLabel = document.createElement("label");
     probabilityLabel.htmlFor = "wallpaperProbability";
     probabilityLabel.textContent = "主图随机比例";
-    var probabilityValueLabel = document.createElement("span");
-    probabilityValueLabel.id = "wallpaperProbabilityValue";
+    var probabilityValueLabel = document.createElement("output");
+    probabilityValueLabel.id = "wallpaperProbabilityValue"; probabilityValueLabel.htmlFor = "wallpaperProbability";
     probabilityHead.appendChild(probabilityLabel);
     probabilityHead.appendChild(probabilityValueLabel);
     var probabilityTrack = document.createElement("div");
@@ -2816,7 +2815,7 @@
     var value = document.createElement("output");
     value.id = "interactionCountValue";
     value.htmlFor = "interactionCount";
-    track.appendChild(slider); track.appendChild(value);
+    head.appendChild(value); track.appendChild(slider);
     var ends = document.createElement("div");
     ends.className = "interaction-count-ends";
     var zero = document.createElement("span"), max = document.createElement("span");
@@ -2832,10 +2831,14 @@
       if (interactionController) interactionController.setCount(state.interactionCount);
       syncInteractionPanel();
     });
-    body.appendChild(countBlock);
-    body.appendChild(buildProbabilityBlock());
-    body.appendChild(buildCollisionBlock());
-    body.appendChild(buildPaceBlock());
+    var controls = document.createElement("div"); controls.className = "interaction-controls";
+    var probabilityBlock = buildProbabilityBlock();
+    controls.appendChild(countBlock); controls.appendChild(probabilityBlock);
+    controls.appendChild(buildCollisionBlock()); controls.appendChild(buildPaceBlock());
+    body.appendChild(controls);
+    // A single quiet live readout below the controls, separate from the sliders.
+    var probabilityNote = probabilityBlock.querySelector("#wallpaperInteractionNote");
+    body.appendChild(probabilityNote);
 
     var explanation = document.createElement("details");
     explanation.className = "interaction-algorithm";
@@ -2847,9 +2850,9 @@
     copy.className = "interaction-algorithm-copy";
     [
       ["一张看不见的地形", "拖动浮光，在隐形势场梯度中改变 Light / Dark 的倾向。方向是主线，局部的弯曲与起伏带来一点难以预料。"],
-      ["距离、绕行与碰撞", "每次拖动会选定最近的一枚作为参照：拉开、聚拢、顺逆绕行，以及对方被推动的位移，都参与比例变化。多枚浮光彼此碰撞；只有一枚时，由势场决定。"],
+      ["距离、绕行与碰撞", "每次拖动会选定最近的一枚作为参照：拉开、聚拢、顺逆绕行，以及对方被推动的位移，都参与比例变化。多枚浮光彼此碰撞；只有一枚时，由势场决定。自然碰撞采用约 30%–42% 的力度，越拥挤越倾向散开。"],
       ["轻拨之后，安静落定", "比例从当前设置出发，随手势变化，松手时保存。自然游动与松手后的惯性只负责氛围；手动滑轨与拖动共用同一个比例。"],
-      ["让浮光自己出发", "单击星球唤出 auto / drive，再轻点开启。部分浮光会追逐、冲撞，偶尔接力；碰撞沿用本次力度。再次轻点即可停下。自动驾驶不改变主图比例，也不计入手动交互次数。"],
+      ["让浮光自己出发", "单击星球唤出 auto / drive，再轻点开启。部分浮光会追逐、冲撞，偶尔接力；再次轻点即可停下。自然 pace 只改变自然漂浮的速率。自动驾驶不改变主图比例，也不计入手动交互次数。"],
       ["一点可知的黑箱", "势场、距离、旋转、连带位移的系数为 62 / 20 / 13 / 5。它把动作映射为抽签权重，不是训练模型，也不猜测心情。"]
     ].forEach(function (entry) {
       var paragraph = document.createElement("p"), title = document.createElement("b");
