@@ -14,7 +14,7 @@
   const COLLISION_MAX = 24;
   const MAX_IMPACT_SPEED = 640;
   // Mutable so tests can shorten the reshuffle cadence; the app never rewrites it.
-  const AUTO = { cruiseMin: 5, cruiseMax: 8, burst: 1.7, kickLimit: 320, manualGrace: 1.25, replan: 0.75, reshuffle: 18 };
+  const AUTO = { cruiseMin: 5, cruiseMax: 8, burst: 1.7, kickLimit: 320, manualGrace: 1.25, replan: 0.75, reshuffle: 11.5 };
   const NATURAL = Object.freeze({ neighborRadius: 76, share: 0.30, densityStep: 0.06, cooldown: 0.28 });
   const COUNT_MAX = 49, COUNT_CURVE = 2.6, COUNT_LOW_CURVE = 1.3, COUNT_MID = 8;
   const RADIUS = 11;
