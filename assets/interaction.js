@@ -16,6 +16,9 @@
   // Mutable so tests can shorten the reshuffle cadence; the app never rewrites it.
   const AUTO = { cruiseMin: 5, cruiseMax: 8, burst: 1.7, kickLimit: 320, manualGrace: 1.25, replan: 0.75, reshuffle: 11.5 };
   const NATURAL = Object.freeze({ neighborRadius: 76, share: 0.30, densityStep: 0.06, cooldown: 0.28 });
+  // Natural encounter adjudication: two drifters entering the circle face a 70% roll;
+  // even odds then send one to bump or send one dodging away. Ambient only, never writes.
+  const ENCOUNTER = Object.freeze({ radius: 110, trigger: 0.7, bumpBoost: 2.4, dodgeBoost: 1.7, bumpTime: 1.4, dodgeTime: 1.3, cooldown: 9, maxActive: 3 });
   // Placement soft penalties: closeness is a weak nudge chance may tolerate, separation a
   // medium pull, and a desert left behind is the strong one. Per-arrival jitters and a
   // random anchor keep constellations from settling into a few formulaic shapes.
@@ -338,6 +341,8 @@
     let autoEnabled = false, autoRage = false, autoClock = 0, navigation = null, autoNotice = '', lastRelay = -10, relay = null, nextReshuffle = 0, lastReshuffle = -1;
     const chargedContacts = new Map();
     const naturalContacts = new Map();
+    const encounters = new Map();
+    let nextEncounterScan = 0;
     const motion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
     const cleanups = [];
     const listen = (target, name, fn, settings) => { target.addEventListener(name, fn, settings); cleanups.push(() => target.removeEventListener(name, fn, settings)); };
@@ -540,7 +545,62 @@
         limitVelocity(body);
       }
     }
+    function scanEncounters() {
+      if (motion.matches || gesture) return;
+      for (const [key, entry] of encounters) {
+        const [a, b] = entry.pair;
+        if (!bodies.includes(a) || !bodies.includes(b) || (autoClock > entry.until && distance(a, b) > ENCOUNTER.radius)) encounters.delete(key);
+      }
+      let active = 0;
+      bodies.forEach(body => { if (body.encounter) active++; });
+      if (active >= ENCOUNTER.maxActive) return;
+      for (let i = 0; i < bodies.length && active < ENCOUNTER.maxActive; i++) {
+        const body = bodies[i];
+        if (body.auto || isManual(body) || body.encounter || body.naturalCooldown > autoClock) continue;
+        for (let j = i + 1; j < bodies.length; j++) {
+          const other = bodies[j];
+          if (other.auto || isManual(other) || other.encounter || other.naturalCooldown > autoClock) continue;
+          const key = body.index + ':' + other.index;
+          if (encounters.has(key) || distance(body, other) >= ENCOUNTER.radius) continue;
+          encounters.set(key, { pair: [body, other], until: autoClock + ENCOUNTER.cooldown });
+          if (Math.random() >= ENCOUNTER.trigger) continue;
+          const actor = Math.random() < 0.5 ? body : other, partner = actor === body ? other : body;
+          if (Math.random() < 0.5) {
+            actor.encounter = { mode: 'bump', partner, until: autoClock + ENCOUNTER.bumpTime };
+          } else {
+            const away = Math.atan2(actor.y - partner.y, actor.x - partner.x);
+            let heading = away;
+            for (const offset of [0, 0.7, -0.7, 1.4, -1.4]) {
+              const point = { x: actor.x + Math.cos(away + offset) * 30, y: actor.y + Math.sin(away + offset) * 30 };
+              if (geometry.valid(point)) { heading = away + offset; break; }
+            }
+            actor.encounter = { mode: 'dodge', heading, until: autoClock + ENCOUNTER.dodgeTime };
+            actor.angle = heading; actor.turn = 0;
+          }
+          active++;
+        }
+      }
+    }
+    function steerEncounter(body, dt) {
+      const enc = body.encounter;
+      if (!enc) return false;
+      if (autoClock >= enc.until || (enc.mode === 'bump' && (!bodies.includes(enc.partner) || isManual(enc.partner) || enc.partner.auto))) {
+        body.encounter = null; body.turn = 0; body.scatterUntil = autoClock + 0.4;
+        return false;
+      }
+      const goal = enc.mode === 'bump' ? enc.partner : { x: body.x + Math.cos(enc.heading) * 40, y: body.y + Math.sin(enc.heading) * 40 };
+      const desired = Math.atan2(goal.y - body.y, goal.x - body.x) + (enc.mode === 'bump' ? Math.sin(autoClock * 2.1 + body.index) * 0.04 : 0);
+      const turn = Math.atan2(Math.sin(desired - body.angle), Math.cos(desired - body.angle));
+      body.angle += clamp(turn, -3.4 * dt, 3.4 * dt);
+      const boost = enc.mode === 'bump' ? ENCOUNTER.bumpBoost : ENCOUNTER.dodgeBoost;
+      const speed = (MOTION.horizontal + MOTION.vertical) * 0.5 * boost * pace;
+      const pull = 1 - Math.exp(-3.0 * dt);
+      body.vx += (Math.cos(body.angle) * speed - body.vx) * pull;
+      body.vy += (Math.sin(body.angle) * speed - body.vy) * pull;
+      return true;
+    }
     function naturalImpact(body, other, nx, ny) {
+      body.encounter = null; other.encounter = null;
       const key = Math.min(body.index, other.index) + ':' + Math.max(body.index, other.index);
       const approach = (body.vx - other.vx) * nx + (body.vy - other.vy) * ny;
       const fresh = !naturalContacts.has(key);
@@ -692,13 +752,17 @@
       if (gesture && now - gesture.lastTime > 80) {
         bodies[gesture.index].vx = 0; bodies[gesture.index].vy = 0;
       }
+      if (autoClock >= nextEncounterScan) {
+        nextEncounterScan = autoClock + 0.18;
+        scanEncounters();
+      }
       bodies.forEach((body, index) => {
           if (gesture && gesture.index === index) {
             return;
           }
           if (autoEnabled && keyboardActivity && keyboardActivity.index === index) return;
           const driving = autoEnabled && driveBody(body, dt);
-          if (!driving) {
+          if (!driving && !steerEncounter(body, dt)) {
           body.turn = body.turn * Math.exp(-1.8 * dt) + (Math.random() - 0.5) * 1.6 * Math.sqrt(dt);
           body.angle += body.turn * dt;
           const pull = 1 - Math.exp(-(body.scatterUntil > autoClock ? 0.7 : 1.3) * dt);
@@ -1010,5 +1074,5 @@
     autoDrive: { bounds: autoBounds, rageBounds, motion: AUTO }, collision: { max: COLLISION_MAX, normalize: collisionSettings, strength: collisionStrength, draw: randomCollision,
     fromSlider: value => collisionStrength(Math.pow(COLLISION_MAX, clamp(Number(value) || 0, 0, 1000) / 1000)),
     toSlider: value => Math.round(Math.log(collisionStrength(value)) / Math.log(COLLISION_MAX) * 1000) },
-    _test: { REGION, WEIGHTS, MOTION, AUTO, NATURAL, PLACEMENT, naturalPace, naturalResponse, resolveNaturalImpact, RESTITUTION, MAX_IMPACT_SPEED, resolveImpact, resolveAutoImpact, autoBounds, rageBounds, placementWeights, pickSite, limitVelocity, makeGeometry, inPolygon, segmentDistance, advance, potential, startModel, sampleModel, modelProbability, safeSites, clearRoute, navigationGrid, routeBetween } };
+    _test: { REGION, WEIGHTS, MOTION, AUTO, NATURAL, PLACEMENT, ENCOUNTER, naturalPace, naturalResponse, resolveNaturalImpact, RESTITUTION, MAX_IMPACT_SPEED, resolveImpact, resolveAutoImpact, autoBounds, rageBounds, placementWeights, pickSite, limitVelocity, makeGeometry, inPolygon, segmentDistance, advance, potential, startModel, sampleModel, modelProbability, safeSites, clearRoute, navigationGrid, routeBetween } };
 });

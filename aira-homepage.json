@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "3.9.13",
+  "version": "3.10.0",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互——近距离软惩罚区从 60k 翻倍至 120k，贴脸对更少见；聚落光环下沿同步对齐。"
+  "description": "通透的个人名片主页。代号：交互——算法卡片新增「落子与星座」「有记忆的航向」；自然漂移加入邂逅判定：两枚进入判定圈时 70% 立案，五五开一者加速相碰或一者调头避让，氛围不惊扰比例。"
 }
