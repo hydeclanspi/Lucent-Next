@@ -48,6 +48,32 @@
 .stats-step:disabled { opacity: .35; }
 .stats-touch-hint { font-size: 10.5px; color: var(--ink-2); text-align: center; }
 .stats-footnote { margin: 14px 0 0; color: var(--ink-2); font-size: 11px; line-height: 1.7; }
+/* ---- 场志 sections ---- */
+.stats-field { min-width: 0; }
+.stats-terrain-region { fill: rgba(147,202,237,.05); stroke: var(--ink-4); stroke-width: .7; stroke-dasharray: 3 4; }
+.stats-terrain-cell { fill: var(--stats-blue); }
+.stats-social-legend { display: flex; flex-wrap: wrap; gap: 5px 12px; }
+.stats-social-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--ink-2); }
+.stats-social-chip::before { content: ""; width: 8px; height: 8px; border-radius: 3px; }
+.stats-chip-contact::before { background: rgba(140,150,168,.55); }
+.stats-chip-bump::before { background: var(--stats-orange); }
+.stats-chip-dodge::before { background: #5a8f7d; }
+.stats-chip-autoHit::before { background: var(--stats-blue); }
+.stats-seg-contact { fill: rgba(140,150,168,.55); }
+.stats-seg-bump { fill: var(--stats-orange); }
+.stats-seg-dodge { fill: #5a8f7d; }
+.stats-seg-autoHit { fill: var(--stats-blue); }
+.stats-roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)); gap: 7px; margin-top: 10px; }
+.stats-roster-chip { min-height: 34px; border-radius: 10px; font-size: 11.5px; font-variant-numeric: tabular-nums; color: var(--ink-2); background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.22); }
+:root[data-theme="dark"] .stats-roster-chip { background: rgba(196,222,251,.06); border-color: rgba(230,243,255,.12); }
+.stats-roster-chip.is-quiet { opacity: .45; }
+.stats-roster-chip.is-active { color: #2f7598; border-color: rgba(126,186,226,.75); box-shadow: 0 0 0 1px rgba(126,186,226,.35), 0 0 8px rgba(126,186,226,.25); }
+:root[data-theme="dark"] .stats-roster-chip.is-active { color: #a8d8f4; }
+.stats-roster-chip.is-picked { background: rgba(187,229,253,.3); border-color: rgba(126,186,226,.8); }
+.stats-roster-card { margin-top: 12px; padding: 13px 16px; border-radius: 14px; background: linear-gradient(130deg, rgba(147,202,237,.14), rgba(200,228,247,.05)); border: 1px solid rgba(203,230,248,.26); }
+.stats-roster-card strong { font-size: 12.5px; font-weight: 600; letter-spacing: .4px; }
+.stats-roster-card p { margin: 6px 0 0; font-size: 11.5px; line-height: 1.75; color: var(--ink); font-variant-numeric: tabular-nums; }
+.stats-roster-card .stats-roster-friends, .stats-roster-card .stats-roster-events { color: var(--ink-2); font-size: 11px; }
 .stats-tooltip { position: absolute; z-index: 3; pointer-events: none; padding: 12px 14px; border-radius: 14px; color: var(--ink); background: linear-gradient(150deg, rgba(255,255,255,.32), rgba(238,247,253,.14)); border: 1px solid rgba(255,255,255,.52); box-shadow: 0 6px 20px rgba(15,35,55,.10), inset 0 1px 0 rgba(255,255,255,.55); backdrop-filter: blur(30px) saturate(180%); -webkit-backdrop-filter: blur(30px) saturate(180%); }
 :root[data-theme="dark"] .stats-tooltip { background: linear-gradient(150deg, rgba(34,42,58,.38), rgba(24,30,44,.24)); border-color: rgba(222,241,255,.18); box-shadow: 0 6px 20px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.10); }
 .stats-tooltip[hidden] { display: none; }

@@ -324,6 +324,7 @@
     const setProbability = typeof opts.setProbability === 'function' ? opts.setProbability : () => {};
     const onActivity = typeof opts.onActivity === 'function' ? opts.onActivity : () => {};
     const onAutoDriveChange = typeof opts.onAutoDriveChange === 'function' ? opts.onAutoDriveChange : () => {};
+    const emitField = typeof opts.onFieldEvent === 'function' ? opts.onFieldEvent : () => {};
     let impactStrength = collisionStrength(opts.collisionStrength);
     let pace = naturalPace(opts.naturalPace);
     const isReady = typeof opts.isReady === 'function' ? opts.isReady : () => true;
@@ -405,7 +406,9 @@
           const index = bodies.findIndex(candidate => candidate.auto && !partnered.has(bodies.indexOf(candidate)));
           if (index < 0) return;
           bodies[index].auto = null;
-          newDriver(Math.random() < 0.5 ? body : partner);
+          const member = Math.random() < 0.5 ? body : partner;
+          newDriver(member);
+          emitField({ kind: 'pilot', a: member.identity, b: (member === body ? partner : body).identity });
         });
       }
     }
@@ -469,6 +472,8 @@
       }
       chargedContacts.set(key, [body, other]);
       resolveAutoImpact(body, other, nx, ny, impactStrength);
+      const charger = a ? body : other;
+      emitField({ kind: 'autoHit', a: charger.identity, b: (a ? other : body).identity });
       // Consume both sides' charge now, before another body/substep can see contact.
       if (body.auto) coolDriver(body, other);
       if (other.auto) coolDriver(other, body);
@@ -479,6 +484,7 @@
     function driveBody(body, dt) {
       const driver = body.auto;
       if (!driver || isManual(body)) return false;
+      if (driver.phase === 'charge' && autoClock >= driver.until) emitField({ kind: 'miss', a: body.identity, b: driver.target ? driver.target.identity : 0 });
       if (driver.phase === 'coast' && autoClock < driver.until) return false;
       if (driver.phase === 'coast' || !driver.path.length || autoClock >= driver.until) planDriver(body, false);
       if (driver.target && (!bodies.includes(driver.target) || isManual(driver.target))) planDriver(body, false);
@@ -502,6 +508,7 @@
       const visible = target && driver.visible;
       if (visible && distance(body, target) < 160 && driver.phase === 'chase') {
         driver.phase = 'charge'; driver.until = autoClock + 1.8;
+        emitField({ kind: 'charge', a: body.identity, b: target.identity });
       }
       if (driver.phase === 'charge' && visible) {
         // Modest prediction and a tiny time-varying miss angle, never through walls.
@@ -567,6 +574,7 @@
           const actor = Math.random() < 0.5 ? body : other, partner = actor === body ? other : body;
           if (Math.random() < 0.5) {
             actor.encounter = { mode: 'bump', partner, until: autoClock + ENCOUNTER.bumpTime };
+            emitField({ kind: 'bump', a: actor.identity, b: partner.identity });
           } else {
             const away = Math.atan2(actor.y - partner.y, actor.x - partner.x);
             let heading = away;
@@ -576,6 +584,7 @@
             }
             actor.encounter = { mode: 'dodge', heading, until: autoClock + ENCOUNTER.dodgeTime };
             actor.angle = heading; actor.turn = 0;
+            emitField({ kind: 'dodge', a: actor.identity, b: partner.identity });
           }
           active++;
         }
@@ -608,6 +617,7 @@
         && !(body.naturalCooldown > autoClock) && !(other.naturalCooldown > autoClock);
       const neighbors = bodies.filter(candidate => candidate === body || candidate === other
         || Math.min(distance(candidate, body), distance(candidate, other)) < NATURAL.neighborRadius);
+      if (energize) emitField({ kind: 'contact', a: body.identity, b: other.identity });
       const kicked = resolveNaturalImpact(body, other, nx, ny, impactStrength, neighbors.length, energize);
       if (kicked) {
         naturalContacts.set(key, [body, other]);
@@ -790,6 +800,7 @@
       if (relay) {
         if (autoEnabled && bodies.includes(relay.source) && bodies.includes(relay.receiver) && relay.source.auto && !relay.receiver.auto && !isManual(relay.source) && !isManual(relay.receiver)) {
           relay.source.auto = null; newDriver(relay.receiver); coolDriver(relay.receiver, relay.source); lastRelay = autoClock;
+          emitField({ kind: 'relay', a: relay.receiver.identity, b: relay.source.identity });
         }
         relay = null;
       }
@@ -981,6 +992,12 @@
       listen(body.button, 'contextmenu', event => event.preventDefault());
     }
 
+    function drawIdentity() {
+      const used = new Set(bodies.map(body => body.identity));
+      const free = [];
+      for (let id = 1; id <= 49; id++) if (!used.has(id)) free.push(id);
+      return free.length ? free[Math.floor(Math.random() * free.length)] : 0;
+    }
     function createBody(index) {
       const button = document.createElement('button');
       button.type = 'button'; button.className = 'interaction-item'; button.dataset.item = String(index); button.dataset.tone = index % 2 ? 'warm' : 'cool';
@@ -989,7 +1006,7 @@
       const lens = document.createElement('span'); lens.className = 'interaction-lens'; lens.setAttribute('aria-hidden', 'true');
       const glint = document.createElement('span'); glint.className = 'interaction-glint'; glint.setAttribute('aria-hidden', 'true');
       lens.appendChild(glint); button.appendChild(lens); field.appendChild(button);
-      const body = { index, cleanups: [], positioned: false, x: 0, y: 0, vx: (index ? -4 : 5) * MOTION.speedScale, vy: (index ? 3 : -2) * MOTION.speedScale, angle: Math.random() * Math.PI * 2, turn: 0, button, contactUntil: 0, auto: null, manualUntil: 0 };
+      const body = { index, identity: drawIdentity(), cleanups: [], positioned: false, x: 0, y: 0, vx: (index ? -4 : 5) * MOTION.speedScale, vy: (index ? 3 : -2) * MOTION.speedScale, angle: Math.random() * Math.PI * 2, turn: 0, button, contactUntil: 0, auto: null, manualUntil: 0 };
       bodies.push(body);
       bindBody(body, index);
     }
@@ -1048,6 +1065,7 @@
       getCollisionStrength() { return impactStrength; },
       setNaturalPace(value) { pace = naturalPace(value); },
       getNaturalPace() { return pace; },
+      fieldSnapshot() { return bodies.map(body => ({ id: body.identity, x: body.x, y: body.y, auto: !!body.auto })); },
       destroy() {
         if (destroyed) return;
         finishGesture(true); destroyed = true; stopFrames();

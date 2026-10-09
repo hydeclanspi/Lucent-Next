@@ -1427,11 +1427,11 @@
     fieldStore = window.AiraFieldStore.create({ storage: fieldStorageBackend(),
       width: function () { return window.innerWidth; }, height: function () { return window.innerHeight; } });
   }
-  var fieldKnownIds = new Set(), fieldDriveTick = { blue: 0, rage: 0 };
+  var fieldKnownIds = new Set();
   function fieldPulse() {
     if (!fieldStore || !interactionController || !interactionController.fieldSnapshot) return;
     if (document.hidden) return;
-    var snapshot = interactionController.fieldSnapshot(), ids = [], near = [], width = window.innerWidth || 1560, height = window.innerHeight || 1040;
+    var snapshot = interactionController.fieldSnapshot(), ids = [], near = [];
     snapshot.forEach(function (item) {
       ids.push(item.id);
       if (!fieldKnownIds.has(item.id)) { fieldKnownIds.add(item.id); fieldStore.recordSummon([item.id]); }
@@ -1441,7 +1441,7 @@
     }
     fieldStore.recordAppearance(ids, 4);
     fieldStore.recordNear(near, 4);
-    fieldStore.recordResidency(snapshot.map(function (item) { return { x: item.x / width * 1560, y: item.y / height * 1040 }; }), 4);
+    fieldStore.recordResidency(snapshot, 4);
     var mode = autoDriveState();
     fieldStore.recordDrive(mode.enabled && !mode.rage ? 4 : 0, mode.rage ? 4 : 0);
   }
@@ -1465,7 +1465,8 @@
       }); }
     };
     statsStore = window.AiraStatsStore.create({ storage: storage });
-    if (statsController) { statsController.destroy(); statsController = window.AiraStatsPanel.mount(el.sheet, { store: statsStore, field: fieldStore, onBack: closeSheet }); }
+    if (statsController) { statsController.destroy(); statsController = window.AiraStatsPanel.mount(el.sheet, { store: statsStore, field: fieldStore, onBack: closeSheet,
+      activeIds: function () { return interactionController && interactionController.fieldSnapshot ? interactionController.fieldSnapshot().map(function (item) { return item.id; }) : []; } }); }
   }
 
   function recordStats(event) { if (statsStore) statsStore.record(event); }
@@ -1475,7 +1476,8 @@
     var parent = { nodes: Array.from(el.sheet.childNodes), classes: el.sheet.className, scroll: el.sheet.scrollTop, label: el.sheet.getAttribute('aria-label') };
     openSheet({ title: '历史统计', center: true, wide: true, stats: true });
     statsParent = parent;
-    statsController = window.AiraStatsPanel.mount(el.sheet, { store: statsStore, onBack: closeSheet });
+    statsController = window.AiraStatsPanel.mount(el.sheet, { store: statsStore, field: fieldStore, onBack: closeSheet,
+      activeIds: function () { return interactionController && interactionController.fieldSnapshot ? interactionController.fieldSnapshot().map(function (item) { return item.id; }) : []; } });
     el.sheet.querySelector('.stats-back').focus({ preventScroll: true });
   }
 
@@ -2107,6 +2109,7 @@
       collisionStrength: state.collisionCurrent,
       naturalPace: state.naturalPace,
       onAutoDriveChange: syncAutoDriveButton,
+      onFieldEvent: function (event) { if (fieldStore) fieldStore.record(event); },
       isReady: function () { return state.wallpaperProbabilityReady && state.interactionSettingsReady && state.collisionReady && state.paceReady && state.probabilityDefaultReady; },
       isPaused: function () {
         return !el.sheetRoot.hidden || !!(editRoot && !editRoot.root.hidden);
@@ -3453,6 +3456,7 @@
     if (initStage >= stage) return;
     initStage = stage;
     initStats();
+    initField();
     loadCollisionSettings();
     loadPaceSettings();
     loadAutoDriveSettings();

@@ -54,6 +54,165 @@
     previous.addEventListener('click', function () { step(-1); }); next.addEventListener('click', function () { step(1); });
     navigation.appendChild(previous); navigation.appendChild(element('span', 'stats-touch-hint', '轻点图表，或横向滑动查看')); navigation.appendChild(next); root.appendChild(navigation);
     var foot = element('p', 'stats-footnote', '仅保存时段汇总；Light 倾向是随机权重，并非壁纸实际出现频率。'); root.appendChild(foot);
+
+    /* ---- 场志：浮光地形图、它们的关系、驾驶志、名册 ---- */
+    var field = options.field || null, fieldView = null, rosterPick = 0;
+    var fieldRoot = element('div', 'stats-field'); root.appendChild(fieldRoot);
+    if (field) {
+      var terrainSection = element('section', 'stats-section stats-terrain');
+      terrainSection.appendChild(element('h4', '', '浮光地形图'));
+      terrainSection.appendChild(element('p', 'stats-caption', '颜色越深，浮光在该区域驻留越久——它们自己走出来的地形'));
+      var terrainHost = element('div', 'stats-chart stats-terrain-host'); terrainSection.appendChild(terrainHost); fieldRoot.appendChild(terrainSection);
+      var socialSection = element('section', 'stats-section stats-social');
+      var socialHead = element('div', 'stats-chart-heading');
+      socialHead.appendChild(element('h4', '', '它们的关系'));
+      var socialLegend = element('div', 'stats-social-legend');
+      [['contact', '自然碰撞'], ['bump', '邂逅·撞撞'], ['dodge', '邂逅·回避'], ['autoHit', 'FSD 冲撞']].forEach(function (item) {
+        var chip = element('span', 'stats-social-chip stats-chip-' + item[0], item[1]); socialLegend.appendChild(chip);
+      });
+      socialHead.appendChild(socialLegend); socialSection.appendChild(socialHead);
+      socialSection.appendChild(element('p', 'stats-caption', '浮光之间每天的交往方式，驾驶与邂逅都不惊扰比例'));
+      var socialHost = element('div', 'stats-chart'); socialSection.appendChild(socialHost); fieldRoot.appendChild(socialSection);
+      var driveSection = element('section', 'stats-section stats-drive');
+      driveSection.appendChild(element('h4', '', '驾驶志'));
+      var driveNumbers = element('p', 'stats-caption'); driveSection.appendChild(driveNumbers);
+      var driveHost = element('div', 'stats-chart'); driveSection.appendChild(driveHost); fieldRoot.appendChild(driveSection);
+      var rosterSection = element('section', 'stats-section stats-roster');
+      rosterSection.appendChild(element('h4', '', '名册'));
+      rosterSection.appendChild(element('p', 'stats-caption', '49 位固定居民，累计档案；点亮者为当前在场'));
+      var rosterGrid = element('div', 'stats-roster-grid'); rosterSection.appendChild(rosterGrid);
+      var rosterDetail = element('div', 'stats-roster-detail'); rosterSection.appendChild(rosterDetail);
+      fieldRoot.appendChild(rosterSection);
+    }
+    function fmtDuration(seconds) {
+      seconds = Math.round(seconds);
+      if (seconds < 60) return seconds + ' 秒';
+      if (seconds < 3600) return Math.round(seconds / 60) + ' 分钟';
+      var h = Math.floor(seconds / 3600), m = Math.round((seconds - h * 3600) / 60);
+      return m ? h + ' 小时 ' + m + ' 分' : h + ' 小时';
+    }
+    function fmtEventTime(time) { var d = new Date(time); return (d.getMonth() + 1) + '月' + d.getDate() + '日'; }
+    var fieldEventNames = { contact: '自然碰撞', bump: '撞撞', dodge: '回避', charge: '出击', miss: '扑空', autoHit: '命中', relay: '接力', pilot: '得舵' };
+    function aggregateDays(rows, pick) {
+      if (rows.length <= 60) return rows.map(function (row) { return { day: row.day, values: pick(row) }; });
+      var per = Math.ceil(rows.length / 52), out = [];
+      for (var i = 0; i < rows.length; i += per) {
+        var chunk = rows.slice(i, i + per), sum = chunk.length ? pick(chunk[0]).map(function () { return 0; }) : [];
+        chunk.forEach(function (row) { pick(row).forEach(function (v, j) { sum[j] += v; }); });
+        out.push({ day: chunk[0].day, values: sum });
+      }
+      return out;
+    }
+    function drawField() {
+      if (!field) { fieldRoot.hidden = true; return; }
+      fieldRoot.hidden = false;
+      fieldView = field.getView(range);
+      var w = Math.max(240, Math.round(terrainHost.getBoundingClientRect().width) || 480);
+      // 浮光地形图
+      (function () {
+        terrainHost.textContent = '';
+        var tw = w, th = Math.round(tw * fieldView.gridH / fieldView.gridW);
+        var svg = svgNode('svg', { viewBox: '0 0 ' + tw + ' ' + th, width: tw, height: th, role: 'img', 'aria-label': '浮光常驻热力图' });
+        var region = window.AiraInteraction && AiraInteraction._test ? AiraInteraction._test.REGION : null;
+        if (region) {
+          var points = region.map(function (p) { return (p[0] / 1560 * tw).toFixed(1) + ',' + (p[1] / 1040 * th).toFixed(1); }).join(' ');
+          svg.appendChild(svgNode('polygon', { points: points, class: 'stats-terrain-region' }));
+        }
+        var max = 0;
+        fieldView.grid.forEach(function (n) { max = Math.max(max, n); });
+        for (var gy = 0; gy < fieldView.gridH; gy++) for (var gx = 0; gx < fieldView.gridW; gx++) {
+          var n = fieldView.grid[gy * fieldView.gridW + gx];
+          if (!n) continue;
+          var intensity = max ? Math.log1p(n) / Math.log1p(max) : 0;
+          svg.appendChild(svgNode('rect', { x: (gx / fieldView.gridW * tw).toFixed(1), y: (gy / fieldView.gridH * th).toFixed(1),
+            width: (tw / fieldView.gridW - 0.7).toFixed(1), height: (th / fieldView.gridH - 0.7).toFixed(1), rx: 1.5,
+            class: 'stats-terrain-cell', opacity: (0.08 + 0.85 * intensity).toFixed(3) }));
+        }
+        terrainHost.appendChild(svg);
+      })();
+      // 它们的关系
+      (function () {
+        socialHost.textContent = '';
+        var rows = aggregateDays(fieldView.social, function (row) { return [row.contact, row.bump, row.dodge, row.autoHit]; });
+        var sh = 132, svg = svgNode('svg', { viewBox: '0 0 ' + w + ' ' + sh, width: w, height: sh, role: 'img', 'aria-label': '浮光交往方式随时间变化' });
+        var max = 1;
+        rows.forEach(function (row) { max = Math.max(max, row.values[0] + row.values[1] + row.values[2] + row.values[3]); });
+        var bw = Math.max(1, (w - 10) / rows.length - 2);
+        rows.forEach(function (row, i) {
+          var x = 5 + i / rows.length * (w - 10), y = sh - 22, total = row.values[0] + row.values[1] + row.values[2] + row.values[3];
+          if (!total) return;
+          ['contact', 'bump', 'dodge', 'autoHit'].forEach(function (kind, j) {
+            var h = row.values[j] / max * (sh - 40);
+            if (h <= 0) return;
+            y -= h;
+            svg.appendChild(svgNode('rect', { x: x.toFixed(1), y: y.toFixed(1), width: bw.toFixed(1), height: Math.max(0.6, h).toFixed(1), rx: 0.8, class: 'stats-seg stats-seg-' + kind }));
+          });
+        });
+        socialHost.appendChild(svg);
+      })();
+      // 驾驶志
+      (function () {
+        var t = fieldView.totals, shots = t.hit + t.miss, missRate = shots ? Math.round(100 * t.miss / shots) : null;
+        driveNumbers.textContent = '蓝档 ' + fmtDuration(t.blue) + ' · 橙档 ' + fmtDuration(t.rage)
+          + ' · 出击 ' + shots + ' 次 · 命中 ' + t.hit + ' 次' + (missRate == null ? '' : ' · 扑空率 ' + missRate + '%')
+          + ' · 接力 ' + t.relay + ' 次 · 得舵 ' + t.pilot + ' 次';
+        driveHost.textContent = '';
+        var rows = aggregateDays(fieldView.drive, function (row) { return [row.blue, row.rage]; });
+        var dh = 56, svg = svgNode('svg', { viewBox: '0 0 ' + w + ' ' + dh, width: w, height: dh, role: 'img', 'aria-label': '蓝橙驾驶时长随时间变化' });
+        var max = 1;
+        rows.forEach(function (row) { max = Math.max(max, row.values[0] + row.values[1]); });
+        rows.forEach(function (row, i) {
+          if (!(row.values[0] + row.values[1])) return;
+          var x = 5 + i / rows.length * (w - 10), bw = Math.max(1, (w - 10) / rows.length - 2);
+          var hb = row.values[0] / max * (dh - 18), hr = row.values[1] / max * (dh - 18);
+          svg.appendChild(svgNode('rect', { x: x.toFixed(1), y: (dh - 14 - hb - hr).toFixed(1), width: bw.toFixed(1), height: Math.max(0.6, hb).toFixed(1), rx: 0.8, class: 'stats-seg stats-seg-autoHit' }));
+          svg.appendChild(svgNode('rect', { x: x.toFixed(1), y: (dh - 14 - hr).toFixed(1), width: bw.toFixed(1), height: Math.max(0.6, hr).toFixed(1), rx: 0.8, class: 'stats-seg stats-seg-bump' }));
+        });
+        driveHost.appendChild(svg);
+      })();
+      // 名册
+      (function () {
+        rosterGrid.textContent = '';
+        var active = new Set(typeof options.activeIds === 'function' ? options.activeIds() : []);
+        fieldView.profiles.forEach(function (p) {
+          var chip = element('button', 'stats-roster-chip', String(p.id));
+          chip.type = 'button'; chip.dataset.id = p.id;
+          var hasData = p.appearances || p.minutes || p.bump || p.taken || p.dodge || p.hit || p.miss;
+          chip.classList.toggle('is-active', active.has(p.id));
+          chip.classList.toggle('is-quiet', !hasData);
+          chip.classList.toggle('is-picked', rosterPick === p.id);
+          chip.setAttribute('aria-label', '第 ' + p.id + ' 号浮光的档案');
+          chip.addEventListener('click', function () { rosterPick = rosterPick === p.id ? 0 : p.id; drawField(); });
+          rosterGrid.appendChild(chip);
+        });
+        rosterDetail.textContent = '';
+        if (rosterPick) {
+          var p = fieldView.profiles[rosterPick - 1], shots = p.hit + p.miss;
+          var card = element('div', 'stats-roster-card');
+          card.appendChild(element('strong', '', '#' + rosterPick + ' 号浮光'));
+          card.appendChild(element('p', '', '出场 ' + p.appearances + ' 次 · 在场 ' + fmtDuration(p.minutes * 60)
+            + ' · 撞人 ' + p.bump + ' · 被撞 ' + p.taken + ' · 回避 ' + p.dodge));
+          card.appendChild(element('p', '', '出击 ' + shots + ' · 命中 ' + p.hit + (shots ? ' · 扑空率 ' + Math.round(100 * p.miss / shots) + '%' : ' · 尚未出击')
+            + ' · 得舵 ' + p.pilot + ' · 接力 ' + p.relayIn + '/' + p.relayOut));
+          var friends = fieldView.pairs.filter(function (pair) { return pair.a === rosterPick || pair.b === rosterPick; }).slice(0, 3);
+          if (friends.length) {
+            card.appendChild(element('p', 'stats-roster-friends', '密友榜：' + friends.map(function (pair) {
+              var other = pair.a === rosterPick ? pair.b : pair.a;
+              return '#' + other + '（亲近 ' + pair.nearMinutes + ' 分钟 · 碰撞 ' + pair.contact + '）';
+            }).join('、')));
+          }
+          var events = fieldView.events.filter(function (event) { return event[2] === rosterPick || event[3] === rosterPick; }).slice(0, 3);
+          if (events.length) {
+            card.appendChild(element('p', 'stats-roster-events', '最近：' + events.map(function (event) {
+              return fmtEventTime(event[0]) + ' ' + (event[1] === 'bump' || event[1] === 'dodge' || event[1] === 'autoHit' || event[1] === 'charge' || event[1] === 'miss'
+                ? (event[2] === rosterPick ? fieldEventNames[event[1]] + ' → #' + event[3] : '#' + event[3] + ' ' + fieldEventNames[event[1]] + ' → 我')
+                : fieldEventNames[event[1]] + (event[3] ? ' · #' + event[3] : ''));
+            }).join('；')));
+          }
+          rosterDetail.appendChild(card);
+        }
+      })();
+    }
     var tooltip = element('div', 'stats-tooltip'); tooltip.hidden = true; tooltip.setAttribute('aria-hidden', 'true');
     var tooltipTitle = element('strong'), tooltipValue = element('p'), tooltipExtra = element('p');
     tooltip.appendChild(tooltipTitle); tooltip.appendChild(tooltipValue); tooltip.appendChild(tooltipExtra); root.appendChild(tooltip);
@@ -202,13 +361,15 @@
       status.hidden = !statusText.textContent; retry.hidden = view.status !== 'error';
       root.dataset.status = view.status;
       draw();
+      drawField();
     }
     var unsubscribe = store.subscribe(render);
+    var unsubscribeField = field ? field.subscribe(render) : null;
     function resized() { if (frame) cancelAnimationFrame(frame); frame = requestAnimationFrame(function () { frame = null; draw(); }); }
     var resize = typeof ResizeObserver === 'function' ? new ResizeObserver(resized) : null;
     if (resize) resize.observe(root); else window.addEventListener('resize', resized);
     render();
-    return { destroy: function () { destroyed = true; unsubscribe(); if (resize) resize.disconnect(); else window.removeEventListener('resize', resized); if (frame) cancelAnimationFrame(frame); root.remove(); } };
+    return { destroy: function () { destroyed = true; unsubscribe(); if (unsubscribeField) unsubscribeField(); if (resize) resize.disconnect(); else window.removeEventListener('resize', resized); if (frame) cancelAnimationFrame(frame); root.remove(); } };
   }
   window.AiraStatsPanel = { mount: mount };
 })();
