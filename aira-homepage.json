@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "4.0.7",
+  "version": "4.0.8",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "通透的个人名片主页。代号：交互——抓住浮光时浮现的编号改为淡杏色，离本体更远、字号更小更淡。"
+  "description": "通透的个人名片主页。代号：交互——抓住浮光时的编号徽章字体可爱化：圆润字族、微微倾斜。"
 }
