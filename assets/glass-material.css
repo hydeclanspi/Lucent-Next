@@ -127,6 +127,11 @@
   position: relative;
   z-index: 1;
 }
+/* 壁纸面板右上角的【随机】开关是 .wp-panel 里的 absolute 子元素：面板一旦跟着上一条
+   变成定位父级，开关就会从弹窗右上角掉进面板内部（往左 32px、往下若干）。面板本身
+   不参与这层装饰（弹窗的接触光是画在 #sheet 自己的背景上），保持 static，
+   让【随机】的定位父级回到 #sheet。 */
+:root[data-sheet-glass="warm"] #sheet > .wp-panel { position: static; }
 
 /* Preserve the inherited dark palette and its different saturation midpoint. */
 :root[data-theme="dark"][data-home-glass="warm"] .page > .card,
