@@ -1,11 +1,10 @@
-/* v5.0 beta.2 — warm-clear color study; two opt-in surfaces, all layout belongs to the original CSS.
-   No global glass/ink tokens: child windows and unrelated controls keep 4.5.3.
-   Only RGB colors change from beta.1; alpha, filters and geometry stay fixed.
+/* v5.0.3 — independently selected warm-clear materials, inherited from beta.2.
+   Classic surfaces keep the original CSS; layout and optical parameters stay fixed.
    --beta-cool is the inherited name for the neutral environment fill.
    The optical rim is an illustration of thickness, not a refraction shader. */
 
-.page > .card,
-#sheet.interaction-sheet {
+:root[data-home-glass="warm"] .page > .card,
+:root[data-sheet-glass="warm"] #sheet {
   --beta-warm: 250, 231, 209;
   --beta-cool: 220, 222, 224;
   --beta-face: 248, 247, 244;
@@ -26,8 +25,8 @@
   backdrop-filter: blur(18px) saturate(132%) brightness(1.13);
 }
 
-/* The interaction sheet has a steadier reading bed than the home surface. */
-#sheet.interaction-sheet {
+/* Every sheet has a steadier reading bed than the home surface. */
+:root[data-sheet-glass="warm"] #sheet {
   background:
     radial-gradient(ellipse at 45% 44%, rgba(253, 251, 248, .43), rgba(249, 247, 243, .13) 80%, transparent),
     linear-gradient(123deg, rgba(255, 254, 252, .38), rgba(247, 244, 239, .23) 48%, rgba(243, 241, 237, .28));
@@ -35,15 +34,15 @@
   backdrop-filter: blur(26px) saturate(124%) brightness(1.19);
 }
 
-:root[data-beta-wallpaper="light"] .page > .card,
-:root[data-beta-wallpaper="light"] #sheet.interaction-sheet {
+:root[data-beta-wallpaper="light"][data-home-glass="warm"] .page > .card,
+:root[data-beta-wallpaper="light"][data-sheet-glass="warm"] #sheet {
   --beta-warm: 250, 232, 213;
   --beta-cool: 222, 221, 226;
 }
 
 /* A broad reflection and gentle environment color — anchored, never spinning. */
-.page > .card::before,
-#sheet.interaction-sheet::before {
+:root[data-home-glass="warm"] .page > .card::before,
+:root[data-sheet-glass="warm"] #sheet::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -57,8 +56,8 @@
 
 /* Kept separate from the container so the external history tab is never clipped. */
 @supports ((mask-composite: exclude) or (-webkit-mask-composite: xor)) {
-  .page > .card::after,
-  #sheet.interaction-sheet::after {
+  :root[data-home-glass="warm"] .page > .card::after,
+  :root[data-sheet-glass="warm"] #sheet::after {
     content: "";
     position: absolute;
     inset: 0;
@@ -80,9 +79,9 @@
   }
 }
 
-/* Only these direct material decorations are added by glass-beta.js. */
-.page > .card > .beta-glass-sheen,
-#sheet.interaction-sheet > .beta-glass-sheen {
+/* Only these direct material decorations are added by glass-material.js. */
+:root[data-home-glass="warm"] .page > .card > .beta-glass-sheen,
+:root[data-sheet-glass="warm"] #sheet > .beta-glass-sheen {
   display: block;
   position: absolute;
   inset: 2px;
@@ -106,13 +105,13 @@
 }
 .beta-glass-sheen > .beta-glass-point.is-lit { opacity: 1; }
 
-#sheet.interaction-sheet > :not(.beta-glass-sheen) {
+:root[data-sheet-glass="warm"] #sheet > :not(.beta-glass-sheen) {
   position: relative;
   z-index: 1;
 }
 
-:root[data-theme="dark"] .page > .card,
-:root[data-theme="dark"] #sheet.interaction-sheet {
+:root[data-theme="dark"][data-home-glass="warm"] .page > .card,
+:root[data-theme="dark"][data-sheet-glass="warm"] #sheet {
   --beta-rim-light: .50;
   --beta-glow-strength: .105;
   background:
@@ -129,15 +128,15 @@
   -webkit-backdrop-filter: blur(18px) saturate(124%) brightness(.88);
   backdrop-filter: blur(18px) saturate(124%) brightness(.88);
 }
-:root[data-theme="dark"] #sheet.interaction-sheet {
+:root[data-theme="dark"][data-sheet-glass="warm"] #sheet {
   background:
     radial-gradient(ellipse at 45% 44%, rgba(26, 26, 28, .37), rgba(26, 26, 28, .12) 80%, transparent),
     linear-gradient(123deg, rgba(64, 61, 60, .39), rgba(26, 26, 29, .39) 45%, rgba(46, 44, 47, .41));
   -webkit-backdrop-filter: blur(26px) saturate(122%) brightness(.91);
   backdrop-filter: blur(26px) saturate(122%) brightness(.91);
 }
-:root[data-theme="dark"] .page > .card::before,
-:root[data-theme="dark"] #sheet.interaction-sheet::before {
+:root[data-theme="dark"][data-home-glass="warm"] .page > .card::before,
+:root[data-theme="dark"][data-sheet-glass="warm"] #sheet::before {
   background:
     radial-gradient(ellipse 72% 52% at 0% 0%, rgba(var(--beta-warm), .075), transparent 80%),
     radial-gradient(ellipse 70% 62% at 100% 100%, rgba(var(--beta-cool), .08), transparent 76%),
@@ -146,16 +145,16 @@
 
 /* A complete, readable fallback if the host has no backdrop-filter support. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .page > .card, #sheet.interaction-sheet { background: rgba(241, 239, 235, .96); }
-  :root[data-theme="dark"] .page > .card,
-  :root[data-theme="dark"] #sheet.interaction-sheet { background: rgba(35, 34, 36, .97); }
+  :root[data-home-glass="warm"] .page > .card, :root[data-sheet-glass="warm"] #sheet { background: rgba(241, 239, 235, .96); }
+  :root[data-theme="dark"][data-home-glass="warm"] .page > .card,
+  :root[data-theme="dark"][data-sheet-glass="warm"] #sheet { background: rgba(35, 34, 36, .97); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .beta-glass-sheen { display: none !important; }
 }
 @media (prefers-reduced-transparency: reduce) {
-  .page > .card, #sheet.interaction-sheet { background: rgba(244, 242, 238, .96); }
-  :root[data-theme="dark"] .page > .card,
-  :root[data-theme="dark"] #sheet.interaction-sheet { background: rgba(35, 34, 36, .97); }
+  :root[data-home-glass="warm"] .page > .card, :root[data-sheet-glass="warm"] #sheet { background: rgba(244, 242, 238, .96); }
+  :root[data-theme="dark"][data-home-glass="warm"] .page > .card,
+  :root[data-theme="dark"][data-sheet-glass="warm"] #sheet { background: rgba(35, 34, 36, .97); }
 }

@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "id": "com.example.aira-profile-card.beta.warm",
-  "name": "名片 · v5.0 beta 暖光",
-  "version": "5.0.0-beta.2",
+  "id": "com.example.aira-profile-card",
+  "name": "名片 · Profile Card",
+  "version": "5.0.3",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "v5.0 beta.2 暖光清玻璃实验。仅调整主页主搜索大面板与「代号：交互」面板的材质配色，保留 beta.1 的透明度、模糊与交互。独立安装身份，可与正式版和 beta.1 并存。"
+  "description": "暖光液态清璃与经典磨砂玻璃可独立应用于主页主面板、进阶弹出窗口。长按「切换」在壁纸窗口设置，自动保存；保留原有交互、统计与备份功能。"
 }

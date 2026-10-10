@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN" data-theme="light">
+<html lang="zh-CN" data-theme="light" data-home-glass="warm" data-sheet-glass="warm">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -8,7 +8,8 @@
   <link rel="stylesheet" href="./assets/app.css">
   <link rel="stylesheet" href="./assets/interaction.css">
   <link rel="stylesheet" href="./assets/stats.css">
-  <link rel="stylesheet" href="./assets/glass-beta.css">
+  <link rel="stylesheet" href="./assets/glass-material.css">
+  <link rel="stylesheet" href="./assets/glass-settings.css">
   <style>
     body {
       background-image: url("./assets/wallpaper.jpg");
@@ -19,6 +20,13 @@
     }
   </style>
   <script>
+    try {
+      var material = JSON.parse(localStorage.getItem("aira-profile-card:glassMaterial") || "null");
+      if (material) {
+        document.documentElement.dataset.homeGlass = material.home === "classic" ? "classic" : "warm";
+        document.documentElement.dataset.sheetGlass = material.sheets === "classic" ? "classic" : "warm";
+      }
+    } catch (e) {}
     if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
       document.documentElement.dataset.theme = "dark";
     }
@@ -200,6 +208,6 @@
   <script src="./assets/field-store.js"></script>
   <script src="./assets/stats-panel.js"></script>
   <script src="./assets/app.js"></script>
-  <script src="./assets/glass-beta.js"></script>
+  <script src="./assets/glass-material.js"></script>
 </body>
 </html>

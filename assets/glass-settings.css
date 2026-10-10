@@ -1,0 +1,15 @@
+/* Reuse the interaction toolbar's glass capsule, with two independent rows. */
+.glass-material-section { margin-top: 24px; }
+.glass-material-title { margin: 0 0 12px 4px; font-size: 12px; color: var(--ink-2); letter-spacing: .8px; }
+.interaction-toolbar.glass-material-settings { grid-template-columns: minmax(0, 1fr); margin: 0; padding: 5px; }
+.glass-material-row { display: grid; grid-template-columns: minmax(108px, .85fr) repeat(2, minmax(0, 1fr)); align-items: center; gap: 4px; padding: 3px; }
+.glass-material-row + .glass-material-row { border-top: 1px solid var(--utility-rule); margin-top: 4px; padding-top: 7px; }
+.glass-material-label { color: var(--utility-ink); font-size: 12px; padding: 0 12px; }
+.glass-material-choice { min-height: 42px; padding: 8px 9px; font-size: 12px; letter-spacing: 0; }
+.glass-material-choice[aria-pressed="true"] { color: var(--ink); background: rgba(255, 250, 242, .43); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .58), 0 2px 6px rgba(69, 49, 30, .045); }
+.glass-material-choice:disabled { opacity: .55; }
+@media (max-width: 520px) {
+  .glass-material-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .glass-material-label { grid-column: 1 / -1; padding: 7px 9px 3px; }
+  .glass-material-choice { white-space: normal; }
+}
