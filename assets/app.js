@@ -55,6 +55,7 @@
     sort: "M7 4v16m0 0-3-3m3 3 3-3M17 20V4m0 0-3 3m3-3 3 3",
     plus: "M12 5v14M5 12h14",
     refresh: "M20 12a8 8 0 1 1-2.4-5.7M20 4v4.6h-4.6",
+    crop: "M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5",
     star: "M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.7L12 16.6l-5.1 2.7 1-5.7-4.1-4 5.7-.8z",
     sun: "M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6zM12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M5.5 18.5l1.6-1.6M16.9 7.1l1.6-1.6",
     moon: "M20 14.6A8.6 8.6 0 0 1 9.4 4a8.6 8.6 0 1 0 10.6 10.6z",
@@ -79,6 +80,7 @@
     wallpaper: "dark",
     wallpaperBlur: {},
     wallpaperBrightness: {},
+    wallpaperCrop: {},
     glassMaterial: { version: 1, home: "warm", sheets: "warm" },
     glassMaterialReady: false,
     wallpaperRolled: "",
@@ -1718,12 +1720,12 @@
   var EXPORT_BIG_CHARS = 64 * 1024;   // 单次复制开始提示静默截断风险的体量
   var EXPORT_STORE_WAIT = 1600;       // 两个引擎就绪的等待上限，超时只降级，不失败
 
-  var EXPORT_KEYS = ["profile", "icons", "folds", "wallpaper", "wallpaperBlur", "wallpaperBrightness", "glassMaterial", "wallpaperProbability",
+  var EXPORT_KEYS = ["profile", "icons", "folds", "wallpaper", "wallpaperBlur", "wallpaperBrightness", "wallpaperCrop", "glassMaterial", "wallpaperProbability",
     "probabilityDefaults", "interactionSettings", "collisionSettings", "motionSettings", "autoDriveSettings",
     "uiPrefs", "logs", "signs", "logsBundleVersion", "signsBundleVersion"];
   var EXPORT_LABELS = {
     profile: "名片", icons: "图标偏好", folds: "折叠状态", wallpaper: "壁纸模式", wallpaperBlur: "壁纸模糊",
-    wallpaperBrightness: "壁纸亮度", glassMaterial: "玻璃材质",
+    wallpaperBrightness: "壁纸亮度", wallpaperCrop: "壁纸取景", glassMaterial: "玻璃材质",
     wallpaperProbability: "明暗比例", probabilityDefaults: "比例默认值", interactionSettings: "浮光数量",
     collisionSettings: "碰撞力度", motionSettings: "自然 pace", autoDriveSettings: "自动驾驶", uiPrefs: "编号徽章",
     logs: "日志", signs: "签名历史", logsBundleVersion: "日志版本", signsBundleVersion: "签名版本"
@@ -2730,12 +2732,18 @@
     });
   }
 
-  /* ---------- 壁纸（Light / Dark + 柔焦） ---------- */
+  /* ---------- 壁纸（Light / Dark + 柔焦 + 亮度 + Dark 取景） ---------- */
 
   var WALLPAPERS = {
     light: { src: "./assets/wallpaper-yang.jpg", thumb: "./assets/wallpaper-yang.jpg", label: "Light", note: "伦敦夜景" },
     dark: { src: "./assets/wallpaper.jpg", thumb: "./assets/wp-thumb-dark.jpg", label: "Dark", note: "日漫黄昏" }
   };
+
+  /* Dark 的取景原图：比出厂窗口更大，供用户拖动取景框重新裁切 */
+  var WP_DARK_SOURCE = "./assets/wallpaper-dark-source.jpg";
+  var WP_SOURCE_SIZE = { w: 4096, h: 2048 };
+  var WP_DEFAULT_WINDOW = { x: 382, y: 0, w: 3072, h: 2048 };
+  var WP_CROP_SETTLE = 200;
 
   var WP_BLUR_DEFAULT = { light: 4, dark: 0 };
   var WP_BLUR_MAX = 20;
@@ -2744,9 +2752,8 @@
 
   var WP_BRIGHT_MIN = 50;
   var WP_BRIGHT_MAX = 100;
-  /* 资源里已经烙进去的亮度：Dark 出厂压暗到 86%。滑轨以未压暗的原图亮度为 100 基准，
-     出厂值即烙入值（换算回滤镜系数为 1）。 */
-  var WP_BRIGHT_BAKED = { light: 100, dark: 86 };
+  /* 资源里已经烙进去的亮度：Dark 出厂压暗到 74%（原图 100% 为基准，出厂值即烙入值）。 */
+  var WP_BRIGHT_BAKED = { light: 100, dark: 74 };
   var WP_BRIGHT_DEFAULT = WP_BRIGHT_BAKED;
 
   var WP_MODES = ["dark", "light", "random"];
@@ -2981,12 +2988,87 @@
     return String(Math.round(wpBrightPercent(side) / WP_BRIGHT_BAKED[side] * 1000) / 1000);
   }
 
+  function normalizeCrop(value) {
+    if (!value || typeof value !== "object") return null;
+    var x = Number(value.x), y = Number(value.y), w = Number(value.w), h = Number(value.h);
+    if (!isFinite(x) || !isFinite(y) || !isFinite(w) || !isFinite(h) || w < 8 || h < 8) return null;
+    w = Math.min(w, WP_SOURCE_SIZE.w);
+    h = Math.min(h, WP_SOURCE_SIZE.h);
+    return {
+      x: Math.round(Math.min(Math.max(x, 0), WP_SOURCE_SIZE.w - w)),
+      y: Math.round(Math.min(Math.max(y, 0), WP_SOURCE_SIZE.h - h)),
+      w: Math.round(w),
+      h: Math.round(h)
+    };
+  }
+
+  function wpCrop(side) {
+    return side === "dark" ? normalizeCrop(state.wallpaperCrop && state.wallpaperCrop.dark) : null;
+  }
+
+  /* 取景窗口在当前屏幕比例下实际可见的部分（取窗口内最大的同比例子矩形） */
+  function wpVisibleRegion(win, aspect) {
+    if (win.w / win.h <= aspect) {
+      var tall = win.w / aspect;
+      return { x: win.x, y: win.y + (win.h - tall) / 2, w: win.w, h: tall };
+    }
+    var wide = win.h * aspect;
+    return { x: win.x + (win.w - wide) / 2, y: win.y, w: wide, h: win.h };
+  }
+
+  /* 把取景区域铺满某个显示盒的 background 几何（像素值，居中、cover） */
+  function wpLayerBox(region, boxW, boxH) {
+    var scale = Math.max(boxW / region.w, boxH / region.h);
+    return {
+      size: (WP_SOURCE_SIZE.w * scale).toFixed(1) + "px " + (WP_SOURCE_SIZE.h * scale).toFixed(1) + "px",
+      position: (boxW / 2 - (region.x + region.w / 2) * scale).toFixed(1) + "px " +
+        (boxH / 2 - (region.y + region.h / 2) * scale).toFixed(1) + "px"
+    };
+  }
+
+  /* 同一取景区域铺进固定比例盒子（长宽都写成百分比，与盒子实际像素无关） */
+  function wpThumbGeometry(region, aspect) {
+    var k1 = Math.max(1 / region.w, 1 / (aspect * region.h));
+    var k2 = Math.max(aspect / region.w, 1 / region.h);
+    return {
+      width: (WP_SOURCE_SIZE.w * k1 * 100).toFixed(2) + "%",
+      height: (WP_SOURCE_SIZE.h * k2 * 100).toFixed(2) + "%",
+      left: (50 - 100 * (region.x + region.w / 2) * k1).toFixed(2) + "%",
+      top: (50 - 100 * (region.y + region.h / 2) * k2).toFixed(2) + "%"
+    };
+  }
+
+  function wpViewport() {
+    return {
+      w: window.innerWidth || document.documentElement.clientWidth || 1,
+      h: window.innerHeight || document.documentElement.clientHeight || 1
+    };
+  }
+
   function applyWallpaper() {
     var side = wpSide();
-    var url = 'url("' + WALLPAPERS[side].src + '")';
+    var crop = wpCrop(side);
+    var url = 'url("' + (crop ? WP_DARK_SOURCE : WALLPAPERS[side].src) + '")';
     try {
+      var view = wpViewport();
       document.body.style.backgroundImage = url;
       if (el.wpImg) el.wpImg.style.backgroundImage = url;
+      if (crop) {
+        var geo = wpLayerBox(crop, view.w, view.h);
+        document.body.style.backgroundSize = geo.size;
+        document.body.style.backgroundPosition = geo.position;
+        if (el.wpImg) {
+          el.wpImg.style.backgroundSize = geo.size;
+          el.wpImg.style.backgroundPosition = geo.position;
+        }
+      } else {
+        document.body.style.backgroundSize = "cover";
+        document.body.style.backgroundPosition = "center center";
+        if (el.wpImg) {
+          el.wpImg.style.backgroundSize = "cover";
+          el.wpImg.style.backgroundPosition = "center center";
+        }
+      }
     } catch (error) {
       /* 忽略 */
     }
@@ -3017,7 +3099,16 @@
     storageSet("wallpaper", state.wallpaper).catch(function () {});
     storageSet("wallpaperBlur", state.wallpaperBlur).catch(function () {});
     storageSet("wallpaperBrightness", state.wallpaperBrightness).catch(function () {});
+    storageSet("wallpaperCrop", state.wallpaperCrop).catch(function () {});
   }
+
+  /* 取景按当前屏幕比例计算，转屏/改窗口后重铺一次 */
+  var wallpaperResizeTimer = 0;
+  window.addEventListener("resize", function () {
+    if (!wpCrop(wpSide())) return;
+    clearTimeout(wallpaperResizeTimer);
+    wallpaperResizeTimer = setTimeout(applyWallpaper, 120);
+  });
 
   function loadWallpaper() {
     var revision = ++wallpaperLoadRevision;
@@ -3031,13 +3122,15 @@
       storageGet("wallpaperBlur", null),
       storageGet("wallpaperProbability", null),
       readInteractionSetting("interactionSettings").catch(function () { state.interactionReadError = true; return null; }),
-      storageGet("wallpaperBrightness", null)
+      storageGet("wallpaperBrightness", null),
+      storageGet("wallpaperCrop", null)
     ]).then(function (settings) {
       if (revision !== wallpaperLoadRevision) return;
       var saved = settings[0];
       var savedBlur = settings[1];
       var savedProbability = settings[2];
       var savedBright = settings[4];
+      var savedCrop = settings[5];
       state.interactionDefaultCount = interactionCountValue(settings[3] && settings[3].defaultCount);
       state.interactionCount = state.interactionDefaultCount;
       if (interactionController) interactionController.setCount(state.interactionCount);
@@ -3061,6 +3154,10 @@
         ["light", "dark"].forEach(function (side) {
           if (typeof savedBright[side] === "number") state.wallpaperBrightness[side] = savedBright[side];
         });
+      }
+      if (savedCrop && typeof savedCrop === "object") {
+        var cropDark = normalizeCrop(savedCrop.dark);
+        if (cropDark) state.wallpaperCrop.dark = cropDark;
       }
       // 一次性迁移：Light 的旧默认 5% → 新默认 4%
       if (state.wallpaperBlur.light === 5) {
@@ -4068,20 +4165,66 @@
       var percent = wpBrightPercent(wpSide());
       brightRange.value = String(percent);
       brightValue.textContent = percent + "%";
+      // 亮度只服务 Dark：Light 选中时把这条滑轨收起来
+      brightRow.hidden = wpSide() !== "dark";
+    }
+
+    function makeThumb(side, item) {
+      var crop = side === "dark" ? wpCrop("dark") : null;
+      if (!crop) {
+        var img = document.createElement("img");
+        img.className = "wp-thumb";
+        img.alt = "";
+        img.src = item.thumb;
+        thumbs[side] = img;
+        return img;
+      }
+      // 自定义取景：拿原图按取景几何铺进 3:2 的缩略图
+      var view = document.createElement("span");
+      view.className = "wp-thumb wp-thumb-view";
+      var layer = document.createElement("img");
+      layer.className = "wp-thumb-src";
+      layer.alt = "";
+      layer.src = WP_DARK_SOURCE;
+      var geo = wpThumbGeometry(crop, 3 / 2);
+      layer.style.width = geo.width;
+      layer.style.height = geo.height;
+      layer.style.left = geo.left;
+      layer.style.top = geo.top;
+      view.appendChild(layer);
+      thumbs[side] = view;
+      return view;
+    }
+
+    function makeZoomButton() {
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "wp-zoom";
+      button.setAttribute("aria-label", "调整 Dark 取景");
+      button.title = "调整取景";
+      button.appendChild(icon(ICONS.crop));
+      button.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        openWallpaperCrop();
+      });
+      return button;
     }
 
     function refresh() {
       picks.textContent = "";
       ["light", "dark"].forEach(function (side) {
         var item = WALLPAPERS[side];
-        var card = document.createElement("button");
-        card.type = "button";
+        var card = document.createElement("div");
         card.className = "wp-pick" + (wpSide() === side ? " on" : "");
-        var img = document.createElement("img");
-        img.className = "wp-thumb";
-        img.alt = "";
-        img.src = item.thumb;
-        thumbs[side] = img;
+        card.setAttribute("role", "button");
+        card.setAttribute("tabindex", "0");
+        card.setAttribute("aria-label", item.label + " 壁纸");
+        card.setAttribute("aria-pressed", wpSide() === side ? "true" : "false");
+        var wrap = document.createElement("span");
+        wrap.className = "wp-thumbwrap";
+        wrap.appendChild(makeThumb(side, item));
+        if (side === "dark" && wpSide() === "dark") wrap.appendChild(makeZoomButton());
         var cap = document.createElement("span");
         cap.className = "cap";
         var name = document.createElement("b");
@@ -4090,9 +4233,9 @@
         note.textContent = item.note;
         cap.appendChild(name);
         cap.appendChild(note);
-        card.appendChild(img);
+        card.appendChild(wrap);
         card.appendChild(cap);
-        card.addEventListener("click", function () {
+        var pick = function () {
           state.wallpaper = side;
           state.wallpaperRolled = side;
           applyWallpaper();
@@ -4100,6 +4243,12 @@
           refresh();
           syncBlur();
           syncBright();
+        };
+        card.addEventListener("click", pick);
+        card.addEventListener("keydown", function (event) {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          pick();
         });
         picks.appendChild(card);
       });
@@ -4137,6 +4286,226 @@
     syncBright();
     syncRandom();
     applyGlassMaterial();
+  }
+
+  /* ---------- 壁纸取景（Dark 裁切调整） ---------- */
+
+  function openWallpaperCrop() {
+    var side = "dark";
+    var view = wpViewport();
+    var aspect = view.w / view.h;
+    var defaultRegion = clampRegion(wpVisibleRegion(WP_DEFAULT_WINDOW, aspect));
+    var frame = clampRegion(wpVisibleRegion(wpCrop(side) || WP_DEFAULT_WINDOW, aspect));
+    var position = { x: frame.x, y: frame.y };
+    var settleTimer = 0, drag = null, stageBuilt = false;
+
+    function clampRegion(region) {
+      var w = Math.min(region.w, WP_SOURCE_SIZE.w);
+      var h = Math.min(region.h, WP_SOURCE_SIZE.h);
+      return {
+        x: Math.min(Math.max(region.x, 0), WP_SOURCE_SIZE.w - w),
+        y: Math.min(Math.max(region.y, 0), WP_SOURCE_SIZE.h - h),
+        w: w,
+        h: h
+      };
+    }
+
+    var editor = document.createElement("div");
+    editor.className = "crop-editor";
+
+    var hint = document.createElement("p");
+    hint.className = "crop-hint";
+    hint.textContent = "拖动取景框选择画面范围，松手后下方给出预览效果。";
+
+    var box = document.createElement("div");
+    box.className = "crop-box";
+    var photo = document.createElement("img");
+    photo.className = "crop-photo";
+    photo.alt = "";
+    photo.src = WP_DARK_SOURCE;
+    photo.style.filter = "brightness(" + wpBrightFactor(side) + ")";
+    var handle = document.createElement("div");
+    handle.className = "crop-frame";
+    handle.tabIndex = 0;
+    handle.setAttribute("aria-label", "取景框，拖动或方向键移动");
+    box.appendChild(photo);
+    box.appendChild(handle);
+
+    var previewLabel = document.createElement("p");
+    previewLabel.className = "crop-preview-label";
+    previewLabel.textContent = "预览 · 套上界面后";
+    var preview = document.createElement("div");
+    preview.className = "crop-preview";
+    var previewLayer = document.createElement("div");
+    previewLayer.className = "crop-preview-layer";
+    previewLayer.style.filter = "brightness(" + wpBrightFactor(side) + ")";
+    preview.appendChild(previewLayer);
+
+    editor.appendChild(hint);
+    editor.appendChild(box);
+    editor.appendChild(previewLabel);
+    editor.appendChild(preview);
+
+    function boxScale() {
+      return (box.clientWidth || 1) / WP_SOURCE_SIZE.w;
+    }
+
+    function paintFrame() {
+      var scale = boxScale();
+      handle.style.left = (position.x * scale).toFixed(1) + "px";
+      handle.style.top = (position.y * scale).toFixed(1) + "px";
+      handle.style.width = (frame.w * scale).toFixed(1) + "px";
+      handle.style.height = (frame.h * scale).toFixed(1) + "px";
+    }
+
+    function currentRegion() {
+      return {
+        x: Math.round(position.x),
+        y: Math.round(position.y),
+        w: Math.round(frame.w),
+        h: Math.round(frame.h)
+      };
+    }
+
+    function buildStage(previewWidth, live) {
+      var stage = document.createElement("div");
+      stage.className = "crop-preview-stage";
+      stage.style.width = live.w + "px";
+      stage.style.height = live.h + "px";
+      stage.style.transform = "scale(" + (previewWidth / live.w).toFixed(5) + ")";
+      [".topbar", ".page"].forEach(function (selector) {
+        var node = document.querySelector(selector);
+        if (!node) return;
+        var rect = node.getBoundingClientRect();
+        var clone = node.cloneNode(true);
+        clone.removeAttribute("id");
+        Array.prototype.forEach.call(clone.querySelectorAll("[id]"), function (child) { child.removeAttribute("id"); });
+        clone.setAttribute("aria-hidden", "true");
+        if ("inert" in clone) clone.inert = true;
+        clone.style.position = "absolute";
+        clone.style.left = Math.round(rect.left) + "px";
+        clone.style.top = Math.round(rect.top) + "px";
+        clone.style.width = Math.round(rect.width) + "px";
+        clone.style.height = Math.round(rect.height) + "px";
+        clone.style.margin = "0";
+        stage.appendChild(clone);
+      });
+      preview.appendChild(stage);
+    }
+
+    function layoutPreview() {
+      var live = wpViewport();
+      var liveAspect = live.w / live.h;
+      var maxWidth = Math.max(220, Math.min(editor.clientWidth || live.w, 560));
+      var maxHeight = Math.max(190, Math.min(280, Math.round(live.h * 0.3)));
+      var width = Math.min(maxWidth, maxHeight * liveAspect);
+      var height = width / liveAspect;
+      preview.style.width = Math.round(width) + "px";
+      preview.style.height = Math.round(height) + "px";
+      var geo = wpLayerBox(currentRegion(), width, height);
+      previewLayer.style.backgroundImage = 'url("' + WP_DARK_SOURCE + '")';
+      previewLayer.style.backgroundSize = geo.size;
+      previewLayer.style.backgroundPosition = geo.position;
+      if (!stageBuilt) { buildStage(width, live); stageBuilt = true; }
+    }
+
+    function armSettle() {
+      clearTimeout(settleTimer);
+      settleTimer = setTimeout(layoutPreview, WP_CROP_SETTLE);
+    }
+
+    function moveBy(dx, dy) {
+      position.x = Math.min(Math.max(position.x + dx, 0), WP_SOURCE_SIZE.w - frame.w);
+      position.y = Math.min(Math.max(position.y + dy, 0), WP_SOURCE_SIZE.h - frame.h);
+      paintFrame();
+    }
+
+    function resetToDefault() {
+      position.x = defaultRegion.x;
+      position.y = defaultRegion.y;
+      paintFrame();
+      layoutPreview();
+    }
+
+    function commit() {
+      var region = currentRegion();
+      var near = function (a, b) { return Math.abs(a - b) < 1.5; };
+      var isDefault = near(region.x, defaultRegion.x) && near(region.y, defaultRegion.y) &&
+        near(region.w, defaultRegion.w) && near(region.h, defaultRegion.h);
+      if (!state.wallpaperCrop || typeof state.wallpaperCrop !== "object") state.wallpaperCrop = {};
+      if (isDefault) delete state.wallpaperCrop.dark;
+      else state.wallpaperCrop.dark = normalizeCrop(region);
+      applyWallpaper();
+      saveWallpaper();
+      openWallpaperPanel();
+    }
+
+    box.addEventListener("pointerdown", function (event) {
+      if (event.button) return;
+      event.preventDefault();
+      try { handle.setPointerCapture(event.pointerId); } catch (error) { /* 忽略 */ }
+      handle.classList.add("dragging");
+      drag = { id: event.pointerId, x: event.clientX, y: event.clientY, fx: position.x, fy: position.y };
+    });
+
+    handle.addEventListener("pointermove", function (event) {
+      if (!drag || event.pointerId !== drag.id) return;
+      var scale = boxScale();
+      position.x = drag.fx + (event.clientX - drag.x) / scale;
+      position.y = drag.fy + (event.clientY - drag.y) / scale;
+      position.x = Math.min(Math.max(position.x, 0), WP_SOURCE_SIZE.w - frame.w);
+      position.y = Math.min(Math.max(position.y, 0), WP_SOURCE_SIZE.h - frame.h);
+      paintFrame();
+    });
+
+    function endDrag(event) {
+      if (!drag || (event && event.pointerId !== drag.id)) return;
+      try { handle.releasePointerCapture(drag.id); } catch (error) { /* 忽略 */ }
+      handle.classList.remove("dragging");
+      drag = null;
+      armSettle();
+    }
+    handle.addEventListener("pointerup", endDrag);
+    handle.addEventListener("pointercancel", endDrag);
+
+    handle.addEventListener("keydown", function (event) {
+      var step = event.shiftKey ? 96 : 24;
+      if (event.key === "ArrowLeft") moveBy(-step, 0);
+      else if (event.key === "ArrowRight") moveBy(step, 0);
+      else if (event.key === "ArrowUp") moveBy(0, -step);
+      else if (event.key === "ArrowDown") moveBy(0, step);
+      else return;
+      event.preventDefault();
+      armSettle();
+    });
+
+    var actions = document.createElement("div");
+    actions.className = "crop-actions";
+    var resetButton = document.createElement("button");
+    resetButton.type = "button";
+    resetButton.className = "btn sm";
+    resetButton.textContent = "恢复默认";
+    resetButton.addEventListener("click", resetToDefault);
+    var commitButton = document.createElement("button");
+    commitButton.type = "button";
+    commitButton.className = "btn primary sm";
+    commitButton.textContent = "完成";
+    commitButton.addEventListener("click", commit);
+    actions.appendChild(resetButton);
+    actions.appendChild(commitButton);
+    editor.appendChild(actions);
+
+    openSheet({
+      title: "调整取景",
+      sub: "Dark 壁纸 · 拖动取景框选择画面位置",
+      content: editor,
+      center: true,
+      wide: true
+    });
+    paintFrame();
+    layoutPreview();
+    requestAnimationFrame(paintFrame);
+    photo.addEventListener("load", paintFrame);
   }
 
   function bindInteractionLauncher() {

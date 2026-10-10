@@ -297,6 +297,10 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   border: 1px solid var(--glass-line);
   box-shadow: inset 0 1px 0 var(--glass-top);
   transition: transform 0.16s ease, box-shadow 0.2s ease;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 .wp-pick:active { transform: scale(0.98); }
 .wp-pick.on {
@@ -408,6 +412,83 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   color: var(--ink-2);
   font-variant-numeric: tabular-nums;
 }
+.wp-brightrow[hidden] { display: none; }
+
+/* Dark 缩略图上的取景入口（线条小 icon） */
+.wp-thumbwrap { position: relative; display: block; }
+.wp-thumb-view { position: relative; display: block; overflow: hidden; }
+.wp-thumb-view .wp-thumb-src { position: absolute; display: block; max-width: none; }
+.wp-zoom {
+  position: absolute;
+  right: 7px;
+  bottom: 7px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, .55);
+  background: rgba(18, 20, 24, .38);
+  color: #fff;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .22);
+  cursor: pointer;
+}
+.wp-zoom svg { width: 13px; height: 13px; }
+.wp-zoom:active { transform: scale(.94); }
+
+/* 取景编辑器（Dark 裁切调整） */
+.crop-editor { display: flex; flex-direction: column; gap: 14px; }
+.crop-hint { margin: 0; font-size: 12px; line-height: 1.6; color: var(--ink-3); letter-spacing: .3px; }
+.crop-box {
+  position: relative;
+  aspect-ratio: 2 / 1;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--glass-3);
+  border: 1px solid var(--glass-line);
+  touch-action: none;
+}
+.crop-photo { display: block; width: 100%; height: auto; user-select: none; -webkit-user-drag: none; }
+.crop-frame {
+  position: absolute;
+  border: 1.5px solid rgba(255, 255, 255, .92);
+  border-radius: 10px;
+  box-shadow: 0 0 0 2000px rgba(12, 14, 18, .46);
+  cursor: grab;
+  touch-action: none;
+}
+.crop-frame.dragging { cursor: grabbing; }
+.crop-preview-label { margin: 0; font-size: 11.5px; letter-spacing: .8px; color: var(--ink-3); text-align: center; }
+/* 取景窗口的两个按钮：自己的按钮行，吸在面板底部右下，不必滚动去够 */
+.crop-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px 2px 2px;
+  border-radius: 16px;
+  backdrop-filter: blur(18px) saturate(170%);
+  -webkit-backdrop-filter: blur(18px) saturate(170%);
+}
+.crop-preview {
+  position: relative;
+  margin: 0 auto;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--glass-line);
+  background: var(--glass-3);
+  box-shadow: 0 8px 22px rgba(20, 22, 28, .16);
+}
+.crop-preview-layer { position: absolute; inset: 0; background-repeat: no-repeat; }
+.crop-preview-stage,
+.crop-preview-stage * { pointer-events: none; }
+.crop-preview-stage { position: absolute; left: 0; top: 0; transform-origin: left top; }
 .wp-range {
   flex: 1 1 auto;
   min-width: 0;
