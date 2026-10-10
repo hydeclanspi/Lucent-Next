@@ -1,38 +1,67 @@
-/* v5.0.3 — independently selected warm-clear materials, inherited from beta.2.
-   Classic surfaces keep the original CSS; layout and optical parameters stay fixed.
-   --beta-cool is the inherited name for the neutral environment fill.
-   The optical rim is an illustration of thickness, not a refraction shader. */
-
+/* v4.7.3 — tunable materials based on the approved 5.0.3 midpoint.
+   Classic surfaces retain the original CSS. Only decorations are adjusted.
+   Sheet reflections belong to its own background so they cannot scroll into a rim. */
 :root[data-home-glass="warm"] .page > .card,
 :root[data-sheet-glass="warm"] #sheet {
+  --beta-alpha: 1;
+  --beta-edge: 1;
+  --beta-touch: 1;
+  --beta-touch-lit: 0;
+  --beta-blur: 18px;
+  --beta-saturation: 132%;
   --beta-warm: 250, 231, 209;
   --beta-cool: 220, 222, 224;
   --beta-face: 248, 247, 244;
+  --beta-face-end: 248, 247, 244;
+  --beta-tone-a: 255, 255, 255;
+  --beta-tone-b: 246, 244, 240;
+  --beta-tone-c: 239, 237, 233;
   --beta-rim-light: .88;
   --beta-glow-strength: .18;
-  background:
-    radial-gradient(ellipse at 46% 45%, rgba(var(--beta-face), .35), rgba(var(--beta-face), .11) 73%, transparent 100%),
-    linear-gradient(123deg, rgba(255, 255, 255, .29), rgba(246, 244, 240, .14) 42%, rgba(239, 237, 233, .21));
-  border-color: rgba(252, 249, 244, .55);
+  --beta-reflection:
+    radial-gradient(ellipse 72% 52% at 0% 0%, rgba(var(--beta-warm), calc(.22 * var(--beta-alpha))), transparent 80%),
+    radial-gradient(ellipse 70% 62% at 100% 100%, rgba(var(--beta-cool), calc(.15 * var(--beta-alpha))), transparent 76%),
+    linear-gradient(116deg, rgba(255, 255, 255, calc(.14 * var(--beta-edge))), transparent 29%, transparent 73%, rgba(252, 250, 247, calc(.07 * var(--beta-edge))));
+  --beta-bed:
+    radial-gradient(ellipse at 46% 45%, rgba(var(--beta-face), calc(.35 * var(--beta-alpha))), rgba(var(--beta-face-end), calc(.11 * var(--beta-alpha))) 73%, transparent 100%),
+    linear-gradient(123deg, rgba(var(--beta-tone-a), calc(.29 * var(--beta-alpha))), rgba(var(--beta-tone-b), calc(.14 * var(--beta-alpha))) 42%, rgba(var(--beta-tone-c), calc(.21 * var(--beta-alpha))));
+  background: var(--beta-bed);
+  border-color: rgba(252, 249, 244, calc(.55 * var(--beta-edge)));
   box-shadow:
     0 22px 60px -15px rgba(23, 22, 22, .32),
     0 4px 12px -5px rgba(21, 20, 20, .18),
-    inset 0 1px 0 rgba(255, 255, 255, .90),
-    inset 1px 0 0 rgba(255, 255, 255, .32),
-    inset 0 -1px 0 rgba(177, 173, 168, .32),
-    inset 0 0 0 2px rgba(253, 250, 246, .075);
-  -webkit-backdrop-filter: blur(18px) saturate(132%) brightness(1.13);
-  backdrop-filter: blur(18px) saturate(132%) brightness(1.13);
+    inset 0 1px 0 rgba(255, 255, 255, calc(.90 * var(--beta-edge))),
+    inset 1px 0 0 rgba(255, 255, 255, calc(.32 * var(--beta-edge))),
+    inset 0 -1px 0 rgba(177, 173, 168, calc(.32 * var(--beta-edge))),
+    inset 0 0 0 2px rgba(253, 250, 246, calc(.075 * var(--beta-edge)));
+  -webkit-backdrop-filter: blur(var(--beta-blur)) saturate(var(--beta-saturation)) brightness(1.13);
+  backdrop-filter: blur(var(--beta-blur)) saturate(var(--beta-saturation)) brightness(1.13);
 }
 
-/* Every sheet has a steadier reading bed than the home surface. */
+/* The background uses the visible scrollport; no child can enlarge its scroll area. */
 :root[data-sheet-glass="warm"] #sheet {
+  --beta-blur: 26px;
+  --beta-saturation: 124%;
+  --beta-face: 253, 251, 248;
+  --beta-face-end: 249, 247, 243;
+  --beta-tone-a: 255, 254, 252;
+  --beta-tone-b: 247, 244, 239;
+  --beta-tone-c: 243, 241, 237;
+  --beta-bed:
+    radial-gradient(ellipse at 45% 44%, rgba(var(--beta-face), calc(.43 * var(--beta-alpha))), rgba(var(--beta-face-end), calc(.13 * var(--beta-alpha))) 80%, transparent),
+    linear-gradient(123deg, rgba(var(--beta-tone-a), calc(.38 * var(--beta-alpha))), rgba(var(--beta-tone-b), calc(.23 * var(--beta-alpha))) 48%, rgba(var(--beta-tone-c), calc(.28 * var(--beta-alpha))));
   background:
-    radial-gradient(ellipse at 45% 44%, rgba(253, 251, 248, .43), rgba(249, 247, 243, .13) 80%, transparent),
-    linear-gradient(123deg, rgba(255, 254, 252, .38), rgba(247, 244, 239, .23) 48%, rgba(243, 241, 237, .28));
-  -webkit-backdrop-filter: blur(26px) saturate(124%) brightness(1.19);
-  backdrop-filter: blur(26px) saturate(124%) brightness(1.19);
+    radial-gradient(circle 180px at var(--beta-touch-x, 50%) var(--beta-touch-y, 50%), rgba(255, 255, 255, calc(var(--beta-glow-strength) * var(--beta-touch) * var(--beta-touch-lit))) 0%, rgba(252, 249, 244, calc(.035 * var(--beta-touch) * var(--beta-touch-lit))) 43%, transparent 70%),
+    var(--beta-reflection), var(--beta-bed);
+  background-attachment: scroll;
+  border-top-color: rgba(255, 255, 255, calc(.88 * var(--beta-edge)));
+  border-left-color: rgba(255, 250, 240, calc(.58 * var(--beta-edge)));
+  border-bottom-color: rgba(253, 249, 242, calc(.58 * var(--beta-edge)));
+  -webkit-backdrop-filter: blur(var(--beta-blur)) saturate(var(--beta-saturation)) brightness(1.19);
+  backdrop-filter: blur(var(--beta-blur)) saturate(var(--beta-saturation)) brightness(1.19);
 }
+:root[data-sheet-glass="warm"] #sheet::before,
+:root[data-sheet-glass="warm"] #sheet::after { content: none; display: none; }
 
 :root[data-beta-wallpaper="light"][data-home-glass="warm"] .page > .card,
 :root[data-beta-wallpaper="light"][data-sheet-glass="warm"] #sheet {
@@ -40,24 +69,17 @@
   --beta-cool: 222, 221, 226;
 }
 
-/* A broad reflection and gentle environment color — anchored, never spinning. */
-:root[data-home-glass="warm"] .page > .card::before,
-:root[data-sheet-glass="warm"] #sheet::before {
+/* The home card can keep its illustration of thickness, outside the content flow. */
+:root[data-home-glass="warm"] .page > .card::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  background:
-    radial-gradient(ellipse 72% 52% at 0% 0%, rgba(var(--beta-warm), .22), transparent 80%),
-    radial-gradient(ellipse 70% 62% at 100% 100%, rgba(var(--beta-cool), .15), transparent 76%),
-    linear-gradient(116deg, rgba(255, 255, 255, .14), transparent 29%, transparent 73%, rgba(252, 250, 247, .07));
+  background: var(--beta-reflection);
 }
-
-/* Kept separate from the container so the external history tab is never clipped. */
 @supports ((mask-composite: exclude) or (-webkit-mask-composite: xor)) {
-  :root[data-home-glass="warm"] .page > .card::after,
-  :root[data-sheet-glass="warm"] #sheet::after {
+  :root[data-home-glass="warm"] .page > .card::after {
     content: "";
     position: absolute;
     inset: 0;
@@ -65,23 +87,20 @@
     border-radius: inherit;
     pointer-events: none;
     background: linear-gradient(130deg,
-      rgba(255, 255, 255, var(--beta-rim-light)) 0%,
-      rgba(255, 250, 240, .58) 13%,
-      rgba(255, 255, 255, .09) 32%,
-      rgba(218, 214, 207, .19) 51%,
-      rgba(253, 249, 242, .58) 74%,
-      rgba(255, 255, 255, .12) 89%,
-      rgba(255, 255, 255, .62) 100%);
+      rgba(255, 255, 255, calc(var(--beta-rim-light) * var(--beta-edge))) 0%,
+      rgba(255, 250, 240, calc(.58 * var(--beta-edge))) 13%,
+      rgba(255, 255, 255, calc(.09 * var(--beta-edge))) 32%,
+      rgba(218, 214, 207, calc(.19 * var(--beta-edge))) 51%,
+      rgba(253, 249, 242, calc(.58 * var(--beta-edge))) 74%,
+      rgba(255, 255, 255, calc(.12 * var(--beta-edge))) 89%,
+      rgba(255, 255, 255, calc(.62 * var(--beta-edge))) 100%);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
   }
 }
-
-/* Only these direct material decorations are added by glass-material.js. */
-:root[data-home-glass="warm"] .page > .card > .beta-glass-sheen,
-:root[data-sheet-glass="warm"] #sheet > .beta-glass-sheen {
+:root[data-home-glass="warm"] .page > .card > .beta-glass-sheen {
   display: block;
   position: absolute;
   inset: 2px;
@@ -99,57 +118,63 @@
   height: 360px;
   border-radius: 50%;
   pointer-events: none;
-  background: radial-gradient(circle, rgba(255, 255, 255, var(--beta-glow-strength)) 0%, rgba(252, 249, 244, .035) 43%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, calc(var(--beta-glow-strength) * var(--beta-touch))) 0%, rgba(252, 249, 244, calc(.035 * var(--beta-touch))) 43%, transparent 70%);
   opacity: 0;
   transition: opacity 230ms ease;
 }
 .beta-glass-sheen > .beta-glass-point.is-lit { opacity: 1; }
-
 :root[data-sheet-glass="warm"] #sheet > :not(.beta-glass-sheen) {
   position: relative;
   z-index: 1;
 }
 
+/* Preserve the inherited dark palette and its different saturation midpoint. */
 :root[data-theme="dark"][data-home-glass="warm"] .page > .card,
 :root[data-theme="dark"][data-sheet-glass="warm"] #sheet {
+  --beta-saturation: 124%;
+  --beta-face: 28, 28, 29;
+  --beta-face-end: 28, 28, 29;
+  --beta-tone-a: 65, 63, 62;
+  --beta-tone-b: 27, 27, 29;
+  --beta-tone-c: 48, 47, 49;
   --beta-rim-light: .50;
   --beta-glow-strength: .105;
-  background:
-    radial-gradient(ellipse at 45% 44%, rgba(28, 28, 29, .26), rgba(28, 28, 29, .08) 76%, transparent),
-    linear-gradient(123deg, rgba(65, 63, 62, .35), rgba(27, 27, 29, .30) 45%, rgba(48, 47, 49, .36));
-  border-color: rgba(243, 239, 234, .23);
+  --beta-reflection:
+    radial-gradient(ellipse 72% 52% at 0% 0%, rgba(var(--beta-warm), calc(.075 * var(--beta-alpha))), transparent 80%),
+    radial-gradient(ellipse 70% 62% at 100% 100%, rgba(var(--beta-cool), calc(.08 * var(--beta-alpha))), transparent 76%),
+    linear-gradient(116deg, rgba(252, 248, 243, calc(.045 * var(--beta-edge))), transparent 32%, transparent 73%, rgba(235, 232, 230, calc(.025 * var(--beta-edge))));
+  --beta-bed:
+    radial-gradient(ellipse at 45% 44%, rgba(var(--beta-face), calc(.26 * var(--beta-alpha))), rgba(var(--beta-face-end), calc(.08 * var(--beta-alpha))) 76%, transparent),
+    linear-gradient(123deg, rgba(var(--beta-tone-a), calc(.35 * var(--beta-alpha))), rgba(var(--beta-tone-b), calc(.30 * var(--beta-alpha))) 45%, rgba(var(--beta-tone-c), calc(.36 * var(--beta-alpha))));
+  border-color: rgba(243, 239, 234, calc(.23 * var(--beta-edge)));
   box-shadow:
     0 24px 66px -14px rgba(5, 5, 6, .55),
     0 4px 14px -5px rgba(0, 0, 0, .30),
-    inset 0 1px 0 rgba(251, 247, 241, .35),
-    inset 1px 0 0 rgba(244, 240, 235, .13),
-    inset 0 -1px 0 rgba(174, 170, 166, .15),
-    inset 0 0 0 2px rgba(241, 237, 232, .028);
-  -webkit-backdrop-filter: blur(18px) saturate(124%) brightness(.88);
-  backdrop-filter: blur(18px) saturate(124%) brightness(.88);
+    inset 0 1px 0 rgba(251, 247, 241, calc(.35 * var(--beta-edge))),
+    inset 1px 0 0 rgba(244, 240, 235, calc(.13 * var(--beta-edge))),
+    inset 0 -1px 0 rgba(174, 170, 166, calc(.15 * var(--beta-edge))),
+    inset 0 0 0 2px rgba(241, 237, 232, calc(.028 * var(--beta-edge)));
+  -webkit-backdrop-filter: blur(var(--beta-blur)) saturate(var(--beta-saturation)) brightness(.88);
+  backdrop-filter: blur(var(--beta-blur)) saturate(var(--beta-saturation)) brightness(.88);
 }
 :root[data-theme="dark"][data-sheet-glass="warm"] #sheet {
-  background:
-    radial-gradient(ellipse at 45% 44%, rgba(26, 26, 28, .37), rgba(26, 26, 28, .12) 80%, transparent),
-    linear-gradient(123deg, rgba(64, 61, 60, .39), rgba(26, 26, 29, .39) 45%, rgba(46, 44, 47, .41));
-  -webkit-backdrop-filter: blur(26px) saturate(122%) brightness(.91);
-  backdrop-filter: blur(26px) saturate(122%) brightness(.91);
+  --beta-saturation: 122%;
+  --beta-face: 26, 26, 28;
+  --beta-face-end: 26, 26, 28;
+  --beta-tone-a: 64, 61, 60;
+  --beta-tone-b: 26, 26, 29;
+  --beta-tone-c: 46, 44, 47;
+  --beta-bed:
+    radial-gradient(ellipse at 45% 44%, rgba(var(--beta-face), calc(.37 * var(--beta-alpha))), rgba(var(--beta-face-end), calc(.12 * var(--beta-alpha))) 80%, transparent),
+    linear-gradient(123deg, rgba(var(--beta-tone-a), calc(.39 * var(--beta-alpha))), rgba(var(--beta-tone-b), calc(.39 * var(--beta-alpha))) 45%, rgba(var(--beta-tone-c), calc(.41 * var(--beta-alpha))));
+  -webkit-backdrop-filter: blur(var(--beta-blur)) saturate(var(--beta-saturation)) brightness(.91);
+  backdrop-filter: blur(var(--beta-blur)) saturate(var(--beta-saturation)) brightness(.91);
 }
-:root[data-theme="dark"][data-home-glass="warm"] .page > .card::before,
-:root[data-theme="dark"][data-sheet-glass="warm"] #sheet::before {
-  background:
-    radial-gradient(ellipse 72% 52% at 0% 0%, rgba(var(--beta-warm), .075), transparent 80%),
-    radial-gradient(ellipse 70% 62% at 100% 100%, rgba(var(--beta-cool), .08), transparent 76%),
-    linear-gradient(116deg, rgba(252, 248, 243, .045), transparent 32%, transparent 73%, rgba(235, 232, 230, .025));
-}
-
-/* A complete, readable fallback if the host has no backdrop-filter support. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   :root[data-home-glass="warm"] .page > .card, :root[data-sheet-glass="warm"] #sheet { background: rgba(241, 239, 235, .96); }
   :root[data-theme="dark"][data-home-glass="warm"] .page > .card,
   :root[data-theme="dark"][data-sheet-glass="warm"] #sheet { background: rgba(35, 34, 36, .97); }
 }
-
 @media (prefers-reduced-motion: reduce) {
   .beta-glass-sheen { display: none !important; }
 }

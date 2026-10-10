@@ -1666,7 +1666,7 @@
     meta.className = "about-meta";
     var version = document.createElement("p");
     version.className = "about-version";
-    version.textContent = "名片主页 v5.0.3 · 2026-10 构建";
+    version.textContent = "名片主页 v4.7.3 · 2026-10 构建";
     var build = document.createElement("p");
     build.className = "about-build";
     build.textContent = "鸿蒙 Aira 灵感台 · beta v0.7 引擎 · © 2026";
@@ -3757,16 +3757,55 @@
     syncInteractionPanel(); syncProbabilityPanel(); syncCollisionPanel(); syncPacePanel(); syncAutoDriveButton(); syncFactoryPanel();
   }
 
-  // Independent material choices use the same native storage bridge as wallpaper.
+  // Independent material choices and tuning share one versioned native preference.
   var glassLoadRevision = 0;
   var glassSaveQueue = Promise.resolve();
-  function applyGlassMaterial() {
-    root.dataset.homeGlass = state.glassMaterial.home;
-    root.dataset.sheetGlass = state.glassMaterial.sheets;
-    document.querySelectorAll("[data-glass-target]").forEach(function (button) {
-      button.disabled = !state.glassMaterialReady;
-      button.setAttribute("aria-pressed", String(state.glassMaterial[button.dataset.glassTarget] === button.dataset.glassValue));
+  var GLASS_PARAMETERS = [
+    ["transparency", "通透度", "调节玻璃本身的遮罩感"],
+    ["blur", "玻璃柔焦", "调节透过玻璃的背景轮廓"],
+    ["warmth", "暖意", "从中性清白到温暖的杏色受光"],
+    ["edge", "边缘光泽", "调节亮边与厚度感"],
+    ["color", "环境色彩", "调节透过玻璃的背景颜色浓度"],
+    ["touch", "触光强度", "调节接触时的反光，零为关闭"]
+  ];
+  function glassTuning(value) {
+    var result = {};
+    GLASS_PARAMETERS.forEach(function (parameter) {
+      var n = value && value[parameter[0]];
+      result[parameter[0]] = typeof n === "number" && isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : 50;
     });
+    return result;
+  }
+  function normalizeGlassMaterial(saved) {
+    saved = saved && typeof saved === "object" ? saved : {};
+    var tuning = saved.tuning || {};
+    return { version: 2, home: saved.home === "classic" ? "classic" : "warm", sheets: saved.sheets === "classic" ? "classic" : "warm",
+      tuning: { home: glassTuning(tuning.home), sheets: glassTuning(tuning.sheets) } };
+  }
+  function applyGlassMaterial() {
+    var settings = state.glassMaterial;
+    if (!settings.tuning) settings = state.glassMaterial = normalizeGlassMaterial(settings);
+    root.dataset.homeGlass = settings.home;
+    root.dataset.sheetGlass = settings.sheets;
+    if (window.AiraGlassMaterial) window.AiraGlassMaterial.apply(settings.tuning);
+    document.querySelectorAll("button[data-glass-target]").forEach(function (button) {
+      button.disabled = !state.glassMaterialReady;
+      button.setAttribute("aria-pressed", String(settings[button.dataset.glassTarget] === button.dataset.glassValue));
+    });
+    document.querySelectorAll("[data-glass-tuning]").forEach(function (group) { group.hidden = settings[group.dataset.glassTuning] !== "warm"; });
+    document.querySelectorAll("input[data-glass-tune]").forEach(function (input) {
+      var value = settings.tuning[input.dataset.glassOwner][input.dataset.glassTune];
+      input.disabled = !state.glassMaterialReady;
+      input.value = String(value);
+      input.setAttribute("aria-valuetext", value + " / 100");
+      input.nextElementSibling.value = String(value);
+    });
+    document.querySelectorAll(".glass-reset").forEach(function (button) { button.disabled = !state.glassMaterialReady; });
+  }
+  function saveGlassMaterial() {
+    var saved = normalizeGlassMaterial(state.glassMaterial);
+    glassSaveQueue = glassSaveQueue.then(function () { return storageSet("glassMaterial", saved); })
+      .catch(function () { toast("材质已预览，保存未成功，请稍后重试"); });
   }
   function loadGlassMaterial() {
     var revision = ++glassLoadRevision;
@@ -3774,8 +3813,7 @@
     applyGlassMaterial();
     return storageGet("glassMaterial", null).then(function (saved) {
       if (revision !== glassLoadRevision) return;
-      saved = saved && typeof saved === "object" ? saved : {};
-      state.glassMaterial = { version: 1, home: saved.home === "classic" ? "classic" : "warm", sheets: saved.sheets === "classic" ? "classic" : "warm" };
+      state.glassMaterial = normalizeGlassMaterial(saved);
       state.glassMaterialReady = true;
       applyGlassMaterial();
     }).catch(function () { if (revision === glassLoadRevision) { state.glassMaterialReady = true; applyGlassMaterial(); } });
@@ -3790,6 +3828,8 @@
     var capsule = document.createElement("div");
     capsule.className = "interaction-toolbar glass-material-settings";
     [["home", "主页主面板"], ["sheets", "进阶弹出窗口"]].forEach(function (target) {
+      var block = document.createElement("div");
+      block.className = "glass-target-block";
       var row = document.createElement("div");
       row.className = "glass-material-row";
       row.setAttribute("role", "group");
@@ -3808,17 +3848,61 @@
         button.disabled = !state.glassMaterialReady;
         button.setAttribute("aria-pressed", String(state.glassMaterial[target[0]] === choice[0]));
         button.addEventListener("click", function () {
-          if (state.glassMaterial[target[0]] === choice[0]) return;
           ++glassLoadRevision;
           state.glassMaterial[target[0]] = choice[0];
           applyGlassMaterial();
-          var saved = { version: 1, home: state.glassMaterial.home, sheets: state.glassMaterial.sheets };
-          glassSaveQueue = glassSaveQueue.then(function () { return storageSet("glassMaterial", saved); })
-            .catch(function () { toast("材质已预览，保存未成功，请稍后重试"); });
+          saveGlassMaterial();
         });
         row.appendChild(button);
       });
-      capsule.appendChild(row);
+      block.appendChild(row);
+      var tuning = document.createElement("div");
+      tuning.className = "glass-tuning";
+      tuning.dataset.glassTuning = target[0];
+      tuning.hidden = state.glassMaterial[target[0]] !== "warm";
+      var more = document.createElement("details");
+      more.className = "glass-more";
+      var summary = document.createElement("summary");
+      summary.textContent = "更多调节";
+      more.appendChild(summary);
+      GLASS_PARAMETERS.forEach(function (parameter, index) {
+        var line = document.createElement("label");
+        line.className = "glass-tune-row";
+        var name = document.createElement("span");
+        name.textContent = parameter[1];
+        name.title = parameter[2];
+        var input = document.createElement("input");
+        input.type = "range"; input.min = "0"; input.max = "100"; input.step = "1";
+        input.className = "wp-range glass-tune-range";
+        input.dataset.glassOwner = target[0]; input.dataset.glassTune = parameter[0];
+        input.setAttribute("aria-label", target[1] + " · " + parameter[1]);
+        input.disabled = !state.glassMaterialReady;
+        var output = document.createElement("output");
+        input.value = String(state.glassMaterial.tuning[target[0]][parameter[0]]);
+        output.value = input.value;
+        input.addEventListener("input", function () {
+          ++glassLoadRevision;
+          state.glassMaterial.tuning[target[0]][parameter[0]] = Number(input.value);
+          applyGlassMaterial();
+        });
+        input.addEventListener("change", saveGlassMaterial);
+        line.appendChild(name); line.appendChild(input); line.appendChild(output);
+        (index < 3 ? tuning : more).appendChild(line);
+      });
+      tuning.appendChild(more);
+      var footer = document.createElement("div");
+      footer.className = "glass-tuning-footer";
+      var reset = document.createElement("button");
+      reset.type = "button"; reset.className = "glass-reset"; reset.textContent = "恢复推荐值";
+      reset.setAttribute("aria-label", "恢复" + target[1] + "推荐值");
+      reset.disabled = !state.glassMaterialReady;
+      reset.addEventListener("click", function () {
+        ++glassLoadRevision;
+        state.glassMaterial.tuning[target[0]] = glassTuning(null);
+        applyGlassMaterial(); saveGlassMaterial();
+      });
+      footer.appendChild(reset); tuning.appendChild(footer);
+      block.appendChild(tuning); capsule.appendChild(block);
     });
     section.appendChild(capsule);
     return section;
