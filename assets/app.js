@@ -78,6 +78,7 @@
     signs: [],
     wallpaper: "dark",
     wallpaperBlur: {},
+    wallpaperBrightness: {},
     glassMaterial: { version: 1, home: "warm", sheets: "warm" },
     glassMaterialReady: false,
     wallpaperRolled: "",
@@ -1717,11 +1718,12 @@
   var EXPORT_BIG_CHARS = 64 * 1024;   // 单次复制开始提示静默截断风险的体量
   var EXPORT_STORE_WAIT = 1600;       // 两个引擎就绪的等待上限，超时只降级，不失败
 
-  var EXPORT_KEYS = ["profile", "icons", "folds", "wallpaper", "wallpaperBlur", "glassMaterial", "wallpaperProbability",
+  var EXPORT_KEYS = ["profile", "icons", "folds", "wallpaper", "wallpaperBlur", "wallpaperBrightness", "glassMaterial", "wallpaperProbability",
     "probabilityDefaults", "interactionSettings", "collisionSettings", "motionSettings", "autoDriveSettings",
     "uiPrefs", "logs", "signs", "logsBundleVersion", "signsBundleVersion"];
   var EXPORT_LABELS = {
-    profile: "名片", icons: "图标偏好", folds: "折叠状态", wallpaper: "壁纸模式", wallpaperBlur: "壁纸模糊", glassMaterial: "玻璃材质",
+    profile: "名片", icons: "图标偏好", folds: "折叠状态", wallpaper: "壁纸模式", wallpaperBlur: "壁纸模糊",
+    wallpaperBrightness: "壁纸亮度", glassMaterial: "玻璃材质",
     wallpaperProbability: "明暗比例", probabilityDefaults: "比例默认值", interactionSettings: "浮光数量",
     collisionSettings: "碰撞力度", motionSettings: "自然 pace", autoDriveSettings: "自动驾驶", uiPrefs: "编号徽章",
     logs: "日志", signs: "签名历史", logsBundleVersion: "日志版本", signsBundleVersion: "签名版本"
@@ -2740,6 +2742,13 @@
   var WP_BLUR_RATIO = 1.2;
   var WP_THUMB_SCALE = 0.25;
 
+  var WP_BRIGHT_MIN = 50;
+  var WP_BRIGHT_MAX = 100;
+  /* 资源里已经烙进去的亮度：Dark 出厂压暗到 86%。滑轨以未压暗的原图亮度为 100 基准，
+     出厂值即烙入值（换算回滤镜系数为 1）。 */
+  var WP_BRIGHT_BAKED = { light: 100, dark: 86 };
+  var WP_BRIGHT_DEFAULT = WP_BRIGHT_BAKED;
+
   var WP_MODES = ["dark", "light", "random"];
   var interactionController = null;
   var autoDriveUI = { state: null, hideTimer: 0, fadeTimer: 0, pointerDown: false, keyboardFocus: false };
@@ -2962,6 +2971,16 @@
     return Math.round(wpBlurPercent(side) * WP_BLUR_RATIO * 10) / 10;
   }
 
+  function wpBrightPercent(side) {
+    var value = state.wallpaperBrightness[side];
+    if (typeof value !== "number") return WP_BRIGHT_DEFAULT[side];
+    return Math.min(WP_BRIGHT_MAX, Math.max(WP_BRIGHT_MIN, value));
+  }
+
+  function wpBrightFactor(side) {
+    return String(Math.round(wpBrightPercent(side) / WP_BRIGHT_BAKED[side] * 1000) / 1000);
+  }
+
   function applyWallpaper() {
     var side = wpSide();
     var url = 'url("' + WALLPAPERS[side].src + '")';
@@ -2973,6 +2992,11 @@
     }
     try {
       document.documentElement.style.setProperty("--wp-blur", wpBlurPx(side) + "px");
+    } catch (error) {
+      /* 忽略 */
+    }
+    try {
+      document.documentElement.style.setProperty("--wp-bright", wpBrightFactor(side));
     } catch (error) {
       /* 忽略 */
     }
@@ -2992,6 +3016,7 @@
   function saveWallpaper() {
     storageSet("wallpaper", state.wallpaper).catch(function () {});
     storageSet("wallpaperBlur", state.wallpaperBlur).catch(function () {});
+    storageSet("wallpaperBrightness", state.wallpaperBrightness).catch(function () {});
   }
 
   function loadWallpaper() {
@@ -3005,12 +3030,14 @@
       storageGet("wallpaper", null),
       storageGet("wallpaperBlur", null),
       storageGet("wallpaperProbability", null),
-      readInteractionSetting("interactionSettings").catch(function () { state.interactionReadError = true; return null; })
+      readInteractionSetting("interactionSettings").catch(function () { state.interactionReadError = true; return null; }),
+      storageGet("wallpaperBrightness", null)
     ]).then(function (settings) {
       if (revision !== wallpaperLoadRevision) return;
       var saved = settings[0];
       var savedBlur = settings[1];
       var savedProbability = settings[2];
+      var savedBright = settings[4];
       state.interactionDefaultCount = interactionCountValue(settings[3] && settings[3].defaultCount);
       state.interactionCount = state.interactionDefaultCount;
       if (interactionController) interactionController.setCount(state.interactionCount);
@@ -3028,6 +3055,11 @@
       if (savedBlur && typeof savedBlur === "object") {
         ["light", "dark"].forEach(function (side) {
           if (typeof savedBlur[side] === "number") state.wallpaperBlur[side] = savedBlur[side];
+        });
+      }
+      if (savedBright && typeof savedBright === "object") {
+        ["light", "dark"].forEach(function (side) {
+          if (typeof savedBright[side] === "number") state.wallpaperBrightness[side] = savedBright[side];
         });
       }
       // 一次性迁移：Light 的旧默认 5% → 新默认 4%
@@ -3951,6 +3983,23 @@
     blurRow.appendChild(range);
     blurRow.appendChild(value);
 
+    var brightRow = document.createElement("div");
+    brightRow.className = "wp-brightrow";
+    var brightLabel = document.createElement("span");
+    brightLabel.className = "wp-label";
+    brightLabel.textContent = "亮度";
+    var brightRange = document.createElement("input");
+    brightRange.type = "range";
+    brightRange.className = "wp-range";
+    brightRange.min = String(WP_BRIGHT_MIN);
+    brightRange.max = String(WP_BRIGHT_MAX);
+    brightRange.step = "1";
+    var brightValue = document.createElement("span");
+    brightValue.className = "wp-value";
+    brightRow.appendChild(brightLabel);
+    brightRow.appendChild(brightRange);
+    brightRow.appendChild(brightValue);
+
     var modeNote = document.createElement("p");
     modeNote.className = "wp-mode-note";
 
@@ -3972,6 +4021,7 @@
     body.appendChild(modeNote);
     body.appendChild(picks);
     body.appendChild(blurRow);
+    body.appendChild(brightRow);
     body.appendChild(buildGlassMaterialSettings());
 
     var thumbs = {};
@@ -3979,7 +4029,7 @@
     function paintThumbs() {
       ["light", "dark"].forEach(function (side) {
         var node = thumbs[side];
-        if (node) node.style.filter = "blur(" + (wpBlurPercent(side) * WP_BLUR_RATIO * WP_THUMB_SCALE).toFixed(2) + "px)";
+        if (node) node.style.filter = "blur(" + (wpBlurPercent(side) * WP_BLUR_RATIO * WP_THUMB_SCALE).toFixed(2) + "px) brightness(" + wpBrightFactor(side) + ")";
       });
     }
 
@@ -4004,6 +4054,7 @@
       saveWallpaper();
       refresh();
       syncBlur();
+      syncBright();
       syncRandom();
     });
 
@@ -4011,6 +4062,12 @@
       var percent = wpBlurPercent(wpSide());
       range.value = String(percent);
       value.textContent = percent + "%";
+    }
+
+    function syncBright() {
+      var percent = wpBrightPercent(wpSide());
+      brightRange.value = String(percent);
+      brightValue.textContent = percent + "%";
     }
 
     function refresh() {
@@ -4042,6 +4099,7 @@
           saveWallpaper();
           refresh();
           syncBlur();
+          syncBright();
         });
         picks.appendChild(card);
       });
@@ -4059,6 +4117,14 @@
     });
     range.addEventListener("change", saveWallpaper);
 
+    brightRange.addEventListener("input", function () {
+      state.wallpaperBrightness[wpSide()] = Number(brightRange.value) || WP_BRIGHT_DEFAULT[wpSide()];
+      brightValue.textContent = state.wallpaperBrightness[wpSide()] + "%";
+      applyWallpaper();
+      paintThumbs();
+    });
+    brightRange.addEventListener("change", saveWallpaper);
+
     openSheet({
       title: "壁纸",
       content: body,
@@ -4068,6 +4134,7 @@
     });
     refresh();
     syncBlur();
+    syncBright();
     syncRandom();
     applyGlassMaterial();
   }
