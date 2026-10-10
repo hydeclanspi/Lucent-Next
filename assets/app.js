@@ -1895,7 +1895,7 @@
         kind: "backup",
         exportedAt: new Date().toISOString(),
         timezoneOffsetMinutes: -new Date().getTimezoneOffset(),
-        homepage: { id: "com.example.aira-profile-card", version: "4.3.0" },
+        homepage: { id: "com.example.aira-profile-card", version: "4.7.3" },
         summary: {
           keys: Object.keys(keys).length,
           logs: Array.isArray(keys.logs) ? keys.logs.length : 0,
@@ -3798,6 +3798,7 @@
       input.disabled = !state.glassMaterialReady;
       input.value = String(value);
       input.setAttribute("aria-valuetext", value + " / 100");
+      input.style.setProperty("--tune-p", value + "%");
       input.nextElementSibling.value = String(value);
     });
     document.querySelectorAll(".glass-reset").forEach(function (button) { button.disabled = !state.glassMaterialReady; });
@@ -4069,6 +4070,7 @@
     refresh();
     syncBlur();
     syncRandom();
+    applyGlassMaterial();
   }
 
   function bindInteractionLauncher() {

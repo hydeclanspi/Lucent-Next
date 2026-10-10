@@ -13,6 +13,49 @@
 .glass-tune-row { display: grid; grid-template-columns: 82px minmax(0, 1fr) 30px; align-items: center; gap: 16px; min-height: 44px; color: var(--ink-2); font-size: 12px; }
 .glass-tune-row output { text-align: right; font-variant-numeric: tabular-nums; font-size: 11px; }
 .glass-tune-range { width: 100%; min-width: 0; margin: 0; }
+/* 六条材质滑轨不再复用「柔焦」那条白轨：2px 浅蓝细线 + 2.5×14 竖脊记号，
+   行程左侧填充，50 处一枚细刻记表示推荐值。--tune-p 由 applyGlassMaterial 同步。 */
+.glass-tune-range {
+  --tune-rail: rgba(122, 158, 190, .21);
+  --tune-fill: rgba(110, 152, 190, .86);
+  --tune-thumb: #6B9AC1;
+  --tune-tick: rgba(104, 146, 186, .58);
+  --tune-ring: rgba(104, 150, 196, .40);
+  height: 30px;
+  background-image: linear-gradient(90deg, transparent calc(50% - .7px), var(--tune-tick) calc(50% - .7px) calc(50% + .7px), transparent calc(50% + .7px));
+  background-size: 100% 10px;
+  background-position: 50% 50%;
+  background-repeat: no-repeat;
+}
+:root[data-theme="dark"] .glass-tune-range {
+  --tune-rail: rgba(150, 190, 222, .17);
+  --tune-fill: rgba(170, 206, 236, .80);
+  --tune-thumb: #8FB8DC;
+  --tune-tick: rgba(176, 210, 238, .52);
+  --tune-ring: rgba(170, 208, 240, .42);
+}
+.glass-tune-range::-webkit-slider-runnable-track {
+  height: 2px;
+  border: 0;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--tune-fill) 0 var(--tune-p, 50%), var(--tune-rail) var(--tune-p, 50%));
+  box-shadow: none;
+}
+.glass-tune-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 2.5px; height: 14px;
+  margin-top: -6px;
+  border: 0; border-radius: 1.5px;
+  background: var(--tune-thumb);
+  box-shadow: none;
+}
+:root[data-theme="dark"] .glass-tune-range::-webkit-slider-thumb { background: var(--tune-thumb); }
+/* 键盘聚焦：去掉浏览器套在整个输入框上的默认方框，改成记号自己长大一圈加光晕 */
+.glass-tune-range:focus-visible { outline: none; }
+.glass-tune-range:focus-visible::-webkit-slider-thumb {
+  height: 16px; margin-top: -7px;
+  box-shadow: 0 0 0 4px var(--tune-ring);
+}
 .glass-more { margin-top: 4px; }
 .glass-more summary { cursor: pointer; padding: 11px 0; color: var(--ink-2); font-size: 12px; }
 .glass-more[open] summary { margin-bottom: 5px; }
