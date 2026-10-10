@@ -840,11 +840,15 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   height: 42px;
   padding: 0 15px;
   border-radius: 13px;
-  background: var(--glass);
-  border: 1px solid var(--glass-line);
-  box-shadow: inset 0 1px 0 var(--glass-top);
-  backdrop-filter: var(--blur-sm);
-  -webkit-backdrop-filter: var(--blur-sm);
+  background:
+    radial-gradient(ellipse at 10% 0%, rgba(255, 244, 225, .18), transparent 65%),
+    linear-gradient(120deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, .035) 48%, rgba(252, 247, 240, .09));
+  border: 1px solid rgba(255, 251, 244, .38);
+  border-top-color: rgba(255, 255, 255, .68);
+  border-bottom-color: rgba(230, 224, 214, .24);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .48), inset 0 -1px 0 rgba(83, 76, 65, .09), 0 2px 5px rgba(28, 24, 20, .045);
+  backdrop-filter: blur(6px) saturate(112%);
+  -webkit-backdrop-filter: blur(6px) saturate(112%);
   font-size: 13px;
   letter-spacing: 0.3px;
   color: var(--ink-2);
@@ -859,18 +863,20 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: var(--glass-3);
-  border: 1px solid var(--glass-line);
+  background: rgba(255, 252, 247, .12);
+  border: 1px solid rgba(255, 255, 255, .26);
   font-size: 12px;
   font-weight: 650;
   color: var(--ink-3);
 }
 .chip .ci img { width: 100%; height: 100%; object-fit: cover; }
 .chip.active {
-  background: var(--glass-2);
-  border-color: rgba(232, 69, 42, 0.5);
+  background:
+    radial-gradient(ellipse at 10% 0%, rgba(255, 240, 215, .22), transparent 65%),
+    linear-gradient(120deg, rgba(255, 255, 255, .19), rgba(255, 255, 255, .055) 48%, rgba(252, 247, 240, .12));
+  border-color: rgba(232, 69, 42, .48);
   color: var(--ink);
-  box-shadow: inset 0 0 0 1px rgba(232, 69, 42, 0.22), inset 0 1px 0 var(--glass-top);
+  box-shadow: inset 0 0 0 1px rgba(232, 69, 42, .10), inset 0 1px 0 rgba(255, 255, 255, .64), inset 0 -1px 0 rgba(83, 76, 65, .08), 0 2px 6px rgba(28, 24, 20, .05);
 }
 
 /* 快捷方式网格 */
