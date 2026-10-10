@@ -57,7 +57,7 @@
   box-shadow: 0 0 0 4px var(--tune-ring);
 }
 .glass-more { margin-top: 4px; }
-.glass-more summary { cursor: pointer; padding: 8px 0 11px; color: var(--ink-2); font-size: 12px; }
+.glass-more summary { cursor: pointer; padding: 5.5px 0 11px; color: var(--ink-2); font-size: 12px; }
 .glass-more[open] summary { margin-bottom: 5px; }
 .glass-more-advanced { margin: 4px 0 1px; padding-left: 13px; }
 .glass-more-advanced[open] { padding-bottom: 3px; }
