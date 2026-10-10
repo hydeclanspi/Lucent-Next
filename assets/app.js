@@ -3829,7 +3829,7 @@
     section.appendChild(title);
     var capsule = document.createElement("div");
     capsule.className = "interaction-toolbar glass-material-settings";
-    [["home", "主页主面板"], ["sheets", "进阶弹出窗口"]].forEach(function (target) {
+    [["home", "主页主面板", "进阶调节", "高级调节"], ["sheets", "进阶弹出窗口", "更多调节", "进阶调节"]].forEach(function (target) {
       var block = document.createElement("div");
       block.className = "glass-target-block";
       var row = document.createElement("div");
@@ -3865,15 +3865,18 @@
       var more = document.createElement("details");
       more.className = "glass-more";
       var summary = document.createElement("summary");
-      summary.textContent = "更多调节";
+      summary.textContent = target[2];
       more.appendChild(summary);
       var advanced = document.createElement("details");
       advanced.className = "glass-more glass-more-advanced";
       var advancedSummary = document.createElement("summary");
-      advancedSummary.textContent = "进阶调节";
+      advancedSummary.textContent = target[3];
       advanced.appendChild(advancedSummary);
       var footer = document.createElement("div");
       footer.className = "glass-tuning-footer";
+      // 收起时只留一行标题，页脚跟着 details 一起进出；展开后与原来一致。
+      footer.hidden = true;
+      more.addEventListener("toggle", function () { footer.hidden = !more.open; });
       var save = document.createElement("button");
       save.type = "button"; save.className = "glass-reset glass-save"; save.textContent = "保存定制设计";
       save.hidden = true;
