@@ -268,7 +268,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 :root[data-theme="dark"] .wp-toggle.yang .wp-g1 { stop-color: #4E5C74; }
 :root[data-theme="dark"] .wp-toggle.yang .wp-g2 { stop-color: #E8EEF8; }
 
-/* 壁纸层：位于壁纸之上、内容之下；模糊只作用于这一层，不会糊到界面 */
+/* 壁纸层：位于壁纸之上、内容之下；模糊与亮度只作用于这一层，不会糊到界面 */
 .wp-img {
   position: fixed;
   inset: -26px;
@@ -277,8 +277,8 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   background-position: center center;
   background-size: cover;
   background-repeat: no-repeat;
-  filter: blur(var(--wp-blur, 0px));
-  -webkit-filter: blur(var(--wp-blur, 0px));
+  filter: blur(var(--wp-blur, 0px)) brightness(var(--wp-bright, 1));
+  -webkit-filter: blur(var(--wp-blur, 0px)) brightness(var(--wp-bright, 1));
 }
 
 /* 壁纸面板 */
@@ -382,20 +382,25 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   background: #43D17C;
 }
 
-.wp-blurrow {
+.wp-blurrow,
+.wp-brightrow {
   display: flex;
   align-items: center;
   gap: 16px;
   margin-top: 28px;
   padding: 0 4px;
 }
-.wp-blurrow .wp-label {
+/* 亮度与柔焦成对：两条轨道贴成一组，组内留白比组间更紧 */
+.wp-brightrow { margin-top: 18px; }
+.wp-blurrow .wp-label,
+.wp-brightrow .wp-label {
   flex: none;
   font-size: 11.5px;
   letter-spacing: 1.4px;
   color: var(--ink-3);
 }
-.wp-blurrow .wp-value {
+.wp-blurrow .wp-value,
+.wp-brightrow .wp-value {
   flex: none;
   min-width: 40px;
   text-align: right;
