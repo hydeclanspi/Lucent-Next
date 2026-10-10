@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "5.0.3",
+  "version": "4.7.3",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "暖光液态清璃与经典磨砂玻璃可独立应用于主页主面板、进阶弹出窗口。长按「切换」在壁纸窗口设置，自动保存；保留原有交互、统计与备份功能。"
+  "description": "经典磨砂与暖光液态清璃分别应用于主页和进阶弹窗，支持独立调节通透度、玻璃柔焦、暖意、边缘光泽、环境色彩、触光强度及恢复推荐值；修正弹窗滚动时的装饰边框。"
 }

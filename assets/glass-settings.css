@@ -3,13 +3,26 @@
 .glass-material-title { margin: 0 0 12px 4px; font-size: 12px; color: var(--ink-2); letter-spacing: .8px; }
 .interaction-toolbar.glass-material-settings { grid-template-columns: minmax(0, 1fr); margin: 0; padding: 5px; }
 .glass-material-row { display: grid; grid-template-columns: minmax(108px, .85fr) repeat(2, minmax(0, 1fr)); align-items: center; gap: 4px; padding: 3px; }
-.glass-material-row + .glass-material-row { border-top: 1px solid var(--utility-rule); margin-top: 4px; padding-top: 7px; }
+.glass-target-block + .glass-target-block { border-top: 1px solid var(--utility-rule); margin-top: 8px; padding-top: 8px; }
 .glass-material-label { color: var(--utility-ink); font-size: 12px; padding: 0 12px; }
 .glass-material-choice { min-height: 42px; padding: 8px 9px; font-size: 12px; letter-spacing: 0; }
 .glass-material-choice[aria-pressed="true"] { color: var(--ink); background: rgba(255, 250, 242, .43); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .58), 0 2px 6px rgba(69, 49, 30, .045); }
 .glass-material-choice:disabled { opacity: .55; }
+.glass-tuning { padding: 12px 14px 4px; }
+.glass-tuning[hidden] { display: none; }
+.glass-tune-row { display: grid; grid-template-columns: 82px minmax(0, 1fr) 30px; align-items: center; gap: 16px; min-height: 44px; color: var(--ink-2); font-size: 12px; }
+.glass-tune-row output { text-align: right; font-variant-numeric: tabular-nums; font-size: 11px; }
+.glass-tune-range { width: 100%; min-width: 0; margin: 0; }
+.glass-more { margin-top: 5px; }
+.glass-more summary { cursor: pointer; padding: 10px 0; color: var(--ink-2); font-size: 12px; }
+.glass-more[open] summary { margin-bottom: 4px; }
+.glass-tuning-footer { display: flex; justify-content: flex-end; padding: 3px 0 6px; }
+.glass-reset { border: 0; background: transparent; color: var(--ink-2); padding: 8px 0 8px 12px; font: inherit; font-size: 11px; cursor: pointer; }
+.glass-reset:focus-visible, .glass-more summary:focus-visible { outline: 2px solid var(--ink-2); outline-offset: 3px; border-radius: 5px; }
 @media (max-width: 520px) {
   .glass-material-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .glass-material-label { grid-column: 1 / -1; padding: 7px 9px 3px; }
   .glass-material-choice { white-space: normal; }
+  .glass-tuning { padding-inline: 10px; }
+  .glass-tune-row { grid-template-columns: 68px minmax(0, 1fr) 26px; gap: 10px; }
 }
