@@ -63,9 +63,6 @@
 .glass-more-advanced[open] { padding-bottom: 3px; }
 .glass-tuning-footer { display: flex; justify-content: flex-end; align-items: center; gap: 22px; padding: 4px 0 7px; }
 .glass-reset { border: 0; background: transparent; color: var(--ink-2); padding: 8px 0; font: inherit; font-size: 11px; cursor: pointer; }
-.glass-save { animation: glass-save-in .3s ease; }
-@keyframes glass-save-in { from { opacity: 0; transform: translateX(6px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .glass-save { animation: none; } }
 .glass-reset:focus-visible, .glass-more summary:focus-visible { outline: 2px solid var(--ink-2); outline-offset: 3px; border-radius: 5px; }
 @media (max-width: 520px) {
   .glass-material-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }

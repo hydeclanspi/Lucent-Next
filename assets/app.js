@@ -3879,11 +3879,9 @@
       more.addEventListener("toggle", function () { footer.hidden = !more.open; });
       var save = document.createElement("button");
       save.type = "button"; save.className = "glass-reset glass-save"; save.textContent = "保存定制设计";
-      save.hidden = true;
       save.disabled = !state.glassMaterialReady;
       save.setAttribute("aria-label", "保存" + target[1] + "定制设计");
       save.addEventListener("click", function () {
-        save.hidden = true;
         saveGlassMaterial().then(function (ok) { if (ok) toast("定制设计已保存"); });
       });
       var reset = document.createElement("button");
@@ -3893,7 +3891,6 @@
       reset.addEventListener("click", function () {
         ++glassLoadRevision;
         state.glassMaterial.tuning[target[0]] = glassTuning(null);
-        save.hidden = true;
         applyGlassMaterial(); saveGlassMaterial();
       });
       footer.appendChild(save); footer.appendChild(reset);
@@ -3915,7 +3912,6 @@
         input.addEventListener("input", function () {
           ++glassLoadRevision;
           state.glassMaterial.tuning[target[0]][parameter[0]] = Number(input.value);
-          save.hidden = false;
           applyGlassMaterial();
         });
         input.addEventListener("change", saveGlassMaterial);
