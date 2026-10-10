@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "id": "com.example.aira-profile-card.beta",
-  "name": "名片 · v5.0 beta",
-  "version": "5.0.0-beta.1",
+  "id": "com.example.aira-profile-card.beta.warm",
+  "name": "名片 · v5.0 beta 暖光",
+  "version": "5.0.0-beta.2",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "v5.0 beta 液态玻璃试验。仅调整主页主搜索大面板与「代号：交互」面板的玻璃材质及局部光感；独立安装身份，保留正式版。"
+  "description": "v5.0 beta.2 暖光清玻璃实验。仅调整主页主搜索大面板与「代号：交互」面板的材质配色，保留 beta.1 的透明度、模糊与交互。独立安装身份，可与正式版和 beta.1 并存。"
 }
