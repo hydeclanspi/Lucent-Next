@@ -55,7 +55,7 @@
     sort: "M7 4v16m0 0-3-3m3 3 3-3M17 20V4m0 0-3 3m3-3 3 3",
     plus: "M12 5v14M5 12h14",
     refresh: "M20 12a8 8 0 1 1-2.4-5.7M20 4v4.6h-4.6",
-    crop: "M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5",
+    spark: "M12 2Q13.2 9.9 22 12Q13.2 14.1 12 22Q10.8 14.1 2 12Q10.8 9.9 12 2Z",
     star: "M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.7L12 16.6l-5.1 2.7 1-5.7-4.1-4 5.7-.8z",
     sun: "M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6zM12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M5.5 18.5l1.6-1.6M16.9 7.1l1.6-1.6",
     moon: "M20 14.6A8.6 8.6 0 0 1 9.4 4a8.6 8.6 0 1 0 10.6 10.6z",
@@ -1899,7 +1899,7 @@
         kind: "backup",
         exportedAt: new Date().toISOString(),
         timezoneOffsetMinutes: -new Date().getTimezoneOffset(),
-        homepage: { id: "com.example.aira-profile-card", version: "4.7.3" },
+        homepage: { id: "com.example.aira-profile-card", version: "4.7.4" },
         summary: {
           keys: Object.keys(keys).length,
           logs: Array.isArray(keys.logs) ? keys.logs.length : 0,
@@ -2732,18 +2732,21 @@
     });
   }
 
-  /* ---------- 壁纸（Light / Dark + 柔焦 + 亮度 + Dark 取景） ---------- */
+  /* ---------- 壁纸（Light / Dark + 柔焦 + 亮度 + 取景） ---------- */
 
   var WALLPAPERS = {
     light: { src: "./assets/wallpaper-yang.jpg", thumb: "./assets/wallpaper-yang.jpg", label: "Light", note: "伦敦夜景" },
     dark: { src: "./assets/wallpaper.jpg", thumb: "./assets/wp-thumb-dark.jpg", label: "Dark", note: "日漫黄昏" }
   };
 
-  /* Dark 的取景原图：比出厂窗口更大，供用户拖动取景框重新裁切 */
-  var WP_DARK_SOURCE = "./assets/wallpaper-dark-source.jpg";
-  var WP_SOURCE_SIZE = { w: 4096, h: 2048 };
-  var WP_DEFAULT_WINDOW = { x: 382, y: 0, w: 3072, h: 2048 };
+  /* 取景原图：两套壁纸各自的“原图”和出厂取景窗口。Dark 的原图比出厂窗口更大；
+     Light 的原图就是壁纸本身。用户可在上面拖动取景框重新裁切。 */
+  var WP_SOURCES = {
+    light: { src: "./assets/wallpaper-yang.jpg", size: { w: 3120, h: 2080 }, window: { x: 0, y: 0, w: 3120, h: 2080 } },
+    dark: { src: "./assets/wallpaper-dark-source.jpg", size: { w: 4096, h: 2048 }, window: { x: 382, y: 0, w: 3072, h: 2048 } }
+  };
   var WP_CROP_SETTLE = 200;
+  var WP_CROP_ANIM = 260;
 
   var WP_BLUR_DEFAULT = { light: 4, dark: 0 };
   var WP_BLUR_MAX = 20;
@@ -2988,22 +2991,27 @@
     return String(Math.round(wpBrightPercent(side) / WP_BRIGHT_BAKED[side] * 1000) / 1000);
   }
 
-  function normalizeCrop(value) {
+  function wpSource(side) {
+    return WP_SOURCES[side] || WP_SOURCES.dark;
+  }
+
+  function normalizeCrop(side, value) {
+    var bounds = wpSource(side).size;
     if (!value || typeof value !== "object") return null;
     var x = Number(value.x), y = Number(value.y), w = Number(value.w), h = Number(value.h);
     if (!isFinite(x) || !isFinite(y) || !isFinite(w) || !isFinite(h) || w < 8 || h < 8) return null;
-    w = Math.min(w, WP_SOURCE_SIZE.w);
-    h = Math.min(h, WP_SOURCE_SIZE.h);
+    w = Math.min(w, bounds.w);
+    h = Math.min(h, bounds.h);
     return {
-      x: Math.round(Math.min(Math.max(x, 0), WP_SOURCE_SIZE.w - w)),
-      y: Math.round(Math.min(Math.max(y, 0), WP_SOURCE_SIZE.h - h)),
+      x: Math.round(Math.min(Math.max(x, 0), bounds.w - w)),
+      y: Math.round(Math.min(Math.max(y, 0), bounds.h - h)),
       w: Math.round(w),
       h: Math.round(h)
     };
   }
 
   function wpCrop(side) {
-    return side === "dark" ? normalizeCrop(state.wallpaperCrop && state.wallpaperCrop.dark) : null;
+    return normalizeCrop(side, state.wallpaperCrop && state.wallpaperCrop[side]);
   }
 
   /* 取景窗口在当前屏幕比例下实际可见的部分（取窗口内最大的同比例子矩形） */
@@ -3017,22 +3025,22 @@
   }
 
   /* 把取景区域铺满某个显示盒的 background 几何（像素值，居中、cover） */
-  function wpLayerBox(region, boxW, boxH) {
+  function wpLayerBox(region, boxW, boxH, source) {
     var scale = Math.max(boxW / region.w, boxH / region.h);
     return {
-      size: (WP_SOURCE_SIZE.w * scale).toFixed(1) + "px " + (WP_SOURCE_SIZE.h * scale).toFixed(1) + "px",
+      size: (source.w * scale).toFixed(1) + "px " + (source.h * scale).toFixed(1) + "px",
       position: (boxW / 2 - (region.x + region.w / 2) * scale).toFixed(1) + "px " +
         (boxH / 2 - (region.y + region.h / 2) * scale).toFixed(1) + "px"
     };
   }
 
   /* 同一取景区域铺进固定比例盒子（长宽都写成百分比，与盒子实际像素无关） */
-  function wpThumbGeometry(region, aspect) {
+  function wpThumbGeometry(region, aspect, source) {
     var k1 = Math.max(1 / region.w, 1 / (aspect * region.h));
     var k2 = Math.max(aspect / region.w, 1 / region.h);
     return {
-      width: (WP_SOURCE_SIZE.w * k1 * 100).toFixed(2) + "%",
-      height: (WP_SOURCE_SIZE.h * k2 * 100).toFixed(2) + "%",
+      width: (source.w * k1 * 100).toFixed(2) + "%",
+      height: (source.h * k2 * 100).toFixed(2) + "%",
       left: (50 - 100 * (region.x + region.w / 2) * k1).toFixed(2) + "%",
       top: (50 - 100 * (region.y + region.h / 2) * k2).toFixed(2) + "%"
     };
@@ -3048,13 +3056,14 @@
   function applyWallpaper() {
     var side = wpSide();
     var crop = wpCrop(side);
-    var url = 'url("' + (crop ? WP_DARK_SOURCE : WALLPAPERS[side].src) + '")';
+    var source = wpSource(side);
+    var url = 'url("' + (crop ? source.src : WALLPAPERS[side].src) + '")';
     try {
       var view = wpViewport();
       document.body.style.backgroundImage = url;
       if (el.wpImg) el.wpImg.style.backgroundImage = url;
       if (crop) {
-        var geo = wpLayerBox(crop, view.w, view.h);
+        var geo = wpLayerBox(crop, view.w, view.h, source.size);
         document.body.style.backgroundSize = geo.size;
         document.body.style.backgroundPosition = geo.position;
         if (el.wpImg) {
@@ -3156,8 +3165,10 @@
         });
       }
       if (savedCrop && typeof savedCrop === "object") {
-        var cropDark = normalizeCrop(savedCrop.dark);
-        if (cropDark) state.wallpaperCrop.dark = cropDark;
+        ["light", "dark"].forEach(function (side) {
+          var crop = normalizeCrop(side, savedCrop[side]);
+          if (crop) state.wallpaperCrop[side] = crop;
+        });
       }
       // 一次性迁移：Light 的旧默认 5% → 新默认 4%
       if (state.wallpaperBlur.light === 5) {
@@ -4076,9 +4087,15 @@
     range.step = "1";
     var value = document.createElement("span");
     value.className = "wp-value";
+    var zoom = document.createElement("button");
+    zoom.type = "button";
+    zoom.className = "wp-zoom";
+    zoom.appendChild(icon(ICONS.spark, { fill: true }));
+    zoom.addEventListener("click", function () { openWallpaperCrop(wpSide()); });
     blurRow.appendChild(blurLabel);
     blurRow.appendChild(range);
     blurRow.appendChild(value);
+    blurRow.appendChild(zoom);
 
     var brightRow = document.createElement("div");
     brightRow.className = "wp-brightrow";
@@ -4093,9 +4110,23 @@
     brightRange.step = "1";
     var brightValue = document.createElement("span");
     brightValue.className = "wp-value";
+    var brightReset = document.createElement("button");
+    brightReset.type = "button";
+    brightReset.className = "wp-default";
+    brightReset.textContent = "默认";
+    brightReset.setAttribute("aria-label", "亮度恢复默认");
+    brightReset.addEventListener("click", function () {
+      state.wallpaperBrightness[wpSide()] = WP_BRIGHT_DEFAULT[wpSide()];
+      brightRange.value = String(wpBrightPercent(wpSide()));
+      brightValue.textContent = wpBrightPercent(wpSide()) + "%";
+      applyWallpaper();
+      paintThumbs();
+      saveWallpaper();
+    });
     brightRow.appendChild(brightLabel);
     brightRow.appendChild(brightRange);
     brightRow.appendChild(brightValue);
+    brightRow.appendChild(brightReset);
 
     var modeNote = document.createElement("p");
     modeNote.className = "wp-mode-note";
@@ -4162,15 +4193,23 @@
     }
 
     function syncBright() {
-      var percent = wpBrightPercent(wpSide());
+      var side = wpSide();
+      var percent = wpBrightPercent(side);
       brightRange.value = String(percent);
       brightValue.textContent = percent + "%";
-      // 亮度只服务 Dark：Light 选中时把这条滑轨收起来
-      brightRow.hidden = wpSide() !== "dark";
+      // 亮度只服务 Dark：Light 选中时这条滑轨向左收起来，取景入口同时淡入一下
+      var off = side !== "dark";
+      brightRow.classList.toggle("off", off);
+      brightRange.disabled = off;
+      zoom.setAttribute("aria-label", "调整 " + (side === "light" ? "Light" : "Dark") + " 取景");
+      zoom.title = "调整取景";
+      zoom.classList.remove("just");
+      void zoom.offsetWidth;
+      zoom.classList.add("just");
     }
 
     function makeThumb(side, item) {
-      var crop = side === "dark" ? wpCrop("dark") : null;
+      var crop = wpCrop(side);
       if (!crop) {
         var img = document.createElement("img");
         img.className = "wp-thumb";
@@ -4180,13 +4219,14 @@
         return img;
       }
       // 自定义取景：拿原图按取景几何铺进 3:2 的缩略图
+      var source = wpSource(side);
       var view = document.createElement("span");
       view.className = "wp-thumb wp-thumb-view";
       var layer = document.createElement("img");
       layer.className = "wp-thumb-src";
       layer.alt = "";
-      layer.src = WP_DARK_SOURCE;
-      var geo = wpThumbGeometry(crop, 3 / 2);
+      layer.src = source.src;
+      var geo = wpThumbGeometry(crop, 3 / 2, source.size);
       layer.style.width = geo.width;
       layer.style.height = geo.height;
       layer.style.left = geo.left;
@@ -4194,21 +4234,6 @@
       view.appendChild(layer);
       thumbs[side] = view;
       return view;
-    }
-
-    function makeZoomButton() {
-      var button = document.createElement("button");
-      button.type = "button";
-      button.className = "wp-zoom";
-      button.setAttribute("aria-label", "调整 Dark 取景");
-      button.title = "调整取景";
-      button.appendChild(icon(ICONS.crop));
-      button.addEventListener("click", function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-        openWallpaperCrop();
-      });
-      return button;
     }
 
     function refresh() {
@@ -4224,7 +4249,6 @@
         var wrap = document.createElement("span");
         wrap.className = "wp-thumbwrap";
         wrap.appendChild(makeThumb(side, item));
-        if (side === "dark" && wpSide() === "dark") wrap.appendChild(makeZoomButton());
         var cap = document.createElement("span");
         cap.className = "cap";
         var name = document.createElement("b");
@@ -4288,23 +4312,24 @@
     applyGlassMaterial();
   }
 
-  /* ---------- 壁纸取景（Dark 裁切调整） ---------- */
+  /* ---------- 壁纸取景（Light / Dark 裁切调整） ---------- */
 
-  function openWallpaperCrop() {
-    var side = "dark";
+  function openWallpaperCrop(side) {
+    side = side === "light" ? "light" : "dark";
+    var source = wpSource(side);
     var view = wpViewport();
     var aspect = view.w / view.h;
-    var defaultRegion = clampRegion(wpVisibleRegion(WP_DEFAULT_WINDOW, aspect));
-    var frame = clampRegion(wpVisibleRegion(wpCrop(side) || WP_DEFAULT_WINDOW, aspect));
+    var defaultRegion = clampRegion(wpVisibleRegion(source.window, aspect));
+    var frame = clampRegion(wpVisibleRegion(wpCrop(side) || source.window, aspect));
     var position = { x: frame.x, y: frame.y };
     var settleTimer = 0, drag = null, stageBuilt = false;
 
     function clampRegion(region) {
-      var w = Math.min(region.w, WP_SOURCE_SIZE.w);
-      var h = Math.min(region.h, WP_SOURCE_SIZE.h);
+      var w = Math.min(region.w, source.size.w);
+      var h = Math.min(region.h, source.size.h);
       return {
-        x: Math.min(Math.max(region.x, 0), WP_SOURCE_SIZE.w - w),
-        y: Math.min(Math.max(region.y, 0), WP_SOURCE_SIZE.h - h),
+        x: Math.min(Math.max(region.x, 0), source.size.w - w),
+        y: Math.min(Math.max(region.y, 0), source.size.h - h),
         w: w,
         h: h
       };
@@ -4322,7 +4347,7 @@
     var photo = document.createElement("img");
     photo.className = "crop-photo";
     photo.alt = "";
-    photo.src = WP_DARK_SOURCE;
+    photo.src = source.src;
     photo.style.filter = "brightness(" + wpBrightFactor(side) + ")";
     var handle = document.createElement("div");
     handle.className = "crop-frame";
@@ -4347,7 +4372,7 @@
     editor.appendChild(preview);
 
     function boxScale() {
-      return (box.clientWidth || 1) / WP_SOURCE_SIZE.w;
+      return (box.clientWidth || 1) / source.size.w;
     }
 
     function paintFrame() {
@@ -4402,8 +4427,8 @@
       var height = width / liveAspect;
       preview.style.width = Math.round(width) + "px";
       preview.style.height = Math.round(height) + "px";
-      var geo = wpLayerBox(currentRegion(), width, height);
-      previewLayer.style.backgroundImage = 'url("' + WP_DARK_SOURCE + '")';
+      var geo = wpLayerBox(currentRegion(), width, height, source.size);
+      previewLayer.style.backgroundImage = 'url("' + source.src + '")';
       previewLayer.style.backgroundSize = geo.size;
       previewLayer.style.backgroundPosition = geo.position;
       if (!stageBuilt) { buildStage(width, live); stageBuilt = true; }
@@ -4415,8 +4440,8 @@
     }
 
     function moveBy(dx, dy) {
-      position.x = Math.min(Math.max(position.x + dx, 0), WP_SOURCE_SIZE.w - frame.w);
-      position.y = Math.min(Math.max(position.y + dy, 0), WP_SOURCE_SIZE.h - frame.h);
+      position.x = Math.min(Math.max(position.x + dx, 0), source.size.w - frame.w);
+      position.y = Math.min(Math.max(position.y + dy, 0), source.size.h - frame.h);
       paintFrame();
     }
 
@@ -4433,8 +4458,8 @@
       var isDefault = near(region.x, defaultRegion.x) && near(region.y, defaultRegion.y) &&
         near(region.w, defaultRegion.w) && near(region.h, defaultRegion.h);
       if (!state.wallpaperCrop || typeof state.wallpaperCrop !== "object") state.wallpaperCrop = {};
-      if (isDefault) delete state.wallpaperCrop.dark;
-      else state.wallpaperCrop.dark = normalizeCrop(region);
+      if (isDefault) delete state.wallpaperCrop[side];
+      else state.wallpaperCrop[side] = normalizeCrop(side, region);
       applyWallpaper();
       saveWallpaper();
       openWallpaperPanel();
@@ -4453,8 +4478,8 @@
       var scale = boxScale();
       position.x = drag.fx + (event.clientX - drag.x) / scale;
       position.y = drag.fy + (event.clientY - drag.y) / scale;
-      position.x = Math.min(Math.max(position.x, 0), WP_SOURCE_SIZE.w - frame.w);
-      position.y = Math.min(Math.max(position.y, 0), WP_SOURCE_SIZE.h - frame.h);
+      position.x = Math.min(Math.max(position.x, 0), source.size.w - frame.w);
+      position.y = Math.min(Math.max(position.y, 0), source.size.h - frame.h);
       paintFrame();
     });
 
@@ -4497,7 +4522,7 @@
 
     openSheet({
       title: "调整取景",
-      sub: "Dark 壁纸 · 拖动取景框选择画面位置",
+      sub: (side === "light" ? "Light" : "Dark") + " 壁纸 · 拖动取景框选择画面位置",
       content: editor,
       center: true,
       wide: true

@@ -412,34 +412,71 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   color: var(--ink-2);
   font-variant-numeric: tabular-nums;
 }
-.wp-brightrow[hidden] { display: none; }
+/* 亮度与柔焦的收放：Light 选中时向左收起来，取景入口同时淡入一下 */
+.wp-brightrow {
+  overflow: hidden;
+  max-height: 44px;
+  transition: max-height .28s cubic-bezier(.22, .9, .3, 1), opacity .22s ease, margin-top .28s cubic-bezier(.22, .9, .3, 1);
+}
+.wp-brightrow.off {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+  pointer-events: none;
+}
+.wp-brightrow .wp-range { transition: transform .28s cubic-bezier(.22, .9, .3, 1); transform-origin: left center; }
+.wp-brightrow.off .wp-range { transform: scaleX(.35); }
 
-/* Dark 缩略图上的取景入口（线条小 icon） */
+/* 缩略图里的取景视图 */
 .wp-thumbwrap { position: relative; display: block; }
 .wp-thumb-view { position: relative; display: block; overflow: hidden; }
 .wp-thumb-view .wp-thumb-src { position: absolute; display: block; max-width: none; }
+
+/* 柔焦行右端的取景入口：一枚小菱形（magic / inspiration 的那点灵气）；
+   亮度行同一位置放「默认」小字，点它回到出厂 74% */
+.wp-zoom,
+.wp-default {
+  flex: none;
+  width: 24px;
+}
 .wp-zoom {
-  position: absolute;
-  right: 7px;
-  bottom: 7px;
-  width: 26px;
-  height: 26px;
+  height: 24px;
   display: grid;
   place-items: center;
   padding: 0;
   border-radius: 9px;
-  border: 1px solid rgba(255, 255, 255, .55);
-  background: rgba(18, 20, 24, .38);
-  color: #fff;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, .22);
+  border: 1px solid rgba(255, 255, 255, .42);
+  background: rgba(18, 20, 24, .1);
+  color: var(--ink-2);
   cursor: pointer;
+  transition: color .18s ease, background .18s ease, border-color .18s ease, transform .18s ease;
 }
 .wp-zoom svg { width: 13px; height: 13px; }
-.wp-zoom:active { transform: scale(.94); }
+.wp-zoom:hover { color: var(--accent); border-color: rgba(255, 255, 255, .62); }
+.wp-zoom:active { transform: scale(.92); }
+.wp-zoom.just { animation: spark-in .36s cubic-bezier(.22, .9, .3, 1); }
+@keyframes spark-in {
+  0% { opacity: 0; transform: scale(.55) rotate(-28deg); }
+  62% { opacity: 1; }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+.wp-default {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 10px;
+  letter-spacing: 0;
+  color: var(--ink-3);
+  text-decoration: underline;
+  text-underline-offset: 2.5px;
+  cursor: pointer;
+  transition: color .18s ease, opacity .18s ease;
+}
+.wp-default:hover { color: var(--ink-2); }
+.wp-default:active { opacity: .65; }
 
-/* 取景编辑器（Dark 裁切调整） */
+/* 取景编辑器（Light / Dark 裁切调整） */
 .crop-editor { display: flex; flex-direction: column; gap: 14px; }
 .crop-hint { margin: 0; font-size: 12px; line-height: 1.6; color: var(--ink-3); letter-spacing: .3px; }
 .crop-box {
@@ -462,19 +499,13 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 }
 .crop-frame.dragging { cursor: grabbing; }
 .crop-preview-label { margin: 0; font-size: 11.5px; letter-spacing: .8px; color: var(--ink-3); text-align: center; }
-/* 取景窗口的两个按钮：自己的按钮行，吸在面板底部右下，不必滚动去够 */
+/* 取景窗口的两个按钮：跟在内容最下面，滚到底再确认 */
 .crop-actions {
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 12px;
-  padding: 10px 2px 2px;
-  border-radius: 16px;
-  backdrop-filter: blur(18px) saturate(170%);
-  -webkit-backdrop-filter: blur(18px) saturate(170%);
+  margin-top: 16px;
+  padding: 0 2px 2px;
 }
 .crop-preview {
   position: relative;
