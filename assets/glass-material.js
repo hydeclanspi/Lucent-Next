@@ -13,10 +13,13 @@
   var frame = 0;
   var disposed = false;
 
+  function enabled(controller) {
+    return root.getAttribute(controller.node === card ? "data-home-glass" : "data-sheet-glass") === "warm";
+  }
+
   function active(controller) {
-    return !disposed && !document.hidden && !reduce.matches &&
-      (controller.node === card ? sheetRoot.hidden :
-        !sheetRoot.hidden && sheet.classList.contains("interaction-sheet"));
+    return !disposed && enabled(controller) && !document.hidden && !reduce.matches &&
+      (controller.node === card ? !sheetRoot || sheetRoot.hidden : sheetRoot && !sheetRoot.hidden);
   }
 
   function syncWallpaper() {
@@ -37,7 +40,7 @@
   }
 
   function ensure(controller) {
-    if (controller.point && controller.point.parentNode.parentNode === controller.node) return;
+    if (controller.point && controller.point.parentNode && controller.point.parentNode.parentNode === controller.node) return;
     var skin = controller.node.querySelector(":scope > .beta-glass-sheen");
     if (!skin) {
       skin = document.createElement("span");
@@ -97,19 +100,42 @@
   }
 
   function released() { hideAll(); }
-  function syncSheet() {
+  function syncSurfaces() {
     hideAll();
-    // Original openSheet replaces children; restored parent panels may reuse them.
-    if (!sheet.classList.contains("interaction-sheet")) return;
-    var controller = controllers[1];
-    if (controller && controller.point && !sheet.contains(controller.point)) controller.point = null;
+    controllers.forEach(function (controller) {
+      // openSheet replaces children; returning from a child panel can restore an older skin.
+      var skins = controller.node.querySelectorAll(":scope > .beta-glass-sheen");
+      controller.point = null;
+      skins.forEach(function (skin) {
+        var point = skin.querySelector(".beta-glass-point");
+        if (point) point.classList.remove("is-lit");
+        if (!enabled(controller)) skin.remove();
+        else if (point && !controller.point) controller.point = point;
+        else skin.remove();
+      });
+    });
   }
+  function syncSheet(records) {
+    var changed = records.some(function (record) {
+      if (record.type === "attributes") return true;
+      // Adding our own skin must not cancel the first pointer frame.
+      return Array.from(record.addedNodes).concat(Array.from(record.removedNodes)).some(function (node) {
+        return node.nodeType !== 1 || !node.classList.contains("beta-glass-sheen");
+      });
+    });
+    if (changed) syncSurfaces();
+  }
+
   function visibility() { if (document.hidden) hideAll(); }
   function pause() { hideAll(); }
 
   bind(card);
   bind(sheet);
   syncWallpaper();
+  syncSurfaces();
+  var materialObserver = new MutationObserver(syncSurfaces);
+  materialObserver.observe(root, { attributes: true, attributeFilter: ["data-home-glass", "data-sheet-glass", "data-theme", "data-beta-wallpaper"] });
+  observers.push(materialObserver);
   if (wallpaper) {
     var wallpaperObserver = new MutationObserver(syncWallpaper);
     wallpaperObserver.observe(wallpaper, { attributes: true, attributeFilter: ["class"] });
@@ -117,7 +143,7 @@
   }
   if (sheet && sheetRoot) {
     var sheetObserver = new MutationObserver(syncSheet);
-    sheetObserver.observe(sheet, { attributes: true, attributeFilter: ["class"] });
+    sheetObserver.observe(sheet, { attributes: true, attributeFilter: ["class"], childList: true });
     sheetObserver.observe(sheetRoot, { attributes: true, attributeFilter: ["hidden"] });
     observers.push(sheetObserver);
   }

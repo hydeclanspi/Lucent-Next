@@ -78,6 +78,8 @@
     signs: [],
     wallpaper: "dark",
     wallpaperBlur: {},
+    glassMaterial: { version: 1, home: "warm", sheets: "warm" },
+    glassMaterialReady: false,
     wallpaperRolled: "",
     wallpaperProbability: { version: 1, light: 0.5, source: "default", updatedAt: 0 },
     wallpaperProbabilityReady: false,
@@ -1664,7 +1666,7 @@
     meta.className = "about-meta";
     var version = document.createElement("p");
     version.className = "about-version";
-    version.textContent = "名片主页 v4.5.3 · 2026-10 构建";
+    version.textContent = "名片主页 v5.0.3 · 2026-10 构建";
     var build = document.createElement("p");
     build.className = "about-build";
     build.textContent = "鸿蒙 Aira 灵感台 · beta v0.7 引擎 · © 2026";
@@ -1715,11 +1717,11 @@
   var EXPORT_BIG_CHARS = 64 * 1024;   // 单次复制开始提示静默截断风险的体量
   var EXPORT_STORE_WAIT = 1600;       // 两个引擎就绪的等待上限，超时只降级，不失败
 
-  var EXPORT_KEYS = ["profile", "icons", "folds", "wallpaper", "wallpaperBlur", "wallpaperProbability",
+  var EXPORT_KEYS = ["profile", "icons", "folds", "wallpaper", "wallpaperBlur", "glassMaterial", "wallpaperProbability",
     "probabilityDefaults", "interactionSettings", "collisionSettings", "motionSettings", "autoDriveSettings",
     "uiPrefs", "logs", "signs", "logsBundleVersion", "signsBundleVersion"];
   var EXPORT_LABELS = {
-    profile: "名片", icons: "图标偏好", folds: "折叠状态", wallpaper: "壁纸模式", wallpaperBlur: "壁纸模糊",
+    profile: "名片", icons: "图标偏好", folds: "折叠状态", wallpaper: "壁纸模式", wallpaperBlur: "壁纸模糊", glassMaterial: "玻璃材质",
     wallpaperProbability: "明暗比例", probabilityDefaults: "比例默认值", interactionSettings: "浮光数量",
     collisionSettings: "碰撞力度", motionSettings: "自然 pace", autoDriveSettings: "自动驾驶", uiPrefs: "编号徽章",
     logs: "日志", signs: "签名历史", logsBundleVersion: "日志版本", signsBundleVersion: "签名版本"
@@ -3755,6 +3757,73 @@
     syncInteractionPanel(); syncProbabilityPanel(); syncCollisionPanel(); syncPacePanel(); syncAutoDriveButton(); syncFactoryPanel();
   }
 
+  // Independent material choices use the same native storage bridge as wallpaper.
+  var glassLoadRevision = 0;
+  var glassSaveQueue = Promise.resolve();
+  function applyGlassMaterial() {
+    root.dataset.homeGlass = state.glassMaterial.home;
+    root.dataset.sheetGlass = state.glassMaterial.sheets;
+    document.querySelectorAll("[data-glass-target]").forEach(function (button) {
+      button.disabled = !state.glassMaterialReady;
+      button.setAttribute("aria-pressed", String(state.glassMaterial[button.dataset.glassTarget] === button.dataset.glassValue));
+    });
+  }
+  function loadGlassMaterial() {
+    var revision = ++glassLoadRevision;
+    state.glassMaterialReady = false;
+    applyGlassMaterial();
+    return storageGet("glassMaterial", null).then(function (saved) {
+      if (revision !== glassLoadRevision) return;
+      saved = saved && typeof saved === "object" ? saved : {};
+      state.glassMaterial = { version: 1, home: saved.home === "classic" ? "classic" : "warm", sheets: saved.sheets === "classic" ? "classic" : "warm" };
+      state.glassMaterialReady = true;
+      applyGlassMaterial();
+    }).catch(function () { if (revision === glassLoadRevision) { state.glassMaterialReady = true; applyGlassMaterial(); } });
+  }
+  function buildGlassMaterialSettings() {
+    var section = document.createElement("section");
+    section.className = "glass-material-section";
+    var title = document.createElement("p");
+    title.className = "wp-label glass-material-title";
+    title.textContent = "玻璃材质";
+    section.appendChild(title);
+    var capsule = document.createElement("div");
+    capsule.className = "interaction-toolbar glass-material-settings";
+    [["home", "主页主面板"], ["sheets", "进阶弹出窗口"]].forEach(function (target) {
+      var row = document.createElement("div");
+      row.className = "glass-material-row";
+      row.setAttribute("role", "group");
+      row.setAttribute("aria-label", target[1] + "玻璃材质");
+      var label = document.createElement("span");
+      label.className = "glass-material-label";
+      label.textContent = target[1];
+      row.appendChild(label);
+      [["classic", "经典磨砂玻璃"], ["warm", "暖光液态清璃"]].forEach(function (choice) {
+        var button = document.createElement("button");
+        button.type = "button";
+        button.className = "interaction-utility-button glass-material-choice";
+        button.textContent = choice[1];
+        button.dataset.glassTarget = target[0];
+        button.dataset.glassValue = choice[0];
+        button.disabled = !state.glassMaterialReady;
+        button.setAttribute("aria-pressed", String(state.glassMaterial[target[0]] === choice[0]));
+        button.addEventListener("click", function () {
+          if (state.glassMaterial[target[0]] === choice[0]) return;
+          ++glassLoadRevision;
+          state.glassMaterial[target[0]] = choice[0];
+          applyGlassMaterial();
+          var saved = { version: 1, home: state.glassMaterial.home, sheets: state.glassMaterial.sheets };
+          glassSaveQueue = glassSaveQueue.then(function () { return storageSet("glassMaterial", saved); })
+            .catch(function () { toast("材质已预览，保存未成功，请稍后重试"); });
+        });
+        row.appendChild(button);
+      });
+      capsule.appendChild(row);
+    });
+    section.appendChild(capsule);
+    return section;
+  }
+
   function openWallpaperPanel() {
     var body = document.createElement("div");
     body.className = "wp-panel";
@@ -3800,6 +3869,7 @@
     body.appendChild(modeNote);
     body.appendChild(picks);
     body.appendChild(blurRow);
+    body.appendChild(buildGlassMaterialSettings());
 
     var thumbs = {};
 
@@ -4197,6 +4267,7 @@
     initStats();
     initField();
     loadUiPrefs();
+    loadGlassMaterial();
     loadCollisionSettings();
     loadPaceSettings();
     loadAutoDriveSettings();
