@@ -3804,8 +3804,9 @@
   }
   function saveGlassMaterial() {
     var saved = normalizeGlassMaterial(state.glassMaterial);
-    glassSaveQueue = glassSaveQueue.then(function () { return storageSet("glassMaterial", saved); })
-      .catch(function () { toast("材质已预览，保存未成功，请稍后重试"); });
+    var attempt = glassSaveQueue.then(function () { return storageSet("glassMaterial", saved); });
+    glassSaveQueue = attempt.catch(function () { toast("材质已预览，保存未成功，请稍后重试"); });
+    return attempt.then(function () { return true; }, function () { return false; });
   }
   function loadGlassMaterial() {
     var revision = ++glassLoadRevision;
@@ -3865,6 +3866,33 @@
       var summary = document.createElement("summary");
       summary.textContent = "更多调节";
       more.appendChild(summary);
+      var advanced = document.createElement("details");
+      advanced.className = "glass-more glass-more-advanced";
+      var advancedSummary = document.createElement("summary");
+      advancedSummary.textContent = "进阶调节";
+      advanced.appendChild(advancedSummary);
+      var footer = document.createElement("div");
+      footer.className = "glass-tuning-footer";
+      var save = document.createElement("button");
+      save.type = "button"; save.className = "glass-reset glass-save"; save.textContent = "保存定制设计";
+      save.hidden = true;
+      save.disabled = !state.glassMaterialReady;
+      save.setAttribute("aria-label", "保存" + target[1] + "定制设计");
+      save.addEventListener("click", function () {
+        save.hidden = true;
+        saveGlassMaterial().then(function (ok) { if (ok) toast("定制设计已保存"); });
+      });
+      var reset = document.createElement("button");
+      reset.type = "button"; reset.className = "glass-reset"; reset.textContent = "恢复推荐值";
+      reset.setAttribute("aria-label", "恢复" + target[1] + "推荐值");
+      reset.disabled = !state.glassMaterialReady;
+      reset.addEventListener("click", function () {
+        ++glassLoadRevision;
+        state.glassMaterial.tuning[target[0]] = glassTuning(null);
+        save.hidden = true;
+        applyGlassMaterial(); saveGlassMaterial();
+      });
+      footer.appendChild(save); footer.appendChild(reset);
       GLASS_PARAMETERS.forEach(function (parameter, index) {
         var line = document.createElement("label");
         line.className = "glass-tune-row";
@@ -3883,25 +3911,16 @@
         input.addEventListener("input", function () {
           ++glassLoadRevision;
           state.glassMaterial.tuning[target[0]][parameter[0]] = Number(input.value);
+          save.hidden = false;
           applyGlassMaterial();
         });
         input.addEventListener("change", saveGlassMaterial);
         line.appendChild(name); line.appendChild(input); line.appendChild(output);
-        (index < 3 ? tuning : more).appendChild(line);
+        (index < 3 ? more : advanced).appendChild(line);
       });
+      more.appendChild(advanced);
       tuning.appendChild(more);
-      var footer = document.createElement("div");
-      footer.className = "glass-tuning-footer";
-      var reset = document.createElement("button");
-      reset.type = "button"; reset.className = "glass-reset"; reset.textContent = "恢复推荐值";
-      reset.setAttribute("aria-label", "恢复" + target[1] + "推荐值");
-      reset.disabled = !state.glassMaterialReady;
-      reset.addEventListener("click", function () {
-        ++glassLoadRevision;
-        state.glassMaterial.tuning[target[0]] = glassTuning(null);
-        applyGlassMaterial(); saveGlassMaterial();
-      });
-      footer.appendChild(reset); tuning.appendChild(footer);
+      tuning.appendChild(footer);
       block.appendChild(tuning); capsule.appendChild(block);
     });
     section.appendChild(capsule);
