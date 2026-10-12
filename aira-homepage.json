@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "com.example.aira-profile-card",
   "name": "名片 · Profile Card",
-  "version": "4.7.4",
+  "version": "4.7.9",
   "entry": "index.html",
   "previewLight": "preview-light.jpg",
   "previewDark": "preview-dark.jpg",
   "author": "Your Name",
-  "description": "经典磨砂与暖光液态清璃分别用于主页与进阶弹窗；暖光下分两级展开通透度、玻璃柔焦、暖意、边缘光泽、环境色彩、触光强度，可保存定制设计或恢复推荐值。"
+  "description": "暖光液态清璃与经典磨砂可分别用于主页和弹窗。六款搜索动效将文字轻轻收进箭头，可预览、切换或关闭；保留原有交互、统计、壁纸定制及备份功能。"
 }
