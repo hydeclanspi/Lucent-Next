@@ -27,9 +27,21 @@
   box-shadow: 0 0 15px rgba(211, 184, 147, .26);
   pointer-events: none;
 }
-#btnSearchMotion { position: relative; color: var(--ink-3); }
-#btnSearchMotion svg { width: 14px; height: 14px; stroke-width: 1.1; transform: rotate(-8deg); }
+/* 搜索引擎行唯一的「✨ 理」入口：整枚按 86% 缩小 */
+#btnSearchMotion {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 8px;
+  font-size: 10px;
+  letter-spacing: 0.4px;
+  color: var(--ink-2);
+}
+#btnSearchMotion svg { width: 11.5px; height: 11.5px; stroke-width: 1; color: #ad8746; transform: rotate(-8deg); }
 #btnSearchMotion:focus-visible { outline: 1px solid var(--ink-2); outline-offset: 2px; }
+:root[data-theme="dark"] #btnSearchMotion svg { color: #c9ab84; }
 
 .sheet.wide.search-motion-sheet {
   max-width: 720px;
@@ -49,14 +61,43 @@
 }
 .sm-panel svg { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.4; }
 .sm-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
-.sm-heading-copy { min-width: 0; }
+.sm-heading-copy { flex: 1 1 0; min-width: 0; }
 .sm-eyebrow { margin: 0 0 10px; font: 8px/1.5 var(--mono); letter-spacing: 2.1px; color: var(--sm-gold); }
+.sm-title-row { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
 .sm-title { margin: 0; font: 500 29px/1.35 var(--serif); letter-spacing: 1.8px; }
 .sm-subtitle { margin: 7px 0 0; font-size: 10.5px; letter-spacing: 1.4px; color: var(--ink-3); }
-.wp-random.sm-toggle { position: static; flex: none; gap: 9px; padding: 5px 0; margin-top: 14px; min-height: 36px; font-size: 11px; letter-spacing: .5px; }
+.wp-random.sm-toggle { position: static; flex: none; gap: 9px; padding: 5px 0; margin: 0; min-height: 36px; font-size: 11px; letter-spacing: .5px; }
 .wp-random.sm-toggle[aria-pressed="true"] { color: var(--sm-mint); }
 .wp-random.sm-toggle[aria-pressed="true"] .wp-track { border-color: var(--sm-mint); background: rgba(103, 185, 154, .12); }
 .wp-random.sm-toggle[aria-pressed="true"] .wp-knob { background: var(--sm-mint-knob); }
+/* 右上角入口：实心陶瓷白，釉面由上到下微暖，一线高光 + 轻投影做出厚度感。
+   文案一行「搜索引擎设置 →」，绝不拆行。 */
+.sm-engine {
+  --sm-engine-radius: 14px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, .94);
+  border-radius: var(--sm-engine-radius);
+  background: linear-gradient(168deg, #fffefb 0%, #fbf6ee 46%, #f0e7d9 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .98),
+    inset 0 -1px 1px rgba(150, 128, 99, .14),
+    0 1px 2px rgba(58, 44, 30, .12),
+    0 9px 20px rgba(58, 44, 30, .14);
+  color: var(--ink);
+  font-size: 11px;
+  letter-spacing: .6px;
+  line-height: 1;
+  white-space: nowrap;
+  transition: transform .16s ease, box-shadow .24s ease;
+}
+.sm-engine svg { width: 11px; height: 11px; stroke-width: 2; color: #a97f43; }
+.sm-engine:active { transform: scale(.97); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .98), inset 0 -1px 1px rgba(150, 128, 99, .14), 0 1px 2px rgba(58, 44, 30, .12); }
+.sm-panel .sm-engine:focus-visible { border-radius: var(--sm-engine-radius); }
 .sm-preview { margin-top: 24px; border: 1px solid var(--sm-line); border-radius: 20px; background: linear-gradient(125deg, rgba(239, 218, 180, .12), rgba(242, 248, 253, .04) 70%); padding: 16px 20px 12px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2); }
 .sm-preview-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
 .sm-current { min-width: 0; display: flex; align-items: baseline; gap: 9px; }
@@ -68,8 +109,9 @@
 .sm-search { margin: 0; height: 52px; background: rgba(255, 255, 255, .16); backdrop-filter: none; -webkit-backdrop-filter: none; }
 .sm-search input { padding: 0; color: var(--ink); letter-spacing: 0; }
 .sm-search input::placeholder { font-size: 12px; }
-.sm-search .search-go { background: linear-gradient(135deg, #729bb9, #4e7697); color: #fbf9f4; box-shadow: 0 4px 12px rgba(36, 66, 98, .17), inset 0 1px 0 rgba(255, 255, 255, .3); }
-.sm-search .search-go svg { width: 17px; height: 17px; stroke-width: 1.65; }
+/* 回车键照搬鸿蒙实机：纯平系统蓝 #0A58F8 + 白箭头，无阴影无描边，整体按实机缩小 15% */
+.sm-search .search-go { width: 32px; height: 32px; background: #0a58f8; color: #fff; box-shadow: none; border-radius: 10px; }
+.sm-search .search-go svg { width: 14.5px; height: 14.5px; stroke-width: 1.7; }
 .sm-search .search-go:disabled { opacity: .42; cursor: default; }
 .sm-search:focus-within { box-shadow: inset 0 1px 2px rgba(20, 26, 52, .03), 0 0 0 2px rgba(104, 149, 180, .14); }
 .sm-preview-bottom { display: flex; justify-content: space-between; align-items: center; gap: 14px; }
@@ -108,9 +150,19 @@
 :root[data-theme="dark"] .sm-preview { background: linear-gradient(125deg, rgba(215, 183, 148, .06), rgba(145, 184, 216, .025) 70%); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045); }
 :root[data-theme="dark"] .sm-search { background: rgba(225, 235, 250, .065); }
 :root[data-theme="dark"] .sm-radio:checked + .sm-choice-content { border-color: rgba(200, 173, 136, .48); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .035); }
-
+:root[data-theme="dark"] .sm-engine {
+  border-color: rgba(255, 255, 255, .2);
+  background: linear-gradient(168deg, #45464f 0%, #33343d 48%, #26272f 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .22),
+    inset 0 -1px 1px rgba(0, 0, 0, .34),
+    0 1px 2px rgba(0, 0, 0, .34),
+    0 9px 20px rgba(0, 0, 0, .34);
+}
+:root[data-theme="dark"] .sm-engine svg { color: #cbab7d; }
 @media (hover: hover) {
   .sm-choice:hover .sm-choice-content { border-color: rgba(159, 128, 86, .36); }
+  .sm-engine:hover { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .98), inset 0 -1px 1px rgba(150, 128, 99, .14), 0 2px 4px rgba(58, 44, 30, .14), 0 12px 26px rgba(58, 44, 30, .18); }
   .sm-done:hover, .sm-replay:not(:disabled):hover { color: var(--ink); }
 }
 @media (max-width: 560px) {
@@ -126,6 +178,8 @@
   .sm-glyph { width: 43px; height: 33px; top: 26px; right: 11px; opacity: .28; }
   .sm-grid { gap: 9px; }
   .sm-hint { font-size: 9px; }
+  .sm-heading { gap: 14px; }
+  .sm-title-row { gap: 16px; }
 }
 @media (max-width: 400px) {
   .sheet.wide.search-motion-sheet { padding: 23px 18px 14px; }
@@ -140,9 +194,11 @@
   .sm-search input { font-size: 14px; }
   .sm-replay { font-size: 9px; }
   .sm-preview-bottom { gap: 8px; }
+  .sm-title-row { gap: 12px; }
+  .sm-engine { --sm-engine-radius: 13px; height: 38px; padding: 0 11px; font-size: 10.5px; letter-spacing: .5px; }
 }
 @media (pointer: coarse) {
-  .wp-random.sm-toggle { min-height: 44px; margin-top: 10px; }
+  .wp-random.sm-toggle { min-height: 44px; }
   .sm-replay, .sm-done { min-height: 40px; }
 }
 /* Keep all six studies together on the tablet's landscape canvas. */
@@ -151,6 +207,7 @@
   .sm-eyebrow { margin-bottom: 6px; }
   .sm-title { font-size: 26px; }
   .sm-subtitle { margin-top: 4px; }
+  .sm-engine { height: 38px; padding: 0 12px; font-size: 10.5px; }
   .sm-preview { margin-top: 15px; padding: 12px 18px 9px; }
   .sm-stage { padding: 17px 0 16px; }
   .sm-collection { margin-top: 15px; }

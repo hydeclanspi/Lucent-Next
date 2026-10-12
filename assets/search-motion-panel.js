@@ -30,8 +30,10 @@
     var panel = document.createElement('section');
     panel.className = 'sm-panel';
     panel.innerHTML =
-      '<header class="sm-heading"><div class="sm-heading-copy"><p class="sm-eyebrow">A THOUGHT, IN FLIGHT</p><h2 class="sm-title">念起，光行</h2><p class="sm-subtitle">搜索动效</p></div>' +
-      '<button class="wp-random sm-toggle" type="button" aria-label="启用搜索动效"><span class="sm-toggle-label">开启搜索动效</span><i class="wp-track" aria-hidden="true"><i class="wp-knob"></i></i></button></header>' +
+      '<header class="sm-heading"><div class="sm-heading-copy"><p class="sm-eyebrow">A THOUGHT, IN FLIGHT</p>' +
+      '<div class="sm-title-row"><h2 class="sm-title">念起，光行</h2><button class="wp-random sm-toggle" type="button" aria-label="启用搜索动效"><span class="sm-toggle-label">开启搜索动效</span><i class="wp-track" aria-hidden="true"><i class="wp-knob"></i></i></button></div>' +
+      '<p class="sm-subtitle">搜索动效</p></div>' +
+      '<button class="sm-engine" type="button"><span class="sm-engine-label">搜索引擎设置</span>' + arrow + '</button></header>' +
       '<section class="sm-preview" aria-label="搜索动效预览"><div class="sm-preview-heading"><div class="sm-current"><span class="sm-current-number"></span><span class="sm-current-name"></span><span class="sm-current-latin" lang="en"></span></div><span class="sm-duration"></span></div>' +
       '<div class="sm-stage"><form class="search sm-search" autocomplete="off">' + searchIcon + '<input type="search" aria-label="输入文字预览搜索动效" placeholder="写下一个念头…" enterkeyhint="search" maxlength="160"><button class="search-go" type="submit" aria-label="播放动效预览">' + arrow + '</button></form></div>' +
       '<div class="sm-preview-bottom"><div class="sm-speed" role="group" aria-label="预览速度"><button type="button" data-rate="1" aria-pressed="true">1× 原速</button><button type="button" data-rate="0.35" aria-pressed="false">0.35× 慢放</button></div><p class="sm-hint" hidden></p><button class="sm-replay" type="button">' + replayIcon + '<span>再看一次</span></button></div></section>' +
@@ -127,6 +129,9 @@
     });
 
     listen(toggle, 'click', function () { enabled = !enabled; stop(); change(); if (enabled) preview(); });
+    listen(panel.querySelector('.sm-engine'), 'click', function () {
+      if (typeof options.onEngineSettings === 'function') options.onEngineSettings();
+    });
     listen(replay, 'click', preview);
     Array.from(panel.querySelectorAll('.sm-speed button')).forEach(function (speed) {
       listen(speed, 'click', function () {

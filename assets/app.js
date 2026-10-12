@@ -4726,6 +4726,14 @@
       if (revision === searchMotionRevision) searchMotionSettings = normalizedSearchMotion(value);
     }).catch(function () {}).then(function () { searchMotionReady = true; });
   }
+  // 动效面板右上角方块：跳 Aira 官方搜索设置，先收起面板再交还给宿主
+  function openEngineSettings() {
+    var entry = entryByKey("searchSettings");
+    if (!entry) return;
+    closeSheet();
+    openEntry(entry);
+  }
+
   function openSearchMotionPanel() {
     if (!window.AiraSearchMotionPanel) return;
     if (!searchMotionReady) { searchMotionLoad.then(openSearchMotionPanel); return; }
@@ -4734,6 +4742,7 @@
     openSheet({ title: "搜索动效", center: true, wide: true, motion: true });
     searchMotionPanel = window.AiraSearchMotionPanel.mount(el.sheet, {
       settings: searchMotionSettings, play: window.AiraSearchMotion.play, onClose: closeSheet,
+      onEngineSettings: openEngineSettings,
       onChange: function (next) {
         ++searchMotionRevision; searchMotionReady = true;
         searchMotionSettings = normalizedSearchMotion(next);
@@ -4870,10 +4879,6 @@
       else toast("预览模式：进入或退出隐私模式会由 Aira 确认");
     });
 
-    $("btnEngineSettings").addEventListener("click", function () {
-      var entry = entryByKey("searchSettings");
-      if (entry) openEntry(entry);
-    });
     $("btnEditProfile").addEventListener("click", openProfileEditor);
 
     $("btnEditMode").addEventListener("click", function () { setEditing(!state.editing); });
