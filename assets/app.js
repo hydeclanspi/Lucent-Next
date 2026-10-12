@@ -1524,6 +1524,9 @@
 
   function openSheet(options) {
     var sheet = el.sheet;
+    if (searchMotionPanel) { searchMotionPanel.destroy(); searchMotionPanel = null; }
+    $("btnSearchMotion").setAttribute("aria-expanded", options.motion ? "true" : "false");
+    sheet.classList.toggle("search-motion-sheet", !!options.motion);
     if (statsController) { statsController.destroy(); statsController = null; }
     statsParent = null; defaultsParent = null;
     sheet.textContent = "";
@@ -1562,7 +1565,7 @@
       heading.appendChild(subtitle);
       sheet.appendChild(heading);
       sheet.appendChild(buildInteractionToolbar());
-    } else if (!options.stats && !options.defaults && !options.about && !options.export) sheet.appendChild(title);
+    } else if (!options.stats && !options.defaults && !options.about && !options.export && !options.motion) sheet.appendChild(title);
 
     if (options.sub) {
       var sub = document.createElement("p");
@@ -1613,6 +1616,8 @@
   }
 
   function closeSheet() {
+    if (searchMotionPanel) { searchMotionPanel.destroy(); searchMotionPanel = null; $("btnSearchMotion").focus({ preventScroll: true }); }
+    $("btnSearchMotion").setAttribute("aria-expanded", "false");
     if (statsParent || defaultsParent) {
       var isDefaults = !!defaultsParent, parent = defaultsParent || statsParent; statsParent = null; defaultsParent = null;
       if (statsController) { statsController.destroy(); statsController = null; }
@@ -1722,13 +1727,13 @@
 
   var EXPORT_KEYS = ["profile", "icons", "folds", "wallpaper", "wallpaperBlur", "wallpaperBrightness", "wallpaperCrop", "glassMaterial", "wallpaperProbability",
     "probabilityDefaults", "interactionSettings", "collisionSettings", "motionSettings", "autoDriveSettings",
-    "uiPrefs", "logs", "signs", "logsBundleVersion", "signsBundleVersion"];
+    "uiPrefs", "searchMotion", "logs", "signs", "logsBundleVersion", "signsBundleVersion"];
   var EXPORT_LABELS = {
     profile: "名片", icons: "图标偏好", folds: "折叠状态", wallpaper: "壁纸模式", wallpaperBlur: "壁纸模糊",
     wallpaperBrightness: "壁纸亮度", wallpaperCrop: "壁纸取景", glassMaterial: "玻璃材质",
     wallpaperProbability: "明暗比例", probabilityDefaults: "比例默认值", interactionSettings: "浮光数量",
     collisionSettings: "碰撞力度", motionSettings: "自然 pace", autoDriveSettings: "自动驾驶", uiPrefs: "编号徽章",
-    logs: "日志", signs: "签名历史", logsBundleVersion: "日志版本", signsBundleVersion: "签名版本"
+    searchMotion: "搜索动效", logs: "日志", signs: "签名历史", logsBundleVersion: "日志版本", signsBundleVersion: "签名版本"
   };
 
   var exportPack = null, exportNodes = null, exportBusy = false;
@@ -1899,7 +1904,7 @@
         kind: "backup",
         exportedAt: new Date().toISOString(),
         timezoneOffsetMinutes: -new Date().getTimezoneOffset(),
-        homepage: { id: "com.example.aira-profile-card", version: "4.7.4" },
+        homepage: { id: "com.example.aira-profile-card", version: "4.7.9" },
         summary: {
           keys: Object.keys(keys).length,
           logs: Array.isArray(keys.logs) ? keys.logs.length : 0,
@@ -4706,6 +4711,41 @@
     });
   }
 
+  var searchMotionSettings = { enabled: true, variant: "beam" };
+  var searchMotionReady = false, searchMotionRevision = 0, searchMotionPanel = null;
+  var searchMotionWriteQueue = Promise.resolve();
+  var searchMotionLoad = Promise.resolve();
+  function normalizedSearchMotion(value) {
+    var ids = ["beam", "prism", "shutter", "filament", "thread", "orbit"];
+    return { enabled: !value || value.enabled !== false, variant: value && ids.indexOf(value.variant) >= 0 ? value.variant : "beam" };
+  }
+  function loadSearchMotionSettings() {
+    var revision = ++searchMotionRevision;
+    searchMotionReady = false;
+    searchMotionLoad = readInteractionSetting("searchMotion").then(function (value) {
+      if (revision === searchMotionRevision) searchMotionSettings = normalizedSearchMotion(value);
+    }).catch(function () {}).then(function () { searchMotionReady = true; });
+  }
+  function openSearchMotionPanel() {
+    if (!window.AiraSearchMotionPanel) return;
+    if (!searchMotionReady) { searchMotionLoad.then(openSearchMotionPanel); return; }
+    // The default is available immediately; a deliberate selection wins over a late read.
+    ++searchMotionRevision;
+    openSheet({ title: "搜索动效", center: true, wide: true, motion: true });
+    searchMotionPanel = window.AiraSearchMotionPanel.mount(el.sheet, {
+      settings: searchMotionSettings, play: window.AiraSearchMotion.play, onClose: closeSheet,
+      onChange: function (next) {
+        ++searchMotionRevision; searchMotionReady = true;
+        searchMotionSettings = normalizedSearchMotion(next);
+        var snapshot = Object.assign({}, searchMotionSettings);
+        searchMotionWriteQueue = searchMotionWriteQueue.catch(function () {}).then(function () {
+          return writeInteractionSetting("searchMotion", snapshot);
+        }).catch(function () { toast("动效已应用，本次设置未能保存"); });
+      }
+    });
+    el.sheet.querySelector(".sm-toggle").focus({ preventScroll: true });
+  }
+
   function bindMainSearch() {
     var form = $("searchForm");
     var input = $("searchInput");
@@ -4713,6 +4753,7 @@
     var imeEnter = false;
     var imeEnterTimer = null;
     var resetOnReturn = false;
+    var submitting = false;
 
     function clearInput() {
       // Clear both the live value and form default before native navigation can
@@ -4742,28 +4783,38 @@
 
     form.addEventListener("submit", function (event) {
       event.preventDefault();
-      if (composing || imeEnter) return;
+      if (composing || imeEnter || submitting) return;
       var draft = input.value;
       var query = draft.trim();
       if (!query) { input.focus(); return; }
       var a = api();
-      if (!a || typeof a.search !== "function") {
-        toast(a ? "搜索接口暂不可用，请稍后重试" : "预览模式：会搜索「" + query + "」");
+      if (a && typeof a.search !== "function") {
+        toast("搜索接口暂不可用，请稍后重试");
         return;
       }
-
-      resetOnReturn = true;
-      clearInput();
-      try {
-        // search() is a void intent API. Pass an immutable snapshot; never replace
-        // it with openSearch(), which cannot carry the query.
-        a.search(query);
-      } catch (error) {
-        resetOnReturn = false;
-        input.value = draft;
-        input.focus();
-        toast("搜索未能发出，请重试");
+      submitting = true;
+      var dispatched = false;
+      function dispatchSearch() {
+        if (dispatched) return;
+        dispatched = true;
+        resetOnReturn = true;
+        clearInput();
+        try {
+          if (a) a.search(query);
+          else toast("预览模式：会搜索「" + query + "」");
+        } catch (error) {
+          resetOnReturn = false;
+          input.value = draft;
+          input.focus();
+          toast("搜索未能发出，请重试");
+        } finally { submitting = false; }
       }
+      if (searchMotionReady && searchMotionSettings.enabled && window.AiraSearchMotion) {
+        window.AiraSearchMotion.play({ form: form, input: input, button: $("btnSystemSearch"), text: draft,
+          variant: searchMotionSettings.variant, onFinish: dispatchSearch });
+        // play() can complete synchronously for reduced motion or unavailable Canvas.
+        if (!dispatched) { input.value = ""; input.defaultValue = ""; }
+      } else dispatchSearch();
     });
 
     window.addEventListener("pagehide", function () {
@@ -4812,6 +4863,7 @@
     });
 
     bindMainSearch();
+    $("btnSearchMotion").addEventListener("click", openSearchMotionPanel);
 
     $("btnPrivacy").addEventListener("click", function () {
       if (a() && typeof a().togglePrivateMode === "function") a().togglePrivateMode();
@@ -4829,8 +4881,8 @@
     el.sheetMask.addEventListener("click", closeSheet);
     document.addEventListener("keydown", function (event) {
       if (event.key === "Escape" && !el.sheetRoot.hidden) closeSheet();
-      if (event.key === "Tab" && (statsParent || defaultsParent)) {
-        var focusable = Array.from(el.sheet.querySelectorAll('button:not(:disabled), select')).filter(function (node) { return !node.hidden && node.getClientRects().length; });
+      if (event.key === "Tab" && (statsParent || defaultsParent || (!el.sheetRoot.hidden && el.sheet.classList.contains("search-motion-sheet")))) {
+        var focusable = Array.from(el.sheet.querySelectorAll('button:not(:disabled), select, input:not(:disabled), [tabindex="0"]')).filter(function (node) { return !node.hidden && node.getClientRects().length; });
         var first = focusable[0], last = focusable[focusable.length - 1];
         if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
@@ -4893,6 +4945,7 @@
     initField();
     loadUiPrefs();
     loadGlassMaterial();
+    loadSearchMotionSettings();
     loadCollisionSettings();
     loadPaceSettings();
     loadAutoDriveSettings();
