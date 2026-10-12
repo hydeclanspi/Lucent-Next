@@ -4706,6 +4706,81 @@
     });
   }
 
+  function bindMainSearch() {
+    var form = $("searchForm");
+    var input = $("searchInput");
+    var composing = false;
+    var imeEnter = false;
+    var imeEnterTimer = null;
+    var resetOnReturn = false;
+
+    function clearInput() {
+      // Clear both the live value and form default before native navigation can
+      // suspend the WebView or capture its history snapshot.
+      input.value = "";
+      input.defaultValue = "";
+      composing = false;
+      input.blur();
+    }
+
+    input.addEventListener("input", function () {
+      // A new draft belongs to the user; delayed lifecycle events must not erase it.
+      resetOnReturn = false;
+    });
+    input.addEventListener("compositionstart", function () { composing = true; });
+    input.addEventListener("compositionend", function () { composing = false; });
+    input.addEventListener("keydown", function (event) {
+      if ((event.key === "Enter" || event.keyCode === 13) &&
+          (composing || event.isComposing || event.keyCode === 229)) {
+        // Some IMEs end composition before the Enter default action submits.
+        // Let the IME commit, but ignore a submit from this same key event.
+        imeEnter = true;
+        clearTimeout(imeEnterTimer);
+        imeEnterTimer = setTimeout(function () { imeEnter = false; }, 0);
+      }
+    });
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      if (composing || imeEnter) return;
+      var draft = input.value;
+      var query = draft.trim();
+      if (!query) { input.focus(); return; }
+      var a = api();
+      if (!a || typeof a.search !== "function") {
+        toast(a ? "搜索接口暂不可用，请稍后重试" : "预览模式：会搜索「" + query + "」");
+        return;
+      }
+
+      resetOnReturn = true;
+      clearInput();
+      try {
+        // search() is a void intent API. Pass an immutable snapshot; never replace
+        // it with openSearch(), which cannot carry the query.
+        a.search(query);
+      } catch (error) {
+        resetOnReturn = false;
+        input.value = draft;
+        input.focus();
+        toast("搜索未能发出，请重试");
+      }
+    });
+
+    window.addEventListener("pagehide", function () {
+      if (resetOnReturn) clearInput();
+    });
+    window.addEventListener("pageshow", function () {
+      if (!resetOnReturn) return;
+      clearInput();
+      resetOnReturn = false;
+    });
+    document.addEventListener("visibilitychange", function () {
+      if (!resetOnReturn) return;
+      clearInput();
+      if (!document.hidden) resetOnReturn = false;
+    });
+  }
+
   function bindInteractions() {
     if (iconsBound) return;
     iconsBound = true;
@@ -4736,10 +4811,7 @@
       else toast("预览模式：这里会打开标签后台");
     });
 
-    $("btnSystemSearch").addEventListener("click", function () {
-      if (a() && typeof a().openSearch === "function") a().openSearch();
-      else toast("预览模式：这里会展开 Aira 系统搜索");
-    });
+    bindMainSearch();
 
     $("btnPrivacy").addEventListener("click", function () {
       if (a() && typeof a().togglePrivateMode === "function") a().togglePrivateMode();
@@ -4753,18 +4825,6 @@
     $("btnEditProfile").addEventListener("click", openProfileEditor);
 
     $("btnEditMode").addEventListener("click", function () { setEditing(!state.editing); });
-
-    $("searchForm").addEventListener("submit", function (event) {
-      event.preventDefault();
-      var value = $("searchInput").value.trim();
-      if (!value) return;
-      if (a() && typeof a().search === "function") {
-        a().search(value);
-        $("searchInput").blur();
-      } else {
-        toast("预览模式：会搜索「" + value + "」");
-      }
-    });
 
     el.sheetMask.addEventListener("click", closeSheet);
     document.addEventListener("keydown", function (event) {
