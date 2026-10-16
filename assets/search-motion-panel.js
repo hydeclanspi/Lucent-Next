@@ -93,7 +93,7 @@
         var area = grid.getBoundingClientRect();
         var rects = cards.map(function (card) { return card.getBoundingClientRect(); });
         var twoColumns = Math.abs(rects[0].top - rects[1].top) < 2;
-        var draw = Math.random(), vertical = twoColumns && draw > .8;
+        var draw = Math.random(), vertical = twoColumns && draw > .7;
         var ray = document.createElement('span');
         ray.className = 'sm-gap-laser' + (vertical ? ' sm-gap-laser-vertical' : '');
         ray.setAttribute('aria-hidden', 'true');
