@@ -19,6 +19,7 @@
     var initial = options.settings || {};
     var selected = studies.some(function (study) { return study.id === initial.variant; }) ? initial.variant : 'beam';
     var enabled = initial.enabled !== false;
+    var simulationEnabled = options.simulationEnabled === true;
     var disposed = false;
     var active = null;
     var playbackRate = 1;
@@ -33,7 +34,8 @@
       '<header class="sm-heading"><div class="sm-heading-copy"><p class="sm-eyebrow">A THOUGHT, IN FLIGHT</p>' +
       '<div class="sm-title-row"><h2 class="sm-title">念起，光行</h2><button class="wp-random sm-toggle" type="button" aria-label="启用搜索动效"><span class="sm-toggle-label">开启搜索动效</span><i class="wp-track" aria-hidden="true"><i class="wp-knob"></i></i></button></div>' +
       '<p class="sm-subtitle">搜索动效</p></div>' +
-      '<button class="sm-engine" type="button"><span class="sm-engine-label">搜索引擎设置</span>' + arrow + '</button></header>' +
+      '<div class="sm-heading-actions"><button class="sm-engine" type="button"><span class="sm-engine-label">搜索引擎设置</span>' + arrow + '</button>' +
+      '<button class="sm-simulation" type="button" aria-pressed="false"><span>彩蛋：无限模拟发射循环</span></button></div></header>' +
       '<section class="sm-preview" aria-label="搜索动效预览"><div class="sm-preview-heading"><div class="sm-current"><span class="sm-current-number"></span><span class="sm-current-name"></span><span class="sm-current-latin" lang="en"></span></div><span class="sm-duration"></span></div>' +
       '<div class="sm-stage"><form class="search sm-search" autocomplete="off">' + searchIcon + '<input type="search" aria-label="输入文字预览搜索动效" placeholder="写下一个念头…" enterkeyhint="search" maxlength="160"><button class="search-go" type="submit" aria-label="播放动效预览">' + arrow + '</button></form></div>' +
       '<div class="sm-preview-bottom"><div class="sm-speed" role="group" aria-label="预览速度"><button type="button" data-rate="1" aria-pressed="true">1× 原速</button><button type="button" data-rate="0.35" aria-pressed="false">0.35× 慢放</button></div><p class="sm-hint" hidden></p><button class="sm-replay" type="button">' + replayIcon + '<span>再看一次</span></button></div></section>' +
@@ -41,6 +43,7 @@
       '<footer class="sm-footer"><p class="sm-selection" role="status" aria-live="polite"></p><button class="sm-done" type="button">完成' + arrow + '</button></footer>';
     container.appendChild(panel);
     var toggle = panel.querySelector('.sm-toggle');
+    var simulation = panel.querySelector('.sm-simulation');
     var form = panel.querySelector('form');
     var input = form.querySelector('input');
     var button = form.querySelector('.search-go');
@@ -93,6 +96,8 @@
       duration.textContent = study.duration + ' ms';
       hint.textContent = enabled ? '输入文字，回车即见。' : '动效已关闭 · 搜索直接出发';
       status.textContent = enabled ? '已选 · ' + study.number + ' ' + study.name : '已关闭 · 保留你的心选';
+      simulation.setAttribute('aria-pressed', String(simulationEnabled));
+      if (simulationEnabled) status.textContent = '仅本次 · 首次回弹，长按 Enter 连发';
       replay.disabled = !enabled;
       button.disabled = !enabled;
       choices.forEach(function (choice) { choice.checked = choice.value === selected; });
@@ -129,6 +134,11 @@
     });
 
     listen(toggle, 'click', function () { enabled = !enabled; stop(); change(); if (enabled) preview(); });
+    listen(simulation, 'click', function () {
+      simulationEnabled = !simulationEnabled;
+      sync();
+      if (typeof options.onSimulationChange === 'function') options.onSimulationChange(simulationEnabled);
+    });
     listen(panel.querySelector('.sm-engine'), 'click', function () {
       if (typeof options.onEngineSettings === 'function') options.onEngineSettings();
     });
@@ -151,6 +161,11 @@
     sync();
 
     return {
+      setSimulationEnabled: function (value) {
+        if (disposed) return;
+        simulationEnabled = value === true;
+        sync();
+      },
       destroy: function () {
         disposed = true;
         stop();

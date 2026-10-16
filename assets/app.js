@@ -1904,7 +1904,7 @@
         kind: "backup",
         exportedAt: new Date().toISOString(),
         timezoneOffsetMinutes: -new Date().getTimezoneOffset(),
-        homepage: { id: "com.example.aira-profile-card", version: "4.7.9" },
+        homepage: { id: "com.example.aira-profile-card", version: "4.8.3" },
         summary: {
           keys: Object.keys(keys).length,
           logs: Array.isArray(keys.logs) ? keys.logs.length : 0,
@@ -4712,6 +4712,7 @@
   }
 
   var searchMotionSettings = { enabled: true, variant: "beam" };
+  var searchSimulation = null;
   var searchMotionReady = false, searchMotionRevision = 0, searchMotionPanel = null;
   var searchMotionWriteQueue = Promise.resolve();
   var searchMotionLoad = Promise.resolve();
@@ -4743,6 +4744,8 @@
     searchMotionPanel = window.AiraSearchMotionPanel.mount(el.sheet, {
       settings: searchMotionSettings, play: window.AiraSearchMotion.play, onClose: closeSheet,
       onEngineSettings: openEngineSettings,
+      simulationEnabled: !!searchSimulation && searchSimulation.isEnabled(),
+      onSimulationChange: function (enabled) { if (searchSimulation) searchSimulation.setEnabled(enabled); },
       onChange: function (next) {
         ++searchMotionRevision; searchMotionReady = true;
         searchMotionSettings = normalizedSearchMotion(next);
@@ -4763,6 +4766,18 @@
     var imeEnterTimer = null;
     var resetOnReturn = false;
     var submitting = false;
+    var nativeMotion = null, nativeDraft = "";
+    if (window.AiraSearchSimulation) searchSimulation = window.AiraSearchSimulation.mount({
+      form: form, input: input, button: $("btnSystemSearch"),
+      getVariant: function () { return searchMotionSettings.variant; },
+      onBeforeEnable: function () {
+        if (nativeMotion) { nativeMotion.cancel(); nativeMotion = null; input.value = nativeDraft; }
+        submitting = false; resetOnReturn = false;
+      },
+      onChange: function (enabled) {
+        if (searchMotionPanel) searchMotionPanel.setSimulationEnabled(enabled);
+      }
+    });
 
     function clearInput() {
       // Clear both the live value and form default before native navigation can
@@ -4802,10 +4817,12 @@
         return;
       }
       submitting = true;
+      nativeDraft = draft;
       var dispatched = false;
       function dispatchSearch() {
         if (dispatched) return;
         dispatched = true;
+        nativeMotion = null;
         resetOnReturn = true;
         clearInput();
         try {
@@ -4819,8 +4836,9 @@
         } finally { submitting = false; }
       }
       if (searchMotionReady && searchMotionSettings.enabled && window.AiraSearchMotion) {
-        window.AiraSearchMotion.play({ form: form, input: input, button: $("btnSystemSearch"), text: draft,
+        var motion = window.AiraSearchMotion.play({ form: form, input: input, button: $("btnSystemSearch"), text: draft,
           variant: searchMotionSettings.variant, onFinish: dispatchSearch });
+        if (!dispatched) nativeMotion = motion;
         // play() can complete synchronously for reduced motion or unavailable Canvas.
         if (!dispatched) { input.value = ""; input.defaultValue = ""; }
       } else dispatchSearch();
