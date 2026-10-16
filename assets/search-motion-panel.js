@@ -39,7 +39,7 @@
       '<div class="sm-title-row"><h2 class="sm-title">念起，光行</h2><button class="wp-random sm-toggle" type="button" aria-label="启用搜索动效"><span class="sm-toggle-label">开启搜索动效</span><i class="wp-track" aria-hidden="true"><i class="wp-knob"></i></i></button></div>' +
       '<p class="sm-subtitle">搜索动效</p></div>' +
       '<div class="sm-heading-actions"><button class="sm-engine" type="button"><span class="sm-engine-label">搜索引擎设置</span>' + arrow + '</button>' +
-      '<button class="wp-random interaction-toolbar sm-simulation" type="button" aria-pressed="false"><span>彩蛋：无限模拟发射循环</span><i class="wp-track" aria-hidden="true"><i class="wp-knob"></i></i></button></div></header>' +
+      '<button class="wp-random interaction-toolbar sm-simulation" type="button" aria-pressed="false"><span>无限模拟发射循环</span><i class="wp-track" aria-hidden="true"><i class="wp-knob"></i></i></button></div></header>' +
       '<section class="sm-preview" aria-label="搜索动效预览"><div class="sm-preview-heading"><div class="sm-current"><span class="sm-current-number"></span><span class="sm-current-name"></span><span class="sm-current-latin" lang="en"></span></div><span class="sm-duration"></span></div>' +
       '<div class="sm-stage"><form class="search sm-search" autocomplete="off">' + searchIcon + '<input type="search" aria-label="输入文字预览搜索动效" placeholder="写下一个念头…" enterkeyhint="search" maxlength="160"><button class="search-go" type="submit" aria-label="播放动效预览">' + arrow + '</button></form></div>' +
       '<div class="sm-preview-bottom"><div class="sm-speed" role="group" aria-label="预览速度"><button type="button" data-rate="1" aria-pressed="true">1× 原速</button><button type="button" data-rate="0.35" aria-pressed="false">0.35× 慢放</button></div><p class="sm-hint" hidden></p><button class="sm-replay" type="button">' + replayIcon + '<span>再看一次</span></button></div></section>' +
@@ -73,6 +73,16 @@
       grid.style.setProperty('--sm-tide-origin', right ? '82%' : '18%');
       grid.style.setProperty('--sm-tide-drift', right ? '12%' : '-12%');
     }
+    // Speed relative to 4.8.3: N(0.70, 0.10^2), truncated at +/-3 sigma.
+    // About 68.5% in .60-.80, 27.2% in .50-.60 / .80-.90,
+    // and 4.3% in .40-.50 / .90-1.00. Sample speed, not duration.
+    function sampledLaserSpeed() {
+      var z;
+      do {
+        z = Math.sqrt(-2 * Math.log(Math.max(Number.EPSILON, Math.random()))) * Math.cos(2 * Math.PI * Math.random());
+      } while (Math.abs(z) > 3);
+      return .70 + .10 * z;
+    }
     function scheduleLaser() {
       clearTimeout(laserTimer);
       if (!ambientOn || disposed || reduceAmbient.matches || document.hidden) return;
@@ -87,6 +97,7 @@
         var ray = document.createElement('span');
         ray.className = 'sm-gap-laser' + (vertical ? ' sm-gap-laser-vertical' : '');
         ray.setAttribute('aria-hidden', 'true');
+        ray.style.animationDuration = Math.round((vertical ? 840 : 680) / sampledLaserSpeed()) + 'ms';
         if (vertical) {
           ray.style.left = ((rects[0].right + rects[1].left) / 2 - area.left) + 'px';
           ray.style.setProperty('--sm-ray-run', (area.height + 100) + 'px');

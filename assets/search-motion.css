@@ -370,3 +370,34 @@
 
 .sm-gap-laser-reverse { background: linear-gradient(270deg, transparent, #69acff 38%, #b4ddff 72%, #fff 93%, #d9eeff 98%, transparent); }
 .sm-gap-laser-vertical.sm-gap-laser-reverse { background: linear-gradient(0deg, transparent, #69acff 38%, #b4ddff 72%, #fff 93%, #d9eeff 98%, transparent); }
+
+/* 4.8.6 — compact primary entry, quiet secondary switch; satin platinum gold. */
+.sm-heading-actions { gap: 12px; min-width: 144px; padding-top: 1px; }
+.sm-engine { height: 34px; padding: 0 11px; --sm-engine-radius: 11px; font-size: 10.5px; font-weight: 500; letter-spacing: .4px; }
+.wp-random.interaction-toolbar.sm-simulation { min-height: 30px; padding: 4px 9px; border-radius: 10px; font-size: 10.5px; letter-spacing: .25px; gap: 8px; }
+.sm-panel .sm-simulation:focus-visible { border-radius: 10px; }
+/* The lettering carries its own metal highlight rather than inheriting flat gold. */
+.sm-collection legend .sm-random[aria-pressed="true"] [lang="en"] {
+  color: #a48e61;
+  background: linear-gradient(165deg, #8c7d60 0%, #bda779 27%, #eee8d7 43%, #d3c5a2 53%, #a88f58 72%, #c9b78c 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 .35px .35px rgba(104, 87, 52, .1);
+}
+.wp-random.sm-random[aria-pressed="true"] .wp-track {
+  border-color: #bcaa80;
+  background: linear-gradient(145deg, #b49e72, #d8c9a4 39%, #e5dbc0 48%, #cbb582 63%, #b59e6d);
+  box-shadow: inset 0 1px 0 rgba(255, 250, 230, .32), inset 0 -1px 0 rgba(131, 105, 59, .12);
+}
+.wp-random.sm-random[aria-pressed="true"] .wp-knob { background: #e9e3d2; box-shadow: 0 1px 2px rgba(107, 83, 40, .13); }
+:root[data-theme="dark"] .sm-collection legend .sm-random[aria-pressed="true"] [lang="en"] {
+  background-image: linear-gradient(165deg, #b6a078, #d6c6a0 27%, #ede8da 43%, #d3c5a2 56%, #bba06c 75%, #d7c7a2);
+  text-shadow: none;
+}
+:root[data-theme="dark"] .wp-random.sm-random[aria-pressed="true"] .wp-track { border-color: #c5b289; background: linear-gradient(145deg, #b49e72, #d9ceb0 43%, #c6ae7b 65%, #ad9462); }
+:root[data-theme="dark"] .wp-random.sm-random[aria-pressed="true"] .wp-knob { background: #e4ddcc; }
+@media (max-width: 400px) {
+  .sm-heading { gap: 12px; }
+  .sm-heading-actions { min-width: 140px; }
+  .wp-random.interaction-toolbar.sm-simulation { padding-inline: 8px; font-size: 10px; }
+}
