@@ -83,7 +83,7 @@
       } while (Math.abs(z) > 3);
       return .70 + .10 * z;
     }
-    function scheduleLaser(minDelay) {
+    function scheduleLaser(minDelay, opening) {
       clearTimeout(laserTimer);
       if (!ambientOn || disposed || reduceAmbient.matches || document.hidden) return;
       laserTimer = setTimeout(function () {
@@ -100,15 +100,37 @@
             weight: (twoColumns ? .7 : 1) / (rows.length - 1) });
         }
         if (twoColumns) lanes.push({ vertical: true, position: (rects[0].right + rects[1].left) / 2 - area.left, weight: .3 });
-        // Mutually exclusive wave sizes: 73% single, 20% double, 7% triple.
-        // Draw lanes without replacement, so no pair can oppose on one road.
-        var wave = Math.random(), count = Math.min(lanes.length, wave < .07 ? 3 : wave < .27 ? 2 : 1);
+        // The opening wave takes every standard lane at once: the centre runs
+        // top to bottom, the second row runs right to left, and the first row
+        // runs left to right. Later waves stay mutually exclusive: 73% single,
+        // 20% double, 7% triple, and draw lanes without replacement so no pair
+        // can oppose on one road.
+        var wave = Math.random(), openingShots = null;
+        var count = Math.min(lanes.length, wave < .07 ? 3 : wave < .27 ? 2 : 1);
+        if (opening) {
+          var horizontal = lanes.filter(function (lane) { return !lane.vertical; });
+          var vertical = lanes.filter(function (lane) { return lane.vertical; })[0];
+          openingShots = [];
+          if (vertical) openingShots.push({ lane: vertical, reverse: false });
+          if (horizontal[1]) openingShots.push({ lane: horizontal[1], reverse: true });
+          if (horizontal[0]) openingShots.push({ lane: horizontal[0], reverse: false });
+          if (!openingShots.length) openingShots.push({ lane: lanes[0], reverse: false });
+          count = openingShots.length;
+        }
         var fragment = document.createDocumentFragment(), longest = 0;
         for (var shot = 0; shot < count; shot++) {
-          var total = lanes.reduce(function (sum, lane) { return sum + lane.weight; }, 0);
-          var choice = Math.random() * total, index = 0;
-          while (index < lanes.length - 1 && choice >= lanes[index].weight) { choice -= lanes[index].weight; index++; }
-          var lane = lanes.splice(index, 1)[0];
+          var lane, reverse;
+          if (openingShots) {
+            var planned = openingShots[shot];
+            lane = lanes.splice(lanes.indexOf(planned.lane), 1)[0];
+            reverse = planned.reverse;
+          } else {
+            var total = lanes.reduce(function (sum, lane) { return sum + lane.weight; }, 0);
+            var choice = Math.random() * total, index = 0;
+            while (index < lanes.length - 1 && choice >= lanes[index].weight) { choice -= lanes[index].weight; index++; }
+            lane = lanes.splice(index, 1)[0];
+            reverse = Math.random() < (lane.vertical ? 4 / 30 : .5);
+          }
           var ray = document.createElement('span');
           ray.className = 'sm-gap-laser' + (lane.vertical ? ' sm-gap-laser-vertical' : '');
           ray.setAttribute('aria-hidden', 'true');
@@ -117,21 +139,21 @@
           ray.style.animationDuration = duration + 'ms';
           ray.style[lane.vertical ? 'left' : 'top'] = lane.position + 'px';
           ray.style.setProperty('--sm-ray-run', ((lane.vertical ? area.height : area.width) + 100) + 'px');
-          if (Math.random() < (lane.vertical ? 4 / 30 : .5)) ray.classList.add('sm-gap-laser-reverse');
+          if (reverse) ray.classList.add('sm-gap-laser-reverse');
           ray.addEventListener('animationend', function (event) { event.currentTarget.remove(); }, { once: true });
           fragment.appendChild(ray);
         }
         grid.appendChild(fragment);
         // Finish this wave before another can reuse any of its lanes.
         scheduleLaser(longest + 90);
-      }, Math.max(1530 + Math.random() * 1640, minDelay || 0));
+      }, opening ? 275 : Math.max(1530 + Math.random() * 1640, minDelay || 0));
     }
     function syncAmbient() {
       if (ambientOn === random) return;
       ambientOn = random;
       clearTimeout(laserTimer);
       grid.querySelectorAll('.sm-gap-laser').forEach(function (ray) { ray.remove(); });
-      if (random) { tideOrigin(); scheduleLaser(); }
+      if (random) { tideOrigin(); scheduleLaser(0, true); }
     }
     listen(grid, 'animationiteration', function (event) {
       if (event.animationName === 'sm-prismatic-tide') tideOrigin();
