@@ -28,6 +28,8 @@
     var composing = false;
     var compositionEnd = 0;
     var listeners = [];
+    var laserTimer = 0, ambientOn = false;
+    var reduceAmbient = window.matchMedia('(prefers-reduced-motion: reduce)');
     var groupName = 'aira-search-motion-' + (++serial);
     container.textContent = '';
     var panel = document.createElement('section');
@@ -66,6 +68,57 @@
       listeners.push(function () { node.removeEventListener(event, handler); });
     }
 
+    function tideOrigin() {
+      var right = Math.random() < .5;
+      grid.style.setProperty('--sm-tide-origin', right ? '82%' : '18%');
+      grid.style.setProperty('--sm-tide-drift', right ? '12%' : '-12%');
+    }
+    function scheduleLaser() {
+      clearTimeout(laserTimer);
+      if (!ambientOn || disposed || reduceAmbient.matches || document.hidden) return;
+      laserTimer = setTimeout(function () {
+        if (!ambientOn || disposed || document.hidden) return;
+        var cards = Array.from(grid.querySelectorAll('.sm-choice'));
+        if (cards.length < 2) return;
+        var area = grid.getBoundingClientRect();
+        var rects = cards.map(function (card) { return card.getBoundingClientRect(); });
+        var twoColumns = Math.abs(rects[0].top - rects[1].top) < 2;
+        var draw = Math.random(), vertical = twoColumns && draw > .8;
+        var ray = document.createElement('span');
+        ray.className = 'sm-gap-laser' + (vertical ? ' sm-gap-laser-vertical' : '');
+        ray.setAttribute('aria-hidden', 'true');
+        if (vertical) {
+          ray.style.left = ((rects[0].right + rects[1].left) / 2 - area.left) + 'px';
+          ray.style.setProperty('--sm-ray-run', (area.height + 100) + 'px');
+          if (draw > .96) ray.classList.add('sm-gap-laser-reverse');
+        } else {
+          var rows = rects.filter(function (rect, index) { return !index || rect.top > rects[index - 1].top + 2; });
+          var row = Math.floor(Math.random() * (rows.length - 1));
+          ray.style.top = ((rows[row].bottom + rows[row + 1].top) / 2 - area.top) + 'px';
+          ray.style.setProperty('--sm-ray-run', (area.width + 100) + 'px');
+          if (Math.random() < .5) ray.classList.add('sm-gap-laser-reverse');
+        }
+        grid.appendChild(ray);
+        ray.addEventListener('animationend', function () { ray.remove(); }, { once: true });
+        scheduleLaser();
+      }, 1700 + Math.random() * 2200);
+    }
+    function syncAmbient() {
+      if (ambientOn === random) return;
+      ambientOn = random;
+      clearTimeout(laserTimer);
+      grid.querySelectorAll('.sm-gap-laser').forEach(function (ray) { ray.remove(); });
+      if (random) { tideOrigin(); scheduleLaser(); }
+    }
+    listen(grid, 'animationiteration', function (event) {
+      if (event.animationName === 'sm-prismatic-tide') tideOrigin();
+    });
+    listen(document, 'visibilitychange', function () {
+      clearTimeout(laserTimer);
+      if (!document.hidden) scheduleLaser();
+    });
+    listen(reduceAmbient, 'change', function () { scheduleLaser(); });
+
     function current() {
       return studies.filter(function (study) { return study.id === (random ? previewVariant : selected); })[0];
     }
@@ -95,6 +148,7 @@
       toggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
       toggle.setAttribute('aria-label', enabled ? '关闭搜索动效' : '开启搜索动效');
       panel.classList.toggle('sm-off', !enabled);
+      syncAmbient();
       panel.classList.toggle('sm-random-on', random);
       randomToggle.setAttribute('aria-pressed', String(random));
       number.textContent = study.number;
@@ -177,6 +231,7 @@
       },
       destroy: function () {
         disposed = true;
+        clearTimeout(laserTimer);
         stop();
         listeners.forEach(function (remove) { remove(); });
         listeners = [];
