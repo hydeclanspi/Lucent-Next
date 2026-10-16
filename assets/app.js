@@ -1904,7 +1904,7 @@
         kind: "backup",
         exportedAt: new Date().toISOString(),
         timezoneOffsetMinutes: -new Date().getTimezoneOffset(),
-        homepage: { id: "com.example.aira-profile-card", version: "4.8.6" },
+        homepage: { id: "com.example.aira-profile-card", version: "4.8.7" },
         summary: {
           keys: Object.keys(keys).length,
           logs: Array.isArray(keys.logs) ? keys.logs.length : 0,

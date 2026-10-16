@@ -401,3 +401,20 @@
   .sm-heading-actions { min-width: 140px; }
   .wp-random.interaction-toolbar.sm-simulation { padding-inline: 8px; font-size: 10px; }
 }
+
+/* 4.8.7 — precise entry offsets; tide parked; pearl-white platinum lettering. */
+.sm-engine { position: relative; top: 6px; }
+.wp-random.interaction-toolbar.sm-simulation { position: relative; top: 8.5px; }
+.sm-random-on .sm-grid::before { animation: none; opacity: 0; }
+.sm-collection legend .sm-random[aria-pressed="true"] [lang="en"] {
+  color: #d3c5a2;
+  background-image:
+    linear-gradient(45deg, transparent 34%, rgba(249, 247, 240, .58) 49%, transparent 64%),
+    linear-gradient(135deg, #eeece3 0%, #e3ddca 24%, #d3c5a2 47%, #d7ccb1 67%, #f0eee6 100%);
+  text-shadow: none;
+}
+:root[data-theme="dark"] .sm-collection legend .sm-random[aria-pressed="true"] [lang="en"] {
+  background-image:
+    linear-gradient(45deg, transparent 34%, rgba(251, 249, 241, .5) 49%, transparent 64%),
+    linear-gradient(135deg, #f0eee6 0%, #e5decb 24%, #d7cbaa 47%, #ddd3bb 67%, #f2f0e8 100%);
+}
