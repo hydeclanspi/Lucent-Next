@@ -59,7 +59,7 @@
         text: glyphs.map(function (g) { return g.char; }).join(''), font: font, fontSize: fontSize,
         ink: style.color, accent: dark ? '#d2b18a' : '#95734e', light: dark ? '#fff3dc' : '#9b7b52', dark: dark, glyphs: glyphs,
         textWidth: glyphs.length ? glyphs[glyphs.length - 1].x + glyphs[glyphs.length - 1].width - glyphs[0].x : 0 };
-      form.appendChild(canvas); form.classList.add('search-motion-playing'); form.setAttribute('aria-busy', 'true'); input.readOnly = true;
+      form.appendChild(canvas); form.classList.add('search-motion-playing'); form.setAttribute('aria-busy', 'true'); if (options.lockInput !== false) input.readOnly = true;
       // Reuse the same renderer backwards for the first simulation; rapid fire
       // keeps the light path, without rebuilding or revealing new text.
       state.burst = options.burst === true;
@@ -67,14 +67,24 @@
         (options.playbackRate === .35 ? .35 : 1), started = performance.now();
       function draw(now) {
         if (finished) return;
-        var elapsed = Math.min(1, (now - started) / duration);
+        var elapsed = Math.max(0, Math.min(1, (now - started) / duration));
         var p = options.roundTrip ? (elapsed <= .5 ? elapsed * 2 : (1 - elapsed) * 2) :
           (options.burst ? lightStarts[options.variant] + elapsed * (1 - lightStarts[options.variant]) : elapsed);
         try {
           ctx.clearRect(0, 0, state.w, state.h); renderer(ctx, state, p);
           button.style.setProperty('--search-arrival', String(Math.sin(Math.PI * Math.max(0, Math.min(1, (p - .7) / .3))) * .75));
         } catch (error) { finish(); return; }
-        if (elapsed >= 1) finish(); else frame = requestAnimationFrame(draw);
+        if (elapsed >= 1) {
+          var next = options.burst && options.nextBurst && options.nextBurst();
+          if (next && window.AiraMotionRenderers[next]) {
+            // One Canvas, one frame loop, stable IME. No per-shot allocation,
+            // style measurement, DOM detach, or readOnly toggling during a hold.
+            options.variant = next; renderer = window.AiraMotionRenderers[next];
+            started = now + 24;
+            clearTimeout(timer); timer = setTimeout(finish, duration + 124);
+            frame = requestAnimationFrame(draw);
+          } else finish();
+        } else frame = requestAnimationFrame(draw);
       }
       document.addEventListener('visibilitychange', onHidden);
       window.addEventListener('pagehide', finish);

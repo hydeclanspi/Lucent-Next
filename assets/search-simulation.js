@@ -6,6 +6,7 @@
     var form = options.form, input = options.input, button = options.button;
     var enabled = false, first = true, running = false, active = null;
     var held = false, holding = false, pending = false, burstUntil = 0, lastRequest = -Infinity;
+    var releaseTimer = 0;
     var holdTimer = 0, revealTimer = 0, nextTimer = 0, generation = 0;
     var composing = false, imeBlocked = false, imeTimer = 0;
     var snapshot = null, roundTrip = false, laserText = '', cycleStarted = 0;
@@ -18,7 +19,7 @@
     function generatedText() {
       var date = new Date();
       function pad(n) { return String(n).padStart(2, '0'); }
-      return ['念起，光行', '当少爷好累', pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds()),
+      return ['念起，光行', '当少爷好累', 'time ' + pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds()),
         'hydeclanspi 2019'][Math.floor(Math.random() * 4)];
     }
     function remember() {
@@ -36,6 +37,7 @@
     function clearValue() { input.value = ''; input.defaultValue = ''; input.scrollLeft = 0; }
     function stopIntent() {
       held = false; holding = false; pending = false; burstUntil = 0; lastRequest = -Infinity;
+      clearTimeout(releaseTimer); releaseTimer = 0;
       clearTimeout(holdTimer); clearTimeout(nextTimer); holdTimer = nextTimer = 0;
       if (!running) form.classList.remove('search-simulation-burst');
     }
@@ -95,7 +97,7 @@
       snapshot = remember();
       form.classList.toggle('search-simulation-burst', burst);
       form.setAttribute('aria-busy', 'true');
-      input.readOnly = true;
+      // Keep the native IME attached during rapid fire; beforeinput handles editing.
 
       function fly() {
         revealTimer = 0;
@@ -107,7 +109,12 @@
         var completed = false;
         try {
           var control = window.AiraSearchMotion.play({ form: form, input: input, button: button,
-            text: laserText, variant: options.getVariant(), roundTrip: roundTrip, burst: burst,
+            text: laserText, variant: options.getVariant(), roundTrip: roundTrip, burst: burst, lockInput: false,
+            nextBurst: burst ? function () {
+              if (!mayContinue() || !(holding || pending || performance.now() < burstUntil)) return false;
+              pending = false;
+              return options.getVariant();
+            } : null,
             onFinish: function () { completed = true; finish(token); } });
           if (!completed && token === generation) {
             active = control;
@@ -150,6 +157,8 @@
       }
       event.preventDefault();
       if (imeBlocked) return;
+      clearTimeout(releaseTimer); releaseTimer = 0;
+      var continued = held;
       if (!held) {
         held = true;
         holdTimer = setTimeout(function () {
@@ -159,22 +168,30 @@
           if (!running && !nextTimer) start(true);
         }, 280);
       }
-      if (event.repeat) {
+      if (event.repeat || continued) {
         holding = true; pending = false;
         if (!running && !nextTimer) start(true);
       } else request();
     });
     window.addEventListener('keyup', function (event) {
       if (event.key !== 'Enter' && event.keyCode !== 13) return;
-      var sustained = holding;
-      held = false; holding = false; clearTimeout(holdTimer); holdTimer = 0;
-      if (sustained) {
-        pending = false; burstUntil = 0; lastRequest = -Infinity;
-        clearTimeout(nextTimer); nextTimer = 0;
-        if (!running) form.classList.remove('search-simulation-burst');
-      }
+      if (!enabled) return;
+      // Some keyboards emit up/down pairs during auto-repeat. Let the next down
+      // join the same train instead of returning to the random-text prelude.
+      clearTimeout(releaseTimer);
+      releaseTimer = setTimeout(function () {
+        releaseTimer = 0;
+        var sustained = holding;
+        held = false; holding = false; clearTimeout(holdTimer); holdTimer = 0;
+        if (sustained) {
+          pending = false; burstUntil = 0;
+          clearTimeout(nextTimer); nextTimer = 0;
+          if (!running) form.classList.remove('search-simulation-burst');
+        }
+      }, 80);
     });
-    input.addEventListener('compositionstart', function () { composing = true; stopIntent(); });
+    input.addEventListener('beforeinput', function () { if (enabled && running) cancel(); });
+    input.addEventListener('compositionstart', function () { if (enabled && running) cancel(); composing = true; stopIntent(); });
     input.addEventListener('compositionend', function () { composing = false; });
     input.addEventListener('input', function () { if (enabled && !running) stopIntent(); });
     form.addEventListener('focusout', function (event) { if (!form.contains(event.relatedTarget)) stopIntent(); });
