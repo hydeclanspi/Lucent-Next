@@ -124,7 +124,7 @@
         grid.appendChild(fragment);
         // Finish this wave before another can reuse any of its lanes.
         scheduleLaser(longest + 90);
-      }, Math.max(1700 + Math.random() * 2200, minDelay || 0));
+      }, Math.max(1530 + Math.random() * 1640, minDelay || 0));
     }
     function syncAmbient() {
       if (ambientOn === random) return;

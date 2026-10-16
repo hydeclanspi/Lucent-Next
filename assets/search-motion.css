@@ -403,8 +403,8 @@
 }
 
 /* 4.8.7 — precise entry offsets; tide parked; pearl-white platinum lettering. */
-.sm-engine { position: relative; top: 6px; }
-.wp-random.interaction-toolbar.sm-simulation { position: relative; top: 8.5px; }
+.sm-engine { position: relative; top: 3px; left: -1.5px; }
+.wp-random.interaction-toolbar.sm-simulation { position: relative; top: 5.5px; }
 .sm-random-on .sm-grid::before { animation: none; opacity: 0; }
 .sm-collection legend .sm-random[aria-pressed] [lang="en"] {
   color: #d3c5a2;
@@ -428,4 +428,4 @@
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-kerning: normal;
 }
-.wp-random.interaction-toolbar.sm-simulation { left: 7.67px; }
+.wp-random.interaction-toolbar.sm-simulation { left: 5.37px; }
