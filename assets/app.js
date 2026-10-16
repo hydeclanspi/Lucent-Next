@@ -4711,14 +4711,18 @@
     });
   }
 
-  var searchMotionSettings = { enabled: true, variant: "beam" };
+  var searchMotionSettings = { enabled: true, variant: "beam", random: false };
   var searchSimulation = null;
   var searchMotionReady = false, searchMotionRevision = 0, searchMotionPanel = null;
   var searchMotionWriteQueue = Promise.resolve();
   var searchMotionLoad = Promise.resolve();
   function normalizedSearchMotion(value) {
     var ids = ["beam", "prism", "shutter", "filament", "thread", "orbit"];
-    return { enabled: !value || value.enabled !== false, variant: value && ids.indexOf(value.variant) >= 0 ? value.variant : "beam" };
+    return { enabled: !value || value.enabled !== false, variant: value && ids.indexOf(value.variant) >= 0 ? value.variant : "beam", random: !!value && value.random === true };
+  }
+  function nextSearchVariant() {
+    var ids = ["beam", "prism", "shutter", "filament", "thread", "orbit"];
+    return searchMotionSettings.random ? ids[Math.floor(Math.random() * ids.length)] : searchMotionSettings.variant;
   }
   function loadSearchMotionSettings() {
     var revision = ++searchMotionRevision;
@@ -4769,7 +4773,7 @@
     var nativeMotion = null, nativeDraft = "";
     if (window.AiraSearchSimulation) searchSimulation = window.AiraSearchSimulation.mount({
       form: form, input: input, button: $("btnSystemSearch"),
-      getVariant: function () { return searchMotionSettings.variant; },
+      getVariant: nextSearchVariant,
       onBeforeEnable: function () {
         if (nativeMotion) { nativeMotion.cancel(); nativeMotion = null; input.value = nativeDraft; }
         submitting = false; resetOnReturn = false;
@@ -4837,7 +4841,7 @@
       }
       if (searchMotionReady && searchMotionSettings.enabled && window.AiraSearchMotion) {
         var motion = window.AiraSearchMotion.play({ form: form, input: input, button: $("btnSystemSearch"), text: draft,
-          variant: searchMotionSettings.variant, onFinish: dispatchSearch });
+          variant: nextSearchVariant(), onFinish: dispatchSearch });
         if (!dispatched) nativeMotion = motion;
         // play() can complete synchronously for reduced motion or unavailable Canvas.
         if (!dispatched) { input.value = ""; input.defaultValue = ""; }
