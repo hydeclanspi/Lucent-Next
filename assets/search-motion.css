@@ -71,8 +71,7 @@
 .wp-random.sm-toggle[aria-pressed="true"] { color: var(--sm-mint); }
 .wp-random.sm-toggle[aria-pressed="true"] .wp-track { border-color: var(--sm-mint); background: rgba(103, 185, 154, .12); }
 .wp-random.sm-toggle[aria-pressed="true"] .wp-knob { background: var(--sm-mint-knob); }
-/* 右上角入口：实心陶瓷白，釉面由上到下微暖，一线高光 + 轻投影做出厚度感。
-   文案一行「搜索引擎设置 →」，绝不拆行。 */
+/* 右上角入口尺寸；pro max 暖白金玻璃材质在文件末尾统一覆盖。 */
 .sm-engine {
   --sm-engine-radius: 14px;
   flex: none;
@@ -166,18 +165,35 @@
 .wp-random.sm-random[aria-pressed="true"] .wp-knob { background: #fff8e9; }
 .sm-collection legend .sm-random[aria-pressed="true"] [lang="en"] { color: inherit; }
 .sm-grid { --sm-ray-core: #b49560; --sm-gap: 10px; position: relative; isolation: isolate; overflow: hidden; border-radius: 15px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sm-gap); }
-/* A half-second tide, then 4.7 seconds of the original clear card material. */
+/* 0.5-second broad tide; 7.4 seconds of untouched clear material. */
 .sm-grid::before {
   content: ''; position: absolute; pointer-events: none; opacity: 0;
-  z-index: -2; inset: -35%;
-  background: radial-gradient(ellipse at 26% 62%, rgba(143, 208, 240, .3), transparent 51%), radial-gradient(ellipse at 73% 52%, rgba(195, 178, 227, .22), transparent 48%), radial-gradient(ellipse at 45% 80%, rgba(179, 224, 205, .18), transparent 49%);
+  z-index: -2; inset: -24%;
+  background: radial-gradient(ellipse at var(--sm-tide-origin, 18%) 75%, rgba(147, 210, 241, .38), rgba(170, 208, 238, .2) 45%, transparent 78%), radial-gradient(ellipse at 65% 22%, rgba(202, 189, 235, .2), transparent 75%), linear-gradient(20deg, rgba(168, 220, 221, .12), rgba(170, 210, 241, .16));
 }
-.sm-random-on .sm-grid::before { animation: sm-prismatic-tide 5.2s linear infinite; }
+.sm-random-on .sm-grid::before { animation: sm-prismatic-tide 7.9s linear infinite; }
 @keyframes sm-prismatic-tide {
-  0% { opacity: 0; transform: translate3d(0, 22%, 0) scaleY(.85); animation-timing-function: ease-out; }
-  4.807692% { opacity: 1; transform: translate3d(0, 0, 0) scaleY(1); animation-timing-function: ease-in; }
-  9.615385%, 100% { opacity: 0; transform: translate3d(0, -18%, 0) scaleY(.9); }
+  0% { opacity: 0; transform: translate3d(var(--sm-tide-drift, -12%), 18%, 0) scale(.94); animation-timing-function: ease-out; }
+  3.164557% { opacity: 1; transform: translate3d(0, 0, 0) scale(1.12); animation-timing-function: ease-in; }
+  6.329114%, 100% { opacity: 0; transform: translate3d(0, -12%, 0) scale(1.16); }
 }
+/* Fine white-hot blue pulses travel only through the open channels. */
+.sm-gap-laser {
+  position: absolute; z-index: 3; pointer-events: none;
+  left: -100px; width: 100px; height: 1.3px; margin-top: -.65px;
+  background: linear-gradient(90deg, transparent, #69acff 38%, #b4ddff 72%, #fff 93%, #d9eeff 98%, transparent);
+  box-shadow: 0 0 3px rgba(56, 137, 255, .85), 0 0 7px rgba(70, 147, 255, .35);
+  border-radius: 100%; opacity: 0;
+  animation: sm-laser-horizontal 680ms cubic-bezier(.24, .48, .65, 1) both;
+}
+.sm-gap-laser-vertical {
+  top: -100px; width: 1.3px; height: 100px; margin-top: 0; margin-left: -.65px;
+  background: linear-gradient(transparent, #69acff 38%, #b4ddff 72%, #fff 93%, #d9eeff 98%, transparent);
+  animation-name: sm-laser-vertical; animation-duration: 840ms;
+}
+.sm-gap-laser-reverse { animation-direction: reverse; }
+@keyframes sm-laser-horizontal { 0% { opacity: 0; transform: translateX(0); } 12%, 82% { opacity: 1; } 100% { opacity: 0; transform: translateX(var(--sm-ray-run)); } }
+@keyframes sm-laser-vertical { 0% { opacity: 0; transform: translateY(0); } 12%, 82% { opacity: 1; } 100% { opacity: 0; transform: translateY(var(--sm-ray-run)); } }
 /* Champagne cores with a narrow ice halo. Current stays inside the gaps. */
 .sm-random-on .sm-choice::before, .sm-random-on .sm-choice::after {
   content: ''; position: absolute; pointer-events: none; z-index: 1;
@@ -325,3 +341,32 @@
 .sm-speed button { padding: 5px 7px; border-radius: 4px; font: 9px/1.5 var(--mono); color: var(--ink-3); white-space: nowrap; }
 .sm-speed button[aria-pressed="true"] { background: var(--sm-selected); color: var(--sm-gold); }
 .sm-preview-bottom { flex-wrap: wrap; gap: 8px; }
+
+/* Pro max — warm platinum glass, without changing the established sizing. */
+.sm-engine {
+  border-color: rgba(255, 249, 232, .68);
+  background: linear-gradient(155deg, rgba(255, 253, 246, .67), rgba(242, 221, 188, .4));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .65), 0 3px 12px rgba(70, 52, 30, .045);
+}
+.sm-engine:active { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .65), 0 2px 7px rgba(70, 52, 30, .04); }
+@media (hover: hover) { .sm-engine:hover { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .76), 0 4px 14px rgba(70, 52, 30, .07); } }
+:root[data-theme="dark"] .sm-engine {
+  border-color: rgba(246, 226, 192, .32);
+  background: linear-gradient(155deg, rgba(236, 219, 187, .24), rgba(181, 155, 112, .13));
+  box-shadow: inset 0 1px 0 rgba(255, 246, 224, .23), 0 3px 12px rgba(0, 0, 0, .08);
+}
+.wp-random.sm-random[aria-pressed="true"] { color: #a68a50; }
+.wp-random.sm-random .wp-track { border-color: #c8b37f; }
+.wp-random.sm-random .wp-knob { background: linear-gradient(145deg, #fff8dd, #c3a261); }
+.wp-random.sm-random[aria-pressed="true"] .wp-track {
+  border-color: #d0b981;
+  background: linear-gradient(145deg, #bba06a 0%, #e7d6a5 39%, #fff4d2 48%, #d3b878 60%, #b99b60 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 245, .7), inset 0 -1px 0 rgba(131, 105, 59, .16);
+}
+.wp-random.sm-random[aria-pressed="true"] .wp-knob { background: #fffbed; box-shadow: 0 1px 2px rgba(107, 83, 40, .2); }
+:root[data-theme="dark"] .wp-random.sm-random[aria-pressed="true"] { color: #e5d4a6; }
+:root[data-theme="dark"] .wp-random.sm-random[aria-pressed="true"] .wp-track { border-color: #e3cf99; background: linear-gradient(145deg, #c1a571, #f4e9c5 45%, #d6bb80 65%, #b99a5f); }
+:root[data-theme="dark"] .wp-random.sm-random[aria-pressed="true"] .wp-knob { background: #fffbed; }
+
+.sm-gap-laser-reverse { background: linear-gradient(270deg, transparent, #69acff 38%, #b4ddff 72%, #fff 93%, #d9eeff 98%, transparent); }
+.sm-gap-laser-vertical.sm-gap-laser-reverse { background: linear-gradient(0deg, transparent, #69acff 38%, #b4ddff 72%, #fff 93%, #d9eeff 98%, transparent); }
