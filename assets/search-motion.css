@@ -406,15 +406,26 @@
 .sm-engine { position: relative; top: 6px; }
 .wp-random.interaction-toolbar.sm-simulation { position: relative; top: 8.5px; }
 .sm-random-on .sm-grid::before { animation: none; opacity: 0; }
-.sm-collection legend .sm-random[aria-pressed="true"] [lang="en"] {
+.sm-collection legend .sm-random[aria-pressed] [lang="en"] {
   color: #d3c5a2;
   background-image:
+    radial-gradient(ellipse 3px 2px at 56% 26%, rgba(240, 238, 230, .46) 0%, rgba(240, 238, 230, .2) 58%, rgba(240, 238, 230, 0) 100%),
     linear-gradient(45deg, transparent 34%, rgba(249, 247, 240, .58) 49%, transparent 64%),
     linear-gradient(135deg, #eeece3 0%, #e3ddca 24%, #d3c5a2 47%, #d7ccb1 67%, #f0eee6 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
   text-shadow: none;
 }
-:root[data-theme="dark"] .sm-collection legend .sm-random[aria-pressed="true"] [lang="en"] {
+:root[data-theme="dark"] .sm-collection legend .sm-random[aria-pressed] [lang="en"] {
   background-image:
+    radial-gradient(ellipse 3px 2px at 56% 26%, rgba(242, 240, 232, .44) 0%, rgba(242, 240, 232, .19) 58%, rgba(242, 240, 232, 0) 100%),
     linear-gradient(45deg, transparent 34%, rgba(251, 249, 241, .5) 49%, transparent 64%),
     linear-gradient(135deg, #f0eee6 0%, #e5decb 24%, #d7cbaa 47%, #ddd3bb 67%, #f2f0e8 100%);
 }
+
+/* 4.8.7 pro max — proportional lettering avoids a compressed monospace m. */
+.sm-collection legend .sm-random [lang="en"] {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-kerning: normal;
+}
+.wp-random.interaction-toolbar.sm-simulation { left: 7.67px; }

@@ -83,7 +83,7 @@
       } while (Math.abs(z) > 3);
       return .70 + .10 * z;
     }
-    function scheduleLaser() {
+    function scheduleLaser(minDelay) {
       clearTimeout(laserTimer);
       if (!ambientOn || disposed || reduceAmbient.matches || document.hidden) return;
       laserTimer = setTimeout(function () {
@@ -93,26 +93,38 @@
         var area = grid.getBoundingClientRect();
         var rects = cards.map(function (card) { return card.getBoundingClientRect(); });
         var twoColumns = Math.abs(rects[0].top - rects[1].top) < 2;
-        var draw = Math.random(), vertical = twoColumns && draw > .7;
-        var ray = document.createElement('span');
-        ray.className = 'sm-gap-laser' + (vertical ? ' sm-gap-laser-vertical' : '');
-        ray.setAttribute('aria-hidden', 'true');
-        ray.style.animationDuration = Math.round((vertical ? 840 : 680) / sampledLaserSpeed()) + 'ms';
-        if (vertical) {
-          ray.style.left = ((rects[0].right + rects[1].left) / 2 - area.left) + 'px';
-          ray.style.setProperty('--sm-ray-run', (area.height + 100) + 'px');
-          if (draw > .96) ray.classList.add('sm-gap-laser-reverse');
-        } else {
-          var rows = rects.filter(function (rect, index) { return !index || rect.top > rects[index - 1].top + 2; });
-          var row = Math.floor(Math.random() * (rows.length - 1));
-          ray.style.top = ((rows[row].bottom + rows[row + 1].top) / 2 - area.top) + 'px';
-          ray.style.setProperty('--sm-ray-run', (area.width + 100) + 'px');
-          if (Math.random() < .5) ray.classList.add('sm-gap-laser-reverse');
+        var rows = rects.filter(function (rect, index) { return !index || rect.top > rects[index - 1].top + 2; });
+        var lanes = [];
+        for (var row = 0; row < rows.length - 1; row++) {
+          lanes.push({ vertical: false, position: (rows[row].bottom + rows[row + 1].top) / 2 - area.top,
+            weight: (twoColumns ? .7 : 1) / (rows.length - 1) });
         }
-        grid.appendChild(ray);
-        ray.addEventListener('animationend', function () { ray.remove(); }, { once: true });
-        scheduleLaser();
-      }, 1700 + Math.random() * 2200);
+        if (twoColumns) lanes.push({ vertical: true, position: (rects[0].right + rects[1].left) / 2 - area.left, weight: .3 });
+        // Mutually exclusive wave sizes: 73% single, 20% double, 7% triple.
+        // Draw lanes without replacement, so no pair can oppose on one road.
+        var wave = Math.random(), count = Math.min(lanes.length, wave < .07 ? 3 : wave < .27 ? 2 : 1);
+        var fragment = document.createDocumentFragment(), longest = 0;
+        for (var shot = 0; shot < count; shot++) {
+          var total = lanes.reduce(function (sum, lane) { return sum + lane.weight; }, 0);
+          var choice = Math.random() * total, index = 0;
+          while (index < lanes.length - 1 && choice >= lanes[index].weight) { choice -= lanes[index].weight; index++; }
+          var lane = lanes.splice(index, 1)[0];
+          var ray = document.createElement('span');
+          ray.className = 'sm-gap-laser' + (lane.vertical ? ' sm-gap-laser-vertical' : '');
+          ray.setAttribute('aria-hidden', 'true');
+          var duration = Math.round((lane.vertical ? 840 : 680) / sampledLaserSpeed());
+          longest = Math.max(longest, duration);
+          ray.style.animationDuration = duration + 'ms';
+          ray.style[lane.vertical ? 'left' : 'top'] = lane.position + 'px';
+          ray.style.setProperty('--sm-ray-run', ((lane.vertical ? area.height : area.width) + 100) + 'px');
+          if (Math.random() < (lane.vertical ? 4 / 30 : .5)) ray.classList.add('sm-gap-laser-reverse');
+          ray.addEventListener('animationend', function (event) { event.currentTarget.remove(); }, { once: true });
+          fragment.appendChild(ray);
+        }
+        grid.appendChild(fragment);
+        // Finish this wave before another can reuse any of its lanes.
+        scheduleLaser(longest + 90);
+      }, Math.max(1700 + Math.random() * 2200, minDelay || 0));
     }
     function syncAmbient() {
       if (ambientOn === random) return;
