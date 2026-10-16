@@ -21,7 +21,7 @@
   });
 
   function glyph(ctx, s, g, x, y, sx = 1, sy = 1, alpha = 1, rotation = 0, color) {
-    if (alpha <= .001 || sx <= 0 || sy <= 0) return;
+    if (s.burst || alpha <= .001 || sx <= 0 || sy <= 0) return;
     ctx.save();
     ctx.globalAlpha = clamp(alpha);
     ctx.translate(x, y);
@@ -40,7 +40,7 @@
     ctx.fillStyle = s.ink;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
-    ctx.fillText(s.text, s.x, s.y);
+    s.glyphs.forEach(g => ctx.fillText(g.char, g.x, s.y));
   }
 
   function line(ctx, points, color, width = 1, alpha = 1) {
@@ -243,7 +243,7 @@
   }
 
   function char(ctx, s, g, x, y, sx = 1, sy = sx, angle = 0, alpha = 1) {
-    if (alpha < .001 || sx <= 0 || sy <= 0) return;
+    if (s.burst || alpha < .001 || sx <= 0 || sy <= 0) return;
     ctx.save();
     ctx.globalAlpha *= clamp(alpha);
     ctx.translate(x, y);
@@ -352,7 +352,7 @@
           ctx.rect(-1, sliceY, width + 2, sliceHeight + .4);
           ctx.clip();
           ctx.fillStyle = s.ink;
-          ctx.fillText(s.text, 0, 0);
+          if (!s.burst) ctx.fillText(s.text, 0, 0);
           ctx.restore();
           stroke(ctx, s.accent || s.ink, pulse(p) * .18, .55, () => {
             const edge = x + width * sx;
