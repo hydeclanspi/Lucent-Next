@@ -1,0 +1,19 @@
+{
+  "name": "Lucent · 灵感台",
+  "short_name": "灵感台",
+  "description": "灵感启动台：一座安静、活着、随时可以出发的个人基地。An inspiration launcher — a calm, living base for every session.",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "id": "../",
+  "start_url": "../",
+  "scope": "../",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "background_color": "#0e1017",
+  "theme_color": "#1b2433",
+  "categories": ["productivity", "lifestyle"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

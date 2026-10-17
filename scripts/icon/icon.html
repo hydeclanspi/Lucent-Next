@@ -1,0 +1,37 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- Lucent · 灵感台 — the app icon: the first two Lueurs, drawn with the product's own lens styling at 46× -->
+<style>
+  html, body { margin: 0; width: 1024px; height: 1024px; overflow: hidden; background: #0e1017; }
+  .sky { position: absolute; inset: 0;
+    background:
+      radial-gradient(62% 48% at 18% 96%, rgba(255, 146, 74, .62), rgba(255, 146, 74, 0) 72%),
+      radial-gradient(38% 26% at 70% 104%, rgba(255, 196, 120, .30), rgba(255, 196, 120, 0) 70%),
+      radial-gradient(64% 52% at 88% 6%, rgba(118, 168, 255, .34), rgba(118, 168, 255, 0) 70%),
+      linear-gradient(162deg, #0f1930 0%, #1b2742 44%, #34304e 76%, #5d3d4a 100%); }
+  .bokeh { position: absolute; border-radius: 50%; filter: blur(18px); }
+  .lens { position: absolute; box-sizing: border-box;
+    -webkit-backdrop-filter: blur(22px) saturate(135%); backdrop-filter: blur(22px) saturate(135%); }
+  .lens::before { content: ""; position: absolute; border-radius: 99px;
+    background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.92), rgba(255,255,255,0)); }
+  .cool { left: 232px; top: 210px; width: 470px; height: 470px; border-radius: 150px 64px 171px 64px; transform: rotate(-24deg);
+    background: linear-gradient(135deg, rgba(212, 242, 255, .26), rgba(230, 247, 255, .05) 49%, rgba(205, 235, 250, .20));
+    border: 9px solid rgba(228, 247, 255, .62);
+    box-shadow: inset 14px 14px 0 rgba(250, 254, 255, .46), inset -14px -14px 0 rgba(137, 183, 207, .16), 0 40px 110px rgba(4, 10, 24, .46); }
+  .cool::before { top: 44px; left: 88px; width: 214px; height: 16px; transform: rotate(-8deg); }
+  .warm { left: 622px; top: 626px; width: 224px; height: 224px; border-radius: 34px 92px 34px 80px; transform: rotate(18deg);
+    background: linear-gradient(140deg, rgba(255, 229, 202, .24), rgba(255, 241, 218, .05) 51%, rgba(255, 225, 192, .18));
+    border: 7px solid rgba(255, 240, 216, .60);
+    box-shadow: inset 8px 8px 0 rgba(255, 250, 240, .42), inset -8px -8px 0 rgba(200, 150, 110, .14), 0 26px 70px rgba(4, 10, 24, .40); }
+  .warm::before { top: 22px; left: 40px; width: 100px; height: 9px; transform: rotate(-8deg); }
+</style></head>
+<body>
+  <div class="sky"></div>
+  <div class="bokeh" style="left:96px;top:770px;width:120px;height:120px;background:rgba(255,186,110,.55)"></div>
+  <div class="bokeh" style="left:250px;top:860px;width:80px;height:80px;background:rgba(255,214,150,.45)"></div>
+  <div class="bokeh" style="left:420px;top:880px;width:64px;height:64px;background:rgba(255,170,100,.40)"></div>
+  <div class="bokeh" style="left:820px;top:150px;width:90px;height:90px;background:rgba(170,205,255,.35)"></div>
+  <div class="bokeh" style="left:900px;top:330px;width:54px;height:54px;background:rgba(200,225,255,.30)"></div>
+  <div class="lens warm"></div>
+  <div class="lens cool"></div>
+</body></html>

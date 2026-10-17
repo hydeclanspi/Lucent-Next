@@ -53,6 +53,8 @@ async function open(options = {}) {
     locale: 'zh-CN'
   });
   await context.route('**/*', route => route.request().url().startsWith(base) ? route.continue() : route.abort());
+  // A visitor who has already left full screen once: no first-click full screen, no hint in the frame.
+  await context.addInitScript(() => { try { sessionStorage.setItem('lucent:immersive:declined', '1'); } catch (_) {} });
   if (options.storage) {
     // Seed a saved localStorage once, before the product's first script runs.
     await context.addInitScript(storage => {
