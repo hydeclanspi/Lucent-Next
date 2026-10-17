@@ -2,15 +2,16 @@
   "name": "lucent",
   "version": "5.0.0",
   "private": true,
-  "description": "Lucent · 灵感台 — a calm browser homepage over a small living world: named glass Lueurs, liquid glass, search-motion studies and a self-verifying local chronicle.",
+  "description": "Lucent · 灵感台 — an inspiration launcher: a calm personal base, alive underneath with 49 numbered glass Lueurs, a launch sequence of light, and every dial handed to you.",
   "author": "hydeclanspi",
   "license": "UNLICENSED",
-  "homepage": "https://hydeclanspi.github.io/lucent/",
+  "homepage": "https://hydeclanspi.github.io/Lucent-Next/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/hydeclanspi/lucent.git"
+    "url": "https://github.com/hydeclanspi/Lucent-Next.git"
   },
   "keywords": [
+    "launcher",
     "homepage",
     "physics",
     "stochastic-process",
