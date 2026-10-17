@@ -1,10 +1,25 @@
 {
-  "name": "airhome-personal",
+  "name": "lucent",
   "version": "5.0.0",
   "private": true,
-  "description": "A personal homepage shaped through light, glass and interaction.",
+  "description": "Lucent · 灵感台 — a calm browser homepage over a small living world: named glass Lueurs, liquid glass, search-motion studies and a self-verifying local chronicle.",
   "author": "hydeclanspi",
   "license": "UNLICENSED",
+  "homepage": "https://hydeclanspi.github.io/lucent/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hydeclanspi/lucent.git"
+  },
+  "keywords": [
+    "homepage",
+    "physics",
+    "stochastic-process",
+    "glassmorphism",
+    "canvas",
+    "motion-design",
+    "vanilla-javascript",
+    "harmonyos"
+  ],
   "scripts": {
     "build": "node scripts/build.mjs",
     "start": "node scripts/build.mjs && node scripts/serve.mjs",
