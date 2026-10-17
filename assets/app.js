@@ -42,7 +42,7 @@
 
   // 「代号：交互」面板右上角的两行，同时作关于窗口左上角的标题
   var BRAND_MOTTO = "灵感与犀利并存";
-  var BRAND_IDENTITY = "airhome (personal)";
+  var BRAND_IDENTITY = "Lucent · 灵感台";
 
   var ICONS = {
     open: "M14 4h6v6M20 4l-9 9M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4",
@@ -237,7 +237,7 @@
     add.addEventListener("click", openProfileEditor);
     el.tags.appendChild(add);
 
-    document.title = "airhome (personal)";
+    document.title = "Lucent · 灵感台";
   }
 
   function loadProfile() {
@@ -1552,7 +1552,7 @@
       titleGroup.className = "interaction-title-group";
       var engineSubtitle = document.createElement("p");
       engineSubtitle.className = "wp-mode-note interaction-engine-subtitle";
-      engineSubtitle.textContent = "beta v0.7 引擎 · 26-10";
+      engineSubtitle.textContent = "Lueurs 引擎 · beta v0.7 · 26-10";
       titleGroup.appendChild(title);
       titleGroup.appendChild(engineSubtitle);
       var subtitle = document.createElement("div");
@@ -1676,10 +1676,10 @@
     meta.className = "about-meta";
     var version = document.createElement("p");
     version.className = "about-version";
-    version.textContent = "airhome (personal) v4.7.3 · 2026-10 构建";
+    version.textContent = "Lucent v5.0 · 2026-10 构建";
     var build = document.createElement("p");
     build.className = "about-build";
-    build.textContent = "鸿蒙 Aira 灵感台 · beta v0.7 引擎 · © 2026";
+    build.textContent = "鸿蒙 Aira 灵感台 · Lueurs 引擎 beta v0.7 · © 2026";
     meta.appendChild(version);
     meta.appendChild(build);
 

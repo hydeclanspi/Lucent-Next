@@ -1,4 +1,4 @@
-/* airhome (personal) — web surfaces and narrow presentation refinements. */
+/* Lucent · 灵感台 — web surfaces and narrow presentation refinements. */
 :root { --aira-accent: #0a59f7; --aira-on-accent: #fff; }
 :root[data-browser-demo] .tile .ticon > svg { width: 24px; height: 24px; }
 :root[data-browser-demo] .abtn.primary { box-shadow: 0 6px 22px rgba(10,89,247,.24), inset 0 1px 0 rgba(255,255,255,.26); }

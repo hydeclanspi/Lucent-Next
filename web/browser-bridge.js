@@ -1,4 +1,4 @@
-/* airhome (personal) browser demonstration bridge · hydeclanspi
+/* Lucent · 灵感台 — browser demonstration bridge · hydeclanspi
  * Optional web-only adapter. It never assigns window.AiraHome.
  * Native packages omit this file. Callers prefer AiraHome over AiraBrowserBridge.
  */
@@ -6,7 +6,7 @@
   "use strict";
   if (window.AiraHome || window.AiraBrowserBridge) return;
 
-  var PREFIX = "airhome-personal:browser:v1:";
+  var PREFIX = "lucent:browser:v1:";
   var HOME_PREFIX = "aira-profile-card:";
   var active = true;
   var privateMode = false;
@@ -91,7 +91,7 @@
   if (!engines.some(function (item) { return item.id === selectedEngine; })) selectedEngine = "google";
   var themeMode = read("theme", "light");
   if (["light", "dark", "system"].indexOf(themeMode) < 0) themeMode = "light";
-  var tabs = [{ id: "home", title: "airhome (personal)", url: "", home: true }];
+  var tabs = [{ id: "home", title: "Lucent · 灵感台", url: "", home: true }];
   var examples = [
     { title: "HarmonyOS · 设计与开发", url: "https://developer.huawei.com/consumer/cn/", tag: "示例" },
     { title: "GitHub · 灵感从这里开始", url: "https://github.com/", tag: "示例" },
@@ -129,7 +129,7 @@
     dialog = el("section", "ab-dialog"); dialog.setAttribute("role", "dialog"); dialog.setAttribute("aria-modal", "true"); dialog.setAttribute("aria-labelledby", "ab-title"); dialog.setAttribute("aria-describedby", "ab-subtitle"); dialog.tabIndex = -1;
     var header = el("header", "ab-header");
     var mark = el("span", "ab-mark"); mark.appendChild(icon(symbol));
-    var headings = el("div", "ab-headings"); headings.appendChild(el("span", "ab-eyebrow", "AIRHOME (PERSONAL) / 浏览器演示"));
+    var headings = el("div", "ab-headings"); headings.appendChild(el("span", "ab-eyebrow", "LUCENT · 灵感台 / 浏览器演示"));
     var h = el("h2", "", title); h.id = "ab-title"; headings.appendChild(h);
     var sub = el("p", "ab-subtitle", subtitle); sub.id = "ab-subtitle"; headings.appendChild(sub);
     var exit = button("", close, "icon"); exit.setAttribute("aria-label", "关闭"); exit.appendChild(icon("close"));
@@ -286,7 +286,7 @@
       note(content, "这里管理演示标签，不会读取或关闭浏览器的真实标签页。");
       tabs.forEach(function (item) {
         var wrap = el("div", "ab-managed-row"); content.appendChild(wrap);
-        row(wrap, item.title, item.home ? "此刻 · airhome (personal)" : item.url, item.home ? close : function () { openTarget(item.url, item.title); }, "tabs", item.home ? "当前" : "演示");
+        row(wrap, item.title, item.home ? "此刻 · Lucent · 灵感台" : item.url, item.home ? close : function () { openTarget(item.url, item.title); }, "tabs", item.home ? "当前" : "演示");
         if (!item.home) { var remove = button("关闭", function () { tabs = tabs.filter(function (tab) { return tab.id !== item.id; }); emit("aira-home-tabs-changed", { count: tabs.length }); openTabs(); }, "quiet"); remove.setAttribute("aria-label", "关闭演示标签 " + item.title); wrap.appendChild(remove); }
       });
       actions(content, [button("新建演示标签", openSearch, "primary")]);
@@ -295,13 +295,13 @@
   function saveJson() {
     var snapshot = { format: "aira-home-browser-demo", exportedAt: new Date().toISOString(), theme: themeMode, shortcuts: copy(shortcuts), engine: selectedEngine, customTemplate: customTemplate(), bookmarks: read("bookmarks", examples) };
     var blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: "application/json" });
-    var url = URL.createObjectURL(blob), anchor = el("a"); anchor.href = url; anchor.download = "airhome-personal-browser-preferences.json";
+    var url = URL.createObjectURL(blob), anchor = el("a"); anchor.href = url; anchor.download = "lucent-browser-preferences.json";
     document.body.appendChild(anchor); anchor.click(); anchor.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
     notify("已请求下载当前浏览器的演示偏好。");
   }
   function openDownloads() {
     show("下载管理", "需要的内容，妥帖地留在手边。", "download", function (content) {
-      row(content, "airhome-personal-5.0.0.zip", "完成状态展示 · 示例文件，没有实际下载", null, "download", "样例");
+      row(content, "lucent-5.0.0-aira.zip", "完成状态展示 · 示例文件，没有实际下载", null, "download", "样例");
       section(content, "可用操作");
       row(content, "导出演示偏好", "将主题、快捷方式与引擎设置保存为本地 JSON", saveJson, "download");
       note(content, "网页无法读取浏览器下载列表。Aira 原生环境会打开真实下载管理。");
@@ -309,8 +309,8 @@
   }
   function openSavedPages() {
     show("我的网页", "一些值得停留的片刻。", "page", function (content) {
-      row(content, "airhome (personal) · 设计手记", "示例收藏页 · 展示本产品的设计取舍", function () {
-        show("设计手记", "airhome (personal) · hydeclanspi", "page", function (inner) {
+      row(content, "Lucent · 设计手记", "示例收藏页 · 展示本产品的设计取舍", function () {
+        show("设计手记", "Lucent · 灵感台 · hydeclanspi", "page", function (inner) {
           section(inner, "让日常入口成为自己的空间"); note(inner, "以个人名片、搜索与快捷方式构成平衡布局。用暖光、细边和通透材质承载内容，让常用操作保持清晰。");
           section(inner, "把细节交给交互"); note(inner, "六款搜索动效、壁纸取景、长按设置与浮光交互，在反复迭代中逐渐形成现在的模样。");
           actions(inner, [button("返回我的网页", openSavedPages)]);

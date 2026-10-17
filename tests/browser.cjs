@@ -9,7 +9,7 @@ const dist = path.join(root, 'dist');
 const results = [], errors = [];
 const server = http.createServer((req, res) => {
   try {
-    const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname).replace(/^\/airhome-personal(?=\/)/, '');
+    const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname).replace(/^\/lucent(?=\/)/, '');
     let file = path.resolve(dist, '.' + pathname);
     if (file !== dist && !file.startsWith(dist + path.sep)) return res.writeHead(403).end();
     if (fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
@@ -21,7 +21,7 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
 (async () => {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
-  const browser = await chromium.launch({ headless: true, ...(process.env.AIRA_BROWSER_CHANNEL ? { channel: process.env.AIRA_BROWSER_CHANNEL } : {}) });
+  const browser = await chromium.launch({ headless: true, ...(process.env.AIRA_BROWSER_CHANNEL ? { channel: process.env.AIRA_BROWSER_CHANNEL } : {}), ...(process.env.AIRA_BROWSER_PATH ? { executablePath: process.env.AIRA_BROWSER_PATH } : {}) });
   const context = await browser.newContext({ viewport: { width: 1560, height: 1040 }, colorScheme: 'light' });
   const page = await context.newPage();
   page.setDefaultTimeout(8000);
@@ -39,7 +39,7 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
   try {
     await home();
     await check('Reference profile, four engines, three shortcuts, Google default and blue action', async () => {
-      assert.equal(await page.title(), 'airhome (personal)');
+      assert.equal(await page.title(), 'Lucent · 灵感台');
       assert.equal(await page.locator('#profileName').textContent(), 'hydeclanspi');
       assert.equal(await page.locator('#profileSign').textContent(), '我真的是活着玩的。都别压力我。');
       assert.equal((await bridge('getSearchEngineState')).selectedEngineId, 'google');
@@ -97,13 +97,13 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       await page.goBack(); await page.waitForFunction(() => !!window.AiraBrowserBridge);
       assert.equal(await page.locator('#searchInput').inputValue(), '');
       assert.equal(await page.locator('#searchInput').evaluate(n => n.defaultValue), '');
-      const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('airhome-personal:browser:v1:history')));
+      const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('lucent:browser:v1:history')));
       assert.equal(stored.length, 1); assert.match(stored[0].url, /google\.com\/search/);
     });
     await check('Bing selection, real URL routing and reduced-motion navigation', async () => {
       await bridge('setSearchEngine', 'bing'); await page.emulateMedia({ reducedMotion: 'reduce' });
-      await page.locator('#searchInput').fill('airhome'); await page.locator('#searchInput').press('Enter');
-      await page.waitForURL('https://www.bing.com/search?*'); assert.equal(new URL(page.url()).searchParams.get('q'), 'airhome');
+      await page.locator('#searchInput').fill('lucent'); await page.locator('#searchInput').press('Enter');
+      await page.waitForURL('https://www.bing.com/search?*'); assert.equal(new URL(page.url()).searchParams.get('q'), 'lucent');
       await home(); await bridge('setSearchEngine', 'google');
       await page.locator('#searchInput').fill('https://example.com/path?q=1#top'); await page.locator('#searchInput').press('Enter');
       await page.waitForURL('https://example.com/path?q=1#top'); await home();
@@ -114,13 +114,13 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       assert.equal(await page.evaluate(() => window.__unsafe), undefined); assert.ok(page.url().startsWith(base)); await close();
     });
     await check('Privacy mode explains its boundary and pauses local navigation history', async () => {
-      const before = await page.evaluate(() => JSON.parse(localStorage.getItem('airhome-personal:browser:v1:history')).length);
+      const before = await page.evaluate(() => JSON.parse(localStorage.getItem('lucent:browser:v1:history')).length);
       await page.locator('#btnPrivacy').click(); await panel('进入演示隐私模式');
       assert.match(await page.locator('.ab-dialog').innerText(), /不会开启浏览器无痕/);
       await page.locator('.ab-dialog').getByRole('button', { name: '进入演示隐私', exact: true }).click();
       assert.equal(await page.locator('html').getAttribute('data-privacy'), 'private');
       await bridge('search', 'private query'); await page.waitForURL('https://www.google.com/search?*'); await home();
-      assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('airhome-personal:browser:v1:history')).length), before);
+      assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('lucent:browser:v1:history')).length), before);
     });
     await check('Custom engine can be configured and used for real search routing', async () => {
       await bridge('setSearchEngine', 'hydeclanspi'); await panel('hydeclanspi');
@@ -154,12 +154,12 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       await page.keyboard.press('Escape');
     });
     await check('Web assets work under a repository subpath', async () => {
-      await page.goto(base + '/airhome-personal/'); await page.waitForFunction(() => document.querySelectorAll('#engineChips .chip').length === 4);
-      assert.equal(await page.title(), 'airhome (personal)');
+      await page.goto(base + '/lucent/'); await page.waitForFunction(() => document.querySelectorAll('#engineChips .chip').length === 4);
+      assert.equal(await page.title(), 'Lucent · 灵感台');
     });
     await check('Desktop, tablet and mobile stay within viewport; screenshots captured', async () => {
-      const updateDocs = process.env.AIRA_UPDATE_DOCS_IMAGES === '1';
-      const images = path.join(root, updateDocs ? 'docs/images' : 'verification/screenshots');
+      // Review captures only; the documentation media are produced separately (see docs/MAINTAINING.md).
+      const images = path.join(root, 'verification/screenshots');
       fs.mkdirSync(images, { recursive: true });
       // Capture clean defaults, not the interaction test session's records.
       await page.goto(base); await page.evaluate(() => localStorage.clear()); await home();
