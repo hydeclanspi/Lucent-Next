@@ -9,4 +9,3 @@ cc1c59bd932d19ef188f6599f63fc955626a74c615e4bd800ea0d96bb58e7702
 ```
 
 Import it through Aira's custom-homepage feature. The repository root contains the standalone web edition; do not ZIP the entire repository for Aira.
-
