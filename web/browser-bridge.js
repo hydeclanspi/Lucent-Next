@@ -144,7 +144,19 @@
     });
   }
   function note(parent, text) { parent.appendChild(el("p", "ab-note", text)); }
-  function section(parent, text) { parent.appendChild(el("h3", "ab-section-title", text)); }
+  function section(parent, text, count) {
+    var head = el("div", "ab-section");
+    head.appendChild(el("h3", "ab-section-title", text));
+    if (count !== undefined) head.appendChild(el("span", "ab-count", String(count)));
+    head.appendChild(el("span", "ab-section-rule"));
+    parent.appendChild(head);
+  }
+  function emptyState(parent, title, detail) {
+    var box = el("div", "ab-empty");
+    var orb = el("span", "ab-empty-orb"); orb.setAttribute("aria-hidden", "true"); orb.appendChild(el("i"));
+    var copy = el("span", "ab-empty-copy"); copy.appendChild(el("strong", "", title)); copy.appendChild(el("p", "", detail));
+    box.append(orb, copy); parent.appendChild(box);
+  }
   function actions(parent, nodes) { var row = el("div", "ab-actions"); nodes.forEach(function (node) { row.appendChild(node); }); parent.appendChild(row); }
   function field(parent, title, value, hint, multiline) {
     var label = el("label", "ab-field"); label.appendChild(el("span", "ab-field-label", title));
@@ -248,11 +260,11 @@
   function openHistory() {
     show("历史记录", "回到灵感经过的地方。", "history", function (content) {
       var items = historyItems();
-      section(content, "本演示中的打开请求");
-      if (!items.length) note(content, "还没有记录。你从这里打开的网页会出现在此处。");
+      section(content, "本演示中的打开请求", items.length);
+      if (!items.length) emptyState(content, "还没有留下足迹", "从这里打开的网页，会安静地排在这里。");
       items.forEach(function (item) { row(content, item.title, new Date(item.at).toLocaleString("zh-CN") + " · " + item.url, function () { openTarget(item.url, item.title); }, "history"); });
       if (items.length) actions(content, [button("清空演示记录", function () { confirmAction("清空记录", "只删除这个演示保存的打开请求。", function () { write("history", []); openHistory(); }); })]);
-      section(content, "界面示例");
+      section(content, "界面示例", examples.slice(0, 2).length);
       examples.slice(0, 2).forEach(function (item) { row(content, item.title, item.url, function () { openTarget(item.url, item.title); }, "history", "样例"); });
       note(content, "样例不代表任何人的访问历史。本页面无法读取真实浏览器历史。");
     });
