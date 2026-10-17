@@ -158,8 +158,8 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       assert.equal(await page.title(), 'Lucent · 灵感台');
     });
     await check('Desktop, tablet and mobile stay within viewport; screenshots captured', async () => {
-      const updateDocs = process.env.AIRA_UPDATE_DOCS_IMAGES === '1';
-      const images = path.join(root, updateDocs ? 'docs/images' : 'verification/screenshots');
+      // Review captures only; the documentation media are produced separately (see docs/MAINTAINING.md).
+      const images = path.join(root, 'verification/screenshots');
       fs.mkdirSync(images, { recursive: true });
       // Capture clean defaults, not the interaction test session's records.
       await page.goto(base); await page.evaluate(() => localStorage.clear()); await home();
