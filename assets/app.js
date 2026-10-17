@@ -2,14 +2,15 @@
   "use strict";
 
   var root = document.documentElement;
-  var api = function () { return window.AiraHome || null; };
+  var api = function () { return window.AiraHome || window.AiraBrowserBridge || null; };
 
   var DEFAULT_PROFILE = {
     name: "hydeclanspi",
     meta: "17 · 上海",
     level: 14,
     sign: "我真的是活着玩的。都别压力我。",
-    tags: ["学生", "技术宅", "乐观", "完美主义"]
+    tags: ["学生", "技术宅", "乐观", "完美主义"],
+    gripText: "Harmony OS"
   };
 
   var DEMO_ENGINES = [
@@ -41,7 +42,7 @@
 
   // 「代号：交互」面板右上角的两行，同时作关于窗口左上角的标题
   var BRAND_MOTTO = "灵感与犀利并存";
-  var BRAND_IDENTITY = "鸿蒙hydeclanspi灵感台";
+  var BRAND_IDENTITY = "airhome (personal)";
 
   var ICONS = {
     open: "M14 4h6v6M20 4l-9 9M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4",
@@ -69,7 +70,8 @@
       name: DEFAULT_PROFILE.name,
       meta: DEFAULT_PROFILE.meta,
       sign: DEFAULT_PROFILE.sign,
-      tags: DEFAULT_PROFILE.tags.slice()
+      tags: DEFAULT_PROFILE.tags.slice(),
+      gripText: DEFAULT_PROFILE.gripText
     },
     engines: [],
     selectedEngineId: "",
@@ -235,7 +237,7 @@
     add.addEventListener("click", openProfileEditor);
     el.tags.appendChild(add);
 
-    document.title = (state.profile.name || "名片") + " · 主页";
+    document.title = "airhome (personal)";
   }
 
   function loadProfile() {
@@ -1130,7 +1132,7 @@
         label: entry.label,
         icon: entry.icon,
         run: function () {
-          if (a && typeof a[entry.method] === "function") a()[entry.method]();
+          if (a && typeof a[entry.method] === "function") a[entry.method]();
           else toast("预览模式：" + entry.label);
           closeSheet();
         }
@@ -1142,7 +1144,7 @@
   function openStatusSheet() {
     openInfoSheet(
       "浏览模式",
-      "这枚胶囊显示的是 Aira 当前真实的浏览边界。主页读不到、也改不了它，只能帮你切换。",
+      "这里控制演示中的本地打开记录，不会开启浏览器无痕模式或隐藏外部网页记录。",
       [
         { label: state.privacy.isPrivate ? "退出隐私模式" : "进入隐私模式", icon: ICONS.shield, method: "togglePrivateMode" },
         { label: "隐私与安全设置", icon: ICONS.edit, method: "openPrivacySecuritySettings" }
@@ -1153,7 +1155,7 @@
   function openThemeSheet() {
     openInfoSheet(
       "浅色 / 深色",
-      "主题由 Aira 与系统决定，主页只跟随、不修改。要换就跳去设置里换。",
+      "为这一方空间选择浅色、深色，或跟随系统。外观设置会保存在当前浏览器中。",
       [
         { label: "外观设置", icon: ICONS.sun, method: "openAppearanceSettings" },
         { label: "主题配色", icon: ICONS.moon, method: "openThemePaletteSettings" }
@@ -1163,10 +1165,10 @@
 
   function openGripSheet() {
     openInfoSheet(
-      "智感握姿",
-      "握姿要 Aira 在实验室开关打开后才提供，主页只接收左手 / 右手 / 双手 / 未握持这几个状态。",
+      "平台标签",
+      "Harmony OS 是这张名片保留的平台标签，可以在编辑名片中修改。网页演示不读取设备握姿。",
       [
-        { label: "打开实验室设置", icon: ICONS.hand, method: "openExperimentsSettings" }
+        { label: "浏览偏好", icon: ICONS.hand, method: "openSettings" }
       ]
     );
   }
@@ -1674,7 +1676,7 @@
     meta.className = "about-meta";
     var version = document.createElement("p");
     version.className = "about-version";
-    version.textContent = "名片主页 v4.7.3 · 2026-10 构建";
+    version.textContent = "airhome (personal) v4.7.3 · 2026-10 构建";
     var build = document.createElement("p");
     build.className = "about-build";
     build.textContent = "鸿蒙 Aira 灵感台 · beta v0.7 引擎 · © 2026";
@@ -1904,7 +1906,7 @@
         kind: "backup",
         exportedAt: new Date().toISOString(),
         timezoneOffsetMinutes: -new Date().getTimezoneOffset(),
-        homepage: { id: "com.example.aira-profile-card", version: "4.8.7" },
+        homepage: { id: "com.example.aira-profile-card", version: "5.0.0" },
         summary: {
           keys: Object.keys(keys).length,
           logs: Array.isArray(keys.logs) ? keys.logs.length : 0,
@@ -4965,7 +4967,7 @@
 
   function init() {
     var a = api();
-    var stage = a ? 2 : 1;
+    var stage = a && !a.__isBrowserDemo ? 2 : 1;
     if (initStage >= stage) return;
     initStage = stage;
     initStats();
@@ -5006,7 +5008,8 @@
       a.getThemePalette().then(function (palette) {
         applyTheme({ mode: state.theme.mode, effectiveMode: state.theme.effectiveMode, palette: palette });
       }).catch(function () {});
-    } else if (typeof a.getTheme === "function") {
+    }
+    if (typeof a.getTheme === "function") {
       a.getTheme().then(applyTheme).catch(function () {});
     }
 
