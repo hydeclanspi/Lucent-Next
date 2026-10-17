@@ -158,7 +158,9 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       assert.equal(await page.title(), 'airhome (personal)');
     });
     await check('Desktop, tablet and mobile stay within viewport; screenshots captured', async () => {
-      const images = path.join(root, 'docs/images'); fs.mkdirSync(images, { recursive: true });
+      const updateDocs = process.env.AIRA_UPDATE_DOCS_IMAGES === '1';
+      const images = path.join(root, updateDocs ? 'docs/images' : 'verification/screenshots');
+      fs.mkdirSync(images, { recursive: true });
       // Capture clean defaults, not the interaction test session's records.
       await page.goto(base); await page.evaluate(() => localStorage.clear()); await home();
       await page.waitForTimeout(800);
