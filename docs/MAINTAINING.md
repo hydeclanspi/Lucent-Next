@@ -23,7 +23,7 @@ This is a static web product. Keep the personal card, content, selected search m
 
 ## Work sequence
 
-Inspect `git status` before editing. Make the smallest change that fits the requested behavior, build, then run relevant checks. For bridge, navigation or persistence changes, run `npm run test:browser`; for pure copy/style changes, inspect the affected view. The browser suite uses fake external responses, so it does not send private queries to search engines.
+Inspect `git status` before editing. Make the smallest change that fits the requested behavior, build, then run relevant checks. For bridge, navigation or persistence changes, run `npm run test:browser`; for pure copy/style changes, inspect the affected view. The browser suite uses fake external responses, so it does not send private queries to search engines. It writes review screenshots to ignored `verification/screenshots/`; set `AIRA_UPDATE_DOCS_IMAGES=1` only when deliberately refreshing the committed images in `docs/images/`.
 
 Run `npm run check`, `npm test`, `npm run build` and the browser suite before a full release. Review desktop/mobile and both themes. Keep the public verification report explicit about what was actually checked. Update this document after a discovered integration pitfall, and leave a concise checkpoint before interrupting longer work.
 
