@@ -4,12 +4,12 @@ Web edition 5.0.0. Last full run: **2026-10-17**, Node.js 22.22, Chromium 141 (P
 
 | Check | Command | Result |
 |---|---|---|
-| Syntax and release identity | `npm run check` | 24 scripts pass `node --check`; package identity and the native package's SHA-256 verified |
+| Syntax and release identity | `npm run check` | 27 scripts pass `node --check`; package identity and the native package's SHA-256 verified |
 | Unit tests | `npm test` | **41 passed** |
 | Static build | `npm run build` | Passed |
-| Browser flows | `npm run test:browser` | **15 passed**; no uncaught page exception in any tested flow |
-| Viewports | (browser suite) | 1560×1040, 1024×768, 390×844 |
-| Repository subpath | (browser suite) | Assets and initialization under `/lucent/` |
+| Browser flows | `npm run test:browser` | **17 passed**; no uncaught page exception in any tested flow |
+| Viewports | (browser suite) | 1560×1040 (the tablet), 1429×763, 1366×768 and 1280×720 (short laptop screens), 1024×768, 390×844 |
+| Repository subpath | (browser suite) | Assets and initialization under `/Lucent-Next/` |
 
 ## Unit tests
 
@@ -23,7 +23,7 @@ Web edition 5.0.0. Last full run: **2026-10-17**, Node.js 22.22, Chromium 141 (P
 
 ## Browser flows
 
-The suite ([`tests/browser.cjs`](../tests/browser.cjs)) covers the reference profile and defaults; the single blue primary action; zero external requests on load; the history panel's focus trap and focus return; theme persistence; adding, reordering and deleting shortcuts with validation; IME composition and blank input never navigating; Lightline playing before navigation; encoded Google queries and Bing routing; reduced motion; refusal of non-HTTP addresses; the privacy demonstration's boundary; custom search templates; every host entry panel; profile editing and motion preferences surviving a reload; the repository subpath; layouts within the viewport on desktop, tablet and phone; and no uncaught exceptions.
+The suite ([`tests/browser.cjs`](../tests/browser.cjs)) covers the reference profile and defaults; the single blue primary action; zero external requests on load; the history panel's focus trap and focus return; theme persistence; adding, reordering and deleting shortcuts with validation; IME composition and blank input never navigating; Lightline playing before navigation; encoded Google queries and Bing routing; reduced motion; refusal of non-HTTP addresses; the privacy demonstration's boundary; custom search templates; every host entry panel; profile editing and motion preferences surviving a reload; the repository subpath; layouts within the viewport on desktop, tablet and phone; the history tag staying clear of the top bar on short laptop screens while the tablet layout stays untouched; immersive full screen on the first real click, a respected exit, and F as a toggle that still types normally in the search field; and no uncaught exceptions.
 
 Outgoing provider pages are intercepted: the tests verify the real destination URL and the timing of navigation without sending a query to any search provider. They say nothing about Google's or Bing's own rendering, regional availability or uptime.
 

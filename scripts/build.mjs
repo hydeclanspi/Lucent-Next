@@ -4,7 +4,7 @@ import path from 'node:path';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const output = path.join(root, 'dist');
-const SITE = 'https://hydeclanspi.github.io/lucent/';
+const SITE = 'https://hydeclanspi.github.io/Lucent-Next/';
 const exists = file => access(file).then(() => true, () => false);
 
 await rm(output, { recursive: true, force: true });

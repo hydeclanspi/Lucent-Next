@@ -2834,6 +2834,38 @@
     syncFactoryPanel();
   }
 
+  // 短横屏守卫：主卡片在宽屏下垂直居中，屏幕一矮，它就上移，浮在它右上方的
+  // 历史记录标签会顶到顶栏。只把卡片下移到刚好留出间隙；平板与更高的屏幕不受影响。
+  var CARD_CLEARANCE = 16;
+  function guardCardClearance() {
+    var root = document.documentElement;
+    var card = document.querySelector(".page > .card"), bar = document.querySelector(".topbar"), tag = $("btnHistory");
+    if (!card || !bar || !tag) return;
+    var current = parseFloat(root.style.getPropertyValue("--card-drop")) || 0, drop = 0;
+    var wide = !window.matchMedia || window.matchMedia("(min-width: 900px)").matches;
+    if (wide && getComputedStyle(tag).position === "absolute") {
+      var page = card.offsetParent;
+      var cardTop = (page ? page.offsetTop : 0) + card.offsetTop - current;
+      var floor = bar.offsetTop + bar.offsetHeight + CARD_CLEARANCE - tag.offsetTop;
+      drop = Math.max(0, Math.ceil(floor - cardTop));
+    }
+    if (drop === current) return;
+    if (drop) root.style.setProperty("--card-drop", drop + "px");
+    else root.style.removeProperty("--card-drop");
+    if (interactionController) interactionController.refresh();
+  }
+
+  function bindCardClearance() {
+    var card = document.querySelector(".page > .card");
+    var queued = 0;
+    var queue = function () { if (!queued) queued = requestAnimationFrame(function () { queued = 0; guardCardClearance(); }); };
+    guardCardClearance();
+    window.addEventListener("resize", guardCardClearance, { passive: true });
+    if (typeof ResizeObserver === "function" && card) new ResizeObserver(queue).observe(card);
+    if (typeof MutationObserver === "function") new MutationObserver(queue).observe(document.documentElement, { attributes: true, attributeFilter: ["data-focus"] });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(queue);
+  }
+
   function mountInteraction() {
     if (interactionController || !window.AiraInteraction) return;
     interactionController = window.AiraInteraction.mount({
@@ -5055,6 +5087,7 @@
 
     tickClock();
     setInterval(tickClock, 20000);
+    bindCardClearance();
 
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", init);

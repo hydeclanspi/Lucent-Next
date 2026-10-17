@@ -12,7 +12,8 @@ The original licences of the photograph and the illustrations were not part of t
 
 - Interface symbols and icons — the planet, the FSD lettermark, the six motion glyphs, the badge cap — are vector paths drawn in code.
 - The figures in `docs/images/figures/` are rendered by `scripts/figures.mjs` from the engine's own functions.
-- The screenshots and animations in `docs/images/` and the social image `web/og.jpg` are rendered from the product itself (`scripts/capture/`).
+- The screenshots and animations in `docs/images/` are rendered from the product itself (`scripts/capture/`); the social image `web/og.jpg` sets the name and tagline over that hero capture (`scripts/og.mjs`).
+- The app icon (`web/icon-*.png`) draws the first two Lueurs with the product's own lens styling over a plain gradient (`scripts/icon/icon.html`); it uses no bundled artwork.
 
 ## Names and fonts
 

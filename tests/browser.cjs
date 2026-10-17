@@ -9,7 +9,7 @@ const dist = path.join(root, 'dist');
 const results = [], errors = [];
 const server = http.createServer((req, res) => {
   try {
-    const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname).replace(/^\/lucent(?=\/)/, '');
+    const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname).replace(/^\/Lucent-Next(?=\/)/, '');
     let file = path.resolve(dist, '.' + pathname);
     if (file !== dist && !file.startsWith(dist + path.sep)) return res.writeHead(403).end();
     if (fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
@@ -23,6 +23,8 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
   const base = `http://127.0.0.1:${server.address().port}`;
   const browser = await chromium.launch({ headless: true, ...(process.env.AIRA_BROWSER_CHANNEL ? { channel: process.env.AIRA_BROWSER_CHANNEL } : {}), ...(process.env.AIRA_BROWSER_PATH ? { executablePath: process.env.AIRA_BROWSER_PATH } : {}) });
   const context = await browser.newContext({ viewport: { width: 1560, height: 1040 }, colorScheme: 'light' });
+  // The flows below act as a visitor who has already left full screen once; immersive mode has its own check.
+  await context.addInitScript(() => { try { sessionStorage.setItem('lucent:immersive:declined', '1'); } catch (_) {} });
   const page = await context.newPage();
   page.setDefaultTimeout(8000);
   page.on('pageerror', e => errors.push(e.message));
@@ -154,7 +156,7 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       await page.keyboard.press('Escape');
     });
     await check('Web assets work under a repository subpath', async () => {
-      await page.goto(base + '/lucent/'); await page.waitForFunction(() => document.querySelectorAll('#engineChips .chip').length === 4);
+      await page.goto(base + '/Lucent-Next/'); await page.waitForFunction(() => document.querySelectorAll('#engineChips .chip').length === 4);
       assert.equal(await page.title(), 'Lucent · 灵感台');
     });
     await check('Desktop, tablet and mobile stay within viewport; screenshots captured', async () => {
@@ -183,6 +185,36 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       }
       await page.locator('#searchInput').scrollIntoViewIfNeeded();
       await page.screenshot({ path: path.join(images, 'mobile.jpg'), type: 'jpeg', quality: 85 });
+    });
+    await check('Short landscape screens keep the history tag clear of the top bar', async () => {
+      const gap = async size => {
+        await page.setViewportSize(size); await home(); await page.waitForTimeout(700);
+        return page.evaluate(() => ({ gap: document.getElementById('btnHistory').getBoundingClientRect().top - document.querySelector('.topbar-actions').getBoundingClientRect().bottom, card: Math.round(document.querySelector('.page > .card').getBoundingClientRect().top) }));
+      };
+      for (const size of [{ width: 1429, height: 763 }, { width: 1280, height: 720 }, { width: 1366, height: 768 }]) {
+        assert.ok((await gap(size)).gap >= 12, `history tag must clear the top bar at ${size.width}×${size.height}`);
+      }
+      assert.equal((await gap({ width: 1560, height: 1040 })).card, 303, 'the tablet layout is untouched');
+    });
+    await check('Large screens go full screen on the first click; leaving is respected; F toggles', async () => {
+      const fresh = await browser.newContext({ viewport: { width: 1560, height: 1040 } });
+      await fresh.route('**/*', route => route.request().url().startsWith(base) ? route.continue() : route.abort());
+      const tab = await fresh.newPage();
+      tab.on('pageerror', e => errors.push(e.message));
+      await tab.goto(base); await tab.waitForFunction(() => document.querySelectorAll('#engineChips .chip').length === 4);
+      await tab.waitForSelector('.lx-immersive-hint.is-visible');
+      await tab.mouse.click(300, 900);
+      await tab.waitForFunction(() => !!document.fullscreenElement);
+      await tab.evaluate(() => document.exitFullscreen());
+      await tab.waitForFunction(() => !document.fullscreenElement);
+      await tab.mouse.click(300, 900); await tab.waitForTimeout(300);
+      assert.equal(await tab.evaluate(() => !!document.fullscreenElement), false, 'after leaving, a click must not force full screen again');
+      await tab.keyboard.press('f');
+      await tab.waitForFunction(() => !!document.fullscreenElement);
+      await tab.locator('#searchInput').click(); await tab.keyboard.press('f');
+      assert.equal(await tab.locator('#searchInput').inputValue(), 'f', 'F types normally in the search field');
+      assert.equal(await tab.evaluate(() => !!document.fullscreenElement), true);
+      await fresh.close();
     });
     await check('No uncaught browser exceptions during the tested flows', async () => assert.deepEqual(errors, []));
   } finally {
