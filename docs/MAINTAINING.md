@@ -1,30 +1,74 @@
-# Working on airhome (personal)
+# Maintaining Lucent
 
-This is a static web product. Keep the personal card, content, selected search motions, and visual relationships intentional. Product identity is **airhome (personal)**, repository slug `airhome-personal`, author **hydeclanspi**.
+Product: **Lucent · 灵感台**. The floating-lens engine is **Lueurs** (小浮光, codename 代号：交互). Repository `lucent`, author **hydeclanspi**. The native package is the Aira (HarmonyOS) 5.0 build; this repository is its web edition.
 
 ## Where changes belong
 
-- `assets/app.js` coordinates the original homepage, settings, search lifecycle, statistics and interactions.
-- `assets/interaction.js`, `stats-store.js` and `field-store.js` contain the interaction and persistence systems.
-- `web/browser-bridge.js` supplies the browser panels, theme palette, search URLs and editable shortcut fixtures. It is separate from the original native archive.
-- `web/browser-bridge.css` owns the added panels and narrow responsive overrides.
-- `scripts/build.mjs` copies `index.html`, `assets/` and `web/` into `dist/`. Editing `dist/` directly will be lost on the next build.
-- `native/` contains the original Aira 5.0 ZIP; do not silently replace it with a web bundle.
+| Path | Owns |
+|---|---|
+| `assets/app.js`, `app.css` | Profile card, search lifecycle, shortcuts, wallpaper, panels, backup and export, About |
+| `assets/interaction.js`, `interaction.css` | The Lueurs engine: region geometry, motion, contacts, Drive (FSD), encounters, placement, identities. `_test` exports are used by the tests and the documentation figures |
+| `assets/stats-store.js`, `field-store.js`, `stats-panel.js` | Aggregate statistics, the field chronicle, and the hand-written SVG charts |
+| `assets/glass-material.{js,css}` | The glass material |
+| `assets/search-motion*.{js,css}`, `search-simulation.{js,css}` | 念起，光行: renderers, player, panel, Random current, simulated launch |
+| `web/browser-bridge.{js,css}` | The browser demonstration layer: host panels, history, theme palette, search URLs, shortcut fixtures |
+| `web/showcase.js` | Deep links (`?lueurs=`, `?fsd=`, `?open=`) that press the product's own controls |
+| `web/og.jpg` | Social preview image |
+| `atelier/` | The sixteen-study motion atelier, a standalone page |
+| `native/` | The original Aira 5.0 package, byte for byte; its SHA-256 is checked by `scripts/check.mjs` |
+| `scripts/` | Build, preview, checks, documentation figures (`figures.mjs`) and media capture (`capture/`) |
+| `docs/` | Deep documentation in Chinese, `docs/en/` in English, `docs/llms.txt` for crawlers |
+
+`scripts/build.mjs` copies `index.html`, `assets/`, `web/` and `atelier/` into `dist/`; editing `dist/` directly is lost on the next build.
 
 ## Details that have caused mistakes
 
-1. **Search dispatch belongs after the animation.** Both Enter and the arrow use the same form submission. Clear live and default input values, handle IME, prevent duplicates, and verify returning from a navigation. Same-tab `location.assign()` works after the animation without popup permissions.
-2. **Blue comes from theme injection.** The original CSS had an orange fallback. The browser adapter supplies `#0a59f7`; warm profile gradients and engine outlines remain intentional.
-3. **Wallpaper is not theme.** Light/dark wallpaper choice and light/dark interface theme are independent. The London bitmap includes a device dock at its lower edge; the web default uses a crop above it. Keep the bitmap unchanged unless an asset change is requested.
-4. **Profile editor and general panels differ.** The profile editor is `.edit-root`; the original utility sheet is `#sheetRoot`; web host panels are `.ab-overlay`. Tests must target the right surface.
-5. **Version labels serve different purposes.** The package is 5.0.0. The original in-product About card retains 4.7.3. Old storage prefixes are intentional compatibility keys, not display branding.
-6. **Private storage is scoped.** Demonstration privacy stops only local navigation recording. Do not suggest that it enables real browser incognito or that example history represents actual visits.
-7. **Use relative paths.** Keep the product usable under a repository subpath. Never add machine-specific imports to tests; use the optional `AIRA_PLAYWRIGHT_MODULE` environment variable for a locally installed test runtime.
+1. **Search dispatch belongs after the animation.** Enter and the arrow share one form submission. Clear the live and default input values, respect IME composition, prevent duplicates, and verify the return from a navigation.
+2. **Blue comes from theme injection.** The original CSS has an orange fallback; the browser layer supplies `#0A59F7`. The warm name gradient and engine outlines are intentional.
+3. **Wallpaper is not theme.** The Light/Dark wallpaper and the light/dark interface are independent. The London bitmap includes a device dock at its lower edge; the default framing sits above it. Do not rewrite the bitmaps.
+4. **Three kinds of surface.** The profile editor is `.edit-root`, product sheets live in `#sheetRoot`, browser-layer panels are `.ab-overlay`. Tests must target the right one.
+5. **Names and keys.** Display names are Lucent / 灵感台 / Lueurs. Storage keys keep the `aira-profile-card:` prefix and environment variables keep `AIRA_`: they are compatibility keys, not branding.
+6. **Private browsing is a demonstration.** It only stops the local history record; it is not a real incognito mode, and the example history is not anyone's real history.
+7. **Relative paths only.** The site must keep working under a repository subpath.
+8. **Docs anchor to source lines.** `docs/*.md` and `docs/en/*.md` link to `assets/…#Lnn`. When code moves, search for `#L` and update both languages.
+9. **Documented numbers are test-backed.** Changing an engine constant means updating the test that pins it, the figure that draws it, and both language versions of the docs.
+
+## Documentation media
+
+**Figures** are drawn from the engine's own functions, so they cannot drift from the code:
+
+```sh
+AIRA_BROWSER_PATH=/path/to/chromium node scripts/figures.mjs            # all seven
+node scripts/figures.mjs potential placement                          # or some of them
+```
+
+They are written to `docs/images/figures/<name>.{zh,en}.png`.
+
+**Screens and animations** are rendered, not screen-recorded: the product runs on a fake clock and a frozen CSS timeline, and every frame is its exact state at an exact virtual time ([`scripts/capture/recorder.cjs`](../scripts/capture/recorder.cjs)).
+
+```sh
+npm run build
+node scripts/capture/scenes.cjs lueurs motion random glass atelier   # a few minutes each
+node scripts/capture/scenes.cjs week chronicle                       # a simulated week, then the panels
+```
+
+Frames and stills land in the ignored `verification/capture/`. `CAPTURE_QUICK=1` runs a short smoke version of every scene. To encode:
+
+| Output | From |
+|---|---|
+| `hero.jpg` | `hero.png` resized to 1920×1280, JPEG quality 85 |
+| `lueurs.webp`, `motion-six.webp`, `random-current.webp` | `ffmpeg -framerate 25 -i <scene>/%04d.png -vf scale=1200:-2:flags=lanczos -c:v libwebp_anim -q:v 90 -compression_level 6 -loop 0 <name>.webp` |
+| `glass-macro.jpg` | `glass-macro.png` (rendered at 4×) |
+| `glass-compare.jpg` | left half of `glass-warm.png`, right half of `glass-classic.png`, 1 px divider |
+| `chronicle.jpg`, `roster.jpg` | the charts (top) and the terrain, drive log and roster (bottom) of `chronicle-sheet.png` |
+| `atelier.jpg` | the first 1,198 CSS px of `atelier.png`, 1600 px wide |
+
+The browser suite writes its own review captures to ignored `verification/screenshots/`; they are evidence for a run, not documentation.
 
 ## Work sequence
 
-Inspect `git status` before editing. Make the smallest change that fits the requested behavior, build, then run relevant checks. For bridge, navigation or persistence changes, run `npm run test:browser`; for pure copy/style changes, inspect the affected view. The browser suite uses fake external responses, so it does not send private queries to search engines. It writes review screenshots to ignored `verification/screenshots/`; set `AIRA_UPDATE_DOCS_IMAGES=1` only when deliberately refreshing the committed images in `docs/images/`.
+Inspect `git status` before editing. Make the smallest change that fits the requested behaviour, build, then run the relevant checks: `npm run check` and `npm test` always; `npm run test:browser` for bridge, navigation or persistence changes. The browser suite stubs external pages, so it never sends a query to a search provider.
 
-Run `npm run check`, `npm test`, `npm run build` and the browser suite before a full release. Review desktop/mobile and both themes. Keep the public verification report explicit about what was actually checked. Update this document after a discovered integration pitfall, and leave a concise checkpoint before interrupting longer work.
+Before a release run all four (check, unit tests, build, browser suite), review desktop and mobile in both themes, and keep [VERIFICATION.md](VERIFICATION.md) explicit about what was actually checked.
 
-Before making the repository public, review profile details and bundled artwork sources across the reachable history. The project currently grants no general artwork redistribution license.
+Before making the repository public, review the profile details and the artwork sources across the whole reachable history. No redistribution licence is granted for the artwork; see [ASSETS.md](ASSETS.md).
