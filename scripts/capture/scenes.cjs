@@ -2,7 +2,7 @@
 // Re-shoot the documentation media from the real product.
 //
 //   npm run build
-//   node scripts/capture/scenes.cjs lueurs motion random glass week chronicle atelier
+//   node scripts/capture/scenes.cjs lueurs motion random simulation focus glass week chronicle atelier
 //
 // Each scene drives the product through its own controls under a fake clock and writes PNG frames
 // and stills to verification/capture/ (ignored by git). `week` runs the product for a simulated
@@ -207,6 +207,48 @@ const scenes = {
     await page.mouse.move(5, 2390);
     await r.advance(400);
     await page.screenshot({ path: out('chronicle-sheet.png'), clip: await page.locator('#sheet').boundingBox() });
+    return r;
+  },
+
+  // Focus mode: both sections folded, the card sinks to the visual centre and search takes the stage.
+  async focus() {
+    const r = await open({ dpr: 2, time: new Date('2026-10-17T21:06:00+01:00') });
+    const { page } = r;
+    await summon(page, 12, () => page.clock.runFor(250));
+    // Fold whichever sections are open (the factory layout already folds 直达).
+    for (const id of ['btnFoldShortcuts', 'btnFoldEntries']) {
+      if (await page.locator('#' + id).getAttribute('aria-expanded') === 'true') await page.locator('#' + id).click();
+    }
+    await page.waitForFunction(() => document.documentElement.dataset.focus === 'on');
+    for (let i = 0; i < 12; i++) await page.clock.runFor(250);
+    await page.mouse.move(1540, 1030);
+    await r.freezeCss();
+    await r.advance(1200);
+    await page.screenshot({ path: out('focus.png') });
+    return r;
+  },
+
+  // Simulated launch from the base itself: the first shot flies out and back, then Enter is held for bursts.
+  async simulation() {
+    const r = await open({ dpr: 2, time: new Date('2026-10-17T21:12:00+01:00') });
+    const { page } = r;
+    await page.locator('#btnSearchMotion').click();
+    await r.advance(1200);
+    await page.locator('.sm-simulation').click();
+    await page.locator('.sm-random').click(); // every shot a different gesture
+    await r.advance(300);
+    await page.locator('.sm-done').click();
+    await r.advance(900);
+    await page.locator('#searchInput').click();
+    await page.keyboard.type('念起，光行');
+    await r.advance(400);
+    await r.freezeCss();
+    const clip = { x: 620, y: 296, width: 730, height: 180 };
+    await r.record(path.join(OUT, 'simulation'), { frames: frames(190), fps: 25, clip, before: async i => {
+      if (i === 8) await page.keyboard.press('Enter');
+      if (i === 70) await page.keyboard.down('Enter');
+      if (i === 150) await page.keyboard.up('Enter');
+    } });
     return r;
   },
 

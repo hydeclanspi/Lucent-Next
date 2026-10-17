@@ -12,7 +12,7 @@ const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.AIRA_PLAYWRIGHT_MODULE || 'playwright');
 const root = fileURLToPath(new URL('../', import.meta.url));
 const out = path.join(root, 'docs/images/figures');
-const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css' };
+const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css', '.jpg': 'image/jpeg', '.png': 'image/png' };
 
 const server = http.createServer(async (req, res) => {
   try {
@@ -27,12 +27,13 @@ const browser = await chromium.launch({ headless: true, ...(process.env.AIRA_BRO
 const page = await browser.newPage({ viewport: { width: 1200, height: 900 }, deviceScaleFactor: 2 });
 await mkdir(out, { recursive: true });
 const only = process.argv.slice(2);
-for (const fig of ['region', 'potential', 'placement', 'speeds', 'fsd', 'glass', 'storage']) {
+for (const fig of ['architecture', 'region', 'potential', 'placement', 'speeds', 'fsd', 'glass', 'storage', 'gestures']) {
   if (only.length && !only.includes(fig)) continue;
   for (const lang of ['zh', 'en']) {
     await page.goto(`${base}?fig=${fig}&lang=${lang}`);
     await page.waitForFunction(() => document.body.dataset.ready === '1');
     await page.evaluate(() => document.fonts.ready);
+    await page.waitForFunction(() => Array.from(document.images).every(image => image.complete && image.naturalWidth > 0));
     const file = path.join(out, `${fig}.${lang}.png`);
     await page.locator('#figure').screenshot({ path: file });
     console.log('wrote', path.relative(root, file));

@@ -209,9 +209,9 @@ const figures = {
   },
 
   speeds() {
-    const stage = header("04", t("电流的速度从哪里来", "Where the current's speed comes from"),
-      t("Random 开启后，蓝白电流沿卡片之间的通道奔跑。每一束的速度独立抽样：以 4.8.3 版为基准的截断正态分布 N(0.70, 0.10²)，超出 ±3σ 重抽。抽的是速度而不是时长，所以快慢在视觉上是对称的。",
-        "With Random on, blue-white current runs through the channels between cards. Each pulse samples its own speed from a normal distribution N(0.70, 0.10²) relative to version 4.8.3, redrawn beyond ±3σ. Speed, not duration, is sampled, so fast and slow feel symmetric."));
+    const stage = header("04", t("激光的速度从哪里来", "Where each laser's speed comes from"),
+      t("Random 开启后，蓝白激光沿卡片之间的通道奔跑。每一束的速度独立抽样：以 4.8.3 版为基准的截断正态分布 N(0.70, 0.10²)，超出 ±3σ 重抽。抽的是速度而不是时长，所以快慢在视觉上是对称的。",
+        "With Random on, blue-white lasers run through the channels between cards. Each pulse samples its own speed from a normal distribution N(0.70, 0.10²) relative to version 4.8.3, redrawn beyond ±3σ. Speed, not duration, is sampled, so fast and slow feel symmetric."));
     const width = 1104, height = 400, ctx = canvas(stage, width, height);
     const left = 70, right = width - 30, top = 30, bottom = height - 56;
     const x = v => left + (v - .4) / .6 * (right - left), pdf = v => Math.exp(-.5 * Math.pow((v - .7) / .1, 2));
@@ -304,7 +304,7 @@ Object.assign(figures, {
   },
 
   glass() {
-    const stage = header("06", t("通透玻璃：六个参数，六层光学", "Liquid glass: six parameters, six optical layers"),
+    const stage = header("06", t("通透玻璃：六个参数，六层光学", "Lucent Glass: six parameters, six optical layers"),
       t("同一种玻璃承担阅读、操作和装饰三种用途。六个 0–100 的参数先映射成 CSS 变量，再分配到六层；滤镜只作用在装饰层，文字、图标与数据始终在独立前景，清晰度不受影响。",
         "One glass serves reading, operating and ornament. Six 0–100 parameters map to CSS variables that feed six layers; filters touch only the decorative layers, so text, icons and data stay in a separate, crisp foreground."));
     const width = 1104, height = 560, g = svg(stage, width, height);
@@ -329,7 +329,7 @@ Object.assign(figures, {
       label(g, x + 450, y + 18, name, { size: 16, serif: true, fill: color });
       label(g, x + 450, y + 40, desc, { size: 12.5, fill: "#98a1ab" });
     });
-    const params = t(["透明度", "柔化", "冷暖", "边缘", "色彩", "触感"], ["Transparency", "Softness", "Warmth", "Edge", "Colour", "Touch"]);
+    const params = t(["通透度", "玻璃柔焦", "暖意", "边缘光泽", "环境色彩", "触光强度"], ["Clarity", "Softness", "Warmth", "Edge", "Colour", "Touch"]);
     label(g, 24, 64, t("六个参数", "Six parameters"), { size: 15, serif: true });
     params.forEach((p, i) => {
       const y = 96 + i * 46;
@@ -340,7 +340,7 @@ Object.assign(figures, {
     });
     el(g, "path", { d: "M222 250 C 262 250, 262 250, 296 250", fill: "none", stroke: "#c9c2b6", "stroke-width": 1.3, "marker-end": "url(#arrow)" });
     multiline(g, 24, 400, t(["主卡片与弹窗各自一套参数，", "可选「经典磨砂」或「暖光液态清璃」。", "静止时没有任何常驻动画循环。"],
-      ["The home card and the sheets each keep", "their own set, in classic frost or", "warm liquid glass. Nothing animates at rest."]), { size: 12.5, fill: "#98a1ab", lh: 20 });
+      ["The home card and the sheets each keep", "their own set, in Classic Frost or", "Warm Clear. Nothing animates at rest."]), { size: 12.5, fill: "#98a1ab", lh: 20 });
     footer(t("assets/glass-material.js · renderSettings() 把参数映射为 --beta-alpha / --beta-blur / --beta-edge / --beta-saturation 与冷暖色 · assets/glass-material.css 负责分层 · 不支持背景滤镜或「减少透明度」时退回到实底",
              "assets/glass-material.js · renderSettings() maps parameters to --beta-alpha / --beta-blur / --beta-edge / --beta-saturation and the warm/cool tints · assets/glass-material.css stacks the layers · a solid fallback when backdrop filters are missing or reduced transparency is requested"));
   },
@@ -413,6 +413,170 @@ Object.assign(figures, {
     ]), { size: 12.5, fill: "#ece6da", lh: 22 });
     footer(t("assets/stats-store.js · assets/field-store.js · 备份文本 AIRAPC1：deflate-raw 压缩 → base64url → CRC-32，复制前按同一格式回读自检，超长时按段切分",
              "assets/stats-store.js · assets/field-store.js · the AIRAPC1 backup text is deflate-raw → base64url → CRC-32, read back in the same format before copying, and segmented when long"));
+  }
+});
+
+// ---- architecture & gesture map ----
+function hexA(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
+function box(g, x, y, w, h, color, title, latin, lines, opts = {}) {
+  el(g, "rect", { x, y, width: w, height: h, rx: 13, fill: hexA(color, opts.fill || .055), stroke: hexA(color, opts.stroke || .5), "stroke-width": 1.2 });
+  const t0 = label(g, x + 16, y + 28, title, { size: opts.titleSize || 16, serif: true, fill: opts.titleFill || "#ece6da" });
+  if (latin) label(g, x + 16 + t0.getComputedTextLength() + 10, y + 28, latin, { size: 11, mono: true, fill: color, spacing: .6 });
+  multiline(g, x + 16, y + (opts.first || 52), lines, { size: opts.size || 12.5, fill: opts.lineFill || "#a9b1ba", lh: opts.lh || 19 });
+}
+function chip(g, x, y, w, text, color) {
+  el(g, "rect", { x, y, width: w, height: 34, rx: 17, fill: hexA(color, .07), stroke: hexA(color, .42), "stroke-width": 1 });
+  label(g, x + w / 2, y + 22, text, { size: 12.5, fill: "#e6dccb", anchor: "middle" });
+}
+
+Object.assign(figures, {
+  architecture() {
+    const stage = header("00", t("产品架构：从一块屏幕，到一个像素", "Architecture: from one screen to one pixel"),
+      t("自上而下，由宏观到微观：它在哪里运行，表面摆着什么，底下运转着哪四套系统，系统靠什么机制成立，以及最后落到像素的那些决定。最下面一行贯穿所有层级：把每个旋钮交给使用者的主权，和让一切经得起长期使用的工程纪律。",
+        "Top to bottom, macro to micro: where it runs, what sits on the surface, the four systems underneath, the mechanisms that make them work, and the decisions that finally land on a pixel. The bottom row cuts across every layer: the controls handed to the person who uses it, and the engineering discipline that keeps it trustworthy over years."));
+    const W0 = 1104, LX = 152, CW = W0 - LX, g = svg(stage, W0, 812);
+    const ice = "#8cc7ec", blue = "#a3b8ff", plat = "#d3c5a2", warm = "#e8be94", gold = "#d8b98c", grey = "#c9c2b6", mute = "#98a1ab", mint = "#93cdb5";
+    const tiers = [
+      ["L0", t("场景", "Context"), t("在哪里运行", "where it runs"), 6, 86],
+      ["L1", t("基地", "Base"), t("表面", "the surface"), 108, 106],
+      ["L2", t("系统", "Systems"), t("底下的四套", "four underneath"), 230, 68],
+      ["L3", t("机制", "Mechanisms"), t("为什么成立", "why it works"), 314, 196],
+      ["L4", t("像素", "Pixels"), t("最后的决定", "final decisions"), 526, 100]
+    ];
+    // spine: macro → micro
+    const spine = el(g, "defs", {});
+    spine.innerHTML = `<linearGradient id="spine" gradientUnits="userSpaceOnUse" x1="0" y1="16" x2="0" y2="618"><stop offset="0" stop-color="${ice}"/><stop offset="1" stop-color="${gold}"/></linearGradient>`;
+    el(g, "line", { x1: 10, y1: 16, x2: 10, y2: 618, stroke: "url(#spine)", "stroke-width": 2, "stroke-linecap": "round" });
+    el(g, "path", { d: "M4 610 L10 624 L16 610", fill: "none", stroke: gold, "stroke-width": 2, "stroke-linejoin": "round" });
+    tiers.forEach(([n, name, hint, y, h]) => {
+      el(g, "circle", { cx: 10, cy: y + 26, r: 4.5, fill: "#0f151d", stroke: "#ece6da", "stroke-width": 1.4 });
+      label(g, 26, y + 22, n, { size: 11, mono: true, fill: gold, spacing: 1 });
+      label(g, 26, y + 46, name, { size: 18, serif: true });
+      label(g, 26, y + 66, hint, { size: 11.5, fill: mute });
+    });
+    const cols = (n, gap) => { const w = (CW - gap * (n - 1)) / n; return Array.from({ length: n }, (_, i) => LX + i * (w + gap)).map(x => [x, w]); };
+    // L0
+    const c3 = cols(3, 12);
+    box(g, c3[0][0], 6, c3[0][1], 86, mute, t("一块屏幕", "One screen"), "screen", t(["MatePad Edge · 14.2″ 3:2 OLED", "3120×2080 → 1560×1040 CSS · 触屏优先"], ["MatePad Edge · 14.2″ 3:2 OLED", "3120×2080 → 1560×1040 CSS · touch first"]));
+    box(g, c3[1][0], 6, c3[1][1], 86, mute, t("宿主", "Host"), "host", t(["鸿蒙 Aira 浏览器的自定义主页", "原生安装包按交付原样保存"], ["custom homepage of the Aira browser", "on HarmonyOS; native package kept as shipped"]));
+    box(g, c3[2][0], 6, c3[2][1], 86, mute, t("网页版", "Web edition"), "web", t(["浏览器演示层 · 一键直达链接", "沉浸全屏 · 可安装为应用"], ["browser layer · deep links", "immersive full screen · installable"]));
+    // L1
+    box(g, c3[0][0], 108, c3[0][1], 106, grey, t("顶栏", "Top bar"), "top bar", t(["时钟与问候 · 搜索 · 全部标签", "隐私模式 · 切换", "FSD · 星球 · 扫一扫 · 太阳"], ["clock & greeting · Search · All tabs", "Private · Switch", "FSD · planet · scan · sun"]));
+    box(g, c3[1][0], 108, c3[1][1], 106, grey, t("名片", "Profile"), "profile", t(["头像光环 · 名字流光 · 状态", "签名 · 徽章 · 标签"], ["avatar ring · gradient name · status", "signature · badges · tags"]));
+    box(g, c3[2][0], 108, c3[2][1], 106, grey, t("主卡片", "Main card"), "card", t(["搜索框 · 搜索引擎 · 快捷方式", "直达 · 日志 · 历史记录"], ["search · engines · shortcuts", "direct entries · note · history"]));
+    // L2 + L3 in four aligned columns
+    const c4 = cols(4, 12);
+    const systems = [
+      [ice, t("生态", "Alive"), "lueurs", t(["小浮光 Lueurs · 场志"], ["Lueurs · the chronicle"]),
+        t(["Ornstein–Uhlenbeck 航向", "4 px 子步进 · 冲量 e = 0.64", "FSD：广度优先寻路 · 四状态", "邂逅：150 px 圈 · 70% 立案", "落子：只罚沙漠与拥挤", "拖动 → 势场 Φ → 壁纸权重", "49 位身份 · 关系谱 · 事件环", "双槽校验 · 分层压缩"],
+          ["Ornstein–Uhlenbeck heading", "4 px sub-steps · impulse e = 0.64", "FSD: breadth-first routes", "encounters: 150 px · 70%", "placement punishes deserts", "drag → potential Φ → odds", "49 identities · relationships", "two slots · tiered compaction"])],
+      [blue, t("发射", "Launch"), "lightline", t(["念起，光行 · 六式"], ["A thought, in flight · six"]),
+        t(["渲染器 = 进度 t 的纯函数", "可慢放 0.35×，也可倒放", "按字形簇切分（Intl.Segmenter）", "量真实字体、字距与滚动", "输入法组字时不触发", "光抵达箭头，才真正导航", "一次性出发计时器兜底", "返回时输入框干净如初"],
+          ["renderer = pure function of t", "slow to 0.35×, or reverse", "graphemes via Intl.Segmenter", "measures the real font & scroll", "IME composition never fires", "navigates only on arrival", "a once-only dispatch timer", "a clean field on return"])],
+      [plat, t("闭环", "Loop"), "recharge", t(["模拟发射 · Random 激光"], ["Simulated launch · Random"]),
+        t(["首发沿原路倒放回弹", "按住 Enter：160 ms 连发", "需求只记一个比特", "键盘自动重复去抖 80 ms", "激光速度：截断正态 N(0.70, 0.1²)", "车道按权重不放回抽取", "开场三束同时出发", "页面隐藏即暂停排班"],
+          ["first shot flies back", "hold Enter: 160 ms bursts", "demand is a single bit", "80 ms debounce for auto-repeat", "speed ~ truncated N(0.70, 0.1²)", "weighted lanes, no replacement", "a three-beam opening", "paused while hidden"])],
+      [warm, t("材质", "Material"), "lucent glass", t(["通透玻璃 · 两种玻璃"], ["Lucent Glass · two finishes"]),
+        t(["六个参数 → CSS 变量", "六层：采样 · 底色 · 冷暖", "　　　边缘 · 高光 · 前景", "高光按帧合并，只写一次", "静止时零动画循环", "主卡片与弹窗各一套", "无背景滤镜 → 实底退路", "减少透明度 / 动态 → 退路"],
+          ["six parameters → CSS variables", "six layers: backdrop · bed ·", "ambient · rim · sheen · content", "highlight coalesced per frame", "zero animation loops at rest", "card and sheets tuned apart", "no backdrop filter → solid", "reduced transparency → solid"])]
+    ];
+    systems.forEach(([color, name, latin, sub, mech], i) => {
+      const [x, w] = c4[i];
+      box(g, x, 230, w, 68, color, name, latin, sub, { first: 52 });
+      el(g, "line", { x1: x + w / 2, y1: 298, x2: x + w / 2, y2: 314, stroke: hexA(color, .6), "stroke-width": 1.2 });
+      el(g, "rect", { x, y: 314, width: w, height: 196, rx: 13, fill: hexA(color, .035), stroke: hexA(color, .3), "stroke-width": 1, "stroke-dasharray": "3 4" });
+      multiline(g, x + 14, 340, mech, { size: 12.5, fill: "#b7bec6", lh: 21 });
+    });
+    // L4 pixels
+    el(g, "rect", { x: LX, y: 526, width: CW, height: 100, rx: 13, fill: hexA(gold, .035), stroke: hexA(gold, .3), "stroke-width": 1 });
+    const pix = t(["浮光 22 px · 圆角 7/3/8/3 · −24°", "星球光环倾斜 23.5°", "编号 8.5 px · 0.45 · −7°", "历史标签框体 skewX −14°",
+                   "唯一的蓝 #0A59F7", "落款金 #CBAE60", "「68 : 32」18 px · 520 · 斜体", "每款动效 320–480 ms"],
+                  ["Lueur 22 px · radii 7/3/8/3 · −24°", "planet ring tilted 23.5°", "numbers 8.5 px · 0.45 · −7°", "history frame skewX −14°",
+                   "one blue: #0A59F7", "signature gold #CBAE60", "“68 : 32” 18 px · 520 · italic", "each motion 320–480 ms"]);
+    const pw = (CW - 24 - 3 * 10) / 4;
+    pix.forEach((text, i) => chip(g, LX + 12 + (i % 4) * (pw + 10), 538 + Math.floor(i / 4) * 44, pw, text, gold));
+    // cross-cutting
+    label(g, 26, 676, t("贯穿", "Across"), { size: 18, serif: true });
+    label(g, 26, 696, t("所有层级", "all layers"), { size: 11.5, fill: mute });
+    const c2 = cols(2, 12);
+    box(g, c2[0][0], 652, c2[0][1], 152, gold, t("主权", "Yours"), "control", t(["三层默认：当前 · 自定义 · 出厂", "玻璃：主卡片 / 弹窗 × 两种 × 六个参数", "壁纸：柔焦 · 亮度 · 取景 · 加权随机", "浮光：数量 · 力度 · pace · 主图比例", "第二层：每个入口都有长按 · 键盘等价"],
+      ["three layers of defaults: now · yours · factory", "glass: card / sheets × two finishes × six dials", "wallpaper: soft focus · brightness · framing · odds", "Lueurs: count · strength · pace · Light/Dark odds", "a second layer: long press everywhere, keyboard too"]), { lh: 19.5 });
+    box(g, c2[1][0], 652, c2[1][1], 152, mint, t("可信", "Trust"), "discipline", t(["数据只在本机 · 加载后零网络请求", "双槽校验快照 · 复制前自检的备份文本", "迁移保总量 · 写入守形状 · 读失败不清空", "方向键移动浮光 · 尊重减少动态与透明度", "41 项单元测试 · 17 组浏览器流程 · CI"],
+      ["data stays on the device · no requests after load", "checksummed two-slot snapshots · self-verifying backup", "migrations keep totals · writes guard their shape", "arrow keys move Lueurs · reduced motion respected", "41 unit tests · 17 browser flows · CI"]), { lh: 19.5 });
+    footer(t("完整清单见 docs/architecture.md：每一层的每一个功能，都对应到源码中的位置。",
+             "The full inventory is in docs/en/architecture.md: every function on every layer, traced to its place in the source."));
+  },
+
+  gestures() {
+    const stage = header("08", t("第二层：表面之下，每个入口都能长按", "The second layer: press and hold"),
+      t("表面只放每天用得到的东西，深度收进长按。下面标出了这张主页上全部的第二层入口；键盘上，Shift+Enter、菜单键或 Shift+F10 与长按等价。",
+        "The surface keeps only what you use every day; depth lives under a long press. Every second-layer entry on the base is marked below. On a keyboard, Shift+Enter, the menu key or Shift+F10 equals a long press."));
+    const W0 = 1104, S = W0 / 1560, H0 = 1040 * S;
+    const wrap = document.createElement("div");
+    wrap.style.cssText = `position:relative;width:${W0}px;height:${H0}px;border-radius:14px;overflow:hidden;`;
+    wrap.innerHTML = `<img src="../../docs/images/hero.jpg" style="position:absolute;inset:0;width:100%;height:100%;filter:saturate(.85) brightness(.62)">`;
+    stage.appendChild(wrap);
+    const g = document.createElementNS(NS, "svg");
+    g.setAttribute("viewBox", `0 0 ${W0} ${H0}`); g.setAttribute("width", W0); g.setAttribute("height", H0);
+    g.style.cssText = "position:absolute;inset:0";
+    wrap.appendChild(g);
+    // where the Lueurs live
+    const poly = geometry.polygon.map(p => `${(p.x * S).toFixed(1)},${(p.y * S).toFixed(1)}`).join(" ");
+    el(g, "polygon", { points: poly, fill: "rgba(140,199,236,.07)", stroke: "rgba(140,199,236,.75)", "stroke-width": 1.3, "stroke-dasharray": "5 5" });
+    const gold = "#e8c98f";
+    // Rings around the controls (CSS px at 1560×1040), then numbered markers with leader lines.
+    [[766, 32, 85, 42], [1222, 33, 40, 40], [1271, 33, 40, 40], [1320, 33, 40, 40], [1170, 33, 40, 40], [633, 558, 84, 97],
+     [1247, 786, 136, 34], [676, 331, 599, 50], [1292, 516, 28, 28], [1292, 681, 28, 28], [1274, 402, 46, 24]]
+      .forEach(([x, y, w, h]) => el(g, "rect", { x: x * S - 3, y: y * S - 3, width: w * S + 6, height: h * S + 6, rx: 8, fill: "none", stroke: "rgba(232,201,143,.85)", "stroke-width": 1.4 }));
+    const marks = [
+      [1, [[808, 77]], 808, 112], [2, [[1242, 76]], 1242, 112], [3, [[1291, 76]], 1291, 112], [4, [[1340, 76]], 1340, 112], [5, [[1190, 76]], 1190, 112],
+      [6, [[630, 606]], 585, 606], [7, [[1315, 823]], 1315, 860], [8, [[673, 356]], 640, 356],
+      [9, [[1324, 530], [1324, 695]], 1392, 612], [10, [[1324, 414]], 1392, 414], [11, [], 330, 250]
+    ];
+    marks.forEach(([n, anchors, mx, my]) => {
+      anchors.forEach(([ax, ay]) => el(g, "line", { x1: ax * S, y1: ay * S, x2: mx * S, y2: my * S, stroke: "rgba(232,201,143,.7)", "stroke-width": 1 }));
+      el(g, "circle", { cx: mx * S, cy: my * S, r: 12, fill: "#121a26", stroke: gold, "stroke-width": 1.5 });
+      label(g, mx * S, my * S + 4.5, String(n), { size: 12.5, mono: true, fill: gold, anchor: "middle", weight: 600 });
+    });
+    label(g, 352 * S, 255 * S, t("浮光栖居的留白", "where the Lueurs live"), { size: 12.5, fill: "rgba(170,215,240,.95)" });
+    // legend
+    const items = t([
+      ["切换", "轻点：Light → Dark → 随机", "长按：壁纸与玻璃 · 柔焦、亮度、取景、两种玻璃 × 六个参数"],
+      ["星球", "轻点：添一枚浮光，唤出 FSD", "长按：代号：交互 · 数量、力度、pace、比例、统计、默认值"],
+      ["扫一扫", "轻点：系统扫码", "长按：备份与导出 · 一段自检的备份文本"],
+      ["太阳", "轻点：设置中心", "长按：关于 · 产品自述与亲笔落款"],
+      ["FSD", "轻点三态：淡蓝巡航 → 暖橙增强 → 关闭", "4.25 秒不点，自己淡出"],
+      ["快捷方式", "长按：图标 · 三种形态 × 28 种底色", "「排序」之后：长按拖动换位"],
+      ["日志", "长按：签名日志 · 每一句按秒留档", ""],
+      ["搜索框", "开启「无限模拟发射」后：回车只发射光", "按住回车：连发；首发会沿原路回弹"],
+      ["折叠", "两段都折叠：专注态", "卡片下沉到视觉中心，搜索成为焦点"],
+      ["✧ 理", "轻点：念起，光行 · 六式、Random、模拟发射", "也是搜索引擎设置的入口"],
+      ["浮光", "拨动、拖动、推挤；方向键移动", "抓住一枚，它的编号才会浮现"]
+    ], [
+      ["Switch", "tap: Light → Dark → random", "hold: wallpaper & glass · soft focus, brightness, framing, 2 finishes × 6 dials"],
+      ["Planet", "tap: add a Lueur, summon FSD", "hold: the Interaction panel · count, strength, pace, odds, stats, defaults"],
+      ["Scan", "tap: the system scanner", "hold: backup & export · one self-verifying text"],
+      ["Sun", "tap: settings", "hold: About · the product in two paragraphs, signed"],
+      ["FSD", "tap: pale-blue cruise → orange boost → off", "fades by itself after 4.25 s"],
+      ["Shortcut", "hold: icon editor · 3 forms × 28 colours", "after 排序 (sort): hold to drag"],
+      ["Note", "hold: the note log · every line kept to the second", ""],
+      ["Search", "with endless simulation on: Enter launches light only", "hold Enter: bursts; the first shot flies back"],
+      ["Folds", "fold both sections: focus mode", "the card sinks to centre; search takes the stage"],
+      ["✧ 理", "tap: A thought, in flight · six motions, Random, simulation", "also the way to search-engine settings"],
+      ["Lueurs", "flick, drag, shove; arrow keys move them", "hold one and its number surfaces"]
+    ]);
+    const legend = svg(stage, W0, 392, 0);
+    legend.style.marginTop = "18px";
+    items.forEach(([name, a, b], i) => {
+      const col = i < 6 ? 0 : 1, row = i < 6 ? i : i - 6, x = col * 556, y = row * 64 + 8;
+      el(legend, "circle", { cx: x + 14, cy: y + 14, r: 11, fill: "#121a26", stroke: gold, "stroke-width": 1.4 });
+      label(legend, x + 14, y + 18.5, String(i + 1), { size: 12, mono: true, fill: gold, anchor: "middle", weight: 600 });
+      label(legend, x + 36, y + 19, name, { size: 15, serif: true });
+      label(legend, x + 36, y + 40, a, { size: 12.5, fill: "#c9c2b6" });
+      if (b) label(legend, x + 36, y + 58, b, { size: 12, fill: "#98a1ab" });
+    });
+    footer(t("截图为 1560×1040 的参考视口（MatePad Edge 横屏）。长按阈值：顶栏与日志 480 ms，快捷方式 430 ms，排序模式下 240 ms。",
+             "Screenshot at the 1560×1040 reference viewport (MatePad Edge, landscape). Hold thresholds: 480 ms for the top bar and the note, 430 ms for shortcuts, 240 ms while sorting."));
   }
 });
 
