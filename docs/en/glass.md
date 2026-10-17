@@ -1,6 +1,6 @@
-# Liquid glass and the design language
+# Lucent Glass and the design language
 
-**Light, clear, sharp — one glass for reading, operating and decorating.**
+**Light, clear, sharp — one glass for reading, operating and decorating. The product is named after it: *lucent* means glowing with light, and letting it through.**
 
 [中文](../glass.md) · [Back to README](../../README.en.md)
 
@@ -20,16 +20,16 @@ A larger blur radius or a lower opacity does not by itself make more convincing 
 
 <p align="center"><img src="../images/figures/glass.en.png" alt="Figure 6: six parameters mapped to CSS variables and distributed across six optical layers" width="100%"></p>
 
-The main card and the sheets each keep their own settings and can be **classic frosted glass** or **warm liquid clear glass**. All six parameters run 0–100 with 50 as the design midpoint ([`glass-material.js`](../../assets/glass-material.js#L40-L59)):
+The main card and the sheets each keep their own settings and come in two finishes: **Classic Frost** (经典磨砂玻璃) or **Warm Clear** (暖光液态清璃). All six dials run 0–100 with 50 as the design midpoint ([`glass-material.js`](../../assets/glass-material.js#L40-L59)):
 
-| Parameter | Mapping | 0 / 50 / 100 |
+| Dial | Mapping | 0 / 50 / 100 |
 |---|---|---|
-| Transparency | `--beta-alpha = 1.55 − 0.011·x`, applied to the opacity of tint and reflections | 1.55 / 1.00 / 0.45 |
-| Softness | `--beta-blur = base·(0.4 + 0.012·x)`, base 18 px for the card, 26 px for sheets | 0.4× / 1.0× / 1.6× |
-| Warmth | The palette interpolates toward neutral grey (cool) or toward warm (R+2, G−1, B−6) | neutral / original / warm |
-| Edge | `--beta-edge = 0.2 + 0.016·x`, applied to the rim and inner lines | 0.2 / 1.0 / 1.8 |
-| Colour | Saturation interpolates between 100% and a base; light card 132%, light sheets 124%, dark 124% / 122% | 100% / base / 2×base − 100% |
-| Touch | Pointer highlight strength `x / 50` | 0 / 1 / 2 |
+| Clarity (通透度) | `--beta-alpha = 1.55 − 0.011·x`, applied to the opacity of tint and reflections | 1.55 / 1.00 / 0.45 |
+| Softness (玻璃柔焦) | `--beta-blur = base·(0.4 + 0.012·x)`, base 18 px for the card, 26 px for sheets | 0.4× / 1.0× / 1.6× |
+| Warmth (暖意) | The palette interpolates toward neutral grey (cool) or toward warm (R+2, G−1, B−6) | neutral / original / warm |
+| Edge (边缘光泽) | `--beta-edge = 0.2 + 0.016·x`, applied to the rim and inner lines | 0.2 / 1.0 / 1.8 |
+| Colour (环境色彩) | Saturation interpolates between 100% and a base; light card 132%, light sheets 124%, dark 124% / 122% | 100% / base / 2×base − 100% |
+| Touch (触光强度) | Pointer highlight strength `x / 50` | 0 / 1 / 2 |
 
 The six layers, bottom to top ([`glass-material.css`](../../assets/glass-material.css)):
 
@@ -40,8 +40,8 @@ The six layers, bottom to top ([`glass-material.css`](../../assets/glass-materia
 5. **Pointer highlight**: a 360 px radial highlight that follows the pointer and fades in over 230 ms.
 6. **Content**: text, icons and data live in their own foreground (`z-index: 1`); filters only touch the decorative layers, so text is always sharp.
 
-<p align="center"><img src="../images/glass-compare.jpg" alt="The same main card: warm liquid clear glass on the left, classic frosted glass on the right" width="100%"></p>
-<p align="center"><sub>Left: warm liquid clear glass · Right: classic frosted glass</sub></p>
+<p align="center"><img src="../images/glass-compare.jpg" alt="The same main card: Warm Clear on the left, Classic Frost on the right" width="100%"></p>
+<p align="center"><sub>Left: Warm Clear · Right: Classic Frost</sub></p>
 
 ## 3. Event-driven, zero at rest
 
@@ -56,7 +56,7 @@ The six layers, bottom to top ([`glass-material.css`](../../assets/glass-materia
 
 The design reference is a 1560×1040 tablet in landscape; narrow screens have their own arrangement.
 
-- **Left: the profile card.** A 92 px avatar inside a ring of conic gradient (warm orange to cherry pink) turning once every 14 s, with a glow that breathes every 6 s; the name in a 100° warm gradient with a 9 s sheen; then the status pill, the one-line signature, badges (level, theme, platform) and tags.
+- **Left: the profile card.** A 104 px avatar (on the tablet) inside a ring of conic gradient (warm orange to cherry pink) turning once every 14 s, with a glow that breathes every 6 s; the name in a 100° warm gradient with a 9 s sheen; then the status pill, the one-line signature, badges (level, theme, platform) and tags.
 - **Right: the main card.** Search, search engines, shortcuts and direct entries, each foldable; at its lower right, a one-line daily note (*wilson vibes only.*), long-press to edit, archived to the second.
 - **Above the card's right corner: the history tag.** Only the frame is skewed by −14° (`skewX`); the icon and text stay upright.
 - **The top bar.** A clock and greeting at the left (上午好，慢慢来 — *good morning, take it slow*), four action pills of which only 搜索 (Search) is blue; at the right, four icons: FSD, the planet, scan and the sun.
@@ -80,7 +80,7 @@ Every colour has one job and is never borrowed for another:
 |---|---|---|
 | HarmonyOS blue | `#0A59F7` | The single primary action: 搜索 in the top bar and the search arrow |
 | Warm gold | Name gradient `#FF6A3C → #FFA14E → #FFD07A`; About title `#DFC47E → #C7A347 → #A9822A`; signature `#CBAE60` | Identity: the name, the avatar ring, the About title and signature |
-| Ice blue | Planet `#BCE5F8`; current `#69ACFF → #B4DDFF → #FFFFFF` | The environment, the Lueurs and Random's current |
+| Ice blue | Planet `#BCE5F8`; lasers `#69ACFF → #B4DDFF → #FFFFFF` | The environment, the Lueurs and Random's lasers |
 | Platinum | `#EEECE3 → #D3C5A2 → #F0EEE6` | Only with Random on: its lettering and switch |
 | Warm orange | `#E8BE94` (dark) / `#865326` (light) | Boosted Drive, and nothing else |
 | Mint | `#408C75` | "On" |

@@ -1,28 +1,36 @@
 # Lucent · 灵感台
 
-> A calm browser homepage over a small living world. Built by hydeclanspi as a custom homepage for the Aira browser on HarmonyOS, published here as a web edition. Vanilla HTML, CSS, JavaScript, Canvas and SVG; no framework, no runtime dependency, no network request after load.
+> An inspiration launcher. Lucent is a calm personal base that a working day starts from and every search lifts off from — and, when you would rather go nowhere, a place still worth staying in. Designed by hydeclanspi for a Huawei MatePad Edge (14.2-inch 3:2 OLED, 3120×2080, laid out on 1560×1040 CSS pixels) as a custom homepage for the Aira browser on HarmonyOS; published here as a web edition. Vanilla HTML, CSS, JavaScript, Canvas and SVG; no framework, no runtime dependency, no network request after load.
 
-Lucent looks like a homepage: a clock, a profile card, search, shortcuts. Under that surface run four systems:
+Positioning: "A homepage is a page you pass through. Lucent is a place you start from." Tagline: "Launch from here. Stay for the light." (由此出发，为光停留。) The 台 in its Chinese name 灵感台 is read four ways — a workbench, a launch pad, a stage and a console — and residents live on it. Design standard: 灵感与犀利并存 — inspired, and incisive.
 
-- Lueurs (小浮光, codename 代号：交互): 49 numbered glass lenses in a hand-drawn 35-vertex region. Motion is an Ornstein–Uhlenbeck heading process with velocity relaxation; contacts are resolved by 4 px sub-stepped impulse physics (restitution 0.64, speed cap 640 px/s) with an eight-direction scattering score. Drive (FSD) is a roam/chase/charge/coast state machine on a breadth-first navigation grid with line-of-sight path simplification. Natural encounters are adjudicated at 70% inside a 150 px circle. Placement ("落子与星座") is weighted sequential sampling that punishes deserts and crowding. Dragging a lens moves an invisible potential field that sets the Light/Dark wallpaper odds.
-- Liquid glass (通透玻璃): a six-parameter material model (transparency, blur, warmth, edge, colour, touch) mapped to layered optics — ambient warm/cool reflections, a masked 1.5 px rim, inset thickness, and a pointer-following specular point coalesced to one animation frame. No permanent animation loop.
-- 念起，光行 (A thought, in flight): six search hand-off motions selected from a sixteen-study atelier. Each Canvas renderer is a pure function of progress, so frames can be scrubbed, slowed to 0.35× and reversed. Random mode adds platinum conduits and blue-white current whose speed is sampled from a truncated normal N(0.70, 0.10²) and whose waves never share a lane.
-- 场志 (Field chronicle): checksummed dual-slot snapshots (FNV-1a over canonical JSON), hierarchical time compaction (hour → day → month → year) under a byte budget, histogram re-binning that preserves totals by the largest-remainder method, and a self-verifying clipboard backup format (deflate-raw, base64url, CRC-32, segmented).
+Five parts:
 
-Verification: 41 unit tests (engine invariants such as momentum conservation, no tunnelling, connected placement chamber, line-of-sight routes; renderer determinism over 21,618 progress states; storage integrity) and 15 browser flows run in CI.
+- Workbench (the base): clock and greeting, profile, search with four engines, shortcuts in three forms and 28 colours, direct entries, a one-line note archived to the second; focus mode when both sections fold; a short-screen guard keeps the history tag clear of the top bar.
+- Residents (alive): Lueurs, 49 numbered glass lenses in a hand-drawn 35-vertex region. Ornstein–Uhlenbeck heading with velocity relaxation; 4 px sub-stepped impulse physics (restitution 0.64, speed cap 640 px/s) with an eight-direction scattering score; Drive (FSD), a roam/chase/charge/coast state machine on a breadth-first navigation grid with line-of-sight simplification; natural encounters adjudicated at 70% inside a 150 px circle; desert-punishing weighted placement ("stones and constellations"); dragging moves an invisible potential field that sets the Light/Dark wallpaper odds. A chronicle keeps every resident's file, relationships, residency terrain and drive log in checksummed dual-slot snapshots with hour → day → month → year compaction and largest-remainder migration; backups use a self-verifying text format (AIRAPC1: deflate-raw, base64url, CRC-32, segmented).
+- Launch pad: 念起，光行 (A thought, in flight) — the typed words become light that reaches the arrow before the search departs. Six motions chosen from a sixteen-study atelier; each Canvas renderer is a pure function of progress, so frames can be slowed to 0.35×, reversed and tested.
+- Stage (loop): an endless simulated launch that sends no search — a first shot that flies back, bursts while Enter is held, one-bit demand — and Random mode's platinum conduits with blue-white lasers whose speeds are drawn from a truncated normal N(0.70, 0.10²) and whose waves never share a lane.
+- Console (control): Lucent Glass with two finishes (Classic Frost, Warm Clear) and six 0–100 dials (clarity, softness, warmth, edge, colour, touch) for the card and the sheets separately, feeding six optical layers with no animation loop at rest; wallpaper soft focus, brightness and framing; Lueur count, strength, pace and odds; three layers of defaults. Every control has a second layer under a long press, with keyboard equivalents.
+
+On large screens the web edition goes full screen on the first click (F toggles) and installs as an app that opens full screen.
+
+Verification: 41 unit tests (engine invariants such as momentum conservation, no tunnelling, a connected placement chamber, line-of-sight routes; renderer determinism over 21,618 progress states; storage integrity) and 17 browser flows run in CI. Documentation figures are drawn by the engine's own functions; screenshots and animations are rendered frame by frame under a fake clock.
+
+Evolution: 109 versions in 22 days (2.0.0 → 5.0.0). Product definition, design and sign-off by hydeclanspi; implementation written with AI coding agents.
 
 ## Docs
 
-- [README (中文)](https://github.com/hydeclanspi/lucent/blob/main/README.md)
-- [README (English)](https://github.com/hydeclanspi/lucent/blob/main/README.en.md)
-- [Lueurs engine](https://github.com/hydeclanspi/lucent/blob/main/docs/en/lueurs.md)
-- [Liquid glass and design language](https://github.com/hydeclanspi/lucent/blob/main/docs/en/glass.md)
-- [念起，光行 — search motion](https://github.com/hydeclanspi/lucent/blob/main/docs/en/motion.md)
-- [Field chronicle — data layer](https://github.com/hydeclanspi/lucent/blob/main/docs/en/chronicle.md)
-- [Evolution — 109 versions in 22 days](https://github.com/hydeclanspi/lucent/blob/main/docs/en/evolution.md)
+- [README (中文)](https://github.com/hydeclanspi/Lucent-Next/blob/main/README.md)
+- [README (English)](https://github.com/hydeclanspi/Lucent-Next/blob/main/README.en.md)
+- [Architecture — from one screen to one pixel](https://github.com/hydeclanspi/Lucent-Next/blob/main/docs/en/architecture.md)
+- [Lueurs engine](https://github.com/hydeclanspi/Lucent-Next/blob/main/docs/en/lueurs.md)
+- [Lucent Glass and the design language](https://github.com/hydeclanspi/Lucent-Next/blob/main/docs/en/glass.md)
+- [念起，光行 — search motion, simulated launch and Random](https://github.com/hydeclanspi/Lucent-Next/blob/main/docs/en/motion.md)
+- [Field chronicle — data layer](https://github.com/hydeclanspi/Lucent-Next/blob/main/docs/en/chronicle.md)
+- [Evolution — 109 versions in 22 days](https://github.com/hydeclanspi/Lucent-Next/blob/main/docs/en/evolution.md)
 
 ## Live
 
-- [Live demo](https://hydeclanspi.github.io/lucent/)
-- [Sixteen-study motion atelier](https://hydeclanspi.github.io/lucent/atelier/)
-- [Source](https://github.com/hydeclanspi/lucent)
+- [Live](https://hydeclanspi.github.io/Lucent-Next/)
+- [Sixteen-study motion atelier](https://hydeclanspi.github.io/Lucent-Next/atelier/)
+- [Source](https://github.com/hydeclanspi/Lucent-Next)
