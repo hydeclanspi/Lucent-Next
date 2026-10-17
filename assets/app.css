@@ -1779,6 +1779,8 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   .signature { max-width: 22em; }
 
   .card { padding: 26px; }
+  /* 短横屏守卫写入的下移量（见 app.js guardCardClearance）；平板比例下为 0 */
+  .page > .card { top: var(--card-drop, 0px); }
 
   /* 宽屏下直达走双列：卡片矮下来，照片才有呼吸的余地 */
   .rows {
