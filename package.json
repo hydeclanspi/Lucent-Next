@@ -1,0 +1,21 @@
+{
+  "name": "airhome-personal",
+  "version": "5.0.0",
+  "private": true,
+  "description": "A personal homepage shaped through light, glass and interaction.",
+  "author": "hydeclanspi",
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "start": "node scripts/build.mjs && node scripts/serve.mjs",
+    "check": "node scripts/check.mjs",
+    "test": "node --test tests/*.test.cjs",
+    "test:browser": "node tests/browser.cjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}
