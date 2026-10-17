@@ -1,22 +1,36 @@
 # Verification
 
-Web edition, 5.0.0. Local verification: **2026-10-17**, Chrome on macOS.
+Web edition 5.0.0. Last full run: **2026-10-17**, Node.js 22.22, Chromium 141 (Playwright 1.62.1) on Linux.
 
-| Check | Result |
-| --- | --- |
-| JavaScript syntax and release identity | 14 scripts passed |
-| Aggregate statistics and field-store tests | 20 passed |
-| Static production build | Passed |
-| Browser behavior groups | 15 passed; no uncaught page exceptions in tested flows |
-| Desktop, tablet, mobile | 1560×1040, 1024×768, 390×844 checked |
-| Project subpath | Assets and initialization checked under `/airhome-personal/` |
+| Check | Command | Result |
+|---|---|---|
+| Syntax and release identity | `npm run check` | 24 scripts pass `node --check`; package identity and the native package's SHA-256 verified |
+| Unit tests | `npm test` | **41 passed** |
+| Static build | `npm run build` | Passed |
+| Browser flows | `npm run test:browser` | **15 passed**; no uncaught page exception in any tested flow |
+| Viewports | (browser suite) | 1560×1040, 1024×768, 390×844 |
+| Repository subpath | (browser suite) | Assets and initialization under `/lucent/` |
 
-The browser suite covers profile defaults, the blue primary action, zero external requests on initial load, history-panel focus behavior, theme persistence, shortcut create/reorder/delete and validation, IME handling, blank search suppression, Lightline-before-navigation ordering, encoded Google queries, Bing routing, reduced motion, URL-scheme rejection, local privacy recording, custom search templates, host entry panels, profile editing, motion preference persistence, and responsive layout.
+## Unit tests
 
-Outgoing provider pages are intercepted in tests. The tests verify the real destination URL and navigation timing, without sending test queries to a search provider. They do not validate Google's or Bing's rendering, regional availability, or uptime. Real use navigates directly to the selected provider in the current tab.
+| File | Tests | What they pin down |
+|---|:-:|---|
+| [`lueurs-engine.test.cjs`](../tests/lueurs-engine.test.cjs) | 13 | Momentum conservation and restitution over 2,000 random collisions; a held lens never recoils; separation top-up only for slow natural contacts; bounded FSD impulse; speed cap; no tunnelling (every step ≤ 4 px, every position legal); one connected placement chamber; line of sight on 120 random routes; continuity and winding of the probability model; slope and smoothness of the potential; placement weights; driver line-up bounds; slider curves |
+| [`motion-renderers.test.cjs`](../tests/motion-renderers.test.cjs) | 4 | The six search-motion renderers over 21,618 progress states: finite coordinates, balanced `save`/`restore`, identical commands on a second pass, original text at t = 0, an empty canvas at t = 1, burst mode drawing light only |
+| [`stats-store.test.cjs`](../tests/stats-store.test.cjs) | 14 | Aggregates only; weighted merges; canonical checksums; no overwrite on read failure; retry without double counting; two-slot recovery; concurrent writes; time zones and clocks turned back; no invented precision; decades within budget |
+| [`field-store-impact.test.cjs`](../tests/field-store-impact.test.cjs) | 6 | Strength bins and peak; only physical collisions counted; a hand's shove never written to a resident's file; round trip; old snapshots load |
+| [`field-store-integrity.test.cjs`](../tests/field-store-integrity.test.cjs) | 4 | 8-bin → 14-bin migration preserving the total exactly; residency grid resampled before writing; damaged-slot fallback with a message; no empty write after a failed read |
 
-Screenshots are in `docs/images/`. Floating objects and the clock change naturally, so these are visual review evidence rather than pixel-perfect golden tests. The browser suite writes review captures to ignored `verification/screenshots/`; `docs/images/` is refreshed deliberately with `AIRA_UPDATE_DOCS_IMAGES=1`. A phone-specific correction keeps the history button from overlapping profile tags.
+## Browser flows
 
-The original 5.0 ZIP is retained byte-for-byte. The native package and web product are separate artifacts; desktop browser results do not establish HarmonyOS import or hardware performance. No new native-device acceptance was performed for this web edition.
+The suite ([`tests/browser.cjs`](../tests/browser.cjs)) covers the reference profile and defaults; the single blue primary action; zero external requests on load; the history panel's focus trap and focus return; theme persistence; adding, reordering and deleting shortcuts with validation; IME composition and blank input never navigating; Lightline playing before navigation; encoded Google queries and Bing routing; reduced motion; refusal of non-HTTP addresses; the privacy demonstration's boundary; custom search templates; every host entry panel; profile editing and motion preferences surviving a reload; the repository subpath; layouts within the viewport on desktop, tablet and phone; and no uncaught exceptions.
 
-The GitHub workflow runs the same syntax, store, build and browser suites on Linux. See the repository's Actions results for its actual CI status; local results above are a separate record.
+Outgoing provider pages are intercepted: the tests verify the real destination URL and the timing of navigation without sending a query to any search provider. They say nothing about Google's or Bing's own rendering, regional availability or uptime.
+
+## What this does not cover
+
+- **Feel on a touchscreen.** The tests prove the rules; the feel of the Lueurs under a finger was tuned on a device across 109 versions, and is not re-measured here.
+- **The native package.** `native/lucent-5.0.0-aira.zip` is kept byte for byte and its digest is checked, but no new HarmonyOS import or on-device acceptance was performed for the web edition.
+- **Other browsers.** This run used Chromium; the CI workflow runs the same suites on Linux for every push and pull request. See the repository's Actions page for its current status.
+
+The browser suite writes review screenshots and a JSON result file to the ignored `verification/` folder.

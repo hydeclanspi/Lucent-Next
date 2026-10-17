@@ -9,7 +9,7 @@ Lucent looks like a homepage: a clock, a profile card, search, shortcuts. Under 
 - 念起，光行 (A thought, in flight): six search hand-off motions selected from a sixteen-study atelier. Each Canvas renderer is a pure function of progress, so frames can be scrubbed, slowed to 0.35× and reversed. Random mode adds platinum conduits and blue-white current whose speed is sampled from a truncated normal N(0.70, 0.10²) and whose waves never share a lane.
 - 场志 (Field chronicle): checksummed dual-slot snapshots (FNV-1a over canonical JSON), hierarchical time compaction (hour → day → month → year) under a byte budget, histogram re-binning that preserves totals by the largest-remainder method, and a self-verifying clipboard backup format (deflate-raw, base64url, CRC-32, segmented).
 
-Verification: 37 unit tests (engine invariants such as momentum conservation, no tunnelling, connected placement chamber, line-of-sight routes; renderer determinism over 21,618 progress states; storage integrity) and 15 browser flows run in CI.
+Verification: 41 unit tests (engine invariants such as momentum conservation, no tunnelling, connected placement chamber, line-of-sight routes; renderer determinism over 21,618 progress states; storage integrity) and 15 browser flows run in CI.
 
 ## Docs
 
@@ -19,7 +19,7 @@ Verification: 37 unit tests (engine invariants such as momentum conservation, no
 - [Liquid glass and design language](https://github.com/hydeclanspi/lucent/blob/main/docs/en/glass.md)
 - [念起，光行 — search motion](https://github.com/hydeclanspi/lucent/blob/main/docs/en/motion.md)
 - [Field chronicle — data layer](https://github.com/hydeclanspi/lucent/blob/main/docs/en/chronicle.md)
-- [Evolution — 132 versions in 22 days](https://github.com/hydeclanspi/lucent/blob/main/docs/en/evolution.md)
+- [Evolution — 109 versions in 22 days](https://github.com/hydeclanspi/lucent/blob/main/docs/en/evolution.md)
 
 ## Live
 
