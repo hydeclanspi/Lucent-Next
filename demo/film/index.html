@@ -110,11 +110,17 @@
       <circle id="press" cx="960" cy="470" r="86" fill="url(#pressGlow)" opacity="0"/>
       <rect id="ringGlow" fill="none" stroke="#bcdcff" stroke-width="7" filter="url(#soft)" opacity="0"/>
       <rect id="ring" fill="none" stroke="#f2f7ff" stroke-width="2.6" opacity="0"/>
+      <!-- Inside the arc: the button as everyone knew it -->
+      <g id="hmIcon" opacity="0">
+        <circle r="52" fill="none" stroke="#9cc3ff" stroke-width="9" filter="url(#soft)" opacity=".85"/>
+        <circle r="52" fill="none" stroke="#eef4ff" stroke-width="3"/>
+        <rect x="-15.6" y="-15.6" width="31.2" height="31.2" rx="8.1" fill="none" stroke="#9cc3ff" stroke-width="5" filter="url(#soft)" opacity=".6"/>
+        <rect x="-15.6" y="-15.6" width="31.2" height="31.2" rx="8.1" fill="none" stroke="#f0f6ff" stroke-width="1.8" opacity=".9"/>
+      </g>
     </svg>
-    <!-- The button opens into a circle of light; its name runs through it, inverted where it crosses -->
+    <!-- So close to the button that it is only an arc; its name stands in the upper left -->
     <div class="layer" id="home">
-      <div id="hmOut" aria-hidden="true"><div class="hm-name" id="hmOutName"><i>Home</i><span>键</span></div></div>
-      <div id="hmIn">
+      <div id="hmText">
         <span class="hm-call" id="hmCall">人们叫它</span>
         <div class="hm-name" id="hmName"><i>Home</i><span>键</span></div>
         <span class="hm-en" id="hmEn">Everyone knew it as the Home button.</span>
@@ -124,9 +130,9 @@
     <div class="layer" id="words">
       <div id="pillars">
         <div class="pillar ink"><b>工作台</b><i>Workbench</i></div>
-        <div class="pillar warm"><b>发射台</b><i>Launch pad</i></div>
-        <div class="pillar"><b>舞台</b><i>Stage</i></div>
+        <div class="pillar"><b>发射台</b><i>Launch pad</i></div>
         <div class="pillar"><b>控制台</b><i>Console</i></div>
+        <div class="pillar"><b>舞台</b><i>Stage</i></div>
       </div>
       <div id="lockup">
         <div class="lk-ling" id="lkLing">灵感</div>

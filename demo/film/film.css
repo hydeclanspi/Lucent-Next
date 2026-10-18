@@ -210,9 +210,8 @@ body { font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: anti
 .cap.ink .zh, .cap.ink .title { color: var(--dark); }
 .cap.ink .sub, .cap.ink .spec { color: var(--dark-2); }
 .cap.ink .en { color: var(--dark-3); }
-.cap.gold .zh { color: #3a2810; letter-spacing: 10px; }
-.cap.gold .en { font: italic 300 32px/1.4 var(--display); letter-spacing: 0.6px; color: rgba(70, 48, 20, 0.66); }
-.cap.gold .reveal > .g { background: linear-gradient(90deg, rgba(255, 246, 220, 0) calc(var(--p) * 140% - 44%), rgba(255, 250, 236, 0.95) calc(var(--p) * 140% - 12%), rgba(214, 160, 70, 0.75) calc(var(--p) * 140% - 4%), rgba(255, 246, 220, 0) calc(var(--p) * 140%)); -webkit-background-clip: text; background-clip: text; }
+.cap.world .zh { letter-spacing: 12px; text-shadow: 0 0 36px rgba(2, 4, 14, 0.65); }
+.cap.world .en { font: italic 300 32px/1.4 var(--display); letter-spacing: 0.6px; color: rgba(226, 233, 246, 0.82); text-shadow: 0 0 24px rgba(2, 4, 14, 0.6); }
 .reveal { display: inline-block; position: relative; --p: 0; }
 .reveal > .t { -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 calc(var(--p) * 140% - 40%), transparent calc(var(--p) * 140%)); mask-image: linear-gradient(90deg, #000 0%, #000 calc(var(--p) * 140% - 40%), transparent calc(var(--p) * 140%)); }
 .reveal > .g { position: absolute; left: 0; top: 0; right: 0; bottom: 0; color: transparent; pointer-events: none;
@@ -220,14 +219,13 @@ body { font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: anti
   -webkit-background-clip: text; background-clip: text; opacity: calc(1 - var(--p) * var(--p)); }
 .cap.ink .reveal > .g { background: linear-gradient(90deg, rgba(10, 89, 247, 0) calc(var(--p) * 140% - 44%), rgba(10, 89, 247, 0.85) calc(var(--p) * 140% - 12%), rgba(120, 180, 255, 0.6) calc(var(--p) * 140% - 4%), rgba(10, 89, 247, 0) calc(var(--p) * 140%)); -webkit-background-clip: text; background-clip: text; }
 
-/* The Home button opens into a circle of light; its name runs through it, white outside and ink inside */
-#home .hm-name { position: absolute; left: 0; top: 0; white-space: nowrap; line-height: 1; }
-#home .hm-name i { font: italic 300 300px/1 var(--display); letter-spacing: -3px; }
-#home .hm-name span { margin-left: 34px; font: 300 216px/1 var(--serif); }
-#hmOut { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; color: #f4f6fa; opacity: 0; }
-#hmIn { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; color: #0d1220; opacity: 0; }
-#hmIn .hm-call { position: absolute; left: 0; width: 1920px; text-align: center; font: 300 28px/1 var(--serif); letter-spacing: 14px; text-indent: 14px; color: rgba(13, 18, 32, 0.74); }
-#hmIn .hm-en { position: absolute; left: 0; width: 1920px; text-align: center; font: italic 300 31px/1 var(--display); letter-spacing: 0.3px; color: rgba(28, 36, 54, 0.7); }
+/* So close to the Home button that it is only an arc; its name stands in the upper left */
+#hmText { position: absolute; left: 176px; top: 170px; color: #f4f6fa; white-space: nowrap; }
+#hmText .hm-call { display: block; font: 300 32px/1 var(--serif); letter-spacing: 16px; color: rgba(236, 242, 250, 0.82); opacity: 0; }
+#hmText .hm-name { display: flex; align-items: baseline; gap: 30px; margin-top: 20px; line-height: 1; opacity: 0; }
+#hmText .hm-name i { font: italic 300 252px/1 var(--display); letter-spacing: -2px; }
+#hmText .hm-name span { font: 300 178px/1 var(--serif); }
+#hmText .hm-en { display: block; margin-top: 22px; font: italic 300 34px/1 var(--display); letter-spacing: 0.3px; color: rgba(214, 224, 238, 0.72); opacity: 0; }
 
 /* Four places, as four pillars of light */
 #pillars { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }

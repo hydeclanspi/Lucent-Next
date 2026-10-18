@@ -1,10 +1,10 @@
 /* Lucent · 灵感台 — concept film · the light engine (WebGL 2)
  *
- * Two canvases. The world canvas paints the space behind everything — night, pearl, aurora, dawn
- * and gold — plus god rays, stage lights, a circle of light, a slit of light that opens onto the golden
- * world, four pillars of worlds side by side, and a white flash. The particle canvas draws glints in front:
- * dust, the sparks of a ring being drawn, glints that gather into a word, a swarm, glints of gold,
- * fireflies. Every frame is a function of the state passed to render(): nothing is stepped or remembered.
+ * Two canvases. The world canvas paints the space behind everything — night, pearl, aurora and
+ * dawn — plus god rays, stage lights, four pillars of worlds side by side, and a white flash. The
+ * particle canvas draws glints in front: dust, the sparks of a ring being drawn, glints that gather
+ * into a word, a swarm, fireflies. Every frame is a function of the state passed to render(): nothing
+ * is stepped or remembered.
  */
 (function () {
   'use strict';
@@ -16,7 +16,7 @@
     'precision highp float;',
     'in vec2 vUv; out vec4 o;',
     'uniform float uT; uniform vec2 uRes; uniform vec4 uWorld; uniform vec3 uRays; uniform vec4 uWarp; uniform vec2 uSpot; uniform float uFlash; uniform float uVoid;',
-    'uniform float uGold; uniform vec3 uSlit; uniform vec4 uQuad; uniform vec3 uBand; uniform vec4 uPort;',
+    'uniform vec4 uQuad; uniform vec3 uBand;',
     'float hash(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }',
     'float noise(vec2 p){ vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3. - 2. * f);',
     '  return mix(mix(hash(i), hash(i + vec2(1, 0)), u.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), u.x), u.y); }',
@@ -52,20 +52,6 @@
     '  c += vec3(1., .80, .66) * exp(-pow((uv.y - .03) * 7., 2.)) * .3;',
     '  float n = fbm(p * 1.4 + vec2(uT * .02, 0.));',
     '  return c * (.9 + .16 * n); }',
-    // The golden world: soft satin gold, paler towards the sky, warm where the sun meets the horizon,
-    // deepening at the edges like gold leaf. The lines that draw the world on it are drawn in film.js.
-    'vec3 gold(vec2 uv, vec2 p){',
-    '  vec2 sun = vec2(0., -.075); float d = length((p - sun) * vec2(.78, 1.));',
-    '  vec3 c = mix(vec3(.79, .65, .43), vec3(.925, .855, .72), smoothstep(-.5, .42, p.y));',
-    '  c = mix(c, vec3(.965, .905, .78), exp(-d * 2.4) * .62);',
-    '  float folds = fbm(vec2(p.x * 1.8 + uT * .018, p.y * 7.5 - uT * .01));',
-    '  c *= .955 + .07 * folds;',
-    '  float sheen = exp(-pow((p.x * .78 - p.y * .62 - .35 * sin(uT * .21)) * 2.4, 2.));',
-    '  c += vec3(1., .95, .85) * sheen * .06;',
-    '  c *= 1. - .2 * smoothstep(.42, 1.08, length(p * vec2(.74, 1.08)));',
-    '  float sea = smoothstep(.0, -.006, p.y - sun.y);',
-    '  c = mix(c, c * vec3(.955, .925, .87), sea * .7);',
-    '  return c; }',
     'float rays(vec2 p, vec2 o){',
     '  vec2 d = p - o; float r = length(d); vec2 a = d / max(r, 1e-4);',
     '  float n = fbm(a * 2.6 + vec2(uT * .06, -uT * .04));',
@@ -105,7 +91,7 @@
     '    float lx = clamp((uv.x - lo.x) / max(hi.x - lo.x, 1e-5), 0., .9999); int k = int(floor(lx * 4.));',
     '    float rev = k == 0 ? uQuad.x : k == 1 ? uQuad.y : k == 2 ? uQuad.z : uQuad.w;',
     '    float shown = inside * (1. - smoothstep(rev * 1.15 - .15, rev * 1.15, 1. - (uv.y - lo.y) / max(hi.y - lo.y, 1e-5)));',
-    '    vec3 w = k == 0 ? pearl(uv, p) : k == 1 ? gold(uv, p) : k == 2 ? night(uv, p) + spots(uv, 1.) * vec3(.66, .8, 1.) * .9 : aurora(uv, p);',
+    '    vec3 w = k == 0 ? pearl(uv, p) : k == 1 ? night(uv, p) : k == 2 ? aurora(uv, p) : night(uv, p) + spots(uv, 1.) * vec3(.66, .8, 1.) * .9;',
     '    c = mix(night(uv, p), w, shown);',
     '    float seam = 0.; for (int j = 1; j < 4; j++) { float sx = lo.x + (hi.x - lo.x) * float(j) / 4.; seam += exp(-pow((uv.x - sx) * uRes.x / 1.6, 2.)); }',
     '    c += vec3(1.) * seam * inside * .55 * max(max(uQuad.x, uQuad.y), max(uQuad.z, uQuad.w));',
@@ -113,29 +99,7 @@
     '    c += vec3(.9, .95, 1.) * edge * step(lo.y, uv.y) * step(uv.y, hi.y) * .5 * uBand.z;',
     '  } else c = mixed(uv, p);',
     '  c *= 1. - uVoid;',
-    '  if (uPort.w > .001) {',
-    // The Home button opened into a circle of light: the pearl world, seen through it.
-    '    float pd = length((uv - uPort.xy) * vec2(uRes.x / uRes.y, 1.));',
-    '    float m = 1. - smoothstep(uPort.z - 1.2 / uRes.y, uPort.z + 1.2 / uRes.y, pd);',
-    '    float pr = pd / max(uPort.z, 1e-4);',
-    '    vec3 pc = mix(pearl(uv, p), vec3(.985, .99, 1.), .45 * pow(1. - clamp(pr, 0., 1.), 1.6));',
-    '    pc *= 1. - .08 * smoothstep(.6, 1., pr);',
-    '    float an = atan(uv.y - uPort.y, (uv.x - uPort.x) * uRes.x / uRes.y);',
-    '    vec3 iri = .5 + .5 * cos(6.28318 * (vec3(0., .33, .67) + an / 6.28318 * 2. + uT * .05));',
-    '    pc += (iri - .5) * .10 * exp(-pow((pr - .955) / .022, 2.));',
-    '    c = mix(c, pc, m * uPort.w);',
-    '  }',
-    '  if (uGold > .001) {',
-    // A slit of light that opens onto the golden world: narrow at first, then wide open.
-    '    float hw = mix(.0018, 1.05, uSlit.x);',
-    '    float dx = abs(uv.x - .5) * asp.x;',
-    '    float m = 1. - smoothstep(hw, hw + .004 + .05 * uSlit.x, dx);',
-    '    c = mix(c, gold(uv, p), m * uGold);',
-    '    float rim = exp(-pow((dx - hw) * uRes.y / (1.4 + 4. * uSlit.x), 2.));',
-    '    c += vec3(1., .88, .64) * rim * uSlit.y * uGold * .8;',
-    '    c += vec3(1., .80, .50) * exp(-dx * 9.) * .35 * uSlit.y * (1. - uSlit.x) * uGold;',
-    '  }',
-    '  if (uRays.x > .001) { vec2 ro = (vec2(uRays.y, 1. - uRays.z) - .5) * asp; vec3 rc = mix(mix(vec3(.72, .84, 1.), vec3(1., .99, .96), uWorld.y), vec3(1., .84, .7), max(uWorld.w, uGold)); c += uRays.x * rays(p, ro) * rc; }',
+    '  if (uRays.x > .001) { vec2 ro = (vec2(uRays.y, 1. - uRays.z) - .5) * asp; vec3 rc = mix(mix(vec3(.72, .84, 1.), vec3(1., .99, .96), uWorld.y), vec3(1., .84, .7), uWorld.w); c += uRays.x * rays(p, ro) * rc; }',
     '  if (uWarp.x > .001) { vec2 wc = (vec2(uWarp.y, 1. - uWarp.z) - .5) * asp; c += uWarp.x * warp(p, wc, uWarp.w) * vec3(.82, .92, 1.) * 2.4; }',
     '  if (uSpot.x > .001) c += uSpot.x * spots(uv, uSpot.y) * vec3(.66, .8, 1.) * .6;',
     '  c = mix(c, vec3(1.), clamp(uFlash, 0., 1.));',
@@ -190,13 +154,6 @@
     '    pos = mix(orbit, aTarget, ease(uB.z * (.7 + .3 * aSeed.y)));',
     '    vAlpha = uA.y * (.75 + .6 * aSeed.y) * (.8 + .2 * sin(uT * 3. + aSeed.x * 20.)); size = 5. + 7. * aSeed.w;',
     '    vColor = mix(vec3(.82, .93, 1.), vec3(1., .9, .78), step(.8, aSeed.z));',
-    '  } else if (uSys == 4) {', // glints of gold in the air: uA = (alpha, rise, -, -); uB.x = half-width of the opening, px
-    '    vec2 base = vec2(aSeed.x * uRes.x, fract(aSeed.y - uT * uA.y * (.3 + .7 * aSeed.z)) * (uRes.y + 80.) - 40.);',
-    '    base.x += sin(uT * (.3 + .4 * aSeed.w) + aSeed.z * TAU) * 30.;',
-    '    pos = base; size = 9. + 30. * pow(aSeed.w, 3.); vDisc = 2.;',
-    '    float tw = pow(.5 + .5 * sin(uT * (1.3 + 2.2 * aSeed.z) + aSeed.x * 40.), 5.);',
-    '    vAlpha = uA.x * (.2 + .8 * tw) * smoothstep(uB.x + 24., uB.x, abs(base.x - uRes.x * .5));',
-    '    vColor = mix(vec3(1., .84, .56), vec3(1., .97, .9), aSeed.z);',
     '  } else if (uSys == 5) {', // fireflies in the back garden: uA = (alpha, -, -, -); uB = region (x, y, w, h)
     '    vec2 base = uB.xy + aSeed.xy * uB.zw;',
     '    base += vec2(sin(uT * (.35 + .3 * aSeed.z) + aSeed.w * TAU), cos(uT * (.28 + .25 * aSeed.w) + aSeed.z * TAU)) * 34.;',
@@ -247,7 +204,7 @@
     if (!g || !f) return null;
 
     var wp = program(g, WORLD_VS, WORLD_FS);
-    var wu = uniforms(g, wp, ['uT', 'uRes', 'uWorld', 'uRays', 'uWarp', 'uSpot', 'uFlash', 'uVoid', 'uGold', 'uSlit', 'uQuad', 'uBand', 'uPort']);
+    var wu = uniforms(g, wp, ['uT', 'uRes', 'uWorld', 'uRays', 'uWarp', 'uSpot', 'uFlash', 'uVoid', 'uQuad', 'uBand']);
     var wb = g.createBuffer(); g.bindBuffer(g.ARRAY_BUFFER, wb); g.bufferData(g.ARRAY_BUFFER, QUAD, g.STATIC_DRAW);
     var wl = g.getAttribLocation(wp, 'p');
 
@@ -280,8 +237,8 @@
         g.uniform1f(wu.uT, s.t); g.uniform2f(wu.uRes, worldCanvas.width, worldCanvas.height);
         g.uniform4fv(wu.uWorld, s.world); g.uniform3fv(wu.uRays, s.rays); g.uniform4fv(wu.uWarp, s.warp);
         g.uniform2fv(wu.uSpot, s.spot); g.uniform1f(wu.uFlash, s.flash); g.uniform1f(wu.uVoid, s.void || 0);
-        g.uniform1f(wu.uGold, s.gold || 0); g.uniform3fv(wu.uSlit, s.slit || [0, 0, 0]);
-        g.uniform4fv(wu.uQuad, s.quad || [0, 0, 0, 0]); g.uniform3fv(wu.uBand, s.band || [0, 0, 0]); g.uniform4fv(wu.uPort, s.port || [0, 0, 0, 0]);
+
+        g.uniform4fv(wu.uQuad, s.quad || [0, 0, 0, 0]); g.uniform3fv(wu.uBand, s.band || [0, 0, 0]);
         g.drawArrays(g.TRIANGLE_STRIP, 0, 4);
         // Particles
         f.viewport(0, 0, fxCanvas.width, fxCanvas.height);
