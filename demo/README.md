@@ -21,9 +21,9 @@ Made for the HUAWEI MatePad Edge; use it there as it is. On a computer, full scr
 
 **[在浏览器中观看 · Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/film/)** &nbsp;·&nbsp; [MP4（1080p，60 帧，有声 · 60 fps, with sound）](media/lucent-film.mp4)
 
-一分三十五秒，请开启声音；每一帧画面、每一个声音都由代码生成。网页版点「播放影片」开始：空格暂停，← / → 跳五秒，M 静音，R 从头播放，F 全屏；地址后加 `?t=42`，从第 42 秒开始。源码在 [film/](film/)；配乐由 `python3 scripts/film-score.py` 合成，渲染成视频用 `node scripts/film.mjs`。
+一分三十九秒，请开启声音；每一帧画面、每一个声音都由代码生成。网页版点「播放影片」开始：空格暂停，← / → 跳五秒，M 静音，R 从头播放，F 全屏；地址后加 `?t=42`，从第 42 秒开始。源码在 [film/](film/)；配乐由 `python3 scripts/film-score.py` 合成，渲染成视频用 `node scripts/film.mjs`。
 
-One minute thirty-five seconds; turn the sound on. Every frame and every sound is made in code. In the browser, press Play: Space pauses, ← / → skip five seconds, M mutes, R replays, F goes full screen; add `?t=42` to start at 42 seconds. The source is in [film/](film/); `python3 scripts/film-score.py` composes the score, and `node scripts/film.mjs` renders the film to video.
+One minute thirty-nine seconds; turn the sound on. Every frame and every sound is made in code. In the browser, press Play: Space pauses, ← / → skip five seconds, M mutes, R replays, F goes full screen; add `?t=42` to start at 42 seconds. The source is in [film/](film/); `python3 scripts/film-score.py` composes the score, and `node scripts/film.mjs` renders the film to video.
 
 ## 实机 · On the device
 

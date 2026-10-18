@@ -225,16 +225,22 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       await tab.evaluate(() => window.__film.ready);
       const film = (t) => tab.evaluate(t => { window.__film.seek(t); return {
         captions: [...document.querySelectorAll('.cap')].filter(n => n.style.visibility === 'visible' && Number(n.style.opacity) > 0.5).map(n => n.querySelector('.t').textContent),
-        name: Number(document.getElementById('hmOut').style.opacity), circle: document.getElementById('hmIn').style.clipPath,
+        name: Number(document.getElementById('hmName').style.opacity), icon: Number(document.getElementById('hmIcon').getAttribute('opacity')),
+        ring: Number(document.getElementById('ring').getAttribute('width')),
+        beyond: document.getElementById('light').getContext('2d').getImageData(120, 120, 1, 1).data[3],
         lockup: Number(document.getElementById('lkLing').style.opacity), end: Number(document.getElementById('endmark').style.opacity)
       }; }, t);
       const { duration, marks } = await tab.evaluate(() => ({ duration: window.__film.duration, marks: window.__film.marks }));
       assert.ok(duration > 60 && duration < 120, 'about a minute and a half');
       const named = await film(marks.home + 1.6);
       assert.ok(named.name > 0.95, 'the button is named as the Home button');
-      assert.match(named.circle, /^circle\(3\d\d(\.\d+)?px/, 'the button has opened into a circle of light');
+      assert.ok(named.icon > 0.95, 'the Home button as everyone knew it stands inside the arc');
+      assert.ok(named.ring > 1800, 'so close to the button that it is only an arc');
       assert.deepEqual((await film(13.5)).captions, ['今天，我们把这个承诺，做成了一个地方。']);
-      assert.deepEqual((await film(marks.open + 2.5)).captions, ['去往整个世界。']);
+      const world = await film(marks.jump + 1.5);
+      assert.deepEqual(world.captions, ['去往整个世界。']);
+      assert.equal(world.beyond, 255, 'beyond the slit, the tunnel of windows fills the frame');
+      assert.deepEqual(await tab.evaluate(() => [...document.querySelectorAll('.pillar b')].map(n => n.textContent)), ['工作台', '发射台', '控制台', '舞台'], 'the four places end on the stage');
       assert.ok((await film(marks.lock + 2.6)).lockup > 0.95, 'the place is named Lucent · 灵感台');
       assert.ok((await film(duration)).end > 0.99, 'the film ends on the mark');
       assert.equal(await tab.evaluate(() => document.body.textContent.includes('明白了吗')), false, 'the film never quizzes its audience');

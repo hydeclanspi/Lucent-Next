@@ -72,7 +72,7 @@ Frames and stills land in the ignored `verification/capture/`. `CAPTURE_QUICK=1`
 | `chronicle.jpg`, `roster.jpg` | the charts (top) and the terrain, drive log and roster (bottom) of `chronicle-sheet.png` |
 | `atelier.jpg` | the first 1,198 CSS px of `atelier.png`, 1600 px wide |
 | `lucent-film.mp4` | `node scripts/film.mjs` (below) |
-| `film-poster.jpg`, `film-teaser.webp`, `on-device.jpg` | `node scripts/film-media.mjs`: the film's frame at 57.6 s (the name at dawn); seven passages of the MP4 joined by 0.35 s cross-fades, 20 fps, 1200 px wide; the slot for the on-device recording, from `scripts/film-media/slot.html` — replace it with a frame of the real recording when it arrives |
+| `film-poster.jpg`, `film-teaser.webp`, `on-device.jpg` | `node scripts/film-media.mjs`: the film's frame 2.6 s after the name locks in (the name at dawn); seven passages of the MP4, placed by the film's own marks, joined by 0.35 s cross-fades, 20 fps, 1200 px wide; the slot for the on-device recording, from `scripts/film-media/slot.html` — replace it with a frame of the real recording when it arrives |
 
 **The film** is rendered the same way, one exact frame at a time: the page is never played, only seeked.
 
@@ -84,7 +84,7 @@ node scripts/film.mjs --preview                                      # half size
 node scripts/film.mjs --from 20 --to 32 --out verification/film/part.mp4
 ```
 
-Two pages render in parallel (`--workers`); on two cores the full film takes about fifty minutes (28 MB). The score reads the scene marks from `demo/film/film.js`, so after retiming a scene, compose it again (about half a minute; `--report score.png` draws its spectrogram and loudness against the marks). It is synthesized from nothing but code — pads, plucked strings, bells, a celesta, a music box, a choir of formants, drums and sound effects — and mastered to about −16 LUFS with true peaks under −1 dBTP. After changing any words in `demo/film/`, run `python3 scripts/film-fonts.py` (needs `fonttools` and `brotli`) so the bundled subsets cover them.
+Two pages render in parallel (`--workers`); on two cores the full film takes about fifty minutes (28 MB). The score reads the scene marks from `demo/film/film.js`, so after retiming a scene, compose it again (about half a minute; `--report score.png` draws its spectrogram and loudness against the marks). It is synthesized from nothing but code — a kick, claps, snares and metallic hats, a rolling bass and a sub that duck under the kick, plucked arpeggios through dotted-eighth echoes, chords of detuned saws, a lead for the hook, impacts, risers and sound effects — and mastered to about −14.5 LUFS with true peaks under −1 dBTP. After changing any words in `demo/film/`, run `python3 scripts/film-fonts.py` (needs `fonttools` and `brotli`) so the bundled subsets cover them.
 
 The browser suite writes its own review captures to ignored `verification/screenshots/`; they are evidence for a run, not documentation.
 
