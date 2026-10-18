@@ -7,10 +7,11 @@
  * on a grid of 120 beats a minute.
  *
  * Back to front: the world (WebGL, gl.js: night, pearl, aurora, dawn and gold, with rays, stage lights,
- * a slit of light and four pillars), the place (one 1560 × 1040 screen in DOM, seen through a camera),
- * light (Canvas 2D), type (DOM and SVG), glints (WebGL points).
+ * a circle of light, a slit of light and four pillars), the place (one 1560 × 1040 screen in DOM, seen
+ * through a camera), light (Canvas 2D: beams, lasers, the gold linework and its silk), type (DOM and
+ * SVG), glints (WebGL points).
  *
- *   ?capture   no controls; window.__film = { duration, ready, seek(t) } for the renderer
+ *   ?capture   no controls; window.__film = { duration, marks, ready, seek(t) } for the renderer
  *   ?t=42      start at 42 s
  */
 (function () {
@@ -82,7 +83,7 @@
   function px(n) { return n.toFixed(2) + 'px'; }
   function f3(n) { return n.toFixed(3); }
   function blurOf(k) { return k > 0.002 ? 'blur(' + k.toFixed(2) + 'px)' : 'none'; }
-  var DEG = Math.PI / 180, TAU = Math.PI * 2, NS = 'http://www.w3.org/2000/svg';
+  var DEG = Math.PI / 180, TAU = Math.PI * 2;
 
   // ---------- elements ----------
   var stage = $('stage'), camera = $('camera'), device = $('device'), bezel = $('bezel'), edgeR = $('edgeR'), screen = $('screen');
@@ -832,7 +833,7 @@
   }
   function goldWorld(t, s) {
     if (s.gold <= 0.001) return;
-    var c = lctx, a0 = s.gold, half = lerp(0.0018, 1.05, s.slit[0]) * 1080;
+    var c = lctx, a0 = s.gold * s.gold, half = lerp(0.0018, 1.05, s.slit[0]) * 1080;
     var grow = E.out(seg(t, M.slit + 0.1, M.open + 1.7));
     c.save();
     c.beginPath(); c.rect(960 - half, 0, 2 * half, 1080); c.clip();
