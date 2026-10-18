@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <title>Lucent · 灵感台 — 概念影片</title>
+  <meta name="description" content="Lucent · 灵感台的概念影片：Home 键是一个承诺，总有一个地方等你回来；今天，它成了一个地方。由此出发，为光停留。A concept film for Lucent, the inspiration launcher. Every frame is drawn in code.">
+  <meta name="theme-color" content="#04060c">
+  <link rel="icon" type="image/png" sizes="32x32" href="../web/icon-32.png">
+  <link rel="stylesheet" href="./film.css">
+</head>
+<body>
+<div id="viewport" aria-label="Lucent · 灵感台 概念影片">
+  <div id="stage">
+    <canvas class="layer" id="world" width="960" height="540"></canvas>
+    <div class="layer" id="giant"><span id="giantWord"></span></div>
+    <div class="layer" id="halo"></div>
+
+    <!-- The place: one screen, the base as it stands on the device -->
+    <div id="camera">
+      <div id="device">
+        <div id="bezel"></div>
+        <div id="screen">
+          <div class="ly" id="lySky"><canvas id="innerSky" width="1620" height="1080"></canvas><div id="glare"></div></div>
+          <div class="ly" id="lyGlass"><div id="cardGlass"></div></div>
+          <div class="ly" id="ui">
+            <div class="tb-clock">19:42</div>
+            <div class="tb-date">10月17日 周六 · 晚上好，辛苦了</div>
+            <div class="tb-pill primary" style="left:416px"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.4"/><path d="m15.3 15.3 5 5"/></svg>搜索</div>
+            <div class="tb-pill" style="left:511px"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="13" height="13" rx="2.5"/><path d="M8 4h9.5A2.5 2.5 0 0 1 20 6.5V16"/></svg>全部标签</div>
+            <div class="tb-pill" style="left:633px"><svg viewBox="0 0 24 24"><path d="M12 3.4 19 6v5.4c0 4.3-2.9 7.7-7 9.2-4.1-1.5-7-4.9-7-9.2V6z"/></svg>隐私模式</div>
+            <div class="tb-pill" style="left:755px"><svg viewBox="0 0 24 24"><rect x="3.6" y="3.6" width="16.8" height="16.8" rx="5.2" fill="rgba(220,230,245,.55)" stroke="none"/></svg>切换</div>
+            <div class="tb-icon" style="left:1222px"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10.5" ry="3.7" transform="rotate(23.5 12 12)" opacity=".55"/><circle cx="12" cy="12" r="6.2" fill="rgba(188,229,248,.18)"/><path d="M1.5 12a10.5 3.7 0 0 0 21 0" transform="rotate(23.5 12 12)"/></svg></div>
+            <div class="tb-icon" style="left:1271px"><svg viewBox="0 0 24 24"><path d="M3 8V5.5A2.5 2.5 0 0 1 5.5 3H8M16 3h2.5A2.5 2.5 0 0 1 21 5.5V8M21 16v2.5A2.5 2.5 0 0 1 18.5 21H16M8 21H5.5A2.5 2.5 0 0 1 3 18.5V16"/><path d="M3.5 12h17"/></svg></div>
+            <div class="tb-icon" style="left:1320px"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M4.6 7.2l2 1.2M17.4 15.6l2 1.2M4.6 16.8l2-1.2M17.4 8.4l2-1.2"/></svg></div>
+            <div class="history"><span>历史记录 ↗</span></div>
+            <div class="avatar"><i></i><b></b></div>
+            <div class="name">hydeclanspi</div>
+            <div class="status"><i></i>普通模式</div>
+            <div class="sig">把今天过成想要的样子。</div>
+            <div class="badges"><span>★ Lv.14</span><span>浅色模式</span><span>HarmonyOS</span></div>
+            <div class="card" id="card">
+              <div class="search" id="search">
+                <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.4"/><path d="m15.3 15.3 5 5"/></svg>
+                <span class="ph" id="ph">搜索或输入网址</span>
+                <span class="typed" id="typed"></span>
+                <i class="caret" id="caret"></i>
+                <b class="go" id="go"><svg viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></b>
+              </div>
+              <div class="sec" style="top:111px">搜索引擎</div>
+              <div class="chips">
+                <span class="chip"><b style="background:#3d6df2">B</b>Baidu</span>
+                <span class="chip on"><b style="background:#e8604c">G</b>Google</span>
+                <span class="chip"><b style="background:#1d9bd1">b</b>Bing</span>
+                <span class="chip"><b style="background:#9aa3b2">h</b>hydeclanspi</span>
+              </div>
+              <div class="sec" style="top:226px">快捷方式</div>
+              <div class="tiles">
+                <span class="tile"><i><svg viewBox="0 0 24 24"><path d="M12 6.5C10 5 7.5 4.6 4.5 5v13c3-.4 5.5 0 7.5 1.5 2-1.5 4.5-1.9 7.5-1.5V5c-3-.4-5.5 0-7.5 1.5Zm0 0v13"/></svg></i>书签</span>
+                <span class="tile"><i><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4m6-4v4"/></svg></i>日程</span>
+                <span class="tile"><i><svg viewBox="0 0 24 24"><path d="M6 4h9l3 3v13H6z"/><path d="M9 11h6m-6 4h4"/></svg></i>笔记</span>
+                <span class="tile add"><i><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></i>添加</span>
+              </div>
+              <div class="sec" style="top:392px">直达</div>
+            </div>
+            <div class="note">wilson vibes only.</div>
+          </div>
+          <div class="ly" id="lyTop">
+            <div id="backdrop"></div>
+            <div class="sheet" id="motionSheet">
+              <div class="sheet-title">念起，光行</div>
+              <div class="toggle" id="randomToggle">Random<i></i></div>
+            </div>
+            <div id="screenDim"></div>
+          </div>
+          <div class="ly" id="lyLueurs"><div id="lueurs"></div><svg id="pen" viewBox="0 0 1560 1040"><path id="penPath" d=""/></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- The exploded view: one label per layer -->
+    <div class="layer" id="labels">
+      <div class="xl"><b>壁纸</b><span>3120 × 2080，一个像素对一个像素</span></div>
+      <div class="xl"><b>通透玻璃</b><span>六项参数，六层光学</span></div>
+      <div class="xl"><b>界面</b><span>以 1560 × 1040 为参照</span></div>
+      <div class="xl"><b>居民</b><span>稍后揭晓</span></div>
+    </div>
+
+    <!-- The console: Lucent Glass over an aurora -->
+    <div class="layer" id="aurora">
+      <canvas id="orbs" width="1920" height="1080"></canvas>
+      <div id="specimen"><i class="sp-tint"></i><i class="sp-touch"></i><i class="sp-rim"></i></div>
+      <div id="glassPanel">
+        <div class="gp-title">Lucent Glass<span>通透玻璃</span></div>
+        <div class="gp-seg"><span class="on">暖光液态清璃</span><span>经典磨砂</span></div>
+      </div>
+    </div>
+
+    <canvas class="layer" id="light" width="1920" height="1080"></canvas>
+    <div class="layer" id="scrim"></div>
+    <div class="layer" id="black"></div>
+    <svg class="layer" id="vec" viewBox="0 0 1920 1080">
+      <defs>
+        <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7"/></filter>
+        <radialGradient id="pressGlow"><stop offset="0" stop-color="#eaf3ff" stop-opacity=".26"/><stop offset="1" stop-color="#eaf3ff" stop-opacity="0"/></radialGradient>
+      </defs>
+      <circle id="press" cx="960" cy="470" r="86" fill="url(#pressGlow)" opacity="0"/>
+      <rect id="ringGlow" fill="none" stroke="#bcdcff" stroke-width="7" filter="url(#soft)" opacity="0"/>
+      <rect id="ring" fill="none" stroke="#f2f7ff" stroke-width="2.6" opacity="0"/>
+    </svg>
+    <div class="layer" id="home"><span class="hm-call" id="hmCall">人们叫它</span><span class="hm-h" id="hmH">H</span><span class="hm-me" id="hmMe">me</span><span class="hm-key" id="hmKey">键</span><span class="hm-en" id="hmEn">Everyone knew it as the Home button.</span></div>
+
+    <div class="layer" id="words">
+      <div id="montage"><span id="mWord"></span><i id="mLatin"></i></div>
+      <div id="getit">明白了吗？</div>
+      <div id="four">
+        <div class="w4" style="top:322px"><span>工作</span><span class="tai">台</span></div>
+        <div class="w4" style="top:422px"><span>发射</span><span class="tai">台</span></div>
+        <div class="w4" style="top:522px"><span>舞</span><span class="tai">台</span></div>
+        <div class="w4" style="top:622px"><span>控制</span><span class="tai">台</span></div>
+      </div>
+      <div id="lockup">
+        <div class="lk-ling" id="lkLing">灵感</div>
+        <div class="lk-tai" id="lkTai">台</div>
+        <div class="lk-mark" id="lkMark" style="top:640px">LUCENT</div>
+        <div class="lk-kicker" id="lkKicker" style="top:722px"><b>灵感启动台</b><i>The inspiration launcher</i></div>
+      </div>
+      <div id="specs"></div>
+      <div id="tagline">
+        <div class="zh"><span id="tg1">由此出发，</span><span id="tg2">为光停留。</span></div>
+        <span class="en" id="tgEn">Launch from here. Stay for the light.</span>
+      </div>
+      <div id="endmark"><span class="m"><b>LUCENT</b><span>灵感台</span></span><span class="u">hydeclanspi.github.io/Lucent-Next</span></div>
+    </div>
+    <div class="layer" id="captions"></div>
+    <div class="layer" id="bloom"></div>
+
+    <canvas class="layer" id="fx" width="1920" height="1080"></canvas>
+    <div class="layer" id="vignette"></div>
+  </div>
+</div>
+
+<div id="title"><b>LUCENT</b>概念影片 · Concept film</div>
+<div id="controls" role="group" aria-label="播放控制">
+  <button type="button" id="play" aria-label="播放 / 暂停"><svg class="play-icon" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg><svg class="pause-icon" viewBox="0 0 24 24"><path d="M8 5v14m8-14v14"/></svg></button>
+  <button type="button" id="replay" aria-label="从头播放"><svg viewBox="0 0 24 24"><path d="M4.5 8A8 8 0 1 1 4 15M4.5 3v5H10"/></svg></button>
+  <input id="scrub" type="range" min="0" max="1000" value="0" step="1" aria-label="进度">
+  <span id="time">0:00 / 1:21</span>
+  <button type="button" id="full" aria-label="全屏"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+</div>
+
+<script src="./gl.js"></script>
+<script src="./film.js"></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!doctype html>
+<!-- Lucent · 灵感台 — the slot for the on-device recording (demo/media/on-device.jpg), rendered by
+     scripts/film-media.mjs at 1920×1080. The ring from the film's first frame becomes a play button.
+     Type: Inter, Noto Serif CJK SC and Noto Sans CJK SC, as installed on the rendering machine. -->
+<html lang="zh-CN"><head><meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+  body {
+    background:
+      radial-gradient(60% 70% at 18% 22%, rgba(160, 192, 255, .62), rgba(160, 192, 255, 0) 70%),
+      radial-gradient(55% 60% at 86% 30%, rgba(206, 192, 255, .58), rgba(206, 192, 255, 0) 70%),
+      radial-gradient(70% 60% at 70% 96%, rgba(255, 214, 186, .55), rgba(255, 214, 186, 0) 70%),
+      linear-gradient(180deg, #e7edf8, #f3f5fb);
+  }
+  .device { position: absolute; left: 400px; top: 154px; width: 1120px; height: 747px; border-radius: 58px; box-sizing: border-box; padding: 26px;
+    background: linear-gradient(150deg, #2c313a 0%, #15181e 38%, #0c0e12 62%, #252a32 100%);
+    box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .2), inset 0 0 0 7px #07080b, 0 70px 120px rgba(30, 40, 70, .28), 0 0 0 1px rgba(0, 0, 0, .45); }
+  .screen { position: relative; width: 100%; height: 100%; border-radius: 34px; overflow: hidden;
+    background: radial-gradient(90% 80% at 50% 40%, #13213f 0%, #0a1222 55%, #05080f 100%); }
+  .screen::before { content: ""; position: absolute; inset: -20%; background: linear-gradient(118deg, rgba(255, 255, 255, 0) 38%, rgba(255, 255, 255, .07) 47%, rgba(255, 255, 255, .02) 53%, rgba(255, 255, 255, 0) 60%); }
+  .screen::after { content: ""; position: absolute; left: 50%; top: 42%; width: 620px; height: 620px; margin: -310px 0 0 -310px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(120, 160, 255, .18), rgba(120, 160, 255, 0) 70%); }
+  .center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #f4f6fa; z-index: 1; }
+  svg { width: 104px; height: 104px; margin-bottom: 40px; overflow: visible; }
+  svg circle { fill: none; stroke: #f2f7ff; stroke-width: 2.4; }
+  svg .glow { stroke: #bcdcff; stroke-width: 9; opacity: .32; filter: blur(5px); }
+  svg path { fill: #f2f7ff; }
+  h1 { margin: 0; font: 300 54px/1.2 "Noto Serif CJK SC", serif; letter-spacing: 12px; text-indent: 12px; }
+  p { margin: 18px 0 0; font: 300 24px/1.4 "Noto Sans CJK SC", sans-serif; letter-spacing: 3px; color: rgba(226, 232, 242, .76); }
+  p b { font: 300 24px/1 "Inter", sans-serif; letter-spacing: .6px; }
+  .pill { margin-top: 34px; padding: 10px 22px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .3); background: rgba(255, 255, 255, .06);
+    font: 300 18px/1 "Noto Sans CJK SC", sans-serif; letter-spacing: 3px; color: rgba(236, 240, 247, .86); }
+  .pill i { font: 300 18px/1 "Inter", sans-serif; font-style: normal; letter-spacing: .6px; margin-left: 10px; color: rgba(236, 240, 247, .62); }
+  .mark { position: absolute; left: 0; right: 0; bottom: 74px; text-align: center; color: #0d1220; }
+  .mark strong { font: 300 24px/1 "Inter", sans-serif; letter-spacing: 10px; }
+  .mark span { margin-left: 18px; padding-left: 18px; border-left: 1px solid rgba(13, 18, 32, .4); font: 300 20px/1 "Noto Serif CJK SC", serif; letter-spacing: 6px; }
+</style></head>
+<body>
+  <div class="device"><div class="screen">
+    <div class="center">
+      <svg viewBox="-52 -52 104 104" aria-hidden="true"><circle class="glow" r="46"/><circle r="46"/><path d="M-11 -17 L19 0 L-11 17 Z"/></svg>
+      <h1>实机演示</h1>
+      <p>在 <b>HUAWEI MatePad Edge</b> 上拍摄</p>
+      <div class="pill">即将放映<i>Coming soon</i></div>
+    </div>
+  </div></div>
+  <div class="mark"><strong>LUCENT</strong><span>灵感台</span></div>
+</body></html>
