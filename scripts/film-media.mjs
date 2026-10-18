@@ -21,7 +21,7 @@ const want = (name) => !wanted.length || wanted.includes(name);
 const launch = () => chromium.launch({ headless: true, ...(process.env.AIRA_BROWSER_PATH ? { executablePath: process.env.AIRA_BROWSER_PATH } : {}) });
 
 // Passages of the film for the teaser: [start, end] in seconds. Each joins the next with a 0.35 s cross-fade.
-const PASSAGES = [[4.5, 6.4], [11.6, 13.3], [18.7, 20.4], [26.7, 29.6], [39.4, 40.9], [48.5, 50.5], [55.4, 57.7]];
+const PASSAGES = [[4.9, 6.6], [18.8, 20.5], [27.6, 29.8], [39.3, 40.8], [43.4, 44.9], [48.6, 50.6], [55.4, 57.7]];
 const FADE = 0.35;
 
 if (want('poster')) {

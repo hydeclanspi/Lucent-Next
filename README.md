@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="demo/media/film-teaser.webp" alt="Lucent · 灵感台 概念影片片段：按键张开成一个光圆，「Home 键」从中穿过；一道白光，转入亮场；四层叠成一块屏幕；一道窄光豁然开朗，是缎面金色的世界；舞台灯亮起；四根光柱，合成「灵感台」" width="100%"></a>
+  <a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="demo/media/film-teaser.webp" alt="Lucent · 灵感台 概念影片片段：按键张开成一个光圆，「Home 键」从中穿过；四层叠成一块屏幕；一道窄光豁然开朗，是缎面金色的世界；舞台灯亮起；极光之上，玻璃的参数逐一调动；四根光柱，合成「灵感台」" width="100%"></a>
 </p>
 
 <h1 align="center">Lucent · 灵感台</h1>

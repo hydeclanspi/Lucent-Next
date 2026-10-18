@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="demo/media/film-teaser.webp" alt="From the Lucent concept film: the button opens into a circle of light with “Home 键” running through it; a flash into the light; four layers stack into one screen; a narrow seam of light opens onto a world of satin gold; stage lights rise; four pillars of light become 灵感台" width="100%"></a>
+  <a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="demo/media/film-teaser.webp" alt="From the Lucent concept film: the button opens into a circle of light with “Home 键” running through it; four layers stack into one screen; a narrow seam of light opens onto a world of satin gold; stage lights rise; over an aurora, the glass's settings turn one by one; four pillars of light become 灵感台" width="100%"></a>
 </p>
 
 <h1 align="center">Lucent · 灵感台</h1>
