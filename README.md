@@ -93,7 +93,7 @@
 
 每一帧画面、每一个声音，都由代码生成：一条时间轴，WebGL 画天色与光，Canvas 画光束、光弧和门外的世界，CSS 与 SVG 画界面和字；配乐与音效由 numpy 合成，读同一张时间表：鼓、滚动的贝斯、琶音、和弦与一段主旋律，每分钟 120 拍，每一次按下、每一道闪光、每一扇门都落在重拍上。任意时刻都可以暂停、拖动，也可以逐帧渲染成视频。
 
-→ [在浏览器中观看](https://hydeclanspi.github.io/Lucent-Next/film/) · [下载 MP4（1080p，60 帧，有声）](demo/media/lucent-film.mp4)
+→ [在浏览器中观看](https://hydeclanspi.github.io/Lucent-Next/film/) · [下载 MP4（2K，2560×1440，60 帧，有声）](demo/media/lucent-film.mp4)
 
 ### 实机
 
