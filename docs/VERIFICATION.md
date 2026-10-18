@@ -10,6 +10,7 @@ Web edition 5.0.0. Last full run: **2026-10-18**, Node.js 22.22, Chromium 141 (P
 | Browser flows | `npm run test:browser` | **18 passed**; no uncaught page exception in any tested flow |
 | Viewports | (browser suite) | 1560×1040 (the tablet), 1429×763, 1366×768 and 1280×720 (short laptop screens), 1024×768, 390×844 |
 | Repository subpath | (browser suite) | Assets and initialization under `/Lucent-Next/` |
+| Film score | `python3 scripts/film-score.py --report score.png` | −16.0 LUFS integrated, true peak −0.9 dBTP, loudness range about 8 LU; every sound event checked against the scene marks on the spectrogram; the stage's laser schedule matches the film's generator bit for bit. Checked by measurement, not by ear |
 
 ## Unit tests
 
