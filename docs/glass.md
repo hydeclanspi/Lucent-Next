@@ -18,9 +18,9 @@
 
 ## 2. 六个参数，六层光学
 
-<p align="center"><img src="images/figures/glass.zh.png" alt="图 06：六个参数映射为 CSS 变量，分配到六层光学" width="100%"></p>
+<p align="center"><img src="figures/glass.zh.png" alt="图 06：六个参数映射为 CSS 变量，分配到六层光学" width="100%"></p>
 
-主卡片与弹窗各自一套参数，可选「经典磨砂玻璃」或「暖光液态清璃」。六个参数都是 0–100，50 为设计中点；下表的参数名与界面一致（[`glass-material.js`](../assets/glass-material.js#L40-L59)）：
+主卡片与弹窗各自一套参数，可选「经典磨砂玻璃」或「暖光液态清璃」。六个参数都是 0–100，50 为设计中点；下表的参数名与界面一致（[`glass-material.js`](../src/assets/glass-material.js#L40-L59)）：
 
 | 参数 | 映射 | 0 / 50 / 100 |
 |---|---|---|
@@ -31,7 +31,7 @@
 | 环境色彩 | 饱和度在 100% 与基准之间插值；浅色主卡 132%、弹窗 124%，深色 124% / 122% | 100% / 基准 / 2×基准−100% |
 | 触光强度 | 跟手高光强度 `x / 50` | 0 / 1 / 2 |
 
-六层自下而上（[`glass-material.css`](../assets/glass-material.css)）：
+六层自下而上（[`glass-material.css`](../src/assets/glass-material.css)）：
 
 1. **背景采样**：`backdrop-filter: blur() saturate() brightness()`，浅色亮度 ×1.13、深色 ×0.88——一次必要的柔化，不叠加第二次。
 2. **底色**：一个偏离中心（46% 45%）的径向色层 + 一道 123° 的线性色层，三个色调随冷暖参数调色，不透明度由透明度参数驱动。
@@ -40,15 +40,15 @@
 5. **跟手高光**：直径 360 px 的径向高光跟随指针，淡入 230 ms。
 6. **内容**：文字、图标、数据留在独立前景（`z-index: 1`），滤镜只作用在装饰层——文字永远清晰。
 
-<p align="center"><img src="images/glass-compare.jpg" alt="同一张主卡片：左为暖光液态清璃，右为经典磨砂玻璃" width="100%"></p>
+<p align="center"><img src="../demo/media/glass-compare.jpg" alt="同一张主卡片：左为暖光液态清璃，右为经典磨砂玻璃" width="100%"></p>
 <p align="center"><sub>左：暖光液态清璃 · 右：经典磨砂玻璃</sub></p>
 
 ## 3. 事件驱动，静止时为零
 
-- 指针进入、移动、按下时只记录坐标并标记「脏」；一帧最多写一次 `transform`（[`flush` / `track`](../assets/glass-material.js#L116-L150)）。鼠标只有在支持悬停的精确指针下才点亮；触屏只跟随按下的那根手指。
+- 指针进入、移动、按下时只记录坐标并标记「脏」；一帧最多写一次 `transform`（[`flush` / `track`](../src/assets/glass-material.js#L116-L150)）。鼠标只有在支持悬停的精确指针下才点亮；触屏只跟随按下的那根手指。
 - 离开、取消、滚动、失焦、缩放、页面隐藏时立刻熄灭；静止时**没有任何常驻动画循环**。
 - 弹窗的高光画在弹窗自己的背景上（`--beta-touch-x/y`），而不是一个子元素——背景没有布局盒，滚动时不会把高光带进边缘，也不会撑大可滚动区域。
-- 弹窗换页时会替换子节点，`MutationObserver` 负责清理旧的高光层、只保留一份；页面卸载时断开所有观察者与监听（[L199-L240](../assets/glass-material.js#L199-L240)）。
+- 弹窗换页时会替换子节点，`MutationObserver` 负责清理旧的高光层、只保留一份；页面卸载时断开所有观察者与监听（[L199-L240](../src/assets/glass-material.js#L199-L240)）。
 
 **退路**：浏览器不支持背景滤镜时退回 96% 不透明的实底；系统开启「减少透明度」时同样使用实底；开启「减少动态效果」时不显示跟手高光。
 

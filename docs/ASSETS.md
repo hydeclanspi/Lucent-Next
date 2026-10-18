@@ -11,13 +11,16 @@ The original licences of the photograph and the illustrations were not part of t
 ## Made for this repository
 
 - Interface symbols and icons — the planet, the FSD lettermark, the six motion glyphs, the badge cap — are vector paths drawn in code.
-- The figures in `docs/images/figures/` are rendered by `scripts/figures.mjs` from the engine's own functions.
-- The screenshots and animations in `docs/images/` are rendered from the product itself (`scripts/capture/`); the social image `web/og.jpg` sets the name and tagline over that hero capture (`scripts/og.mjs`).
-- The app icon (`web/icon-*.png`) draws the first two Lueurs with the product's own lens styling over a plain gradient (`scripts/icon/icon.html`); it uses no bundled artwork.
+- The figures in `docs/figures/` are rendered by `scripts/figures.mjs` from the engine's own functions.
+- The screenshots and animations in `demo/media/` are rendered from the product itself (`scripts/capture/`); the social image `src/web/og.jpg` sets the name and tagline over that hero capture (`scripts/og.mjs`).
+- The app icon (`src/web/icon-*.png`) draws the first two Lueurs with the product's own lens styling over a plain gradient (`scripts/icon/icon.html`); it uses no bundled artwork.
+- The concept film (`demo/film/`) is drawn entirely in code — WebGL shaders for the skies and the light, Canvas for the beams, CSS and SVG for the interface and the type. Its dusk sky is painted procedurally and its avatar is a gradient; it uses no bundled artwork. The MP4 in `demo/media/` is rendered from that page by `scripts/film.mjs`.
 
 ## Names and fonts
 
-Search-provider, school and product names in the shortcuts identify their destinations; no endorsement is implied. HarmonyOS Sans is referenced as a system font preference; no font file is bundled. Aira and HarmonyOS are trademarks of their owners.
+Search-provider, school and product names in the shortcuts identify their destinations; no endorsement is implied. HarmonyOS Sans is referenced as a system font preference; no font file of it is bundled. Aira and HarmonyOS are trademarks of their owners; HUAWEI and MatePad are trademarks of Huawei. The README and the film name the HUAWEI MatePad Edge as the device Lucent was designed for, and imply no endorsement.
+
+The concept film bundles subsets of Noto Serif CJK SC and Noto Sans CJK SC (Adobe) and Inter (The Inter Project Authors), all under the SIL Open Font License 1.1 with no Reserved Font Name; the licence is in [`demo/film/fonts/OFL.txt`](../demo/film/fonts/OFL.txt), and `scripts/film-fonts.py` makes the subsets from the characters the film sets.
 
 ## Personal content
 
