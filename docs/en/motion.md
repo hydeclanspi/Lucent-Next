@@ -12,7 +12,7 @@ Every motion completes within 320–480 ms.
 
 ## 1. The atelier: six from sixteen
 
-<p align="center"><img src="../images/atelier.jpg" alt="The motion atelier, 念起，光行: sixteen search motions in four families, which can be scrubbed frame by frame and watched slowly" width="100%"></p>
+<p align="center"><img src="../../demo/media/atelier.jpg" alt="The motion atelier, 念起，光行: sixteen search motions in four families, which can be scrubbed frame by frame and watched slowly" width="100%"></p>
 
 Before anything entered the product, there was a standalone [atelier](https://hydeclanspi.github.io/Lucent-Next/atelier/) of sixteen studies in four families:
 
@@ -29,7 +29,7 @@ Six were chosen for the product and **kept their atelier numbers**: 01 · 03 · 
 
 ## 2. The six
 
-<p align="center"><img src="../images/motion-six.webp" alt="The six motions played in turn at 0.35×" width="100%"></p>
+<p align="center"><img src="../../demo/media/motion-six.webp" alt="The six motions played in turn at 0.35×" width="100%"></p>
 
 | No. | Name | Duration | In a line | What happens |
 |:-:|---|:-:|---|---|
@@ -44,7 +44,7 @@ All six share an ending: a cross-shaped glint at the arrow, and a gold ring arou
 
 ## 3. Every frame is a pure function of progress
 
-A renderer's signature is `renderer(ctx, state, t)` with `t ∈ [0, 1]` ([`search-motion-renderers.js`](../../assets/search-motion-renderers.js)):
+A renderer's signature is `renderer(ctx, state, t)` with `t ∈ [0, 1]` ([`search-motion-renderers.js`](../../src/assets/search-motion-renderers.js)):
 
 - `t ≤ 0` draws the text as it was; `t ≥ 1` draws nothing — the canvas is clean at the hand-off.
 - Renderers never read the time and never call a random function. The same `t` always draws the same frame.
@@ -54,17 +54,17 @@ That buys three things directly: **slowing down** (0.35× simply divides the dur
 
 ## 4. The player
 
-[`search-motion.js`](../../assets/search-motion.js) places an animation safely over the real search field:
+[`search-motion.js`](../../src/assets/search-motion.js) places an animation safely over the real search field:
 
 - **Measure the real text.** It reads the field's computed font, letter spacing, padding and current horizontal scroll; only characters visible inside the field take part.
-- **Split by grapheme.** Chinese, emoji and combining characters are split with `Intl.Segmenter('zh', { granularity: 'grapheme' })`, so an emoji is never broken in two ([L44-L45](../../assets/search-motion.js#L44-L45)).
+- **Split by grapheme.** Chinese, emoji and combining characters are split with `Intl.Segmenter('zh', { granularity: 'grapheme' })`, so an emoji is never broken in two ([L44-L45](../../src/assets/search-motion.js#L44-L45)).
 - **One canvas, one loop.** The canvas covers the field and extends 54 px above and below to leave room for the light; device pixel ratio is capped at 2.
-- **Never block the search.** A renderer error, a hidden page or an unloading page ends the animation at once and hands control back; and a timer at "duration + 100 ms" stands behind it all — even if a host WebView pauses frame callbacks while navigating, the search is sent exactly once ([L89-L93](../../assets/search-motion.js#L89-L93)).
+- **Never block the search.** A renderer error, a hidden page or an unloading page ends the animation at once and hands control back; and a timer at "duration + 100 ms" stands behind it all — even if a host WebView pauses frame callbacks while navigating, the search is sent exactly once ([L89-L93](../../src/assets/search-motion.js#L89-L93)).
 - **With reduced motion**, nothing plays; the search simply departs.
 
 ## 5. The submit flow
 
-Enter and the arrow go through the same form submission ([`bindMainSearch`](../../assets/app.js#L4799-L4898)):
+Enter and the arrow go through the same form submission ([`bindMainSearch`](../../src/assets/app.js#L4799-L4898)):
 
 - Enter during IME composition goes to the input method and never triggers a search; empty input never departs; a submission in flight is never repeated.
 - Navigation happens only when the animation ends; just before it, the field's value and default value are cleared, so it is clean when you come back; if navigation fails, the text returns to the field.
@@ -72,7 +72,7 @@ Enter and the arrow go through the same form submission ([`bindMainSearch`](../.
 
 ## 6. Random: platinum rings and blue-white lasers
 
-<p align="center"><img src="../images/random-current.webp" alt="With Random on, champagne-platinum conduits run through the gaps between the six cards and blue-white lasers race along them" width="100%"></p>
+<p align="center"><img src="../../demo/media/random-current.webp" alt="With Random on, champagne-platinum conduits run through the gaps between the six cards and blue-white lasers race along them" width="100%"></p>
 
 Turn on Random and the area where you choose a card becomes a circuit board:
 
@@ -80,7 +80,7 @@ Turn on Random and the area where you choose a card becomes a circuit board:
 - **Champagne conduits.** In every gap between two cards run two 1 px champagne dashed lines (`#B49560 → #FFF2CF → #FFFFFF`) with a 1.4 px ice-blue halo, flowing with a 1.1 s period horizontally and 1.3 s vertically. Phases are offset by card index (−0.43 s, −0.79 s), so the circuit never moves in lockstep.
 - **Blue-white lasers.** Pulses of light 1.3 × 100 px (`#69ACFF → #B4DDFF → #FFFFFF`) with a blue glow, running only in the channels between cards.
 
-Scheduling the lasers is a small algorithm of its own ([`scheduleLaser`](../../assets/search-motion-panel.js#L86-L150)):
+Scheduling the lasers is a small algorithm of its own ([`scheduleLaser`](../../src/assets/search-motion-panel.js#L86-L150)):
 
 1. **Lanes from the real layout.** Before each wave, lanes are computed from the cards' actual positions: horizontal lanes between rows, vertical lanes between columns. With two columns, horizontal lanes share a weight of 0.7 and vertical lanes 0.3; with one column there are only horizontal lanes.
 2. **Wave size.** One beam 73% of the time, two 20%, three 7% — never more than there are lanes.
@@ -90,16 +90,16 @@ Scheduling the lasers is a small algorithm of its own ([`scheduleLaser`](../../a
 6. **Wait for the last wave to land.** The next wave leaves after 1.53–3.17 s, and never earlier than 90 ms after the slowest beam of the previous wave ends.
 7. **An opening choreography.** 275 ms after Random turns on, three lanes leave at once: the vertical gap top to bottom, the second horizontal gap right to left, the first horizontal gap left to right.
 
-<p align="center"><img src="../images/figures/speeds.en.png" alt="Figure 4: the truncated normal distribution of laser speeds" width="100%"></p>
+<p align="center"><img src="../figures/speeds.en.png" alt="Figure 4: the truncated normal distribution of laser speeds" width="100%"></p>
 
 Scheduling pauses while the page is hidden; with reduced motion neither conduits nor lasers appear.
 
 ## 7. Simulated launch
 
-<p align="center"><img src="../images/simulation.webp" alt="Endless simulated launch: the first shot flies out and plays back to where it started; then Enter is held and light fires at the arrow shot after shot, each in a different gesture" width="100%"></p>
+<p align="center"><img src="../../demo/media/simulation.webp" alt="Endless simulated launch: the first shot flies out and plays back to where it started; then Enter is held and light fires at the arrow shot after shot, each in a different gesture" width="100%"></p>
 <p align="center"><sub>Random and the simulated launch together: the first shot is a rehearsal and comes back; with Enter held, each shot takes a different gesture and the words leave with the light.</sub></p>
 
-A launcher that only sends you away is a door. At the top right of the panel sits a switch for an endless simulated-launch loop — an easter egg that lasts only for this visit ([`search-simulation.js`](../../assets/search-simulation.js)). With it on, the homepage's search field launches light and never sends a search, and the base closes the loop on itself:
+A launcher that only sends you away is a door. At the top right of the panel sits a switch for an endless simulated-launch loop — an easter egg that lasts only for this visit ([`search-simulation.js`](../../src/assets/search-simulation.js)). With it on, the homepage's search field launches light and never sends a search, and the base closes the loop on itself:
 
 - **The first shot flies back.** If the field is empty, a random line rises in over 180 ms (one of them is 念起，光行). The first shot is a rehearsal: it flies out along its path and plays back in reverse, and every character lands exactly where it was — the dividend of renderers being pure functions. Every shot after it takes the words away with the light.
 - **Hold Enter for bursts.** Hold for more than 280 ms, or press twice less than 300 ms apart, and it bursts: each shot is 160 ms, starting from the moment this motion's light first appears, drawing only the light path and never the text — the same canvas and the same frame loop, with no re-measuring, no detaching nodes and no toggling of read-only state during a burst.

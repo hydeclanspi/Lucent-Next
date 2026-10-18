@@ -18,9 +18,9 @@ A larger blur radius or a lower opacity does not by itself make more convincing 
 
 ## 2. Six parameters, six optical layers
 
-<p align="center"><img src="../images/figures/glass.en.png" alt="Figure 6: six parameters mapped to CSS variables and distributed across six optical layers" width="100%"></p>
+<p align="center"><img src="../figures/glass.en.png" alt="Figure 6: six parameters mapped to CSS variables and distributed across six optical layers" width="100%"></p>
 
-The main card and the sheets each keep their own settings and come in two finishes: **Classic Frost** (经典磨砂玻璃) or **Warm Clear** (暖光液态清璃). All six dials run 0–100 with 50 as the design midpoint ([`glass-material.js`](../../assets/glass-material.js#L40-L59)):
+The main card and the sheets each keep their own settings and come in two finishes: **Classic Frost** (经典磨砂玻璃) or **Warm Clear** (暖光液态清璃). All six dials run 0–100 with 50 as the design midpoint ([`glass-material.js`](../../src/assets/glass-material.js#L40-L59)):
 
 | Dial | Mapping | 0 / 50 / 100 |
 |---|---|---|
@@ -31,7 +31,7 @@ The main card and the sheets each keep their own settings and come in two finish
 | Colour (环境色彩) | Saturation interpolates between 100% and a base; light card 132%, light sheets 124%, dark 124% / 122% | 100% / base / 2×base − 100% |
 | Touch (触光强度) | Pointer highlight strength `x / 50` | 0 / 1 / 2 |
 
-The six layers, bottom to top ([`glass-material.css`](../../assets/glass-material.css)):
+The six layers, bottom to top ([`glass-material.css`](../../src/assets/glass-material.css)):
 
 1. **Backdrop sampling**: `backdrop-filter: blur() saturate() brightness()`, brightness ×1.13 in light and ×0.88 in dark — one necessary blur, never a second one stacked on top.
 2. **Base tint**: an off-centre radial layer (46% 45%) plus a 123° linear layer; three tones follow the warmth parameter, their opacity follows transparency.
@@ -40,15 +40,15 @@ The six layers, bottom to top ([`glass-material.css`](../../assets/glass-materia
 5. **Pointer highlight**: a 360 px radial highlight that follows the pointer and fades in over 230 ms.
 6. **Content**: text, icons and data live in their own foreground (`z-index: 1`); filters only touch the decorative layers, so text is always sharp.
 
-<p align="center"><img src="../images/glass-compare.jpg" alt="The same main card: Warm Clear on the left, Classic Frost on the right" width="100%"></p>
+<p align="center"><img src="../../demo/media/glass-compare.jpg" alt="The same main card: Warm Clear on the left, Classic Frost on the right" width="100%"></p>
 <p align="center"><sub>Left: Warm Clear · Right: Classic Frost</sub></p>
 
 ## 3. Event-driven, zero at rest
 
-- On pointer enter, move and press, only the coordinates are recorded and the layer is marked dirty; `transform` is written at most once per frame ([`flush` / `track`](../../assets/glass-material.js#L116-L150)). A mouse lights the glass only with a precise, hover-capable pointer; on touch, the highlight follows only the finger that is down.
+- On pointer enter, move and press, only the coordinates are recorded and the layer is marked dirty; `transform` is written at most once per frame ([`flush` / `track`](../../src/assets/glass-material.js#L116-L150)). A mouse lights the glass only with a precise, hover-capable pointer; on touch, the highlight follows only the finger that is down.
 - Leaving, cancelling, scrolling, blurring, resizing or hiding the page puts it out at once; at rest there is **no permanent animation loop at all**.
 - In sheets the highlight is painted on the sheet's own background (`--beta-touch-x/y`) rather than a child element: a background has no layout box, so scrolling never carries the highlight into the edge or enlarges the scrollable area.
-- Sheets replace their children when they change pages; a `MutationObserver` cleans up stale highlight layers and keeps exactly one; unloading the page disconnects every observer and listener ([L199-L240](../../assets/glass-material.js#L199-L240)).
+- Sheets replace their children when they change pages; a `MutationObserver` cleans up stale highlight layers and keeps exactly one; unloading the page disconnects every observer and listener ([L199-L240](../../src/assets/glass-material.js#L199-L240)).
 
 **Fallbacks**: without backdrop filters the glass falls back to a 96% opaque solid; with reduced transparency it uses the solid as well; with reduced motion there is no pointer highlight.
 

@@ -6,7 +6,7 @@
 
 ---
 
-<p align="center"><img src="../images/figures/architecture.en.png" alt="Figure 0: the architecture in five layers, top to bottom — context, base, systems, mechanisms, pixels — with control and trust running across all of them" width="100%"></p>
+<p align="center"><img src="../figures/architecture.en.png" alt="Figure 0: the architecture in five layers, top to bottom — context, base, systems, mechanisms, pixels — with control and trust running across all of them" width="100%"></p>
 
 This page is Lucent's complete inventory, from the screen it runs on to every number that lands on a pixel. Each layer answers one question:
 
@@ -27,7 +27,7 @@ This page is Lucent's complete inventory, from the screen it runs on to every nu
 |---|---|
 | **Device** | Huawei MatePad Edge: 14.2-inch OLED, 3:2, 3120×2080, 120 Hz, touch. The layout is set on 1560×1040 CSS pixels (device pixel ratio 2). |
 | **Host** | The Aira browser on HarmonyOS, which runs Lucent as a custom-homepage package. The host provides system search, tabs, private mode, history, bookmarks, downloads, settings and the scanner, plus theme colours and local storage. The native package is kept as shipped in [`native/`](../../native/README.md). |
-| **Web edition** | This repository. [`web/browser-bridge.js`](../../web/browser-bridge.js) implements the host interface in the browser, with a working demonstration panel behind every host entry; [`web/showcase.js`](../../web/showcase.js) provides deep links; [`web/immersive.js`](../../web/immersive.js) takes large screens full screen on the first click; [`web/manifest.webmanifest`](../../web/manifest.webmanifest) makes it installable as an app that opens full screen. |
+| **Web edition** | This repository. [`src/web/browser-bridge.js`](../../src/web/browser-bridge.js) implements the host interface in the browser, with a working demonstration panel behind every host entry; [`src/web/showcase.js`](../../src/web/showcase.js) provides deep links; [`src/web/immersive.js`](../../src/web/immersive.js) takes large screens full screen on the first click; [`src/web/manifest.webmanifest`](../../src/web/manifest.webmanifest) makes it installable as an app that opens full screen. |
 
 ## L1 · Base: the surface
 
@@ -72,7 +72,7 @@ This page is Lucent's complete inventory, from the screen it runs on to every nu
 
 - **Two columns.** On large screens (≥ 900 px) the profile sits on the left and the main card on the right; from 1240 px the content is 1240 px wide and the name 38 px.
 - **Focus mode.** With both sections folded, the card sinks to the visual centre and search is the only focus.
-- **Short-screen guard.** On wide screens the card is centred vertically, so on a short screen it rises until the history tag floating above it meets the top bar. The guard lowers the card just enough to keep a 16 px gap; 1560×1040 and taller screens are untouched ([`guardCardClearance`](../../assets/app.js)).
+- **Short-screen guard.** On wide screens the card is centred vertically, so on a short screen it rises until the history tag floating above it meets the top bar. The guard lowers the card just enough to keep a 16 px gap; 1560×1040 and taller screens are untouched ([`guardCardClearance`](../../src/assets/app.js)).
 
 ## L2 · Systems, and L3 · Mechanisms
 
@@ -194,7 +194,7 @@ Four systems. Each lists what a person sees first, then why it works; formulas a
 - **Storage discipline.** Two slots with canonical checksums; a failed read never overwrites history; migrations keep totals; writes guard their shape; copies verify themselves first.
 - **Accessibility.** Arrow keys move Lueurs; every long press has a keyboard equivalent; reduced motion and reduced transparency are honoured; sheets trap focus and return it on close.
 - **Performance discipline.** One frame loop; about 30 Hz when idle; fully paused in the background, under a sheet or when hidden; zero glass animation at rest.
-- **Verification.** 41 unit tests and 17 browser flows run in CI on every push; the documentation figures are drawn by the engine's own functions, and the screenshots and animations are rendered frame by frame under a fake clock. → [Verification](../VERIFICATION.md)
+- **Verification.** 41 unit tests and 18 browser flows run in CI on every push; the documentation figures are drawn by the engine's own functions, and the screenshots, animations and concept film are rendered frame by frame under a fake clock. → [Verification](../VERIFICATION.md)
 
 ## The full interaction table
 
@@ -220,14 +220,14 @@ Four systems. Each lists what a person sees first, then why it works; formulas a
 
 | File | Owns |
 |---|---|
-| [`index.html`](../../index.html) | The base's structure, metadata and app manifest link |
-| [`assets/app.js`](../../assets/app.js) · [`app.css`](../../assets/app.css) | Profile, search lifecycle, shortcuts, wallpaper, the panels, backup and export, About, the short-screen guard |
-| [`assets/interaction.js`](../../assets/interaction.js) · [`interaction.css`](../../assets/interaction.css) | The Lueurs engine |
-| [`assets/stats-store.js`](../../assets/stats-store.js) · [`field-store.js`](../../assets/field-store.js) · [`stats-panel.js`](../../assets/stats-panel.js) | Statistics, the chronicle and the hand-written SVG charts |
-| [`assets/glass-material.js`](../../assets/glass-material.js) · [`glass-material.css`](../../assets/glass-material.css) | Lucent Glass |
-| [`assets/search-motion-renderers.js`](../../assets/search-motion-renderers.js) · [`search-motion.js`](../../assets/search-motion.js) · [`search-motion-panel.js`](../../assets/search-motion-panel.js) | The six renderers, the player, the panel and the Random lasers |
-| [`assets/search-simulation.js`](../../assets/search-simulation.js) | Simulated launch and bursts |
-| [`web/`](../../web/) | Browser layer, deep links, immersive full screen, app manifest and icons |
-| [`atelier/`](../../atelier/index.html) | The sixteen-study atelier |
+| [`src/index.html`](../../src/index.html) | The base's structure, metadata and app manifest link |
+| [`src/assets/app.js`](../../src/assets/app.js) · [`app.css`](../../src/assets/app.css) | Profile, search lifecycle, shortcuts, wallpaper, the panels, backup and export, About, the short-screen guard |
+| [`src/assets/interaction.js`](../../src/assets/interaction.js) · [`interaction.css`](../../src/assets/interaction.css) | The Lueurs engine |
+| [`src/assets/stats-store.js`](../../src/assets/stats-store.js) · [`field-store.js`](../../src/assets/field-store.js) · [`stats-panel.js`](../../src/assets/stats-panel.js) | Statistics, the chronicle and the hand-written SVG charts |
+| [`src/assets/glass-material.js`](../../src/assets/glass-material.js) · [`glass-material.css`](../../src/assets/glass-material.css) | Lucent Glass |
+| [`src/assets/search-motion-renderers.js`](../../src/assets/search-motion-renderers.js) · [`search-motion.js`](../../src/assets/search-motion.js) · [`search-motion-panel.js`](../../src/assets/search-motion-panel.js) | The six renderers, the player, the panel and the Random lasers |
+| [`src/assets/search-simulation.js`](../../src/assets/search-simulation.js) | Simulated launch and bursts |
+| [`src/web/`](../../src/web/) | Browser layer, deep links, immersive full screen, app manifest and icons |
+| [`demo/atelier/`](../../demo/atelier/index.html) | The sixteen-study atelier |
 | [`scripts/`](../../scripts/) | Build, preview, checks, figures (`figures.mjs`), media capture (`capture/`), the icon (`icon.mjs`) |
 | [`tests/`](../../tests/) | Engine, renderer, storage and browser tests |
