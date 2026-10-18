@@ -95,7 +95,7 @@
 
 Every frame and every sound is made in code: one timeline, with WebGL for the sky and the light, Canvas for the beams, the arc and the world beyond the door, CSS and SVG for the interface and the type; the score and the sound effects are synthesized with numpy from the same timetable — drums, a rolling bass, arpeggios, chords and a hook at 120 beats a minute — so every press, flash and door lands on a downbeat. Pause or scrub any moment, or render it frame by frame to video.
 
-→ [Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/film/) · [Download the MP4 (1080p, 60 fps, with sound)](demo/media/lucent-film.mp4)
+→ [Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/film/) · [Download the MP4 (1440p, 60 fps, with sound)](demo/media/lucent-film.mp4)
 
 ### On the device
 

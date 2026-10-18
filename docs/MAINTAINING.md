@@ -79,12 +79,12 @@ Frames and stills land in the ignored `verification/capture/`. `CAPTURE_QUICK=1`
 ```sh
 python3 scripts/film-score.py                                        # demo/film/score.webm and score.m4a (numpy, scipy, ffmpeg)
 npm run build
-AIRA_BROWSER_PATH=/path/to/chromium node scripts/film.mjs              # demo/media/lucent-film.mp4, 1080p60 H.264 with the score
+AIRA_BROWSER_PATH=/path/to/chromium node scripts/film.mjs              # demo/media/lucent-film.mp4, 1440p60 H.264 with the score
 node scripts/film.mjs --preview                                      # half size, 24 fps, into verification/film/
 node scripts/film.mjs --from 20 --to 32 --out verification/film/part.mp4
 ```
 
-Two pages render in parallel (`--workers`); on two cores the full film takes about fifty minutes (28 MB). The score reads the scene marks from `demo/film/film.js`, so after retiming a scene, compose it again (about half a minute; `--report score.png` draws its spectrogram and loudness against the marks). It is synthesized from nothing but code — a kick, claps, snares and metallic hats, a rolling bass and a sub that duck under the kick, plucked arpeggios through dotted-eighth echoes, chords of detuned saws, a lead for the hook, impacts, risers and sound effects — and mastered to about −14.5 LUFS with true peaks under −1 dBTP. After changing any words in `demo/film/`, run `python3 scripts/film-fonts.py` (needs `fonttools` and `brotli`) so the bundled subsets cover them.
+Two pages render in parallel (`--workers`) at 2560 × 1440 (`--scale 1` for 1080p). A page that follows the camera into the screen holds on to memory for every scale it passes through, so when memory in use passes 65 % (`--recycle-at`) every page is replaced by a fresh one; the film is a function of time, so the frames are unchanged. On two cores with 6 GB the full film takes about an hour and a half, in parts (`--from`, `--to`, `--mute`) joined with the score afterwards. The score reads the scene marks from `demo/film/film.js`, so after retiming a scene, compose it again (about half a minute; `--report score.png` draws its spectrogram and loudness against the marks). It is synthesized from nothing but code — a kick, claps, snares and metallic hats, a rolling bass and a sub that duck under the kick, plucked arpeggios through dotted-eighth echoes, chords of detuned saws, a lead for the hook, impacts, risers and sound effects — and mastered to about −14.5 LUFS with true peaks under −1 dBTP. After changing any words in `demo/film/`, run `python3 scripts/film-fonts.py` (needs `fonttools` and `brotli`) so the bundled subsets cover them.
 
 The browser suite writes its own review captures to ignored `verification/screenshots/`; they are evidence for a run, not documentation.
 
