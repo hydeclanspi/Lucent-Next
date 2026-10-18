@@ -39,6 +39,61 @@ async function drive(page, mode, wait) {
 const longPress = (page, id) => page.evaluate(id => document.getElementById(id).dispatchEvent(
   new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, bubbles: true, cancelable: true })), id);
 
+// Nine residents with room to breathe: an airy constellation across the open space, in 1560×1040
+// layout pixels. Every neighbour sits a little beyond the 150 px encounter circle.
+const CONSTELLATION = [[152, 262], [286, 170], [420, 286], [562, 172], [700, 284], [842, 170], [980, 280], [1120, 172], [474, 452]];
+const lensCenters = page => page.evaluate(() => Array.from(document.querySelectorAll('.interaction-item'), item => {
+  const box = item.getBoundingClientRect();
+  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+}));
+async function dragLens(page, from, to) {
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.clock.runFor(48);
+  for (let k = 1; k <= 24; k++) {
+    const t = 1 - Math.pow(1 - k / 24, 3); // ease out: arrive slowly, so the release carries no fling
+    await page.mouse.move(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t);
+    await page.clock.runFor(16);
+  }
+  await page.clock.runFor(120); // held still for more than 80 ms: the lens is set down at rest
+  await page.mouse.up();
+  await page.clock.runFor(60);
+}
+// Arrange the Lueurs by hand: each one is dragged — a real pointer gesture, as a visitor would —
+// to a point of the constellation, snapped to the engine's own safe sites for the current layout.
+async function spread(page, points = CONSTELLATION) {
+  const goals = await page.evaluate(points => {
+    const api = window.AiraInteraction._test;
+    const exclude = '.topbar, .hero .avatar, .hero .name, .hero .meta, .hero .signature, .hero .badges, .hero .tags, .card, #btnHistory';
+    const rects = Array.from(document.querySelectorAll(exclude), node => node.getBoundingClientRect()).filter(box => box.width > 0 && box.height > 0);
+    const sites = api.safeSites(api.makeGeometry(document.documentElement.clientWidth, window.innerHeight, rects));
+    return points.map(([x, y]) => sites.reduce((a, b) => Math.hypot(a.x - x, a.y - y) <= Math.hypot(b.x - x, b.y - y) ? a : b));
+  }, points);
+  for (let pass = 0; pass < 3; pass++) {
+    const lenses = (await lensCenters(page)).map((p, i) => ({ ...p, i }));
+    // Pair lenses and goals greedily by the shortest remaining distance, then move left to right.
+    const pairs = [], free = lenses.slice(), open = goals.slice();
+    while (free.length && open.length) {
+      let best = null;
+      for (const lens of free) for (const goal of open) {
+        const d = Math.hypot(lens.x - goal.x, lens.y - goal.y);
+        if (!best || d < best.d) best = { lens, goal, d };
+      }
+      pairs.push(best);
+      free.splice(free.indexOf(best.lens), 1); open.splice(open.indexOf(best.goal), 1);
+    }
+    pairs.sort((a, b) => a.goal.x - b.goal.x);
+    let moved = 0;
+    for (const { lens, goal } of pairs) {
+      const now = (await lensCenters(page))[lens.i];
+      if (Math.hypot(now.x - goal.x, now.y - goal.y) > 14) { await dragLens(page, now, goal); moved++; }
+    }
+    if (!moved) break;
+  }
+  // Put the hand away: no lens keeps focus, so no identity number lingers on screen.
+  await page.evaluate(() => document.activeElement && document.activeElement.blur());
+}
+
 function prng(seed) {
   let s = seed >>> 0;
   return () => {
@@ -51,18 +106,21 @@ function prng(seed) {
 }
 
 const scenes = {
-  // The README hero (a full-page still) and the Lueurs close-up: 16 lenses, boosted Drive, 8 s at 25 fps.
+  // The README hero (a full-page still) and the Lueurs in motion: nine residents spread by hand,
+  // Drive off, drifting and meeting on their own — 20 s of life, sampled at 12.5 fps to play as a
+  // 10 s, 2× time-lapse at 25 fps.
   async lueurs() {
-    const r = await open({ dpr: 2, time: new Date('2026-10-17T19:42:00+01:00') });
+    const r = await open({ dpr: 2, seed: 7, time: new Date('2026-10-17T19:42:00+01:00') });
     const { page } = r;
-    await summon(page, 16, () => page.clock.runFor(250));
-    await drive(page, 'rage', () => page.clock.runFor(200));
-    for (let i = 0; i < 24; i++) await page.clock.runFor(250); // let the drivers pick targets
+    await summon(page, 9, () => page.clock.runFor(250));
+    await drive(page, 'off', () => page.clock.runFor(200));
+    await page.clock.runFor(1200);
+    await spread(page);
     await page.mouse.move(1500, 1000);
     await r.freezeCss();
-    await r.advance(100);
+    await r.advance(400);
     await page.screenshot({ path: out('hero.png') });
-    await r.record(path.join(OUT, 'lueurs'), { frames: frames(200), fps: 25, clip: { x: 320, y: 122, width: 700, height: 350 } });
+    await r.record(path.join(OUT, 'lueurs'), { frames: frames(250), fps: 12.5, clip: { x: 110, y: 112, width: 1080, height: 428 } });
     return r;
   },
 
@@ -212,15 +270,17 @@ const scenes = {
 
   // Focus mode: both sections folded, the card sinks to the visual centre and search takes the stage.
   async focus() {
-    const r = await open({ dpr: 2, time: new Date('2026-10-17T21:06:00+01:00') });
+    const r = await open({ dpr: 2, seed: 11, time: new Date('2026-10-17T21:06:00+01:00') });
     const { page } = r;
-    await summon(page, 12, () => page.clock.runFor(250));
+    await summon(page, 9, () => page.clock.runFor(250));
+    await drive(page, 'off', () => page.clock.runFor(200));
     // Fold whichever sections are open (the factory layout already folds 直达).
     for (const id of ['btnFoldShortcuts', 'btnFoldEntries']) {
       if (await page.locator('#' + id).getAttribute('aria-expanded') === 'true') await page.locator('#' + id).click();
     }
     await page.waitForFunction(() => document.documentElement.dataset.focus === 'on');
-    for (let i = 0; i < 12; i++) await page.clock.runFor(250);
+    for (let i = 0; i < 6; i++) await page.clock.runFor(250);
+    await spread(page);
     await page.mouse.move(1540, 1030);
     await r.freezeCss();
     await r.advance(1200);

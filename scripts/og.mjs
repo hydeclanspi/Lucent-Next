@@ -1,4 +1,4 @@
-// Render the social preview (web/og.jpg) from scripts/og/og.html over docs/images/hero.jpg.
+// Render the social preview (src/web/og.jpg) from scripts/og/og.html over demo/media/hero.jpg.
 //   AIRA_BROWSER_PATH=/path/to/chromium node scripts/og.mjs
 // The card is laid out at 1280×640, rendered at 2× and downsampled in the browser, so the type stays crisp.
 import { createRequire } from 'node:module';
@@ -29,6 +29,6 @@ const jpeg = await page.evaluate(async ({ png, width, height }) => {
   ctx.drawImage(img, 0, 0, width, height);
   return canvas.toDataURL('image/jpeg', 0.88).split(',')[1];
 }, { png: sharp.toString('base64'), width, height });
-await writeFile(path.join(root, 'web/og.jpg'), Buffer.from(jpeg, 'base64'));
+await writeFile(path.join(root, 'src/web/og.jpg'), Buffer.from(jpeg, 'base64'));
 await browser.close();
-console.log('Rendered web/og.jpg');
+console.log('Rendered src/web/og.jpg');

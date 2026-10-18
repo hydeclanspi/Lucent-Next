@@ -3,7 +3,7 @@
 // nothing here re-implements the physics.
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const api = require('../assets/interaction.js');
+const api = require('../src/assets/interaction.js');
 const T = api._test;
 
 // Obstacle rectangles measured from the live page at 1560×1040 (top bar, profile, main card, history label).

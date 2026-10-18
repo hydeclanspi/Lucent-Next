@@ -2,7 +2,7 @@
 // 场志 integrity: changing a definition (histogram bins, grid shape) must never lose history.
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { create, _test: util } = require('../assets/field-store.js');
+const { create, _test: util } = require('../src/assets/field-store.js');
 
 function memory(seed = {}) {
   const values = structuredClone(seed), writes = [];

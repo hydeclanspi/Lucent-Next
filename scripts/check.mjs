@@ -6,8 +6,9 @@ import path from 'node:path';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 let count = 0;
-for (const dir of ['assets', 'web', 'scripts', 'scripts/capture', 'tests']) {
-  for (const file of await readdir(path.join(root, dir))) {
+for (const dir of ['src/assets', 'src/web', 'demo/film', 'scripts', 'scripts/capture', 'tests']) {
+  const files = await readdir(path.join(root, dir)).catch(() => []);
+  for (const file of files) {
     if (!/\.(?:js|mjs|cjs)$/.test(file)) continue;
     const result = spawnSync(process.execPath, ['--check', path.join(root, dir, file)], { stdio: 'inherit' });
     if (result.status !== 0) process.exit(result.status || 1);
