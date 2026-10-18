@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <title>Lucent · figures</title>
 <!-- Documentation figures. Maps are computed by calling the engine's own functions in
-     assets/interaction.js; nothing here re-implements the physics. Rendered to PNG by scripts/figures.mjs. -->
+     src/assets/interaction.js; nothing here re-implements the physics. Rendered to PNG by scripts/figures.mjs. -->
 <style>
   :root { --surface: #0f151d; --ink: #ece6da; --muted: #98a1ab; --faint: #6c7580; --line: rgba(236, 230, 218, .14);
           --gold: #d8b98c; --ice: #8cc7ec; --serif: "Noto Serif CJK SC", "Songti SC", serif;
@@ -24,7 +24,7 @@
 </head>
 <body>
 <div id="figure"></div>
-<script src="../../assets/interaction.js"></script>
+<script src="../../src/assets/interaction.js"></script>
 <script>
 "use strict";
 const params = new URLSearchParams(location.search);
@@ -145,8 +145,8 @@ const figures = {
     ctx.fillStyle = "#8cc7ec"; ctx.fillText(t(`${sites.length} 个安全落点 · 24 px 网格`, `${sites.length} safe sites · 24 px grid`), 760 * s, 286 * s);
     const fade = ctx.createLinearGradient(0, height - 90, 0, height); fade.addColorStop(0, "rgba(15,21,29,0)"); fade.addColorStop(1, "rgba(15,21,29,1)");
     ctx.fillStyle = fade; ctx.fillRect(0, height - 90, width, 90);
-    footer(t(`由 assets/interaction.js 的 makeGeometry() 与 safeSites() 直接计算 · 参考视口 1560×1040 · 一枚浮光视觉 22 px、触控 44 px`,
-             `Computed by makeGeometry() and safeSites() in assets/interaction.js · 1560×1040 reference viewport · a Lueur is 22 px to the eye and 44 px to the finger`));
+    footer(t(`由 src/assets/interaction.js 的 makeGeometry() 与 safeSites() 直接计算 · 参考视口 1560×1040 · 一枚浮光视觉 22 px、触控 44 px`,
+             `Computed by makeGeometry() and safeSites() in src/assets/interaction.js · 1560×1040 reference viewport · a Lueur is 22 px to the eye and 44 px to the finger`));
   },
 
   potential() {
@@ -299,8 +299,8 @@ Object.assign(figures, {
       "Friends at the wheel: a driverless close pair (< 92 px) takes over from a lonely driver",
       "Hand override: a held Lueur yields at once and coasts 1.25 s after release"
     ]), { size: 12.5, fill: "#c9c2b6", lh: 21 });
-    footer(t("assets/interaction.js · reconcileDrivers / planDriver / driveBody / automaticImpact · 路径为安全落点四邻接网格上的广度优先搜索，再按视线化简",
-             "assets/interaction.js · reconcileDrivers / planDriver / driveBody / automaticImpact · routes are breadth-first searches on the 4-connected grid of safe sites, simplified by line of sight"));
+    footer(t("src/assets/interaction.js · reconcileDrivers / planDriver / driveBody / automaticImpact · 路径为安全落点四邻接网格上的广度优先搜索，再按视线化简",
+             "src/assets/interaction.js · reconcileDrivers / planDriver / driveBody / automaticImpact · routes are breadth-first searches on the 4-connected grid of safe sites, simplified by line of sight"));
   },
 
   glass() {
@@ -341,8 +341,8 @@ Object.assign(figures, {
     el(g, "path", { d: "M222 250 C 262 250, 262 250, 296 250", fill: "none", stroke: "#c9c2b6", "stroke-width": 1.3, "marker-end": "url(#arrow)" });
     multiline(g, 24, 400, t(["主卡片与弹窗各自一套参数，", "可选「经典磨砂」或「暖光液态清璃」。", "静止时没有任何常驻动画循环。"],
       ["The home card and the sheets each keep", "their own set, in Classic Frost or", "Warm Clear. Nothing animates at rest."]), { size: 12.5, fill: "#98a1ab", lh: 20 });
-    footer(t("assets/glass-material.js · renderSettings() 把参数映射为 --beta-alpha / --beta-blur / --beta-edge / --beta-saturation 与冷暖色 · assets/glass-material.css 负责分层 · 不支持背景滤镜或「减少透明度」时退回到实底",
-             "assets/glass-material.js · renderSettings() maps parameters to --beta-alpha / --beta-blur / --beta-edge / --beta-saturation and the warm/cool tints · assets/glass-material.css stacks the layers · a solid fallback when backdrop filters are missing or reduced transparency is requested"));
+    footer(t("src/assets/glass-material.js · renderSettings() 把参数映射为 --beta-alpha / --beta-blur / --beta-edge / --beta-saturation 与冷暖色 · src/assets/glass-material.css 负责分层 · 不支持背景滤镜或「减少透明度」时退回到实底",
+             "src/assets/glass-material.js · renderSettings() maps parameters to --beta-alpha / --beta-blur / --beta-edge / --beta-saturation and the warm/cool tints · src/assets/glass-material.css stacks the layers · a solid fallback when backdrop filters are missing or reduced transparency is requested"));
   },
 
   storage() {
@@ -411,8 +411,8 @@ Object.assign(figures, {
       "rounding, so the total is exact. A grid guard resamples a",
       "mismatched shape before writing, so nothing silently becomes 0."
     ]), { size: 12.5, fill: "#ece6da", lh: 22 });
-    footer(t("assets/stats-store.js · assets/field-store.js · 备份文本 AIRAPC1：deflate-raw 压缩 → base64url → CRC-32，复制前按同一格式回读自检，超长时按段切分",
-             "assets/stats-store.js · assets/field-store.js · the AIRAPC1 backup text is deflate-raw → base64url → CRC-32, read back in the same format before copying, and segmented when long"));
+    footer(t("src/assets/stats-store.js · src/assets/field-store.js · 备份文本 AIRAPC1：deflate-raw 压缩 → base64url → CRC-32，复制前按同一格式回读自检，超长时按段切分",
+             "src/assets/stats-store.js · src/assets/field-store.js · the AIRAPC1 backup text is deflate-raw → base64url → CRC-32, read back in the same format before copying, and segmented when long"));
   }
 });
 
@@ -501,8 +501,8 @@ Object.assign(figures, {
     const c2 = cols(2, 12);
     box(g, c2[0][0], 652, c2[0][1], 152, gold, t("主权", "Yours"), "control", t(["三层默认：当前 · 自定义 · 出厂", "玻璃：主卡片 / 弹窗 × 两种 × 六个参数", "壁纸：柔焦 · 亮度 · 取景 · 加权随机", "浮光：数量 · 力度 · pace · 主图比例", "第二层：每个入口都有长按 · 键盘等价"],
       ["three layers of defaults: now · yours · factory", "glass: card / sheets × two finishes × six dials", "wallpaper: soft focus · brightness · framing · odds", "Lueurs: count · strength · pace · Light/Dark odds", "a second layer: long press everywhere, keyboard too"]), { lh: 19.5 });
-    box(g, c2[1][0], 652, c2[1][1], 152, mint, t("可信", "Trust"), "discipline", t(["数据只在本机 · 加载后零网络请求", "双槽校验快照 · 复制前自检的备份文本", "迁移保总量 · 写入守形状 · 读失败不清空", "方向键移动浮光 · 尊重减少动态与透明度", "41 项单元测试 · 17 组浏览器流程 · CI"],
-      ["data stays on the device · no requests after load", "checksummed two-slot snapshots · self-verifying backup", "migrations keep totals · writes guard their shape", "arrow keys move Lueurs · reduced motion respected", "41 unit tests · 17 browser flows · CI"]), { lh: 19.5 });
+    box(g, c2[1][0], 652, c2[1][1], 152, mint, t("可信", "Trust"), "discipline", t(["数据只在本机 · 加载后零网络请求", "双槽校验快照 · 复制前自检的备份文本", "迁移保总量 · 写入守形状 · 读失败不清空", "方向键移动浮光 · 尊重减少动态与透明度", "41 项单元测试 · 18 组浏览器流程 · CI"],
+      ["data stays on the device · no requests after load", "checksummed two-slot snapshots · self-verifying backup", "migrations keep totals · writes guard their shape", "arrow keys move Lueurs · reduced motion respected", "41 unit tests · 18 browser flows · CI"]), { lh: 19.5 });
     footer(t("完整清单见 docs/architecture.md：每一层的每一个功能，都对应到源码中的位置。",
              "The full inventory is in docs/en/architecture.md: every function on every layer, traced to its place in the source."));
   },
@@ -514,7 +514,7 @@ Object.assign(figures, {
     const W0 = 1104, S = W0 / 1560, H0 = 1040 * S;
     const wrap = document.createElement("div");
     wrap.style.cssText = `position:relative;width:${W0}px;height:${H0}px;border-radius:14px;overflow:hidden;`;
-    wrap.innerHTML = `<img src="../../docs/images/hero.jpg" style="position:absolute;inset:0;width:100%;height:100%;filter:saturate(.85) brightness(.62)">`;
+    wrap.innerHTML = `<img src="../../demo/media/hero.jpg" style="position:absolute;inset:0;width:100%;height:100%;filter:saturate(.85) brightness(.62)">`;
     stage.appendChild(wrap);
     const g = document.createElementNS(NS, "svg");
     g.setAttribute("viewBox", `0 0 ${W0} ${H0}`); g.setAttribute("width", W0); g.setAttribute("height", H0);
@@ -527,7 +527,9 @@ Object.assign(figures, {
     // Rings around the controls (CSS px at 1560×1040), then numbered markers with leader lines.
     [[766, 32, 85, 42], [1222, 33, 40, 40], [1271, 33, 40, 40], [1320, 33, 40, 40], [1170, 33, 40, 40], [633, 558, 84, 97],
      [1247, 786, 136, 34], [676, 331, 599, 50], [1292, 516, 28, 28], [1292, 681, 28, 28], [1274, 402, 46, 24]]
-      .forEach(([x, y, w, h]) => el(g, "rect", { x: x * S - 3, y: y * S - 3, width: w * S + 6, height: h * S + 6, rx: 8, fill: "none", stroke: "rgba(232,201,143,.85)", "stroke-width": 1.4 }));
+      .forEach(([x, y, w, h], i) => el(g, "rect", { x: x * S - 3, y: y * S - 3, width: w * S + 6, height: h * S + 6, rx: 8, fill: "none", stroke: "rgba(232,201,143,.85)", "stroke-width": 1.4, ...(i === 4 ? { "stroke-dasharray": "4 3" } : {}) }));
+    // The FSD lettermark shows only while Drive runs, so its slot is drawn dashed, with the mark set inside.
+    label(g, 1190 * S, 57.5 * S, "FSD", { size: 10.5, fill: "rgba(232,201,143,.9)", anchor: "middle", weight: 600 });
     const marks = [
       [1, [[808, 77]], 808, 112], [2, [[1242, 76]], 1242, 112], [3, [[1291, 76]], 1291, 112], [4, [[1340, 76]], 1340, 112], [5, [[1190, 76]], 1190, 112],
       [6, [[630, 606]], 585, 606], [7, [[1315, 823]], 1315, 860], [8, [[673, 356]], 640, 356],

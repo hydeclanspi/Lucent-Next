@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { create, _test: util } = require('../assets/stats-store.js');
+const { create, _test: util } = require('../src/assets/stats-store.js');
 const HOUR = 3600000, DAY = 24 * HOUR, start = Date.UTC(2026, 9, 8, 9);
 function memory(seed = {}) {
   const values = structuredClone(seed), writes = [];

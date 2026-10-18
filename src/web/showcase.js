@@ -4,7 +4,7 @@
  *   ?lueurs=16             summon up to 16 Lueurs (0–49), exactly as tapping the planet would
  *   ?fsd=on | ?fsd=rage    start Drive (FSD) in cruise or boosted mode
  *   ?open=motion           念起，光行 — the search-motion panel
- *   ?open=random           the same panel with Random on (platinum conduits and blue-white current)
+ *   ?open=random           the same panel with Random on (platinum conduits and blue-white lasers)
  *   ?open=lueurs           代号：交互 — the Lueurs panel
  *   ?open=chronicle        场志 — history and the field chronicle
  *   ?open=about | glass | backup

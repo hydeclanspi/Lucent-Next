@@ -1,5 +1,5 @@
 // Renders the documentation figures in scripts/figures/figures.html to PNG.
-// The maps are computed in the page by the engine's own functions (assets/interaction.js).
+// The maps are computed in the page by the engine's own functions (src/assets/interaction.js).
 //
 //   npm install && AIRA_BROWSER_PATH=/path/to/chrome node scripts/figures.mjs
 import http from 'node:http';
@@ -11,7 +11,7 @@ import path from 'node:path';
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.AIRA_PLAYWRIGHT_MODULE || 'playwright');
 const root = fileURLToPath(new URL('../', import.meta.url));
-const out = path.join(root, 'docs/images/figures');
+const out = path.join(root, 'docs/figures');
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css', '.jpg': 'image/jpeg', '.png': 'image/png' };
 
 const server = http.createServer(async (req, res) => {

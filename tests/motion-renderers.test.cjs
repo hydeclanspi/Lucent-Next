@@ -7,7 +7,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const source = fs.readFileSync(path.join(__dirname, '../assets/search-motion-renderers.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '../src/assets/search-motion-renderers.js'), 'utf8');
 const sandbox = { window: {}, Math, Array, Object, Number, String };
 vm.runInNewContext(source, sandbox);
 const renderers = sandbox.window.AiraMotionRenderers;
