@@ -1,5 +1,5 @@
 // Media made from the concept film, for the README and the demo page:
-//   demo/media/film-poster.jpg   the name at dawn (57.6 s), straight from the page
+//   demo/media/film-poster.jpg   the name at dawn, straight from the page
 //   demo/media/film-teaser.webp  seven passages of the rendered film, cross-faded, 1200 px wide
 //   demo/media/on-device.jpg     the slot for the on-device recording (scripts/film-media/slot.html)
 //
@@ -20,8 +20,14 @@ const wanted = process.argv.slice(2);
 const want = (name) => !wanted.length || wanted.includes(name);
 const launch = () => chromium.launch({ headless: true, ...(process.env.AIRA_BROWSER_PATH ? { executablePath: process.env.AIRA_BROWSER_PATH } : {}) });
 
+// The film's scene marks, read from the page itself, so the media follow the film when it is retimed.
+const M = Object.fromEntries([...fs.readFileSync(path.join(root, 'demo/film/film.js'), 'utf8').match(/var M = \{([\s\S]*?)\};/)[1]
+  .matchAll(/(\w+):\s*([\d.]+)/g)].map(([, name, t]) => [name, Number(t)]));
 // Passages of the film for the teaser: [start, end] in seconds. Each joins the next with a 0.35 s cross-fade.
-const PASSAGES = [[4.9, 6.6], [18.8, 20.5], [27.6, 29.8], [39.3, 40.8], [43.4, 44.9], [48.6, 50.6], [55.4, 57.7]];
+// The Home button seen from up close; the exploded view; the wave, the jump and the tunnel of windows; the stage
+// lights; the console; the four pillars; the name at dawn.
+const PASSAGES = [[M.home + 0.65, M.home + 2.35], [M.explode + 0.8, M.explode + 2.5], [M.rise - 0.05, M.jump + 0.9],
+  [M.show - 0.2, M.show + 1.3], [M.console + 0.9, M.console + 2.4], [M.pillars + 0.1, M.pillars + 2.1], [M.lock + 0.4, M.lock + 2.7]];
 const FADE = 0.35;
 
 if (want('poster')) {
@@ -41,7 +47,7 @@ if (want('poster')) {
   await page.goto(`http://127.0.0.1:${server.address().port}/film/?capture`);
   await page.waitForFunction(() => window.__film);
   await page.evaluate(() => window.__film.ready);
-  await page.evaluate(() => window.__film.seek(57.6));
+  await page.evaluate((t) => window.__film.seek(t), M.lock + 2.6);
   await page.screenshot({ path: path.join(media, 'film-poster.jpg'), type: 'jpeg', quality: 88 });
   await browser.close();
   server.close();

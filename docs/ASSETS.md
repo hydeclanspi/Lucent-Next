@@ -14,7 +14,7 @@ The original licences of the photograph and the illustrations were not part of t
 - The figures in `docs/figures/` are rendered by `scripts/figures.mjs` from the engine's own functions.
 - The screenshots and animations in `demo/media/` are rendered from the product itself (`scripts/capture/`); the social image `src/web/og.jpg` sets the name and tagline over that hero capture (`scripts/og.mjs`).
 - The app icon (`src/web/icon-*.png`) draws the first two Lueurs with the product's own lens styling over a plain gradient (`scripts/icon/icon.html`); it uses no bundled artwork.
-- The concept film (`demo/film/`) is drawn entirely in code — WebGL shaders for the skies and the light, Canvas for the beams and the gold linework, CSS and SVG for the interface and the type. Its dusk skies are painted procedurally and its avatar is a gradient; it uses no bundled artwork. Its score (`score.webm`, `score.m4a`) is synthesized by `scripts/film-score.py` from oscillators, filters and noise; it uses no samples or recordings. The MP4 in `demo/media/` is rendered from that page by `scripts/film.mjs`.
+- The concept film (`demo/film/`) is drawn entirely in code — WebGL shaders for the skies and the light, Canvas for the beams, the arc and the world beyond the slit, CSS and SVG for the interface and the type. Its dusk skies are painted procedurally, the windows beyond the slit are generic scenes drawn from shapes in code, and its avatar is a gradient; it uses no bundled artwork. Its score (`score.webm`, `score.m4a`) is synthesized by `scripts/film-score.py` from oscillators, filters and noise; it uses no samples or recordings. The MP4 in `demo/media/` is rendered from that page by `scripts/film.mjs`.
 
 ## Names and fonts
 
