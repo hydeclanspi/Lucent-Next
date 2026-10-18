@@ -83,7 +83,7 @@ node scripts/film.mjs --preview                                      # half size
 node scripts/film.mjs --from 20 --to 32 --out verification/film/part.mp4
 ```
 
-Two pages render in parallel (`--workers`); on two cores the full film takes about three quarters of an hour. After changing any words in `demo/film/`, run `python3 scripts/film-fonts.py` (needs `fonttools` and `brotli`) so the bundled subsets cover them.
+Two pages render in parallel (`--workers`); on two cores the full film takes about half an hour (24 MB). After changing any words in `demo/film/`, run `python3 scripts/film-fonts.py` (needs `fonttools` and `brotli`) so the bundled subsets cover them.
 
 The browser suite writes its own review captures to ignored `verification/screenshots/`; they are evidence for a run, not documentation.
 
