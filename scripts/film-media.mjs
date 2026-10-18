@@ -1,6 +1,6 @@
 // Media made from the concept film, for the README and the demo page:
 //   demo/media/film-poster.jpg   the name at dawn (52.6 s), straight from the page
-//   demo/media/film-teaser.webp  six passages of the rendered film, cross-faded, 1200 px wide
+//   demo/media/film-teaser.webp  seven passages of the rendered film, cross-faded, 1200 px wide
 //   demo/media/on-device.jpg     the slot for the on-device recording (scripts/film-media/slot.html)
 //
 //   npm run build && node scripts/film.mjs          # first, the film itself
@@ -61,7 +61,9 @@ if (want('slot')) {
 if (want('teaser')) {
   const film = path.join(media, 'lucent-film.mp4');
   if (!fs.existsSync(film)) throw new Error('Render the film first: node scripts/film.mjs');
-  const parts = PASSAGES.map(([a, b], i) => `[0:v]trim=${a}:${b},setpts=PTS-STARTPTS,fps=20,scale=1200:-2:flags=lanczos,format=yuva420p[p${i}]`);
+  // Each passage is its own seeked input, so ffmpeg never holds one part's frames while it decodes another.
+  const inputs = PASSAGES.flatMap(([a, b]) => ['-ss', String(a), '-t', (b - a).toFixed(2), '-i', film]);
+  const parts = PASSAGES.map((_, i) => `[${i}:v]setpts=PTS-STARTPTS,fps=20,scale=1200:-2:flags=lanczos,format=yuv420p[p${i}]`);
   let last = 'p0', offset = PASSAGES[0][1] - PASSAGES[0][0];
   for (let i = 1; i < PASSAGES.length; i++) {
     offset -= FADE;
@@ -70,8 +72,10 @@ if (want('teaser')) {
     offset += PASSAGES[i][1] - PASSAGES[i][0];
   }
   const out = path.join(media, 'film-teaser.webp');
-  const run = spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', film, '-filter_complex', parts.join(';'), '-map', `[${last}]`,
-    '-c:v', 'libwebp_anim', '-quality', '72', '-compression_level', '6', '-loop', '0', '-an', out], { stdio: 'inherit' });
+  const run = spawnSync('ffmpeg', ['-v', 'error', '-y', ...inputs, '-filter_complex', parts.join(';'), '-map', `[${last}]`,
+    // Every frame is encoded whole (libwebp through the WebP muxer): the animated encoder's partial-frame updates
+    // leave blocky patches on the film's smooth gradients.
+    '-c:v', 'libwebp', '-quality', '80', '-compression_level', '4', '-loop', '0', '-an', out], { stdio: 'inherit' });
   if (run.status !== 0) throw new Error('ffmpeg failed');
   console.log(`Rendered demo/media/film-teaser.webp — ${offset.toFixed(1)} s, ${(fs.statSync(out).size / 1048576).toFixed(1)} MB`);
 }
