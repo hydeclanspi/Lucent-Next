@@ -1274,6 +1274,9 @@
   // ---------- player: picture and score on one clock ----------
   var controls = $('controls'), title = $('title'), playBtn = $('play'), scrub = $('scrub'), clock = $('time');
   var startBtn = $('start'), soundBtn = $('sound'), audio = $('score');
+  // The score is fetched only for a viewer: the renderer never plays it, it lays the file under the video.
+  audio.preload = 'auto';
+  try { audio.load(); } catch (error) { /* no sound, the page clock keeps time */ }
   var playing = false, last = 0, idleTimer = 0, scrubbing = false, muted = false;
   try { muted = window.localStorage.getItem('lucent-film:muted') === '1'; } catch (error) { muted = false; }
   function audible() { return audio && !audio.error && audio.readyState >= 2; }
