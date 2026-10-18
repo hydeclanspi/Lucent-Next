@@ -13,7 +13,7 @@ const server = http.createServer((req, res) => {
     let file = path.resolve(dist, '.' + pathname);
     if (file !== dist && !file.startsWith(dist + path.sep)) return res.writeHead(403).end();
     if (fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
-    res.setHeader('Content-Type', ({ '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.png': 'image/png' })[path.extname(file)] || 'application/octet-stream');
+    res.setHeader('Content-Type', ({ '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.png': 'image/png', '.woff2': 'font/woff2', '.m4a': 'audio/mp4', '.webm': 'audio/webm' })[path.extname(file)] || 'application/octet-stream');
     res.end(fs.readFileSync(file));
   } catch { res.writeHead(404).end(); }
 });
@@ -225,15 +225,20 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       await tab.evaluate(() => window.__film.ready);
       const film = (t) => tab.evaluate(t => { window.__film.seek(t); return {
         captions: [...document.querySelectorAll('.cap')].filter(n => n.style.visibility === 'visible' && Number(n.style.opacity) > 0.5).map(n => n.querySelector('.t').textContent),
-        key: Number(document.getElementById('hmKey').style.opacity), lockup: Number(document.getElementById('lkLing').style.opacity),
-        end: Number(document.getElementById('endmark').style.opacity)
+        name: Number(document.getElementById('hmOut').style.opacity), circle: document.getElementById('hmIn').style.clipPath,
+        lockup: Number(document.getElementById('lkLing').style.opacity), end: Number(document.getElementById('endmark').style.opacity)
       }; }, t);
-      const duration = await tab.evaluate(() => window.__film.duration);
+      const { duration, marks } = await tab.evaluate(() => ({ duration: window.__film.duration, marks: window.__film.marks }));
       assert.ok(duration > 60 && duration < 120, 'about a minute and a half');
-      assert.ok((await film(5.8)).key > 0.95, 'the button is named as the Home button');
+      const named = await film(marks.home + 1.6);
+      assert.ok(named.name > 0.95, 'the button is named as the Home button');
+      assert.match(named.circle, /^circle\(3\d\d(\.\d+)?px/, 'the button has opened into a circle of light');
       assert.deepEqual((await film(13.5)).captions, ['今天，我们把这个承诺，做成了一个地方。']);
-      assert.ok((await film(52.4)).lockup > 0.95, 'the place is named Lucent · 灵感台');
+      assert.deepEqual((await film(marks.open + 2.5)).captions, ['去往整个世界。']);
+      assert.ok((await film(marks.lock + 2.6)).lockup > 0.95, 'the place is named Lucent · 灵感台');
       assert.ok((await film(duration)).end > 0.99, 'the film ends on the mark');
+      assert.equal(await tab.evaluate(() => document.body.textContent.includes('明白了吗')), false, 'the film never quizzes its audience');
+      assert.deepEqual(await tab.evaluate(() => [...document.querySelectorAll('#score source')].map(n => n.getAttribute('src'))), ['./score.webm', './score.m4a'], 'the score, in Opus and in AAC');
       await tab.close();
     });
     await check('No uncaught browser exceptions during the tested flows', async () => assert.deepEqual(errors, []));

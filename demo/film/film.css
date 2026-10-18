@@ -1,20 +1,20 @@
 /* Lucent · 灵感台 — concept film · hydeclanspi
- * Type: Noto Serif CJK SC and Noto Sans CJK SC for Chinese, Inter for Latin.
- * The bundled files are subsets made for this film by scripts/film-fonts.py (SIL Open Font License, fonts/OFL.txt). */
+ * Type: Noto Serif CJK SC and Noto Sans CJK SC for Chinese, Inter for Latin, Cormorant Garamond for display.
+ * The bundled files are subsets (scripts/film-fonts.py; Cormorant from @fontsource), SIL Open Font License, fonts/OFL.txt. */
 @font-face { font-family: "Film Serif"; font-weight: 300; font-display: block; src: url("fonts/serif-light.woff2") format("woff2"); }
 @font-face { font-family: "Film Serif"; font-weight: 400; font-display: block; src: url("fonts/serif-regular.woff2") format("woff2"); }
-@font-face { font-family: "Film Sans"; font-weight: 100; font-display: block; src: url("fonts/sans-thin.woff2") format("woff2"); }
 @font-face { font-family: "Film Sans"; font-weight: 300; font-display: block; src: url("fonts/sans-light.woff2") format("woff2"); }
 @font-face { font-family: "Film Sans"; font-weight: 400; font-display: block; src: url("fonts/sans-regular.woff2") format("woff2"); }
 @font-face { font-family: "Film Sans"; font-weight: 500; font-display: block; src: url("fonts/sans-medium.woff2") format("woff2"); }
 @font-face { font-family: "Film Sans"; font-weight: 700; font-display: block; src: url("fonts/sans-bold.woff2") format("woff2"); }
-@font-face { font-family: "Film Sans"; font-weight: 900; font-display: block; src: url("fonts/sans-black.woff2") format("woff2"); }
 @font-face { font-family: "Film Latin"; font-weight: 200; font-display: block; src: url("fonts/latin-thin.woff2") format("woff2"); }
 @font-face { font-family: "Film Latin"; font-weight: 300; font-display: block; src: url("fonts/latin-light.woff2") format("woff2"); }
 @font-face { font-family: "Film Latin"; font-weight: 400; font-display: block; src: url("fonts/latin-regular.woff2") format("woff2"); }
 @font-face { font-family: "Film Latin"; font-weight: 500; font-display: block; src: url("fonts/latin-medium.woff2") format("woff2"); }
 @font-face { font-family: "Film Latin"; font-weight: 700; font-display: block; src: url("fonts/latin-bold.woff2") format("woff2"); }
 @font-face { font-family: "Film Italic"; font-style: italic; font-weight: 400; font-display: block; src: url("fonts/latin-italic.woff2") format("woff2"); }
+@font-face { font-family: "Film Display"; font-style: normal; font-weight: 300; font-display: block; src: url("fonts/display-light.woff2") format("woff2"); }
+@font-face { font-family: "Film Display"; font-style: italic; font-weight: 300; font-display: block; src: url("fonts/display-italic.woff2") format("woff2"); }
 
 :root {
   --ink: #f4f6fa;
@@ -28,6 +28,7 @@
   --sans: "Film Sans", "HarmonyOS Sans SC", "PingFang SC", "Noto Sans CJK SC", sans-serif;
   --latin: "Film Latin", "Inter", "SF Pro Display", system-ui, sans-serif;
   --italic: "Film Italic", "Inter", system-ui, sans-serif;
+  --display: "Film Display", "Film Serif", "Cormorant Garamond", serif;
   color-scheme: dark;
 }
 
@@ -41,28 +42,37 @@ body { font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: anti
 #world { width: 1920px; height: 1080px; }
 #fx { mix-blend-mode: screen; }
 
-/* ---------- giant type behind the product ---------- */
-#giant { display: flex; align-items: center; justify-content: center; overflow: hidden; }
-#giantWord { font: 900 560px/1 var(--sans); letter-spacing: -12px; white-space: nowrap; opacity: 0; color: #0d1220; }
 #halo { background: radial-gradient(42% 48% at 50% 47%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 70%); opacity: 0; }
 
 /* ---------- the place: one screen, seen through a camera ---------- */
 #camera { position: absolute; left: 0; top: 0; width: 1560px; height: 1040px; transform-origin: 0 0; perspective: 3000px; perspective-origin: 780px 520px; }
 #device { position: absolute; left: 0; top: 0; width: 1560px; height: 1040px; transform-origin: 780px 520px; }
-#device.space, #device.space #screen { transform-style: preserve-3d; }
+#device.space, #device.space #screen, #device.solid { transform-style: preserve-3d; }
+/* The device as it is: a 4.1 mm black bezel (21 px at 1560 px across 300 mm) inside a silver-grey aluminium frame, 6.85 mm thick */
 #bezel {
-  position: absolute; left: -46px; top: -46px; width: 1652px; height: 1132px; border-radius: 74px;
-  background: linear-gradient(150deg, #2c313a 0%, #15181e 38%, #0c0e12 62%, #252a32 100%);
-  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.2), inset 0 0 0 7px #07080b, 0 70px 120px rgba(20, 26, 40, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.5);
+  position: absolute; left: -31px; top: -31px; width: 1622px; height: 1102px; border-radius: 61px; border: 10px solid transparent;
+  background: linear-gradient(160deg, #0b0d10, #050608 55%, #0a0c0f) padding-box,
+    linear-gradient(128deg, #f3f5f7 0%, #b9bec5 18%, #8b9098 34%, #d6d9dd 50%, #a2a7ae 66%, #eceef1 82%, #9da2a9 100%) border-box;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16), 0 70px 120px rgba(20, 30, 50, 0.32), 0 18px 34px rgba(20, 30, 50, 0.18);
   opacity: 0;
 }
-#bezel::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(118deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0) 22%, rgba(255, 255, 255, 0) 78%, rgba(255, 255, 255, 0.1)); }
+#bezel::before { content: ""; position: absolute; left: 50%; top: 7px; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%;
+  background: radial-gradient(circle at 38% 36%, #3a4a66 0%, #11151d 45%, #050607 70%); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06); }
+#bezel::after { content: ""; position: absolute; inset: 0; border-radius: 51px; background: linear-gradient(118deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0) 24%, rgba(255, 255, 255, 0) 76%, rgba(255, 255, 255, 0.05)); }
+#edgeR { position: absolute; left: 1591px; top: -15px; width: 36px; height: 1070px; border-radius: 16px; opacity: 0; transform-origin: 0 50%; transform: rotateY(90deg);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 30%, rgba(0, 0, 0, 0.18) 100%),
+    linear-gradient(180deg, #d9dce0, #a8adb4 22%, #c9cdd2 48%, #8f949b 74%, #cfd2d6); }
 #screen { position: absolute; left: 0; top: 0; width: 1560px; height: 1040px; border-radius: 30px; }
 .ly { position: absolute; left: 0; top: 0; width: 1560px; height: 1040px; }
 #lySky { border-radius: 30px; overflow: hidden; background: #0c1426; box-shadow: 0 30px 80px rgba(6, 12, 30, 0.28); }
-#innerSky { position: absolute; left: -30px; top: -20px; width: 1620px; height: 1080px; transform-origin: 50% 60%; }
+#innerSky, #innerSkyB { position: absolute; left: -30px; top: -20px; width: 1620px; height: 1080px; transform-origin: 50% 60%; }
+#innerSkyB { opacity: 0; }
 #glare { position: absolute; inset: -20%; background: linear-gradient(112deg, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0.2) 48%, rgba(255, 255, 255, 0.05) 53%, rgba(255, 255, 255, 0) 60%); opacity: 0; mix-blend-mode: screen; }
 #screenDim, #backdrop { position: absolute; inset: 0; border-radius: 30px; background: #04070e; opacity: 0; }
+#garden { position: absolute; inset: 0; border-radius: 30px; opacity: 0;
+  background: radial-gradient(60% 50% at 22% 100%, rgba(255, 180, 104, 0.52), rgba(255, 170, 110, 0) 72%),
+    radial-gradient(75% 58% at 62% 104%, rgba(255, 198, 132, 0.5), rgba(255, 176, 112, 0.16) 52%, rgba(255, 170, 110, 0) 80%),
+    radial-gradient(40% 30% at 88% 14%, rgba(206, 220, 255, 0.16), rgba(206, 220, 255, 0) 70%); }
 
 /* ---------- the base, as it stands on the device ---------- */
 #ui > * { position: absolute; }
@@ -200,6 +210,9 @@ body { font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: anti
 .cap.ink .zh, .cap.ink .title { color: var(--dark); }
 .cap.ink .sub, .cap.ink .spec { color: var(--dark-2); }
 .cap.ink .en { color: var(--dark-3); }
+.cap.gold .zh { color: #3a2810; letter-spacing: 10px; }
+.cap.gold .en { font: italic 300 32px/1.4 var(--display); letter-spacing: 0.6px; color: rgba(70, 48, 20, 0.66); }
+.cap.gold .reveal > .g { background: linear-gradient(90deg, rgba(255, 246, 220, 0) calc(var(--p) * 140% - 44%), rgba(255, 250, 236, 0.95) calc(var(--p) * 140% - 12%), rgba(214, 160, 70, 0.75) calc(var(--p) * 140% - 4%), rgba(255, 246, 220, 0) calc(var(--p) * 140%)); -webkit-background-clip: text; background-clip: text; }
 .reveal { display: inline-block; position: relative; --p: 0; }
 .reveal > .t { -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 calc(var(--p) * 140% - 40%), transparent calc(var(--p) * 140%)); mask-image: linear-gradient(90deg, #000 0%, #000 calc(var(--p) * 140% - 40%), transparent calc(var(--p) * 140%)); }
 .reveal > .g { position: absolute; left: 0; top: 0; right: 0; bottom: 0; color: transparent; pointer-events: none;
@@ -207,20 +220,22 @@ body { font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: anti
   -webkit-background-clip: text; background-clip: text; opacity: calc(1 - var(--p) * var(--p)); }
 .cap.ink .reveal > .g { background: linear-gradient(90deg, rgba(10, 89, 247, 0) calc(var(--p) * 140% - 44%), rgba(10, 89, 247, 0.85) calc(var(--p) * 140% - 12%), rgba(120, 180, 255, 0.6) calc(var(--p) * 140% - 4%), rgba(10, 89, 247, 0) calc(var(--p) * 140%)); -webkit-background-clip: text; background-clip: text; }
 
-/* H◯me: the button becomes the o */
-#home span { position: absolute; opacity: 0; white-space: nowrap; }
-.hm-h, .hm-me { top: 0; font: 200 330px/1 var(--latin); letter-spacing: 0; color: #f4f7fc; text-shadow: 0 0 40px rgba(170, 210, 255, 0.25); }
-.hm-call { font: 300 40px/1 var(--serif); letter-spacing: 8px; color: rgba(236, 242, 250, 0.82); }
-.hm-key { top: 0; font: 100 240px/1 var(--sans); color: #f4f7fc; text-shadow: 0 0 40px rgba(170, 210, 255, 0.25); }
-.hm-en { font: 300 24px/1 var(--latin); letter-spacing: 0.4px; color: var(--ink-3); }
+/* The Home button opens into a circle of light; its name runs through it, white outside and ink inside */
+#home .hm-name { position: absolute; left: 0; top: 0; white-space: nowrap; line-height: 1; }
+#home .hm-name i { font: italic 300 300px/1 var(--display); letter-spacing: -3px; }
+#home .hm-name span { margin-left: 34px; font: 300 216px/1 var(--serif); }
+#hmOut { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; color: #f4f6fa; opacity: 0; }
+#hmIn { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; color: #0d1220; opacity: 0; }
+#hmIn .hm-call { position: absolute; left: 0; width: 1920px; text-align: center; font: 300 28px/1 var(--serif); letter-spacing: 14px; text-indent: 14px; color: rgba(13, 18, 32, 0.74); }
+#hmIn .hm-en { position: absolute; left: 0; width: 1920px; text-align: center; font: italic 300 31px/1 var(--display); letter-spacing: 0.3px; color: rgba(28, 36, 54, 0.7); }
 
-#montage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; }
-#mWord { font: 900 260px/1 var(--sans); letter-spacing: 18px; text-indent: 18px; white-space: nowrap; }
-#mLatin { margin-top: 26px; font: 300 34px/1 var(--latin); font-style: normal; letter-spacing: 12px; text-indent: 12px; }
-#getit { position: absolute; left: 0; width: 1920px; top: 494px; text-align: center; font: 300 72px/1.2 var(--serif); letter-spacing: 10px; color: var(--ink); opacity: 0; }
-#four { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
-.w4 { position: absolute; right: 860px; font: 300 76px/1 var(--serif); letter-spacing: 10px; white-space: nowrap; color: var(--ink); opacity: 0; }
-.w4 .tai { display: inline-block; letter-spacing: 0; }
+/* Four places, as four pillars of light */
+#pillars { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+.pillar { position: absolute; left: 0; top: 0; width: 480px; height: 1080px; opacity: 0; color: #f4f6fa; }
+.pillar b { position: absolute; left: 205px; top: 372px; writing-mode: vertical-rl; font: 300 70px/1 var(--serif); letter-spacing: 26px; }
+.pillar i { position: absolute; left: 0; top: 700px; width: 480px; text-align: center; font: italic 300 30px/1 var(--display); letter-spacing: 0.6px; opacity: 0.78; }
+.pillar.ink { color: #0d1220; }
+.pillar.warm { color: #3a2810; }
 #lockup { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
 .lk-ling, .lk-tai { position: absolute; font: 300 150px/1 var(--serif); color: var(--ink); white-space: nowrap; opacity: 0; }
 .lk-ling { left: 735px; top: 395px; }
@@ -260,7 +275,9 @@ body { font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: anti
 #controls button:hover { background: rgba(255, 255, 255, 0.1); }
 #controls button:focus-visible { outline: 2px solid #8fbaff; outline-offset: 1px; }
 #controls svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-#controls .pause-icon { display: none; }
+#controls .pause-icon, #controls .sound-off { display: none; }
+#controls.muted .sound-off { display: block; }
+#controls.muted .sound-on { display: none; }
 #controls.playing .pause-icon { display: block; }
 #controls.playing .play-icon { display: none; }
 #scrub { flex: 1; height: 24px; margin: 0; background: transparent; accent-color: #f2e6c9; cursor: pointer; }
@@ -268,5 +285,13 @@ body { font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: anti
 #title { position: fixed; left: 24px; top: 20px; font: 300 14px/1 var(--latin); letter-spacing: 1px; color: rgba(236, 240, 247, 0.7); transition: opacity 0.4s ease; z-index: 5; mix-blend-mode: difference; }
 #title b { font-weight: 300; letter-spacing: 6px; margin-right: 10px; }
 #title.idle { opacity: 0; }
-.capture #controls, .capture #title { display: none; }
+#start { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 6; display: flex; align-items: center; gap: 18px; padding: 18px 30px 18px 22px; border-radius: 999px; cursor: pointer;
+  color: #f4f6fa; background: rgba(24, 32, 52, 0.42); border: 1px solid rgba(255, 255, 255, 0.24); -webkit-backdrop-filter: blur(22px) saturate(160%); backdrop-filter: blur(22px) saturate(160%);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.18), 0 30px 80px rgba(0, 0, 0, 0.4); font: 300 22px/1.2 var(--serif); letter-spacing: 4px; transition: opacity 0.5s ease, transform 0.5s ease; }
+#start svg { width: 46px; height: 46px; padding: 11px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.85); fill: #f4f6fa; }
+#start em { display: block; margin-top: 8px; font: italic 300 17px/1 var(--display); letter-spacing: 0.6px; color: rgba(226, 232, 242, 0.7); }
+#start:hover { background: rgba(34, 44, 70, 0.52); }
+#start:focus-visible { outline: 2px solid #8fbaff; outline-offset: 4px; }
+#start.gone { opacity: 0; transform: translate(-50%, -46%); pointer-events: none; }
+.capture #controls, .capture #title, .capture #start { display: none; }
 @media (prefers-reduced-motion: reduce) { #controls, #title { transition: none; } }

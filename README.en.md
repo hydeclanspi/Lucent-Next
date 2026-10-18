@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="demo/media/film-teaser.webp" alt="From the Lucent concept film: a beam of light draws the button everyone called Home; the ring opens into a screen and four layers stack into Lucent; the words you write become light and rush into the arrow; over an aurora, the glass's six settings turn one by one; four names become 灵感台" width="100%"></a>
+  <a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="demo/media/film-teaser.webp" alt="From the Lucent concept film: the button opens into a circle of light with “Home 键” running through it; a flash into the light; four layers stack into one screen; a narrow seam of light opens onto a world of satin gold; stage lights rise; four pillars of light become 灵感台" width="100%"></a>
 </p>
 
 <h1 align="center">Lucent · 灵感台</h1>
@@ -66,14 +66,12 @@
 
 <p align="center">
   A workbench. A launch pad. A stage. A console.<br>
-  A workbench. A launch pad. A stage. A console.<br>
-  <br>
-  Are you getting it?
+  In Chinese, all four end in the same character: 台.
 </p>
 
 <h3 align="center">They are one place. We call it Lucent.</h3>
 
-<p align="center"><sub>In Chinese, 灵感台: 灵感 is inspiration, and 台 is a workbench, a launch pad, a stage and a console, all at once.</sub></p>
+<p align="center"><sub>灵感台 in Chinese: 灵感 is inspiration, and 台 is all four places at once.</sub></p>
 
 <br>
 
@@ -93,11 +91,11 @@
 
 <p align="center"><a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="demo/media/film-poster.jpg" alt="The concept film: glints gather into 灵感台 against a dawn sky, with LUCENT and “The inspiration launcher” below" width="100%"></a></p>
 
-**A concept film**, one minute twenty-one seconds. In the dark, a beam of light draws the button everyone called Home; in a flash of white, the promise it made becomes a place. Four layers stack into one screen; the words you write become light, rush into the arrow, race through a tunnel of light and fly back along their path; stage lights rise, and lasers run through rings of platinum; over an aurora, the glass's six settings turn one by one; four names become one, 灵感台; forty-nine residents move into the open space and form constellations; and it all comes to rest on the screen it was made for.
+**A concept film**, one minute thirty-five seconds, with sound. In the dark, a beam of light draws the button; pressed, it opens into a circle of light, and the words “Home 键” run through it. In a flash of white, the promise it made becomes a place. Four layers stack into one screen; the words you write become light, rush into the arrow and pass through a narrow seam of light into a wide world of satin gold, flying on over the sea to the sun; stage lights rise, and lasers run through rings of platinum; over an aurora, the glass's six settings turn one by one; the four places stand as four pillars of light, close into a line, then a point, and 灵感台 rises from it; forty-nine residents move into the open space, form constellations and settle into a back garden; and it all comes to rest on the screen it was made for.
 
-Every frame is drawn in code: one timeline, with WebGL for the sky and the light, Canvas for the beams, CSS and SVG for the interface and the type. Pause or scrub any moment, or render it frame by frame to video.
+Every frame and every sound is made in code: one timeline, with WebGL for the sky and the light, Canvas for the beams and the gold linework, CSS and SVG for the interface and the type; the score and the sound effects are synthesized with numpy from the same timetable, so every press and every beam lands on the beat. Pause or scrub any moment, or render it frame by frame to video.
 
-→ [Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/film/) · [Download the MP4 (1080p, 60 fps)](demo/media/lucent-film.mp4)
+→ [Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/film/) · [Download the MP4 (1080p, 60 fps, with sound)](demo/media/lucent-film.mp4)
 
 ### On the device
 

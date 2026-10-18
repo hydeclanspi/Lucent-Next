@@ -1,3 +1,13 @@
+The fonts in this folder are subsets of these typefaces, used by the Lucent concept film:
+
+- Noto Serif CJK SC and Noto Sans CJK SC. Copyright 2014-2023 Adobe (http://www.adobe.com/).
+  Noto is a trademark of Google Inc.
+- Inter and Inter Display. Copyright 2016-2023 The Inter Project Authors (https://github.com/rsms/inter).
+- Cormorant Garamond (display-light, display-italic: the Latin subsets published as @fontsource/cormorant-garamond).
+  Copyright 2015 The Cormorant Project Authors (https://github.com/CatharsisFonts/Cormorant).
+
+All of them are licensed under the SIL Open Font License, Version 1.1, reproduced below.
+
 SIL OPEN FONT LICENSE
 
 Version 1.1 - 26 February 2007

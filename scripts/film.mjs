@@ -6,8 +6,9 @@
 //   node scripts/film.mjs --from 20 --to 32 --out verification/film/launch.mp4    # a part
 //
 // The page is never played: every frame is window.__film.seek(t) followed by a screenshot, piped
-// straight into ffmpeg (libx264). A slow machine renders the same film as a fast one; --workers sets
-// how many pages render in parallel (default 2).
+// straight into ffmpeg (libx264), with the score (demo/film/score.m4a, scripts/film-score.py) laid
+// under it from the same moment; --mute leaves it out. A slow machine renders the same film as a fast
+// one; --workers sets how many pages render in parallel (default 2).
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -28,7 +29,7 @@ const crf = option('crf', preview ? '26' : '21');
 const out = path.resolve(root, option('out', preview ? 'verification/film/preview.mp4' : 'demo/media/lucent-film.mp4'));
 
 if (!fs.existsSync(path.join(dist, 'film', 'index.html'))) throw new Error('Run `npm run build` first.');
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.woff2': 'font/woff2', '.svg': 'image/svg+xml' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.m4a': 'audio/mp4', '.webm': 'audio/webm' };
 const server = http.createServer((request, response) => {
   try {
     let file = path.resolve(dist, '.' + decodeURIComponent(new URL(request.url, 'http://x').pathname));
@@ -59,7 +60,10 @@ const from = Number(option('from', 0)), to = Math.min(duration, Number(option('t
 const frames = Math.round((to - from) * fps);
 
 fs.mkdirSync(path.dirname(out), { recursive: true });
+const score = path.join(dist, 'film', 'score.m4a');
+const sound = fs.existsSync(score) && !args.includes('--mute');
 const ffmpeg = spawn('ffmpeg', ['-v', 'error', '-y', '-f', 'image2pipe', '-c:v', 'mjpeg', '-framerate', String(fps), '-i', '-',
+  ...(sound ? ['-ss', String(from), '-t', String(frames / fps), '-i', score, '-map', '0:v', '-map', '1:a', '-c:a', 'aac', '-b:a', '192k'] : []),
   '-vf', 'scale=out_color_matrix=bt709:out_range=tv,format=yuv420p',
   '-c:v', 'libx264', '-preset', preview ? 'veryfast' : 'slow', '-crf', crf, '-tune', 'film', '-profile:v', 'high',
   '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', '-movflags', '+faststart', out], { stdio: ['pipe', 'inherit', 'inherit'] });
@@ -96,4 +100,4 @@ await finished;
 await browser.close();
 server.close();
 if (errors.length) { console.error('page errors:', errors); process.exitCode = 1; }
-console.log(`Rendered ${path.relative(root, out)} — ${frames} frames at ${fps} fps, ${(fs.statSync(out).size / 1048576).toFixed(1)} MB`);
+console.log(`Rendered ${path.relative(root, out)} — ${frames} frames at ${fps} fps${sound ? ' with the score' : ''}, ${(fs.statSync(out).size / 1048576).toFixed(1)} MB`);

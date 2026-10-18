@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="demo/media/film-teaser.webp" alt="Lucent · 灵感台 概念影片片段：一束光画出那颗按键，人们叫它 Home 键；光圈展开成一块屏幕，四层叠成灵感台；写下的字化作光，冲进箭头；极光里，玻璃的六项参数逐一调动；四个名字合成「灵感台」" width="100%"></a>
+  <a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="demo/media/film-teaser.webp" alt="Lucent · 灵感台 概念影片片段：按键张开成一个光圆，「Home 键」从中穿过；一道白光，转入亮场；四层叠成一块屏幕；一道窄光豁然开朗，是缎面金色的世界；舞台灯亮起；四根光柱，合成「灵感台」" width="100%"></a>
 </p>
 
 <h1 align="center">Lucent · 灵感台</h1>
@@ -66,12 +66,10 @@
 
 <p align="center">
   工作台。发射台。舞台。控制台。<br>
-  工作台。发射台。舞台。控制台。<br>
-  <br>
-  明白了吗？
+  四个名字，同一个「台」。
 </p>
 
-<h3 align="center">它们是同一个地方。我们叫它，灵感台。</h3>
+<h3 align="center">它们，是同一个地方。我们叫它，灵感台。</h3>
 
 <br>
 
@@ -91,11 +89,11 @@
 
 <p align="center"><a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="demo/media/film-poster.jpg" alt="概念影片：光点在黎明的天色里聚成「灵感台」，其下是 LUCENT 与「灵感启动台」" width="100%"></a></p>
 
-**概念影片**，一分二十一秒。暗场里，一束光画出那颗按键，人们叫它 Home 键；它许下的承诺，在一道白光之后成了一个地方。四层叠成一块屏幕；写下的字化作光，冲进箭头，穿过光速隧道，再沿原路飞回；舞台灯亮起，白金导流环里激光奔跑；极光之上，玻璃的六项参数逐一调动；四个名字合成「灵感台」；四十九位居民住进留白，连成星座；最后，落在那块为它而生的屏幕上。
+**概念影片**，一分三十五秒，有声。暗场里，一束光画出那颗按键；按下去，它张开成一个光圆，「Home 键」从中穿过。它许下的承诺，在一道白光之后成了一个地方。四层叠成一块屏幕；写下的字化作光，冲进箭头，穿过一道窄光，豁然开朗：一个缎面金色的世界，光越过海面，飞向太阳；舞台灯亮起，白金导流环里激光奔跑；极光之上，玻璃的六项参数逐一调动；四个台并肩成四根光柱，收成一线、一点，生出「灵感台」；四十九位居民住进留白，连成星座，又在后花园里安顿下来；最后，落在那块为它而生的屏幕上。
 
-每一帧都由代码绘制：一条时间轴，WebGL 画天色与光，Canvas 画光束，CSS 与 SVG 画界面和字。任意时刻都可以暂停、拖动，也可以逐帧渲染成视频。
+每一帧画面、每一个声音，都由代码生成：一条时间轴，WebGL 画天色与光，Canvas 画光束和金色的线，CSS 与 SVG 画界面和字；配乐与音效由 numpy 合成，读同一张时间表，每一次按下、每一道光都落在拍子上。任意时刻都可以暂停、拖动，也可以逐帧渲染成视频。
 
-→ [在浏览器中观看](https://hydeclanspi.github.io/Lucent-Next/film/) · [下载 MP4（1080p，60 帧）](demo/media/lucent-film.mp4)
+→ [在浏览器中观看](https://hydeclanspi.github.io/Lucent-Next/film/) · [下载 MP4（1080p，60 帧，有声）](demo/media/lucent-film.mp4)
 
 ### 实机
 
