@@ -90,6 +90,11 @@
   var innerSky = $('innerSky'), innerSkyB = $('innerSkyB'), glare = $('glare'), backdrop = $('backdrop'), screenDim = $('screenDim'), garden = $('garden');
   var halo = $('halo'), bloom = $('bloom'), scrim = $('scrim'), black = $('black'), vignette = $('vignette');
   var light = $('light'), lctx = light.getContext('2d');
+  // When the renderer captures above 1080p (scripts/film.mjs --scale), the light is drawn at the frame's own
+  // resolution, so its lines and the world beyond the slit stay as sharp as the type; on screen it keeps
+  // 1920 × 1080, which plays smoothly.
+  var LDPR = CAPTURE ? Math.min(2, Math.max(1, window.devicePixelRatio || 1)) : 1;
+  if (LDPR !== 1) { light.width = Math.round(1920 * LDPR); light.height = Math.round(1080 * LDPR); }
   var ring = $('ring'), ringGlow = $('ringGlow'), press = $('press');
   var hmCall = $('hmCall'), hmName = $('hmName'), hmEn = $('hmEn'), hmIcon = $('hmIcon');
   var cardGlass = $('cardGlass'), card = $('card'), typed = $('typed'), ph = $('ph'), caret = $('caret'), go = $('go');
@@ -804,7 +809,7 @@
   // thousand windows with the words in its clear centre. Drawn in Canvas 2D on a canvas of its own, then
   // laid over the world.
   var BEYOND = (function () {
-    var canvas = document.createElement('canvas'); canvas.width = 1920; canvas.height = 1080;
+    var canvas = document.createElement('canvas'); canvas.width = Math.round(1920 * LDPR); canvas.height = Math.round(1080 * LDPR);
     var bx = canvas.getContext('2d');
     // the world's own clock starts when the slit appears: the wave sets out at T0, the jump is at TJ
     var T0 = M.rise - M.slit, TJ = M.jump - M.slit, WAVE = 0.8;
@@ -1382,7 +1387,7 @@
         var ground = 1 - E.inOut(seg(t, T0 + 0.9, T0 + 1.7)), a1 = E.inOut(seg(t, T0 + 1.0, T0 + 1.75)), reveal = E.inOut(seg(t, T0 + 0.95, T0 + 1.75));
         var jump = t < TJ ? E.in2(seg(t, T0 + 0.8, TJ)) : 1 - E.out(seg(t, TJ, TJ + 0.7));
         var roll = -0.11 * E.inOut(seg(t, T0 + 0.2, T0 + 1.3)) * (1 - E.inOut(seg(t, TJ - 0.3, TJ + 0.04)));
-        bx.setTransform(1, 0, 0, 1, 0, 0); bx.globalAlpha = 1; bx.globalCompositeOperation = 'source-over';
+        bx.setTransform(LDPR, 0, 0, LDPR, 0, 0); bx.globalAlpha = 1; bx.globalCompositeOperation = 'source-over';
         if (roll) { bx.translate(960, 540); bx.rotate(roll); bx.translate(-960, -540); }
         if (a1 < 1) { silicon(bx, t, hz, ground); beams(bx, t, hz); }
         if (a1 > 0.001) {
@@ -1394,7 +1399,7 @@
         bx.setTransform(1, 0, 0, 1, 0, 0);
         c.save();
         if (half < 1100) { c.beginPath(); c.rect(960 - half, 0, 2 * half, 1080); c.clip(); }
-        c.globalAlpha = s.beyond; c.drawImage(canvas, 0, 0);
+        c.globalAlpha = s.beyond; c.drawImage(canvas, 0, 0, 1920, 1080);
         c.restore();
         if (half < 1100 && s.slit[1] > 0.01) { // the door, edged in every colour
           rim(c, 960 - half, s.slit[1], t); rim(c, 960 + half, s.slit[1], t);
@@ -1409,8 +1414,9 @@
       pillar: function (c, x0, x1, y0, y1, a) {
         if (!SPR) build();
         if (!PILLAR) {
-          PILLAR = document.createElement('canvas'); PILLAR.width = 1920; PILLAR.height = 1080;
+          PILLAR = document.createElement('canvas'); PILLAR.width = Math.round(1920 * LDPR); PILLAR.height = Math.round(1080 * LDPR);
           var px = PILLAR.getContext('2d');
+          px.setTransform(LDPR, 0, 0, LDPR, 0, 0);
           // a clear column down the middle, where the pillar's name stands
           winBg(px, 7); windows(px, 7.4, 1, function (tt) { return 9500 + 160 * tt; }, [960, 545, 150, 340]);
           px.save(); px.globalCompositeOperation = 'source-over';
@@ -1419,7 +1425,7 @@
         }
         if (x1 - x0 < 0.5 || y1 - y0 < 0.5) return;
         c.save(); c.beginPath(); c.rect(x0, y0, x1 - x0, y1 - y0); c.clip();
-        c.globalAlpha = a; c.drawImage(PILLAR, (x0 + x1) / 2 - 960, 0);
+        c.globalAlpha = a; c.drawImage(PILLAR, (x0 + x1) / 2 - 960, 0, 1920, 1080);
         c.restore();
       },
       rebuild: function () { SPR = null; PILLAR = null; BEAMS = null; }
@@ -1675,6 +1681,7 @@
     press.style.opacity = f3(Math.max(t > M.press1 + 0.05 ? 0.9 * (1 - E.out(seg(t, M.press1 + 0.05, M.press1 + 1.05))) : 0, t > M.press2 + 0.05 ? 0.9 * (1 - E.out(seg(t, M.press2 + 0.05, M.press2 + 1.05))) : 0));
 
     // ---- light ----
+    lctx.setTransform(LDPR, 0, 0, LDPR, 0, 0);
     lctx.clearRect(0, 0, 1920, 1080);
     // The first photon, and the head that draws the ring
     if (t > M.photon && t < M.draw1 + 0.8) {
