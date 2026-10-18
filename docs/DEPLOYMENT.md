@@ -17,7 +17,7 @@ The repository layout and the published URLs are independent: the source lives i
 | Published at | From | Content |
 |---|---|---|
 | `/` | `src/` | The base (`index.html`, `assets/`, `web/`): its browser demonstration layer, immersive full screen, and the app manifest and icons (installable; opens full screen) |
-| `/film/` | `demo/film/` | The concept film, drawn in code and played in the browser |
+| `/film/` | `demo/film/` | The concept film, drawn and scored in code, played in the browser |
 | `/atelier/` | `demo/atelier/` | The sixteen-study search-motion atelier |
 | `/llms.txt` | `docs/llms.txt` | A plain-text summary for language-model crawlers |
 | `/robots.txt`, `/sitemap.xml`, `/.nojekyll` | generated | Written by `scripts/build.mjs` |

@@ -16,11 +16,11 @@ Product: **Lucent · 灵感台**. The floating-lens engine is **Lueurs** (小浮
 | `src/web/immersive.js` | Immersive full screen on large screens: the first real click, F to toggle, a respected exit |
 | `src/web/manifest.webmanifest`, `src/web/icon-*.png` | Install as an app that opens full screen; the icon is rendered by `scripts/icon.mjs` from `scripts/icon/icon.html` |
 | `src/web/og.jpg` | Social preview (1280×640): the mark and tagline set over the hero capture by `scripts/og.mjs` from `scripts/og/og.html` |
-| `demo/film/` | The concept film: one timeline, a pure function of time — `gl.js` paints the worlds and the glints in WebGL, `film.js` drives the camera, the interface, the light and the words. `fonts/` holds OFL subsets made by `scripts/film-fonts.py`; `scripts/film.mjs` renders it to video |
+| `demo/film/` | The concept film: one timeline, a pure function of time — `gl.js` paints the worlds and the glints in WebGL, `film.js` drives the camera, the interface, the light and the words. `fonts/` holds OFL subsets made by `scripts/film-fonts.py`; `score.webm` and `score.m4a` are its score, synthesized by `scripts/film-score.py`; `scripts/film.mjs` renders it to video |
 | `demo/atelier/` | The sixteen-study motion atelier, a standalone page |
 | `demo/media/` | The screenshots, animations and film renders shown in the README and the docs |
 | `native/` | The original Aira 5.0 package, byte for byte; its SHA-256 is checked by `scripts/check.mjs` |
-| `scripts/` | Build, preview, checks, documentation figures (`figures.mjs`), media capture (`capture/`), the film renderer (`film.mjs`), its font subsetter (`film-fonts.py`) and the media made from it (`film-media.mjs`) |
+| `scripts/` | Build, preview, checks, documentation figures (`figures.mjs`), media capture (`capture/`), the film renderer (`film.mjs`), its score (`film-score.py`), its font subsetter (`film-fonts.py`) and the media made from it (`film-media.mjs`) |
 | `docs/` | Deep documentation in Chinese, `docs/en/` in English, `docs/llms.txt` for crawlers |
 
 `scripts/build.mjs` publishes `src/` at the root of `dist/`, `demo/film/` at `film/` and `demo/atelier/` at `atelier/`, so published addresses never depend on the repository layout. Editing `dist/` directly is lost on the next build.
@@ -72,18 +72,19 @@ Frames and stills land in the ignored `verification/capture/`. `CAPTURE_QUICK=1`
 | `chronicle.jpg`, `roster.jpg` | the charts (top) and the terrain, drive log and roster (bottom) of `chronicle-sheet.png` |
 | `atelier.jpg` | the first 1,198 CSS px of `atelier.png`, 1600 px wide |
 | `lucent-film.mp4` | `node scripts/film.mjs` (below) |
-| `film-poster.jpg`, `film-teaser.webp`, `on-device.jpg` | `node scripts/film-media.mjs`: the film's frame at 52.6 s (the name at dawn); seven passages of the MP4 joined by 0.35 s cross-fades, 20 fps, 1200 px wide; the slot for the on-device recording, from `scripts/film-media/slot.html` — replace it with a frame of the real recording when it arrives |
+| `film-poster.jpg`, `film-teaser.webp`, `on-device.jpg` | `node scripts/film-media.mjs`: the film's frame at 57.6 s (the name at dawn); seven passages of the MP4 joined by 0.35 s cross-fades, 20 fps, 1200 px wide; the slot for the on-device recording, from `scripts/film-media/slot.html` — replace it with a frame of the real recording when it arrives |
 
 **The film** is rendered the same way, one exact frame at a time: the page is never played, only seeked.
 
 ```sh
+python3 scripts/film-score.py                                        # demo/film/score.webm and score.m4a (numpy, scipy, ffmpeg)
 npm run build
-AIRA_BROWSER_PATH=/path/to/chromium node scripts/film.mjs              # demo/media/lucent-film.mp4, 1080p60 H.264
+AIRA_BROWSER_PATH=/path/to/chromium node scripts/film.mjs              # demo/media/lucent-film.mp4, 1080p60 H.264 with the score
 node scripts/film.mjs --preview                                      # half size, 24 fps, into verification/film/
 node scripts/film.mjs --from 20 --to 32 --out verification/film/part.mp4
 ```
 
-Two pages render in parallel (`--workers`); on two cores the full film takes about half an hour (24 MB). After changing any words in `demo/film/`, run `python3 scripts/film-fonts.py` (needs `fonttools` and `brotli`) so the bundled subsets cover them.
+Two pages render in parallel (`--workers`); on two cores the full film takes about forty minutes (about 30 MB). The score reads the scene marks from `demo/film/film.js`, so after retiming a scene, compose it again (about half a minute; `--report score.png` draws its spectrogram and loudness against the marks). It is synthesized from nothing but code — pads, plucked strings, bells, a celesta, a music box, a choir of formants, drums and sound effects — and mastered to about −16 LUFS with true peaks under −1 dBTP. After changing any words in `demo/film/`, run `python3 scripts/film-fonts.py` (needs `fonttools` and `brotli`) so the bundled subsets cover them.
 
 The browser suite writes its own review captures to ignored `verification/screenshots/`; they are evidence for a run, not documentation.
 

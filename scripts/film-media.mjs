@@ -1,5 +1,5 @@
 // Media made from the concept film, for the README and the demo page:
-//   demo/media/film-poster.jpg   the name at dawn (52.6 s), straight from the page
+//   demo/media/film-poster.jpg   the name at dawn (57.6 s), straight from the page
 //   demo/media/film-teaser.webp  seven passages of the rendered film, cross-faded, 1200 px wide
 //   demo/media/on-device.jpg     the slot for the on-device recording (scripts/film-media/slot.html)
 //
@@ -21,7 +21,7 @@ const want = (name) => !wanted.length || wanted.includes(name);
 const launch = () => chromium.launch({ headless: true, ...(process.env.AIRA_BROWSER_PATH ? { executablePath: process.env.AIRA_BROWSER_PATH } : {}) });
 
 // Passages of the film for the teaser: [start, end] in seconds. Each joins the next with a 0.35 s cross-fade.
-const PASSAGES = [[2.0, 6.3], [11.5, 13.3], [18.7, 20.5], [25.3, 27.4], [40.6, 42.4], [45.25, 46.45], [50.5, 52.9]];
+const PASSAGES = [[4.5, 6.4], [11.6, 13.3], [18.7, 20.4], [26.7, 29.6], [39.4, 40.9], [48.5, 50.5], [55.4, 57.7]];
 const FADE = 0.35;
 
 if (want('poster')) {
@@ -41,7 +41,7 @@ if (want('poster')) {
   await page.goto(`http://127.0.0.1:${server.address().port}/film/?capture`);
   await page.waitForFunction(() => window.__film);
   await page.evaluate(() => window.__film.ready);
-  await page.evaluate(() => window.__film.seek(52.6));
+  await page.evaluate(() => window.__film.seek(57.6));
   await page.screenshot({ path: path.join(media, 'film-poster.jpg'), type: 'jpeg', quality: 88 });
   await browser.close();
   server.close();

@@ -7,6 +7,10 @@ demo/film/fonts/. Sources are Noto Serif CJK SC and Noto Sans CJK SC (Adobe, SIL
 License 1.1) and Inter (The Inter Project Authors, SIL Open Font License 1.1); neither carries a
 Reserved Font Name. Override a source path with an environment variable named after the output,
 for example FILM_FONT_SERIF_LIGHT=/path/to/NotoSerifCJK-Light.ttc.
+
+The display face, Cormorant Garamond Light and Light Italic (The Cormorant Project Authors, SIL
+Open Font License 1.1), ships as its full Latin subset from @fontsource/cormorant-garamond 5.3.0:
+display-light.woff2 and display-italic.woff2. Run this script again whenever the film's words change.
 """
 import os
 import pathlib
@@ -32,9 +36,7 @@ FONTS = [
     ("sans-light", f"{NOTO}/NotoSansCJK-Light.ttc", 2, cjk),
     ("sans-regular", f"{NOTO}/NotoSansCJK-Regular.ttc", 2, cjk),
     ("sans-medium", f"{NOTO}/NotoSansCJK-Medium.ttc", 2, cjk),
-    ("sans-thin", f"{NOTO}/NotoSansCJK-Thin.ttc", 2, "键"),
     ("sans-bold", f"{NOTO}/NotoSansCJK-Bold.ttc", 2, cjk),
-    ("sans-black", f"{NOTO}/NotoSansCJK-Black.ttc", 2, cjk),
     ("latin-thin", f"{INTER}/InterDisplay-Thin.otf", None, roman),
     ("latin-light", f"{INTER}/InterDisplay-Light.otf", None, roman),
     ("latin-regular", f"{INTER}/Inter-Regular.otf", None, roman),

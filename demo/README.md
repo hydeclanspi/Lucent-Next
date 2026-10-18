@@ -19,11 +19,11 @@ Made for the HUAWEI MatePad Edge; use it there as it is. On a computer, full scr
 
 <p align="center"><a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="media/film-poster.jpg" alt="概念影片：光点在黎明的天色里聚成「灵感台」 · The concept film: glints gather into 灵感台 against a dawn sky" width="100%"></a></p>
 
-**[在浏览器中观看 · Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/film/)** &nbsp;·&nbsp; [MP4（1080p，60 帧 · 60 fps）](media/lucent-film.mp4)
+**[在浏览器中观看 · Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/film/)** &nbsp;·&nbsp; [MP4（1080p，60 帧，有声 · 60 fps, with sound）](media/lucent-film.mp4)
 
-一分二十一秒，每一帧都由代码绘制。网页版打开即播：空格暂停，← / → 跳五秒，R 从头播放，F 全屏；地址后加 `?t=42`，从第 42 秒开始。源码在 [film/](film/)，渲染成视频用 `node scripts/film.mjs`。
+一分三十五秒，请开启声音；每一帧画面、每一个声音都由代码生成。网页版点「播放影片」开始：空格暂停，← / → 跳五秒，M 静音，R 从头播放，F 全屏；地址后加 `?t=42`，从第 42 秒开始。源码在 [film/](film/)；配乐由 `python3 scripts/film-score.py` 合成，渲染成视频用 `node scripts/film.mjs`。
 
-One minute twenty-one seconds, every frame drawn in code. The web version plays on open: Space pauses, ← / → skip five seconds, R replays, F goes full screen; add `?t=42` to start at 42 seconds. The source is in [film/](film/); `node scripts/film.mjs` renders it to video.
+One minute thirty-five seconds; turn the sound on. Every frame and every sound is made in code. In the browser, press Play: Space pauses, ← / → skip five seconds, M mutes, R replays, F goes full screen; add `?t=42` to start at 42 seconds. The source is in [film/](film/); `python3 scripts/film-score.py` composes the score, and `node scripts/film.mjs` renders the film to video.
 
 ## 实机 · On the device
 

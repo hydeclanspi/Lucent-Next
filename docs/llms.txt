@@ -14,7 +14,7 @@ Five parts:
 
 Made for one screen: the HUAWEI MatePad Edge. On a computer, the web edition's full screen is a faithful simulation of that screen — it goes full screen on the first click (F toggles) and installs as an app that opens full screen. Phones and small screens are outside its scope.
 
-Concept film (demo/film, published at /film/): 81 seconds on one timeline — WebGL for the worlds (night, pearl, aurora, dawn), god rays, warp and stage lights; Canvas 2D for beams and lasers; CSS and SVG for the interface and type; WebGL points for glints. render(t) is a pure function of time, so scripts/film.mjs renders it frame by frame to 1080p60 H.264.
+Concept film (demo/film, published at /film/): 95 seconds with sound on one timeline — WebGL for the worlds (night, pearl, aurora, dawn, satin gold), a circle of light, a slit that opens, four pillars of worlds, god rays and stage lights; Canvas 2D for beams, lasers and the gold linework; CSS and SVG for the interface and type; WebGL points for glints and fireflies. render(t) is a pure function of time, so scripts/film.mjs renders it frame by frame to 1080p60 H.264. Its score is synthesized with numpy by scripts/film-score.py from the same scene marks, on a grid of 120 beats a minute.
 
 Verification: 41 unit tests (engine invariants such as momentum conservation, no tunnelling, a connected placement chamber, line-of-sight routes; renderer determinism over 21,618 progress states; storage integrity) and 18 browser flows run in CI. Documentation figures are drawn by the engine's own functions; screenshots, animations and the film are rendered frame by frame under a fake clock.
 

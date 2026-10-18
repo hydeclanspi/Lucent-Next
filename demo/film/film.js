@@ -2,11 +2,13 @@
  *
  * One timeline. render(t) sets every element, every light and every glint from the time t alone, so
  * the film plays, scrubs, pauses on any frame, and renders to video frame by frame (scripts/film.mjs)
- * with the same result on any machine. Randomness comes from fixed seeds.
+ * with the same result on any machine. Randomness comes from fixed seeds. The score
+ * (scripts/film-score.py) reads the marks below, so picture and sound share one clock: the marks sit
+ * on a grid of 120 beats a minute.
  *
- * Back to front: the world (WebGL, gl.js: night, pearl, aurora and dawn, with rays, warp and stage
- * lights), the place (one 1560 × 1040 screen in DOM, seen through a camera), light (Canvas 2D),
- * type (DOM), glints (WebGL points).
+ * Back to front: the world (WebGL, gl.js: night, pearl, aurora, dawn and gold, with rays, stage lights,
+ * a slit of light and four pillars), the place (one 1560 × 1040 screen in DOM, seen through a camera),
+ * light (Canvas 2D), type (DOM and SVG), glints (WebGL points).
  *
  *   ?capture   no controls; window.__film = { duration, ready, seek(t) } for the renderer
  *   ?t=42      start at 42 s
@@ -16,13 +18,13 @@
 
   // ---------- scene marks, in seconds ----------
   var M = {
-    photon: 1.0, draw0: 1.35, draw1: 3.05, press1: 4.2, home: 4.45, press2: 6.9, morph: 9.6, flash: 11.6,
+    photon: 1.0, draw0: 1.35, draw1: 3.0, press1: 4.0, home: 4.25, press2: 7.0, morph: 9.75, flash: 12.0,
     bench: 16.0, explode: 18.0, implode: 21.5,
-    launch: 22.8, type: 23.9, fly: 25.6, warp: 26.15, back: 28.5, rehearse: 29.2, burst: 31.0,
-    sheet: 32.2, lasers: 33.6, show: 35.8, console: 38.2, knobs: 39.6,
-    montage: 45.2, getit: 47.6, four: 48.8, merge: 49.7, lock: 50.2, dark: 53.8,
-    cut: 56.1, pen: 56.4, lueurs: 57.2, swarm: 58.4, meet: 61.4, stars: 62.4, hold: 64.0,
-    device: 66.8, specs: 68.2, tag: 74.2, flash2: 76.2, end: 81.6
+    launch: 22.5, type: 24.0, fly: 25.5, warp: 26.0, slit: 26.5, open: 27.5, back: 32.5,
+    rehearse: 33.25, burst: 35.0, sheet: 36.0, lasers: 37.5, show: 39.5, console: 42.5, knobs: 44.0,
+    pillars: 48.5, converge: 51.5, point: 52.5, lock: 55.0, dark: 58.5,
+    cut: 61.0, pen: 61.3, lueurs: 62.0, swarm: 63.0, meet: 66.0, stars: 67.0, hold: 68.5, loop: 71.5, garden: 74.75,
+    device: 79.0, specs: 80.5, tag: 87.0, flash2: 89.0, end: 95.0
   };
   var DURATION = M.end;
   var params = new URLSearchParams(window.location.search);
@@ -80,29 +82,28 @@
   function px(n) { return n.toFixed(2) + 'px'; }
   function f3(n) { return n.toFixed(3); }
   function blurOf(k) { return k > 0.002 ? 'blur(' + k.toFixed(2) + 'px)' : 'none'; }
-  var DEG = Math.PI / 180, TAU = Math.PI * 2;
+  var DEG = Math.PI / 180, TAU = Math.PI * 2, NS = 'http://www.w3.org/2000/svg';
 
   // ---------- elements ----------
-  var stage = $('stage'), camera = $('camera'), device = $('device'), bezel = $('bezel'), screen = $('screen');
-  var innerSky = $('innerSky'), glare = $('glare'), backdrop = $('backdrop'), screenDim = $('screenDim');
+  var stage = $('stage'), camera = $('camera'), device = $('device'), bezel = $('bezel'), edgeR = $('edgeR'), screen = $('screen');
+  var innerSky = $('innerSky'), innerSkyB = $('innerSkyB'), glare = $('glare'), backdrop = $('backdrop'), screenDim = $('screenDim'), garden = $('garden');
   var halo = $('halo'), bloom = $('bloom'), scrim = $('scrim'), black = $('black'), vignette = $('vignette');
   var light = $('light'), lctx = light.getContext('2d');
   var ring = $('ring'), ringGlow = $('ringGlow'), press = $('press');
-  var hmCall = $('hmCall'), hmH = $('hmH'), hmMe = $('hmMe'), hmEn = $('hmEn');
+  var hmOut = $('hmOut'), hmOutName = $('hmOutName'), hmIn = $('hmIn'), hmCall = $('hmCall'), hmName = $('hmName'), hmEn = $('hmEn');
   var cardGlass = $('cardGlass'), card = $('card'), typed = $('typed'), ph = $('ph'), caret = $('caret'), go = $('go');
   var motionSheet = $('motionSheet'), randomToggle = $('randomToggle');
   var aurora = $('aurora'), glassPanel = $('glassPanel'), specimen = $('specimen'), orbs = $('orbs'), octx = orbs.getContext('2d');
   var penPath = $('penPath'), lueursLayer = $('lueurs');
-  var wordsLayer = $('words'), capLayer = $('captions');
-  var montage = $('montage'), mWord = $('mWord'), mLatin = $('mLatin'), getit = $('getit');
-  var specsBox = $('specs'), giantWord = $('giantWord');
+  var wordsLayer = $('words'), capLayer = $('captions'), pillarsBox = $('pillars');
+  var specsBox = $('specs');
   var worldCanvas = $('world'), fxCanvas = $('fx');
 
   // ---------- the light engine ----------
   var G = null;
   try { G = window.FilmGL ? window.FilmGL.create(worldCanvas, fxCanvas) : null; } catch (error) { G = null; }
   var flat = G ? null : worldCanvas.getContext('2d');
-  if (G) { G.system('dust', 900, 3); G.system('sparks', 360, 5); }
+  if (G) { G.system('dust', 900, 3); G.system('sparks', 360, 5); G.system('glints', 90, 31); G.system('flies', 64, 41); }
 
   // ---------- the place: a camera over one 1560 × 1040 screen ----------
   var SCX = 780, SCY = 520;
@@ -130,8 +131,9 @@
     [M.cut, at(378, 238, 2.6, 960, 470), 'linear'],
     [M.lueurs + 0.3, at(378, 238, 2.72, 960, 470), 'sine'],
     [M.swarm - 0.2, SWARM_CAM],
-    [M.device, at(650, 300, 1.48, 960, 450), 'sine'],
-    [M.device + 1.6, [690, 470, 0.5]],
+    [M.garden, at(650, 300, 1.44, 960, 450), 'sine'],
+    [M.device, at(640, 320, 1.34, 960, 460), 'sine'],
+    [M.device + 1.8, [690, 470, 0.5]],
     [M.tag, [690, 470, 0.52], 'sine'],
     [M.tag + 0.8, [690, 430, 0.46], 'in'],
     [DURATION, [690, 430, 0.46]]
@@ -142,8 +144,9 @@
     [M.explode + 1.5, [54, 0, -32]],
     [M.implode, [54, 0, -37], 'sine'],
     [M.implode + 1.1, [0, 0, 0]],
-    [M.device, [0, 0, 0]],
-    [M.device + 1.8, [5, -15, 0]],
+    [M.device + 0.1, [0, 0, 0]],
+    [M.device + 1.3, [9, -36, 0]],
+    [M.device + 2.8, [5, -15, 0], 'out'],
     [M.tag, [3, -9, 0], 'sine'],
     [DURATION, [3, -9, 0]]
   ];
@@ -183,24 +186,26 @@
 
   // ---------- words ----------
   var CAPTIONS = [
-    { a: 1.5, b: 4.0, top: 650, zh: '曾经，屏幕下方有一颗按键。', en: 'There was once a button below the screen.' },
-    { a: 7.15, b: 9.2, top: 650, zh: '按下它，走得再远，也能回到起点。', en: 'Press it, and however far you had gone, you were back where you began.' },
-    { a: 9.55, b: 11.5, top: 846, size: 'l', zh: 'Home，是一个承诺：', sub: '总有一个地方，等你回来。', en: 'Home was a promise: there is always a place that waits for you.' },
-    { a: 12.2, b: 15.7, top: 846, ink: true, size: 'l', zh: '今天，我们把这个承诺，做成了一个地方。', en: 'Today, we have made that promise into a place.' },
-    { a: 16.4, b: 18.2, top: 846, ink: true, title: '一张工作台。', sub: '时钟、搜索、快捷方式，各就各位。', en: 'A workbench. Clock, search and shortcuts, each in its place.' },
+    { a: 1.5, b: 3.9, top: 650, zh: '曾经，屏幕下方有一颗按键。', en: 'There was once a button below the screen.' },
+    { a: 7.25, b: 9.4, top: 650, zh: '按下它，走得再远，也能回到起点。', en: 'Press it, and however far you had gone, you were back where you began.' },
+    { a: 9.7, b: 11.9, top: 846, size: 'l', zh: 'Home，是一个承诺：', sub: '总有一个地方，等你回来。', en: 'Home was a promise: there is always a place that waits for you.' },
+    { a: 12.6, b: 15.8, top: 846, ink: true, size: 'l', zh: '今天，我们把这个承诺，做成了一个地方。', en: 'Today, we have made that promise into a place.' },
+    { a: 16.4, b: 18.0, top: 846, ink: true, title: '一张工作台。', sub: '时钟、搜索、快捷方式，各就各位。', en: 'A workbench. Clock, search and shortcuts, each in its place.' },
     { a: 18.8, b: 21.3, top: 900, ink: true, zh: '壁纸、玻璃、界面、居民：四层，叠成一块屏幕。', en: 'Wallpaper, glass, interface, residents: four layers, one screen.' },
-    { a: 23.2, b: 26.0, top: 862, title: '一座发射台。', sub: '写下的字化作一道光，光一到，搜索就出发。', en: 'A launch pad. Your words become light, and the search lifts off when it lands.' },
-    { a: 26.9, b: 28.35, top: 470, size: 'l', zh: '去往整个世界。', en: 'Out into the world.' },
-    { a: 29.5, b: 32.9, top: 862, title: '一方舞台。', sub: '留在这里，光为你演一遍：首发回弹，按住连发。', en: 'A stage. Stay, and the light performs for you: it flies back, then fires again and again.' },
-    { a: 34.0, b: 37.8, top: 880, zh: '白金导流环里，蓝白激光奔跑不息。', en: 'Through rings of platinum, blue-white lasers keep running.' },
-    { a: 39.8, b: 44.9, top: 886, title: '一面控制台。', sub: '玻璃开放六项参数，每颗按钮都有长按。', en: 'A console. Six settings for the glass, and a long press under every button.' },
-    { a: 48.95, b: 50.35, top: 820, zh: '它们，是同一个地方。', en: 'They are one place.' },
-    { a: 54.3, b: 55.9, top: 500, size: 'l', zh: '还有一件事。', en: 'And one more thing.' },
-    { a: 56.6, b: 58.6, top: 862, zh: '最初，留白里只有两枚玻璃。', en: 'It began with two small panes of glass in the open space.' },
-    { a: 59.0, b: 61.3, top: 862, zh: '如今，四十九位居民，各有编号。', en: 'Now forty-nine residents live here, each with a number.' },
-    { a: 61.6, b: 63.9, top: 862, zh: '它们相遇、追逐，连成星座。', en: 'They meet, they chase, they form constellations.' },
-    { a: 64.2, b: 66.5, top: 862, zh: '每次回来，它们都在。', en: 'Whenever you come back, they are here.' },
-    { a: 67.6, b: 73.8, top: 868, x: 690, ink: true, title: '为一块屏幕而生。', spec: 'HUAWEI MatePad Edge', en: 'Made for one screen.' }
+    { a: 23.0, b: 25.6, top: 862, title: '一座发射台。', sub: '写下的字化作一道光，光一到，搜索就出发。', en: 'A launch pad. Your words become light, and the search lifts off when it lands.' },
+    { a: 28.6, b: 32.2, top: 236, size: 'l', gold: true, zh: '去往整个世界。', en: 'Out into the world.' },
+    { a: 33.4, b: 36.8, top: 862, title: '一方舞台。', sub: '留在这里，光为你演一遍：首发回弹，按住连发。', en: 'A stage. Stay, and the light performs for you: it flies back, then fires again and again.' },
+    { a: 38.0, b: 41.8, top: 880, zh: '白金导流环里，蓝白激光奔跑不息。', en: 'Through rings of platinum, blue-white lasers keep running.' },
+    { a: 43.5, b: 48.1, top: 886, title: '一面控制台。', sub: '玻璃开放六项参数，每颗按钮都有长按。', en: 'A console. Six settings for the glass, and a long press under every button.' },
+    { a: 53.0, b: 54.9, top: 820, zh: '它们，是同一个地方。', en: 'They are one place.' },
+    { a: 59.0, b: 60.6, top: 500, size: 'l', zh: '还有一件事。', en: 'And one more thing.' },
+    { a: 61.5, b: 63.4, top: 862, zh: '最初，留白里只有两枚玻璃。', en: 'It began with two small panes of glass in the open space.' },
+    { a: 63.9, b: 66.2, top: 862, zh: '如今，四十九位居民，各有编号。', en: 'Now forty-nine residents live here, each with a number.' },
+    { a: 66.5, b: 68.8, top: 862, zh: '它们相遇、追逐，连成星座。', en: 'They meet, they chase, they form constellations.' },
+    { a: 69.1, b: 71.4, top: 862, zh: '每次回来，它们都在。', en: 'Whenever you come back, they are here.' },
+    { a: 71.7, b: 74.55, top: 836, zh: '你拨动它们，它们改写你的下一张壁纸。', sub: '每一次相遇，场志都一一记下。', en: 'You move them, and they rewrite your next wallpaper. Every meeting is kept in the chronicle.' },
+    { a: 74.85, b: 78.6, top: 836, size: 'l', zh: '一座自己生长的后花园。', sub: '推开门，放下一天的疲惫。', en: 'A back garden that grows on its own. Open the door, and set the day down.' },
+    { a: 79.8, b: 86.2, top: 868, x: 690, ink: true, title: '为一块屏幕而生。', spec: 'HUAWEI MatePad Edge', en: 'Made for one screen.' }
   ];
   function revealSpan(cls, text, parent) {
     var wrap = el('span', 'reveal' + (cls ? ' ' + cls : ''), parent);
@@ -209,7 +214,7 @@
     return wrap;
   }
   CAPTIONS.forEach(function (c) {
-    c.el = el('div', 'cap' + (c.size ? ' ' + c.size : '') + (c.ink ? ' ink' : ''), capLayer);
+    c.el = el('div', 'cap' + (c.size ? ' ' + c.size : '') + (c.ink ? ' ink' : '') + (c.gold ? ' gold' : ''), capLayer);
     c.el.style.top = c.top + 'px';
     if (c.x) { c.el.style.left = (c.x - 960) + 'px'; }
     c.main = revealSpan(c.title ? 'title' : 'zh', c.title || c.zh, el('div', '', c.el));
@@ -230,51 +235,21 @@
     c.el.style.transform = 'translateY(' + (-out * 10).toFixed(2) + 'px)';
   }
 
-  // ---------- H◯me 键: the button becomes the o of its own name ----------
+  // ---------- the Home button opens into a circle of light; its name runs through it ----------
+  // Outside the circle the name is white on the night; inside, it is ink on light. Then the circle closes.
   var RING = { x: 960, y: 470, r: 88 };
-  var HOME = { size: 330, stem: 6, hx: 0, mx: 0, kx: 0, top: 0, ktop: 0, shift: 0 };
-  var hmKey = $('hmKey');
-  function baselineOf(node) {
-    var probe = el('i', '', node);
-    probe.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline';
-    var y = probe.offsetTop;
-    node.removeChild(probe);
-    return y;
-  }
+  var PORT = { r: 340 };
   function layoutHome() {
-    var c = document.createElement('canvas').getContext('2d');
-    c.font = '200 330px "Film Latin"';
-    var mo = c.measureText('o');
-    var inkH = (mo.actualBoundingBoxAscent + mo.actualBoundingBoxDescent) || 180;
-    var size = 330 * (2 * RING.r + 3) / inkH;   // the o is exactly as tall as the ring
-    c.font = '200 ' + size.toFixed(2) + 'px "Film Latin"';
-    mo = c.measureText('o');
-    var ml = c.measureText('l'), mH = c.measureText('H');
-    var oMid = (mo.actualBoundingBoxRight - mo.actualBoundingBoxLeft) / 2;   // the o's ink centre, from its origin
-    var oRise = (mo.actualBoundingBoxAscent - mo.actualBoundingBoxDescent) / 2; // ... and above the baseline
-    var capH = mH.actualBoundingBoxAscent || size * 0.73;
-    var advH = c.measureText('Ho').width - mo.width, homeW = c.measureText('Home').width, meW = c.measureText('me').width;
-    HOME.size = size;
-    HOME.stem = Math.max(2.6, (ml.actualBoundingBoxRight + ml.actualBoundingBoxLeft) || 6);
-    // 键, in the thin sans, as tall as the capital H, one word space after "me"
-    c.font = '100 100px "Film Sans"';
-    var mk = c.measureText('键');
-    var ksize = 100 * capH / ((mk.actualBoundingBoxAscent + mk.actualBoundingBoxDescent) || 88);
-    c.font = '100 ' + ksize.toFixed(2) + 'px "Film Sans"';
-    mk = c.measureText('键');
-    var gap = size * 0.16, width = homeW + gap + mk.width;
-    var x0 = 960 - width / 2, base = RING.y + oRise;
-    // The whole name is centred, so the ring slides to where its o belongs.
-    HOME.shift = x0 + advH + oMid - RING.x;
-    HOME.hx = x0; HOME.mx = x0 + homeW - meW; HOME.kx = x0 + homeW + gap;
-    [hmH, hmMe].forEach(function (node) { node.style.fontSize = size.toFixed(2) + 'px'; });
-    hmKey.style.fontSize = ksize.toFixed(2) + 'px';
-    HOME.top = base - baselineOf(hmH);
-    HOME.ktop = base - mk.actualBoundingBoxDescent - baselineOf(hmKey);
-    hmH.style.left = px(HOME.hx); hmMe.style.left = px(HOME.mx); hmKey.style.left = px(HOME.kx);
-    hmH.style.top = px(HOME.top); hmMe.style.top = px(HOME.top); hmKey.style.top = px(HOME.ktop);
-    hmCall.style.left = '960px'; hmCall.style.top = px(base - capH - 100);
-    hmEn.style.left = '960px'; hmEn.style.top = px(base + 64);
+    var w = hmName.offsetWidth, base = baselineOf(hmName);
+    var left = Math.round(960 - w / 2), top = Math.round(RING.y + 94 - base);
+    [hmOutName, hmName].forEach(function (node) { node.style.left = left + 'px'; node.style.top = top + 'px'; });
+    hmCall.style.top = (RING.y - 232) + 'px';
+    hmEn.style.top = (RING.y + 170) + 'px';
+    PORT.r = Math.round(clamp(w * 0.36, 300, 360));
+  }
+  function portRadius(t) {
+    var open = E.out5(seg(t, M.home, M.home + 0.9)), close = E.inOut(seg(t, M.press2 - 0.62, M.press2 - 0.06));
+    return lerp(RING.r, PORT.r, open * (1 - close));
   }
 
   // ---------- the exploded view ----------
@@ -353,17 +328,23 @@
       octx.fillStyle = g; octx.beginPath(); octx.arc(x, y, o.r, 0, TAU); octx.fill();
     });
   }
-  function knobStart(i) { return M.knobs + i * 0.72; }
+  function knobStart(i) { return M.knobs + i * 0.5; }
   function knobValue(i, t) { var k = KNOBS[i], a = knobStart(i); return lerp(k[1], k[2], E.inOut(seg(t, a, a + 0.85))); }
 
-  // ---------- one place, four names ----------
-  var CUTS = [['工作台', 'Workbench', 'pearl'], ['发射台', 'Launch pad', 'warp'], ['舞台', 'Stage', 'spots'], ['控制台', 'Console', 'aurora']];
-  var CUT = 0.3;
-  function cutIndex(t) { var i = Math.floor((t - M.montage) / CUT); return t >= M.montage && i < 8 ? i : -1; }
-  var w4 = Array.prototype.slice.call(document.querySelectorAll('.w4'));
+  // ---------- four places, one place ----------
+  var PILLARS = Array.prototype.slice.call(document.querySelectorAll('.pillar'));
+  function pillarReveal(k, t) { return E.out(seg(t, M.pillars + k * 0.5, M.pillars + k * 0.5 + 0.45)); }
+  function bandHalf(t) { return lerp(0.5, 0.0009, E.inOut(seg(t, M.converge, M.point))); }
   var lkLing = $('lkLing'), lkTai = $('lkTai'), lkMark = $('lkMark'), lkKicker = $('lkKicker');
   var tg1 = $('tg1'), tg2 = $('tg2'), tgEn = $('tgEn'), tagline = $('tagline'), endmark = $('endmark');
   var GATHER = { t0: M.lock + 0.15, span: 1.5 };
+  function baselineOf(node) {
+    var probe = el('i', '', node);
+    probe.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline';
+    var y = probe.offsetTop;
+    node.removeChild(probe);
+    return y;
+  }
   // The glyphs of 灵感, sampled where the lockup sets them, so the glints can gather into them.
   function sampleLockup() {
     if (!G) return;
@@ -402,11 +383,14 @@
     lu.w1 = 2 * Math.PI / (6.5 + drift() * 4); lu.w2 = 2 * Math.PI / (7.5 + drift() * 4);
     lu.p1 = drift() * 6.28; lu.p2 = drift() * 6.28; lu.amp = 8 + drift() * 6;
   });
-  var touch = el('div', 'touch', lueursLayer);
+  var touch = el('div', 'touch', lueursLayer), flickTouch = el('div', 'touch', lueursLayer);
   var ENC = (function () {
     var a = LUEURS[3].base, b = LUEURS[4].base, dx = b[0] - a[0], dy = b[1] - a[1], d = Math.hypot(dx, dy);
     return { ux: dx / d, uy: dy / d, reach: d - 24, hit: M.meet + 0.9 };
   })();
+  // The closed loop: all nine on one ring in the open space, turning together; then the garden lets them go.
+  var LOOP = { cx: 560, cy: 236, rx: 420, ry: 74, flick: M.loop + 1.5 };
+  function loopAmount(t) { return E.inOut(seg(t, M.loop, M.loop + 1.1)) * (1 - E.inOut(seg(t, M.garden, M.garden + 1.3))); }
   function lueurPosition(i, t) {
     var lu = LUEURS[i];
     var x = lu.base[0], y = lu.base[1];
@@ -419,7 +403,13 @@
       x += ENC.ux * ram; y += ENC.uy * ram;
     }
     if (i === 4) { var push = 46 * E.out(seg(t, ENC.hit, ENC.hit + 1.0)); x += ENC.ux * push; y += ENC.uy * push; }
-    if (i === 6) { var held = E.inOut(seg(t, M.hold + 0.4, M.hold + 1.2)); x += 52 * held; y -= 34 * held; }
+    if (i === 6) { var held = E.inOut(seg(t, M.hold + 0.4, M.hold + 1.2)) * (1 - E.inOut(seg(t, M.loop, M.loop + 0.8))); x += 52 * held; y -= 34 * held; }
+    var lp = loopAmount(t);
+    if (lp > 0) {
+      var a = -Math.PI / 2 + i * TAU / 9 + (t - M.loop) * 0.34;
+      x = lerp(x, LOOP.cx + LOOP.rx * Math.cos(a), lp); y = lerp(y, LOOP.cy + LOOP.ry * Math.sin(a), lp);
+    }
+    if (i === 8) { var fl = E.out(seg(t, LOOP.flick, LOOP.flick + 0.7)) * (1 - E.inOut(seg(t, LOOP.flick + 0.7, LOOP.flick + 1.9))); x += 70 * fl; y -= 26 * fl; }
     return [x, y];
   }
   // Forty-nine glints swirl in, then settle into the nine who are here today.
@@ -454,30 +444,33 @@
   SPECS.forEach(function (s, i) {
     s.row = el('div', 'spec-row', specsBox);
     s.num = el('b', '', s.row); el('span', '', s.row).textContent = s.label;
-    s.t0 = M.specs + i * 0.55;
+    s.t0 = M.specs + i * 0.5;
   });
 
-  // ---------- the sky, painted once ----------
+  // ---------- the skies, painted once: the wallpaper, and the next one ----------
   function glow(ctx, x, y, rx, ry, stops) {
     ctx.save(); ctx.translate(x, y); ctx.scale(1, ry / rx);
     var g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
     stops.forEach(function (s) { g.addColorStop(s[0], s[1]); });
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, rx, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   }
-  (function paintSky() {
-    var ctx = innerSky.getContext('2d'), w = innerSky.width, h = innerSky.height, r = rng(20261017);
+  function paintSky(canvas, seed, look) {
+    var ctx = canvas.getContext('2d'), w = canvas.width, h = canvas.height, r = rng(seed);
     var g = ctx.createLinearGradient(0, 0, 0, h);
-    [[0, '#0d2350'], [0.2, '#183870'], [0.38, '#30508c'], [0.5, '#5a6294'], [0.58, '#6a5a82'], [0.66, '#3a3756'], [0.78, '#1d2236'], [1, '#0e121c']]
-      .forEach(function (s) { g.addColorStop(s[0], s[1]); });
+    look.sky.forEach(function (s) { g.addColorStop(s[0], s[1]); });
     ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-    glow(ctx, w * 0.08, h * 0.53, w * 0.62, h * 0.2, [[0, 'rgba(255,124,66,0.78)'], [0.42, 'rgba(255,150,92,0.3)'], [1, 'rgba(255,150,92,0)']]);
-    glow(ctx, w * 0.3, h * 0.5, w * 0.6, h * 0.11, [[0, 'rgba(255,198,142,0.36)'], [1, 'rgba(255,198,142,0)']]);
-    glow(ctx, w * 0.88, h * 0.06, w * 0.5, h * 0.36, [[0, 'rgba(92,146,255,0.32)'], [1, 'rgba(92,146,255,0)']]);
-    glow(ctx, w * 0.62, h * 0.86, w * 0.7, h * 0.2, [[0, 'rgba(255,170,110,0.16)'], [1, 'rgba(255,170,110,0)']]);
+    look.glows.forEach(function (gl) { glow(ctx, w * gl[0], h * gl[1], w * gl[2], h * gl[3], gl[4]); });
+    if (look.stars) {
+      for (var s = 0; s < look.stars; s++) {
+        var sx = r() * w, sy = h * Math.pow(r(), 1.6) * 0.5, sr = 0.6 + Math.pow(r(), 4) * 1.8;
+        ctx.fillStyle = 'rgba(235,242,255,' + (0.25 + r() * 0.6).toFixed(2) + ')';
+        ctx.beginPath(); ctx.arc(sx, sy, sr, 0, TAU); ctx.fill();
+      }
+    }
     ctx.filter = 'blur(28px)';
     for (var i = 0; i < 18; i++) {
       var cx = r() * w, cy = h * (0.1 + r() * 0.42), rw = 160 + r() * 320, rh = 16 + r() * 38;
-      ctx.fillStyle = 'rgba(' + (16 + r() * 12 | 0) + ',' + (26 + r() * 14 | 0) + ',' + (58 + r() * 20 | 0) + ',' + (0.22 + r() * 0.22).toFixed(2) + ')';
+      ctx.fillStyle = 'rgba(' + (16 + r() * 12 | 0) + ',' + (26 + r() * 14 | 0) + ',' + (58 + r() * 20 | 0) + ',' + (look.cloud * (0.22 + r() * 0.22)).toFixed(2) + ')';
       ctx.beginPath(); ctx.ellipse(cx, cy, rw, rh, (r() - 0.5) * 0.12, 0, Math.PI * 2); ctx.fill();
     }
     ctx.filter = 'blur(10px)';
@@ -486,7 +479,7 @@
       ctx.fillStyle = 'rgba(10,14,26,' + (0.18 + r() * 0.25).toFixed(2) + ')';
       ctx.fillRect(bx, h * 0.64 - bh * 0.4 + r() * 40, bw, bh + h * 0.4);
     }
-    var palette = [[255, 186, 110], [255, 214, 150], [255, 240, 222], [164, 204, 255], [255, 156, 132]];
+    var palette = look.lights;
     ctx.filter = 'blur(1.4px)';
     for (var k = 0; k < 230; k++) {
       var p = palette[(r() * palette.length) | 0], x = w * (0.04 + 0.96 * Math.pow(r(), 0.85)), y = h * (0.58 + 0.42 * Math.pow(r(), 0.9)), rad = 1.5 + Math.pow(r(), 3) * 16;
@@ -502,7 +495,24 @@
       ctx.beginPath(); ctx.arc(mx, my, mr, 0, Math.PI * 2); ctx.fill();
     }
     ctx.filter = 'none';
-  })();
+  }
+  paintSky(innerSky, 20261017, {
+    sky: [[0, '#0d2350'], [0.2, '#183870'], [0.38, '#30508c'], [0.5, '#5a6294'], [0.58, '#6a5a82'], [0.66, '#3a3756'], [0.78, '#1d2236'], [1, '#0e121c']],
+    glows: [[0.08, 0.53, 0.62, 0.2, [[0, 'rgba(255,124,66,0.78)'], [0.42, 'rgba(255,150,92,0.3)'], [1, 'rgba(255,150,92,0)']]],
+      [0.3, 0.5, 0.6, 0.11, [[0, 'rgba(255,198,142,0.36)'], [1, 'rgba(255,198,142,0)']]],
+      [0.88, 0.06, 0.5, 0.36, [[0, 'rgba(92,146,255,0.32)'], [1, 'rgba(92,146,255,0)']]],
+      [0.62, 0.86, 0.7, 0.2, [[0, 'rgba(255,170,110,0.16)'], [1, 'rgba(255,170,110,0)']]]],
+    cloud: 1, stars: 0, lights: [[255, 186, 110], [255, 214, 150], [255, 240, 222], [164, 204, 255], [255, 156, 132]]
+  });
+  // The next wallpaper: the same city later in the evening, under a moon and the first stars.
+  paintSky(innerSkyB, 20261018, {
+    sky: [[0, '#060c24'], [0.22, '#0e1d4c'], [0.4, '#22397c'], [0.52, '#3f4a8a'], [0.6, '#33335e'], [0.7, '#1b1d34'], [0.82, '#11131f'], [1, '#090b12']],
+    glows: [[0.82, 0.16, 0.08, 0.08, [[0, 'rgba(255,250,236,0.95)'], [0.3, 'rgba(255,244,220,0.5)'], [1, 'rgba(255,240,210,0)']]],
+      [0.82, 0.16, 0.42, 0.34, [[0, 'rgba(170,190,255,0.22)'], [1, 'rgba(170,190,255,0)']]],
+      [0.2, 0.56, 0.6, 0.14, [[0, 'rgba(255,170,120,0.32)'], [1, 'rgba(255,170,120,0)']]],
+      [0.6, 0.88, 0.7, 0.2, [[0, 'rgba(255,190,130,0.18)'], [1, 'rgba(255,190,130,0)']]]],
+    cloud: 0.7, stars: 260, lights: [[255, 200, 120], [255, 226, 170], [255, 244, 228], [180, 214, 255], [255, 176, 140]]
+  });
 
   // ---------- the world, frame by frame ----------
   var NIGHT = [1, 0, 0, 0], PEARL = [0, 1, 0, 0], AURORA = [0, 0, 1, 0], DAWN = [0, 0, 0, 1];
@@ -511,63 +521,71 @@
     [M.flash + 0.12, NIGHT], [M.flash + 0.13, PEARL, 'linear'],
     [M.warp + 0.4, PEARL], [M.warp + 0.41, NIGHT, 'linear'],
     [M.console, NIGHT], [M.console + 0.9, AURORA],
-    [M.montage, AURORA],
-    [M.lock, NIGHT, 'linear'], [M.lock + 1.1, DAWN],
+    [M.pillars - 0.01, AURORA], [M.pillars, NIGHT, 'linear'],
+    [M.lock, NIGHT], [M.lock + 1.1, DAWN],
     [M.dark + 0.3, DAWN], [M.dark + 0.31, NIGHT, 'linear'],
     [M.device - 0.2, NIGHT], [M.device + 1.1, PEARL],
     [M.tag + 0.1, PEARL], [M.tag + 0.9, NIGHT],
     [M.flash2 + 0.1, NIGHT], [M.flash2 + 0.11, PEARL, 'linear'],
     [DURATION, PEARL]
   ];
-  var VOID = [[0, 1], [M.photon - 0.2, 1], [M.photon + 1.6, 0], [M.dark - 0.1, 0], [M.dark + 0.4, 1], [M.cut - 0.01, 1], [M.cut, 0, 'linear']];
+  var VOID = [[0, 1], [M.photon - 0.2, 1], [M.photon + 1.6, 0], [M.warp + 0.4, 0], [M.slit, 0.5], [M.open + 0.4, 0.5], [M.open + 0.8, 0],
+    [M.dark - 0.1, 0], [M.dark + 0.4, 1], [M.cut - 0.01, 1], [M.cut, 0, 'linear']];
   var BLOOM = [
     [0, 0], [M.flash - 0.14, 0], [M.flash + 0.06, 1, 'in2'], [M.flash + 0.2, 1], [M.flash + 1.2, 0, 'out'],
-    [M.warp + 0.28, 0], [M.warp + 0.4, 0.55, 'in2'], [M.warp + 0.9, 0, 'out'],
-    [M.back - 0.04, 0], [M.back + 0.06, 0.4], [M.back + 0.6, 0, 'out'],
+    [M.warp + 0.28, 0], [M.warp + 0.4, 0.5, 'in2'], [M.warp + 0.85, 0, 'out'],
+    [M.open + 0.1, 0], [M.open + 0.55, 0.12, 'in2'], [M.open + 1.6, 0, 'out'],
+    [M.back - 0.04, 0], [M.back + 0.06, 0.32], [M.back + 0.6, 0, 'out'],
     [M.flash2 - 0.14, 0], [M.flash2 + 0.05, 1, 'in2'], [M.flash2 + 0.2, 1], [M.flash2 + 1.3, 0, 'out'],
     [DURATION, 0]
   ];
+  var WARM_BLOOM = 'radial-gradient(70% 80% at 50% 50%, #fffdf6 0%, #fff4dc 46%, #f6e2bd 100%)';
   function worldState(t) {
-    var w = key(t, WORLD), warp = [0, 0.5, 0.435, 0], spot = [0, 0], rays = [0, 0.5, 0.435];
-    // The rush into the arrow, and back
-    var ws = key(t, [[M.warp + 0.15, 0], [M.warp + 0.55, 1], [M.back - 0.1, 1], [M.back + 0.4, 0]]);
-    if (ws > 0) warp = [ws, 0.5, 0.435, 0.9 * (t - M.warp) + 0.5 * Math.pow(Math.max(0, t - M.warp), 2)];
+    var w = key(t, WORLD), spot = [0, 0], rays = [0, 0.5, 0.435];
     // Stage lights
     var sp = env(t, M.show - 0.3, M.console + 0.4, 0.9, 0.6);
     if (sp > 0) spot = [1.25 * sp, 1];
-    // Light pours out of the button on the second press; the name rises at dawn
-    var rp = Math.max(1.1 * (1 - E.out(seg(t, M.press2, M.press2 + 1.9))) * (t > M.press2 ? 1 : 0), 0);
+    // Light pours out of the button on the second press; the gold sun; the name rises at dawn; the last words
+    var rp = t > M.press2 ? 1.1 * (1 - E.out(seg(t, M.press2, M.press2 + 1.9))) : 0;
     if (rp > 0) rays = [rp, 0.5, 0.435];
     var rl = env(t, M.lock + 0.4, M.dark + 0.2, 1.2, 0.6);
     if (rl > 0) rays = [0.42 * rl, 0.5, 1.1];
     var rt = env(t, M.tag + 0.6, M.flash2 + 0.1, 0.8, 0.2);
     if (rt > 0) rays = [0.5 * rt, 0.5, 0.56];
-    // One place, four names: the world cuts with every word
-    var ci = cutIndex(t);
-    if (ci >= 0) {
-      var kind = CUTS[ci % 4][2];
-      w = kind === 'pearl' ? PEARL : kind === 'aurora' ? AURORA : NIGHT;
-      if (kind === 'warp') warp = [1, 0.5, 0.5, 2.2 + (t - M.montage) * 2.4];
-      if (kind === 'spots') spot = [1.5, 1];
-    } else if (t >= M.getit && t < M.lock) w = NIGHT;
-    return { t: t, world: w, warp: warp, spot: spot, rays: rays, flash: 0, void: key(t, VOID) };
+    // A slit of light, narrow at first, then wide open onto the golden world
+    var gold = key(t, [[M.slit - 0.02, 0], [M.slit, 1, 'linear'], [M.back, 1], [M.back + 0.3, 0]]);
+    var slit = [key(t, [[M.slit, 0], [M.open, 0.035, 'sine'], [M.open + 0.85, 1, 'inOut']]), key(t, [[M.slit, 0], [M.slit + 0.4, 1], [M.open + 0.55, 1], [M.open + 1.1, 0]]), 0];
+    // The Home button, opened into a circle of light
+    var port = [0, 0, 0, 0];
+    if (t > M.home && t < M.press2) port = [0.5, 1 - RING.y / 1080, portRadius(t) / 1080, Math.min(E.out(seg(t, M.home, M.home + 0.4)), 1 - E.sine(seg(t, M.press2 - 0.32, M.press2 - 0.06)))];
+    // Four pillars of four worlds, closing into one line, then one point
+    var band = [0, 0, 0], quad = [0, 0, 0, 0];
+    if (t >= M.pillars - 0.01 && t < M.point + 0.6) {
+      quad = [0, 1, 2, 3].map(function (k) { return pillarReveal(k, t); });
+      band = [bandHalf(t), lerp(0.5, 0, E.in(seg(t, M.point, M.point + 0.42))), 1];
+    }
+    return { t: t, world: w, warp: [0, 0.5, 0.5, 0], spot: spot, rays: rays, flash: 0, void: key(t, VOID), gold: gold, slit: slit, band: band, quad: quad, port: port };
   }
   function particles(t, s) {
     var out = [], night = s.world[0] + s.world[2] * 0.8 + s.world[3] * 0.6;
-    var dustA = night * (1 - s.void) * key(t, [[0, 0.5], [M.morph, 0.5], [M.flash, 0.25], [M.show - 0.4, 0.25], [M.show + 0.6, 0.7], [M.console + 1.2, 0.45], [M.montage, 0.4], [M.cut, 0.18], [M.device, 0.18], [M.tag, 0.45]]);
+    var dustA = night * (1 - s.void) * (1 - s.gold) * key(t, [[0, 0.5], [M.morph, 0.5], [M.flash, 0.25], [M.show - 0.4, 0.25], [M.show + 0.6, 0.7], [M.console + 1.2, 0.45], [M.pillars, 0.2], [M.lock, 0.4], [M.cut, 0.18], [M.device, 0.18], [M.tag, 0.45]]);
     var push = t >= M.press2 ? [M.press2, 260] : t >= M.press1 ? [M.press1, 150] : [-10, 0];
-    if (cutIndex(t) >= 0) dustA = 0;
     out.push({ name: 'dust', sys: 0, alpha: dustA, a: [dustA, push[0], push[1], 0], b: [RING.x, RING.y, 0, 0] });
     if (t > M.draw0 && t < M.draw1 + 1.4) out.push({ name: 'sparks', sys: 1, alpha: 1, a: [M.draw0, M.draw1, RING.x, RING.y], b: [RING.r, 1, 1.3, 0] });
     if (t > GATHER.t0 - 0.1 && t < GATHER.t0 + GATHER.span + 1) out.push({ name: 'gather', sys: 2, alpha: 1, a: [GATHER.t0, GATHER.span, 1, 1] });
     var sw = env(t, M.swarm, M.swarm + 2.6, 0.4, 0.5);
     if (sw > 0) out.push({ name: 'swarm', sys: 3, alpha: sw, a: [M.swarm, sw, 940, 400], b: [760, 250, 1.45 * E.inOut(seg(t, M.swarm + 1.1, M.swarm + 2.1)), 0] });
+    var gg = env(t, M.slit + 0.3, M.back + 0.15, 0.9, 0.3) * 0.9;
+    if (gg > 0) out.push({ name: 'glints', sys: 4, alpha: gg, a: [gg, 0.028, 0, 0], b: [lerp(0.0018, 1.05, s.slit[0]) * 1080, 0, 0, 0] });
+    var ff = env(t, M.garden + 0.2, M.device + 0.6, 1.4, 0.6);
+    if (ff > 0) out.push({ name: 'flies', sys: 5, alpha: ff, a: [ff, 0, 0, 0], b: [90, 150, 1740, 760] });
     s.particles = out;
   }
   function paintFlat(s) {
     // Without WebGL: the same worlds as flat washes.
     if (!flat) return;
     var c = [s.world[0] * 8 + s.world[1] * 236 + s.world[2] * 70 + s.world[3] * 120, s.world[0] * 12 + s.world[1] * 240 + s.world[2] * 50 + s.world[3] * 110, s.world[0] * 26 + s.world[1] * 248 + s.world[2] * 200 + s.world[3] * 170];
+    c = c.map(function (v, i) { return lerp(v, [250, 232, 196][i], s.gold * s.slit[0]); });
     flat.fillStyle = 'rgb(' + c.map(function (v) { return Math.round(v * (1 - s.void)); }).join(',') + ')';
     flat.fillRect(0, 0, worldCanvas.width, worldCanvas.height);
   }
@@ -587,15 +605,16 @@
     c.restore();
   }
   // A point of light with an anamorphic streak, as a lens sees it.
-  function flare(x, y, a, s) {
+  function flare(x, y, a, s, warm) {
     if (a <= 0.002) return;
     var c = lctx; s = s || 1;
+    var hue = warm ? ['255,170,80', '255,200,120', '255,236,200'] : ['80,140,255', '110,165,255', '220,236,255'];
     c.save(); c.globalCompositeOperation = 'lighter';
     var w = 560 * s, g = c.createLinearGradient(x - w, 0, x + w, 0);
-    g.addColorStop(0, 'rgba(80,140,255,0)'); g.addColorStop(0.35, 'rgba(110,165,255,' + (0.18 * a) + ')'); g.addColorStop(0.5, 'rgba(220,236,255,' + (0.75 * a) + ')'); g.addColorStop(0.65, 'rgba(110,165,255,' + (0.18 * a) + ')'); g.addColorStop(1, 'rgba(80,140,255,0)');
+    g.addColorStop(0, 'rgba(' + hue[0] + ',0)'); g.addColorStop(0.35, 'rgba(' + hue[1] + ',' + (0.18 * a) + ')'); g.addColorStop(0.5, 'rgba(' + hue[2] + ',' + (0.75 * a) + ')'); g.addColorStop(0.65, 'rgba(' + hue[1] + ',' + (0.18 * a) + ')'); g.addColorStop(1, 'rgba(' + hue[0] + ',0)');
     c.fillStyle = g; c.fillRect(x - w, y - 1.3 * s, 2 * w, 2.6 * s);
     var r = 80 * s, h = c.createRadialGradient(x, y, 0, x, y, r);
-    h.addColorStop(0, 'rgba(255,255,255,' + a + ')'); h.addColorStop(0.1, 'rgba(225,238,255,' + (0.75 * a) + ')'); h.addColorStop(0.35, 'rgba(120,170,255,' + (0.16 * a) + ')'); h.addColorStop(1, 'rgba(90,140,255,0)');
+    h.addColorStop(0, 'rgba(255,255,255,' + a + ')'); h.addColorStop(0.1, 'rgba(' + hue[2] + ',' + (0.75 * a) + ')'); h.addColorStop(0.35, 'rgba(' + hue[1] + ',' + (0.16 * a) + ')'); h.addColorStop(1, 'rgba(' + hue[0] + ',0)');
     c.fillStyle = h; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
     c.restore();
   }
@@ -729,6 +748,166 @@
     });
     c.restore();
   }
+  // The closed loop, drawn in light around the nine, with a bead of light travelling it.
+  function loopLine(t) {
+    var on = env(t, M.loop + 0.4, M.garden + 0.9, 0.5, 0.9);
+    if (on <= 0) return;
+    var draw = E.inOut(seg(t, M.loop + 0.4, M.loop + 1.5)), c = lctx, ctr = toStage(LOOP.cx, LOOP.cy);
+    c.save(); c.globalCompositeOperation = 'lighter';
+    [[7, 'rgba(150,200,255,' + f3(0.16 * on) + ')'], [1.4, 'rgba(225,238,255,' + f3(0.7 * on) + ')']].forEach(function (l) {
+      c.strokeStyle = l[1]; c.lineWidth = l[0];
+      c.beginPath(); c.ellipse(ctr[0], ctr[1], LOOP.rx * cam.s, LOOP.ry * cam.s, 0, -Math.PI / 2, -Math.PI / 2 + TAU * draw); c.stroke();
+    });
+    var a = -Math.PI / 2 + (t - M.loop) * 1.25, bx = ctr[0] + LOOP.rx * cam.s * Math.cos(a), by = ctr[1] + LOOP.ry * cam.s * Math.sin(a);
+    var g = c.createRadialGradient(bx, by, 0, bx, by, 22);
+    g.addColorStop(0, 'rgba(255,255,255,' + f3(0.9 * on * draw) + ')'); g.addColorStop(1, 'rgba(160,205,255,0)');
+    c.fillStyle = g; c.beginPath(); c.arc(bx, by, 22, 0, TAU); c.fill();
+    c.restore();
+  }
+
+  // ---------- the golden world, drawn in lines ----------
+  // Soft satin gold from the shader; on it, in engraved hairlines: a horizon, a sun resting on it, a fan of rays,
+  // rings of light widening from the sun, their reflection on a still sea, glitter, and strands of coloured silk.
+  var SUN = { x: 960, y: 621 };
+  var GLITTER = (function () {
+    var r = rng(33), out = [];
+    for (var i = 0; i < 110; i++) {
+      var d = Math.pow(r(), 1.6);
+      out.push({ d: d, x: (r() - 0.5) * (60 + 900 * d) * (0.35 + 0.9 * r()), len: 5 + 40 * d * (0.4 + r()), w: 0.6 + 1.5 * r(), p: r() * TAU, f: 1.1 + 2.6 * r() });
+    }
+    return out;
+  })();
+  var SILK = [
+    { off: -40, ph: 0.0, w: 15, hue: 0.0, k: 1.0 },
+    { off: -15, ph: 1.7, w: 9, hue: 0.17, k: 1.12 },
+    { off: 6, ph: 3.1, w: 13, hue: 0.34, k: 0.92 },
+    { off: 28, ph: 4.4, w: 7, hue: 0.52, k: 1.2 },
+    { off: 50, ph: 5.6, w: 11, hue: 0.7, k: 0.86 }
+  ];
+  // Champagne, peach, rose, lilac, sky, mint, and back to champagne
+  var SILK_COLORS = [[246, 220, 166], [248, 190, 158], [240, 164, 192], [196, 176, 240], [164, 212, 242], [186, 234, 208], [246, 220, 166]];
+  function silkColor(u) {
+    u = ((u % 1) + 1) % 1;
+    var x = u * (SILK_COLORS.length - 1), i = Math.floor(x), f = x - i, a = SILK_COLORS[i], b = SILK_COLORS[i + 1];
+    return [lerp(a[0], b[0], f), lerp(a[1], b[1], f), lerp(a[2], b[2], f)];
+  }
+  function silkY(x, t, k) {
+    return 1010 - 0.215 * x + 40 * Math.sin(x * 0.0034 + t * 0.4 + 0.5) + 16 * Math.sin(x * 0.0088 * k.k - t * 0.6 + k.ph) + k.off * (1 + 0.3 * Math.sin(x * 0.0021 + t * 0.28 + k.ph));
+  }
+  function silk(t, alpha) {
+    if (alpha <= 0.002) return;
+    var c = lctx, STEP = 14;
+    c.save();
+    SILK.forEach(function (k, n) {
+      var top = [], bottom = [], face = [];
+      for (var x = -140; x <= 2060; x += STEP) {
+        var y = silkY(x, t, k), slope = silkY(x + 1, t, k) - y, nl = Math.hypot(slope, 1), nx = -slope / nl, ny = 1 / nl;
+        var th = x * 0.0049 * k.k - t * (0.85 + 0.1 * n) + k.ph, hw = 1 + k.w * 0.5 * Math.abs(Math.cos(th));
+        top.push([x + nx * hw, y + ny * hw]); bottom.push([x - nx * hw, y - ny * hw]); face.push(0.5 + 0.5 * Math.sin(th + 1.1));
+      }
+      var fill = c.createLinearGradient(-140, 0, 2060, 0), edge = c.createLinearGradient(-140, 0, 2060, 0);
+      for (var i = 0; i < face.length; i += 2) {
+        var u = i / (face.length - 1), col = silkColor(u * 0.85 + k.hue - t * 0.045), b = 0.8 + 0.32 * face[i];
+        fill.addColorStop(u, 'rgba(' + Math.min(255, col[0] * b).toFixed(0) + ',' + Math.min(255, col[1] * b).toFixed(0) + ',' + Math.min(255, col[2] * b).toFixed(0) + ',' + f3(alpha * (0.6 + 0.32 * face[i])) + ')');
+        edge.addColorStop(u, 'rgba(255,252,244,' + f3(alpha * 0.9 * Math.pow(face[i], 3)) + ')');
+      }
+      c.shadowColor = 'rgba(104,74,34,' + f3(0.16 * alpha) + ')'; c.shadowBlur = 14; c.shadowOffsetY = 9;
+      c.fillStyle = fill;
+      c.beginPath(); c.moveTo(top[0][0], top[0][1]);
+      for (var j = 1; j < top.length; j++) c.lineTo(top[j][0], top[j][1]);
+      for (var m = bottom.length - 1; m >= 0; m--) c.lineTo(bottom[m][0], bottom[m][1]);
+      c.closePath(); c.fill();
+      c.shadowColor = 'rgba(0,0,0,0)';
+      c.strokeStyle = edge; c.lineWidth = 1.1;
+      c.beginPath(); c.moveTo(top[0][0], top[0][1]);
+      for (var q = 1; q < top.length; q++) c.lineTo(top[q][0], top[q][1]);
+      c.stroke();
+    });
+    c.restore();
+  }
+  // A gilded hairline: a fine dark line with a bright one beside it, as engraved in gold leaf.
+  function gilt(c, path, dark, light) {
+    c.strokeStyle = 'rgba(140,100,44,' + f3(dark) + ')'; c.lineWidth = 1.15; path(0); c.stroke();
+    c.strokeStyle = 'rgba(255,247,226,' + f3(light) + ')'; c.lineWidth = 1; path(1.5); c.stroke();
+  }
+  function goldWorld(t, s) {
+    if (s.gold <= 0.001) return;
+    var c = lctx, a0 = s.gold, half = lerp(0.0018, 1.05, s.slit[0]) * 1080;
+    var grow = E.out(seg(t, M.slit + 0.1, M.open + 1.7));
+    c.save();
+    c.beginPath(); c.rect(960 - half, 0, 2 * half, 1080); c.clip();
+    // walking on, a few steps more: the world draws gently nearer
+    var walk = 1 + 0.05 * E.sine(seg(t, M.open, M.back));
+    c.translate(SUN.x, SUN.y); c.scale(walk, walk); c.translate(-SUN.x, -SUN.y);
+    c.lineCap = 'round';
+    // a fan of rays, a light passing along it
+    for (var i = 1; i < 40; i++) {
+      var ang = Math.PI + i * Math.PI / 40, long = i % 2 === 0, r0 = long ? 84 : 128;
+      var r1 = lerp(r0 + 20, long ? 980 : 430, grow), shine = 0.5 + 0.5 * Math.sin(i * 0.62 - t * 1.25);
+      var ca = Math.cos(ang), sa = Math.sin(ang);
+      var g = c.createLinearGradient(SUN.x + r0 * ca, SUN.y + r0 * sa, SUN.x + r1 * ca, SUN.y + r1 * sa);
+      g.addColorStop(0, 'rgba(140,100,44,' + f3(a0 * (0.2 + 0.2 * shine)) + ')'); g.addColorStop(1, 'rgba(140,100,44,0)');
+      c.strokeStyle = g; c.lineWidth = long ? 1.05 : 0.75;
+      c.beginPath(); c.moveTo(SUN.x + r0 * ca, SUN.y + r0 * sa); c.lineTo(SUN.x + r1 * ca, SUN.y + r1 * sa); c.stroke();
+      if (long && i % 4 === 0) { // now and then a bead of light runs out along a ray
+        var run = ((t - M.slit) * 0.22 + i * 0.137) % 1, rb = lerp(r0, 900, run), ba = a0 * grow * Math.sin(Math.PI * run) * 0.8;
+        glow(c, SUN.x + rb * ca, SUN.y + rb * sa, 16, 16, [[0, 'rgba(255,250,236,' + f3(ba) + ')'], [1, 'rgba(255,240,210,0)']]);
+      }
+    }
+    // rings of light, born at the sun and widening, like rings on still water; mirrored, flatter, in the sea
+    for (var k = 0; k < 7; k++) {
+      var u = ((k + (t - M.slit) * 0.2) % 7) / 7, rr = 70 * Math.pow(16, u);
+      var fa = a0 * grow * Math.pow(Math.sin(Math.PI * u), 0.8);
+      if (fa < 0.004) continue;
+      gilt(c, function (o) { c.beginPath(); c.arc(SUN.x, SUN.y, rr + o, Math.PI, TAU); }, 0.4 * fa, 0.55 * fa);
+      c.save(); c.translate(SUN.x, SUN.y); c.scale(1, 0.22); c.beginPath(); c.arc(0, 0, rr, 0, Math.PI); c.restore();
+      c.strokeStyle = 'rgba(140,100,44,' + f3(0.2 * fa) + ')'; c.lineWidth = 1; c.stroke();
+    }
+    // the sun, resting on the horizon
+    glow(c, SUN.x, SUN.y, 150, 150, [[0, 'rgba(255,251,240,' + f3(0.75 * a0) + ')'], [0.4, 'rgba(255,240,206,' + f3(0.3 * a0) + ')'], [1, 'rgba(255,236,200,0)']]);
+    gilt(c, function (o) { c.beginPath(); c.arc(SUN.x, SUN.y, 56 + o, Math.PI, TAU); }, 0.6 * a0, 0.7 * a0);
+    gilt(c, function (o) { c.beginPath(); c.arc(SUN.x, SUN.y, 64 + o, Math.PI, TAU); }, 0.25 * a0, 0.35 * a0);
+    // the horizon, gilded, fading towards the edges of the world
+    var hz = c.createLinearGradient(0, 0, 1920, 0);
+    hz.addColorStop(0, 'rgba(140,100,44,0)'); hz.addColorStop(0.5, 'rgba(140,100,44,' + f3(0.55 * a0) + ')'); hz.addColorStop(1, 'rgba(140,100,44,0)');
+    c.strokeStyle = hz; c.lineWidth = 1.2; c.beginPath(); c.moveTo(-200, SUN.y); c.lineTo(2120, SUN.y); c.stroke();
+    var hl = c.createLinearGradient(0, 0, 1920, 0);
+    hl.addColorStop(0, 'rgba(255,247,226,0)'); hl.addColorStop(0.5, 'rgba(255,247,226,' + f3(0.8 * a0) + ')'); hl.addColorStop(1, 'rgba(255,247,226,0)');
+    c.strokeStyle = hl; c.lineWidth = 1; c.beginPath(); c.moveTo(-200, SUN.y + 1.6); c.lineTo(2120, SUN.y + 1.6); c.stroke();
+    // glitter on the sea, under the sun
+    c.globalCompositeOperation = 'lighter';
+    GLITTER.forEach(function (gl) {
+      var y = SUN.y + 5 + gl.d * (1080 - SUN.y), tw = Math.pow(0.5 + 0.5 * Math.sin(t * gl.f + gl.p), 4);
+      var al = a0 * grow * tw * (0.3 + 0.5 * (1 - gl.d));
+      if (al < 0.01) return;
+      c.strokeStyle = 'rgba(255,240,206,' + f3(al) + ')'; c.lineWidth = gl.w;
+      c.beginPath(); c.moveTo(SUN.x + gl.x - gl.len / 2, y); c.lineTo(SUN.x + gl.x + gl.len / 2, y); c.stroke();
+    });
+    c.globalCompositeOperation = 'source-over';
+    // strands of silk, in every colour of the light
+    silk(t, a0 * E.out(seg(t, M.open + 0.25, M.open + 1.5)));
+    // what was written flies out over the sea to the sun; when it arrives, a ring of light leaves the sun
+    var c0 = M.open + 0.45, c1 = M.open + 2.35, cp = seg(t, c0, c1);
+    if (cp > 0 && cp < 1) {
+      var pos = function (q) { var f = 1 - Math.pow(1 - q, 2.4); return [lerp(1380, SUN.x, f) + 90 * Math.sin(Math.PI * f), lerp(1140, SUN.y - 3, f)]; };
+      var head = pos(cp), tail = pos(Math.max(0, cp - 0.2)), size = lerp(1.5, 0.3, cp);
+      c.globalCompositeOperation = 'lighter';
+      var tg = c.createLinearGradient(tail[0], tail[1], head[0], head[1]);
+      tg.addColorStop(0, 'rgba(255,226,170,0)'); tg.addColorStop(1, 'rgba(255,251,240,0.95)');
+      c.strokeStyle = tg; c.lineWidth = 3 * size; c.beginPath(); c.moveTo(tail[0], tail[1]); c.lineTo(head[0], head[1]); c.stroke();
+      glow(c, head[0], head[1], 30 * size, 30 * size, [[0, 'rgba(255,255,255,0.95)'], [0.3, 'rgba(255,236,196,0.5)'], [1, 'rgba(255,226,170,0)']]);
+      c.globalCompositeOperation = 'source-over';
+    }
+    var ap = seg(t, c1, c1 + 1.6);
+    if (ap > 0 && ap < 1) {
+      c.globalCompositeOperation = 'lighter';
+      c.strokeStyle = 'rgba(255,246,222,' + f3(0.9 * Math.pow(1 - ap, 1.5)) + ')'; c.lineWidth = 2.2 * (1 - ap) + 0.6;
+      c.beginPath(); c.arc(SUN.x, SUN.y, lerp(56, 640, E.out(ap)), Math.PI, TAU); c.stroke();
+      c.globalCompositeOperation = 'source-over';
+    }
+    c.restore();
+    if (ap > 0 && ap < 0.6) flare(SUN.x, SUN.y, 0.65 * Math.sin(Math.PI * ap / 0.6), 1.1, true);
+  }
 
   // ---------- one frame ----------
   function appear(node, t, t0, dur, dy, blur) {
@@ -748,8 +927,9 @@
     cam.s = c[2]; cam.tx = c[0] - SCX * c[2]; cam.ty = c[1] - SCY * c[2];
     camera.style.transform = 'translate(' + px(cam.tx) + ',' + px(cam.ty) + ') scale(' + cam.s.toFixed(5) + ')';
     var r3 = key(t, ROT); rot.ax = r3[0]; rot.ay = r3[1]; rot.az = r3[2];
-    var spread = key(t, SPREAD);
+    var spread = key(t, SPREAD), solid = t > D && t < T + 1;
     device.classList.toggle('space', spread > 0.001);
+    device.classList.toggle('solid', solid);
     device.style.transform = (rot.ax || rot.ay || rot.az) ? 'rotateX(' + rot.ax.toFixed(3) + 'deg) rotateY(' + rot.ay.toFixed(3) + 'deg) rotateZ(' + rot.az.toFixed(3) + 'deg)' : 'none';
     LAYERS.forEach(function (layer, i) {
       layer.style.transform = spread > 0.001 ? 'translateZ(' + (LAYER_Z[i] * GAP * spread).toFixed(2) + 'px)' : 'none';
@@ -758,12 +938,15 @@
     var screenA = key(t, [[0, 0], [M.morph + 0.4, 0], [M.flash - 0.1, 1], [M.warp + 0.3, 1], [M.warp + 0.55, 0], [M.back, 0], [M.back + 0.25, 1], [M.console, 1], [M.console + 0.5, 0], [M.cut - 0.01, 0], [M.cut, 1, 'linear'], [T, 1], [T + 0.7, 0]]);
     show(camera, screenA > 0.001);
     screen.style.opacity = screenA < 0.999 ? f3(screenA) : '';
-    bezel.style.opacity = f3(key(t, [[D + 0.2, 0], [D + 1.7, 1]]));
+    var shell = key(t, [[D + 0.2, 0], [D + 1.5, 1], [T, 1], [T + 0.7, 0]]);
+    bezel.style.opacity = f3(shell); edgeR.style.opacity = f3(solid ? shell : 0);
     halo.style.opacity = f3(key(t, [[D, 0], [D + 1.8, 0.9], [T, 0.9], [T + 0.7, 0]]));
-    innerSky.style.transform = 'scale(' + (1.01 + 0.012 * Math.sin(t * 0.21)).toFixed(4) + ')';
-    screenDim.style.opacity = f3(key(t, [[M.cut - 0.01, 0, 'linear'], [M.cut, 0.52, 'linear'], [M.cut + 3, 0.52], [M.cut + 4, 0.46], [D, 0.4], [D + 1.6, 0]]));
+    innerSky.style.transform = innerSkyB.style.transform = 'scale(' + (1.01 + 0.012 * Math.sin(t * 0.21)).toFixed(4) + ')';
+    innerSkyB.style.opacity = f3(E.inOut(seg(t, LOOP.flick + 0.1, LOOP.flick + 1.2)));
+    screenDim.style.opacity = f3(key(t, [[M.cut - 0.01, 0, 'linear'], [M.cut, 0.52, 'linear'], [M.cut + 3, 0.52], [M.cut + 4, 0.46], [M.garden, 0.46], [M.garden + 1.5, 0.32], [D, 0.32], [D + 1.6, 0]]));
+    garden.style.opacity = f3(env(t, M.garden, D + 0.9, 1.8, 0.9));
     backdrop.style.opacity = f3(0.5 * env(t, M.sheet + 0.2, M.console + 0.4, 0.8, 0.6));
-    var gp = seg(t, M.flash + 0.3, M.flash + 1.9), gp2 = seg(t, D + 1.9, D + 3.8);
+    var gp = seg(t, M.flash + 0.3, M.flash + 1.9), gp2 = seg(t, D + 2.0, D + 3.9);
     glare.style.opacity = f3(Math.max(Math.sin(Math.PI * gp) * 0.8, Math.sin(Math.PI * gp2)));
     glare.style.transform = 'translateX(' + lerp(-55, 55, gp2 > 0 ? gp2 : gp).toFixed(2) + '%)';
 
@@ -773,6 +956,12 @@
     var spot = 1 - 0.78 * env(t, M.type - 1.1, M.sheet + 1.0, 0.7, 0.8);
     if (spot < 1) SPOTLIT.forEach(function (node) { node.style.opacity = f3(parseFloat(node.style.opacity) * spot); });
     q('.avatar').style.setProperty('--spin', ((t * 360 / 14) % 360).toFixed(2) + 'deg');
+    // In the back garden, the interface steps back and leaves the night to the residents.
+    var recede = Math.min(E.inOut(seg(t, M.garden - 0.3, M.garden + 1.5)), 1 - E.inOut(seg(t, D + 0.1, D + 1.3)));
+    [ui, LAYERS[1]].forEach(function (layer) {
+      layer.style.opacity = recede > 0.001 ? f3(1 - 0.74 * recede) : '';
+      layer.style.filter = recede > 0.001 ? blurOf(3.5 * recede) : '';
+    });
 
     // ---- launch pad: typing, the flight, the arrow; then the stage: rehearsal and bursts ----
     var chars = '念起，光行', n = t < M.type ? 0 : Math.min(5, 1 + Math.floor((t - M.type) / 0.25));
@@ -800,7 +989,7 @@
     randomToggle.style.setProperty('--on', f3(E.inOut(seg(t, M.lasers - 0.43, M.lasers - 0.1))));
 
     // ---- the console ----
-    var au = env(t, M.console + 0.1, M.montage, 0.8, 0.01);
+    var au = env(t, M.console + 0.1, M.pillars, 0.8, 0.01);
     show(aurora, au > 0.001);
     aurora.style.opacity = f3(au);
     var rise = E.out(seg(t, M.console + 0.3, M.console + 1.3));
@@ -818,7 +1007,7 @@
       }
       return value / 100;
     });
-    var touchA = env(t, knobStart(5) + 0.2, M.montage, 0.5, 0.3);
+    var touchA = env(t, knobStart(5) + 0.2, M.pillars, 0.5, 0.3);
     if (au > 0.001) {
       drawOrbs(t);
       specimen.style.setProperty('--sp-blur', (2 + 30 * v[1]).toFixed(2) + 'px');
@@ -830,7 +1019,6 @@
       specimen.style.setProperty('--sp-tx', (58 + 16 * Math.sin((t - 40) * 1.3)).toFixed(2) + '%');
       specimen.style.setProperty('--sp-ty', (36 + 12 * Math.cos((t - 40) * 1.1)).toFixed(2) + '%');
     }
-    // The card on the device keeps the same six settings at their defaults.
     cardGlass.style.setProperty('--touch', '0');
 
     // ---- residents ----
@@ -838,10 +1026,10 @@
     penPath.style.opacity = f3(t < M.pen ? 0 : 1 - E.sine(seg(t, L0 + 0.9, L0 + 1.55)));
     var tease = spread; // a glimpse of the residents in the exploded view
     LUEURS.forEach(function (lu, i) {
-      var pos, alpha;
+      var pos;
       if (tease > 0.001 && t < M.cut) {
-        pos = lu.base; alpha = 0.55 * tease;
-        lu.node.style.opacity = f3(alpha);
+        pos = lu.base;
+        lu.node.style.opacity = f3(0.55 * tease);
         lu.node.style.transform = 'translate(' + px(pos[0]) + ',' + px(pos[1]) + ')';
         lu.idNode.style.opacity = '0'; lu.node.style.setProperty('--held', '0'); lu.glint.style.opacity = '0';
         return;
@@ -852,7 +1040,7 @@
       lu.node.style.opacity = f3(Math.min(1, seg(t, lu.in, lu.in + 0.3) * 1.2));
       lu.node.style.transform = 'translate(' + px(pos[0]) + ',' + px(pos[1]) + ') scale(' + f3(0.4 + 0.6 * pop) + ')';
       lu.idNode.style.opacity = f3(Math.max(env(t, lu.in + 0.12, lu.in + 1.35, 0.25, 0.4), i === 6 ? env(t, M.hold + 0.15, M.hold + 1.95, 0.3, 0.45) : 0));
-      lu.node.style.setProperty('--held', f3(i === 6 ? env(t, M.hold + 0.05, M.hold + 1.5, 0.3, 0.35) : 0));
+      lu.node.style.setProperty('--held', f3(i === 6 ? env(t, M.hold + 0.05, M.hold + 1.5, 0.3, 0.35) : i === 8 ? env(t, LOOP.flick - 0.1, LOOP.flick + 0.9, 0.2, 0.4) : 0));
       var gl = (i === 3 || i === 4) ? seg(t, ENC.hit - 0.02, ENC.hit + 0.3) : 0;
       lu.glint.style.opacity = f3(gl > 0 && gl < 1 ? Math.sin(Math.PI * gl) : 0);
       lu.glint.style.transform = 'rotate(-35deg) scaleX(' + f3(0.35 + 0.85 * gl) + ')';
@@ -860,53 +1048,45 @@
     var hp = lueurPosition(6, t);
     touch.style.opacity = f3(env(t, M.hold, M.hold + 1.45, 0.3, 0.3));
     touch.style.transform = 'translate(' + px(hp[0]) + ',' + px(hp[1]) + ') scale(' + f3(0.8 + 0.2 * E.out(seg(t, M.hold, M.hold + 0.3))) + ')';
+    var fp = lueurPosition(8, Math.min(t, LOOP.flick + 0.15));
+    flickTouch.style.opacity = f3(env(t, LOOP.flick - 0.25, LOOP.flick + 0.45, 0.2, 0.3));
+    flickTouch.style.transform = 'translate(' + px(fp[0] - 34 + 40 * E.out(seg(t, LOOP.flick - 0.05, LOOP.flick + 0.3))) + ',' + px(fp[1] + 10) + ')';
 
-    // ---- H◯me 键 ----
-    var slide = Math.min(E.inOut(seg(t, M.home - 0.05, M.home + 0.75)), 1 - E.inOut(seg(t, M.press2 - 0.62, M.press2 - 0.08)));
-    var follow = HOME.shift * (slide - 1);
-    var hmIn = E.out(seg(t, M.home + 0.15, M.home + 1.05)), keyIn = E.out(seg(t, M.home + 0.4, M.home + 1.25));
-    var hmOut = E.sine(seg(t, M.press2 - 0.55, M.press2 - 0.05));
-    var hmA = hmIn * (1 - hmOut);
-    [hmH, hmMe, hmKey, hmCall, hmEn].forEach(function (node) { show(node, hmA > 0.001); });
-    hmH.style.opacity = f3(hmA); hmMe.style.opacity = f3(hmA); hmKey.style.opacity = f3(keyIn * (1 - hmOut));
-    hmH.style.transform = 'translateX(' + (follow - (1 - hmIn) * 70 - hmOut * 30).toFixed(2) + 'px)';
-    hmMe.style.transform = 'translateX(' + (follow + (1 - hmIn) * 70 + hmOut * 30).toFixed(2) + 'px)';
-    hmKey.style.transform = 'translateX(' + (follow + (1 - keyIn) * 110 + hmOut * 40).toFixed(2) + 'px)';
-    hmH.style.filter = blurOf((1 - hmIn) * 14 + hmOut * 10); hmMe.style.filter = hmH.style.filter;
-    hmKey.style.filter = blurOf((1 - keyIn) * 16 + hmOut * 10);
-    var callIn = E.out(seg(t, M.home, M.home + 0.8));
-    var ls = lerp(22, 8, callIn).toFixed(2) + 'px';
-    hmCall.style.opacity = f3(callIn * (1 - hmOut)); hmCall.style.letterSpacing = ls; hmCall.style.paddingLeft = ls;
-    hmCall.style.transform = 'translateX(-50%)';
-    var enIn = E.out(seg(t, M.home + 0.8, M.home + 1.6));
-    hmEn.style.opacity = f3(enIn * (1 - hmOut)); hmEn.style.transform = 'translate(-50%,' + ((1 - enIn) * 10).toFixed(2) + 'px)';
-
-    // ---- one place, four names ----
-    var ci = cutIndex(t);
-    show(montage, ci >= 0);
-    if (ci >= 0) {
-      var cut = CUTS[ci % 4], ink = cut[2] === 'pearl', cp = (t - M.montage - ci * CUT) / CUT;
-      if (mWord.textContent !== cut[0]) { mWord.textContent = cut[0]; mLatin.textContent = cut[1]; }
-      montage.style.opacity = '1';
-      montage.style.color = ink ? '#0d1220' : '#f4f6fa';
-      montage.style.transform = 'scale(' + (1.08 - 0.08 * E.out5(clamp(cp))).toFixed(4) + ')';
-      mWord.style.filter = blurOf(Math.max(0, 1 - cp * 6) * 10);
+    // ---- the Home button opens into a circle of light; its name runs through it ----
+    var pr = portRadius(t), portOn = t > M.home && t < M.press2;
+    show(hmOut, portOn); show(hmIn, portOn);
+    if (portOn) {
+      var nameIn = E.out(seg(t, M.home + 0.35, M.home + 1.05)), nameOut = E.sine(seg(t, M.press2 - 0.72, M.press2 - 0.28));
+      hmOut.style.opacity = f3(nameIn * (1 - nameOut));
+      hmOut.style.filter = blurOf((1 - nameIn) * 12 + nameOut * 10);
+      hmOut.style.webkitMaskImage = hmOut.style.maskImage = 'radial-gradient(circle at 960px ' + RING.y + 'px, transparent ' + (pr - 0.6).toFixed(2) + 'px, #000 ' + (pr + 0.6).toFixed(2) + 'px)';
+      hmIn.style.clipPath = 'circle(' + pr.toFixed(2) + 'px at 960px ' + RING.y + 'px)';
+      hmIn.style.opacity = f3(1 - E.sine(seg(t, M.press2 - 0.42, M.press2 - 0.1)));
+      hmName.style.opacity = f3(nameIn);
+      hmName.style.filter = blurOf((1 - nameIn) * 12);
+      var call = E.out(seg(t, M.home + 0.8, M.home + 1.45));
+      hmCall.style.opacity = f3(call);
+      hmCall.style.letterSpacing = lerp(30, 14, call).toFixed(2) + 'px';
+      hmEn.style.opacity = f3(E.out(seg(t, M.home + 1.1, M.home + 1.8)));
     }
-    var gi = env(t, M.getit, M.four - 0.05, 0.25, 0.35);
-    show(getit, gi > 0.001);
-    getit.style.opacity = f3(gi);
-    getit.style.letterSpacing = lerp(18, 10, E.out(seg(t, M.getit, M.getit + 1.0))).toFixed(2) + 'px';
-    w4.forEach(function (node, i) {
-      var a = M.four + i * 0.14, inP = E.out(seg(t, a, a + 0.45)), merge = E.inOut(seg(t, M.merge, M.lock));
-      node.style.opacity = f3(t > M.lock + 0.01 ? 0 : inP);
-      node.style.filter = blurOf((1 - inP) * 8);
-      node.style.transform = 'translateX(' + ((1 - inP) * -40).toFixed(2) + 'px)';
-      node.firstChild.style.opacity = f3(1 - merge);
-      node.lastChild.style.transform = 'translateY(' + ((472 - (322 + i * 100)) * merge).toFixed(2) + 'px)';
-    });
-    var mv = E.inOut(seg(t, M.lock, M.lock + 0.8)), lockOut = 1 - E.sine(seg(t, M.dark - 0.5, M.dark + 0.1));
-    lkTai.style.opacity = f3(t < M.lock ? 0 : lockOut);
-    lkTai.style.transform = 'translate(' + px(lerp(984, 1035, mv)) + ',' + px(lerp(472, 395, mv)) + ') scale(' + lerp(76 / 150, 1, mv).toFixed(4) + ')';
+
+    // ---- four places, one place ----
+    var plOn = t > M.pillars - 0.05 && t < M.point + 0.2;
+    show(pillarsBox, plOn);
+    if (plOn) {
+      var wpx = bandHalf(t) * 2 * 1920, fade = 1 - E.sine(seg(t, M.converge + 0.05, M.converge + 0.65));
+      PILLARS.forEach(function (node, k) {
+        var r = E.out(seg(t, M.pillars + k * 0.5 + 0.12, M.pillars + k * 0.5 + 0.75));
+        node.style.opacity = f3(r * fade);
+        node.style.transform = 'translate(' + px(960 + (k - 1.5) * wpx / 4 - 240) + ',' + px((1 - r) * 26) + ')';
+        node.style.filter = blurOf((1 - r) * 8 + (1 - fade) * 8);
+      });
+    }
+    var mv = E.inOut(seg(t, M.lock, M.lock + 0.9)), lockOut = 1 - E.sine(seg(t, M.dark - 0.5, M.dark + 0.1));
+    var s0 = 0.24;
+    lkTai.style.opacity = f3(t < M.lock ? 0 : lockOut * E.out(seg(t, M.lock, M.lock + 0.35)));
+    lkTai.style.transform = 'translate(' + px(lerp(960 - 75 * s0, 1035, mv)) + ',' + px(lerp(540 - 75 * s0, 395, mv)) + ') scale(' + lerp(s0, 1, mv).toFixed(4) + ')';
+    lkTai.style.filter = blurOf((1 - E.out(seg(t, M.lock, M.lock + 0.6))) * 5);
     var lingIn = G ? E.sine(seg(t, GATHER.t0 + GATHER.span - 0.35, GATHER.t0 + GATHER.span + 0.45)) : E.out(seg(t, M.lock + 0.6, M.lock + 1.55));
     lkLing.style.opacity = f3(lingIn * lockOut);
     lkMark.style.opacity = f3(E.out(seg(t, M.lock + 1.45, M.lock + 2.25)) * lockOut);
@@ -941,13 +1121,15 @@
 
     // ---- overlays ----
     black.style.opacity = '0';
+    var warmBloom = (t > M.open - 0.2 && t < M.open + 1.7) || (t > M.back - 0.1 && t < M.back + 0.7);
+    if (bloom.dataset.warm !== String(warmBloom)) { bloom.dataset.warm = String(warmBloom); bloom.style.background = warmBloom ? WARM_BLOOM : ''; }
     bloom.style.opacity = f3(key(t, BLOOM));
-    scrim.style.opacity = f3(key(t, [[M.launch - 0.2, 0], [M.launch + 0.6, 0.85], [M.warp + 0.3, 0.85], [M.warp + 0.6, 0.35], [M.back, 0.35], [M.back + 0.4, 0.85], [M.sheet - 0.6, 0.85], [M.sheet + 0.4, 0.72], [M.show, 0.72], [M.show + 1.0, 0.3], [M.console, 0.3], [M.console + 0.5, 0], [M.cut - 0.01, 0], [M.cut, 0.8, 'linear'], [D, 0.8], [D + 1, 0]]));
+    scrim.style.opacity = f3(key(t, [[M.launch - 0.2, 0], [M.launch + 0.6, 0.85], [M.warp + 0.3, 0.85], [M.warp + 0.6, 0], [M.back, 0], [M.back + 0.4, 0.85], [M.sheet - 0.6, 0.85], [M.sheet + 0.4, 0.72], [M.show, 0.72], [M.show + 1.0, 0.3], [M.console, 0.3], [M.console + 0.5, 0], [M.cut - 0.01, 0], [M.cut, 0.8, 'linear'], [M.garden, 0.8], [M.garden + 1.0, 0.7], [D, 0.7], [D + 1, 0]]));
 
     // ---- the world ----
     var s = worldState(t);
-    var pearlish = s.world[1];
-    vignette.style.opacity = f3((1 - 0.7 * pearlish) * (1 - s.void * 0.5));
+    var pearlish = s.world[1] + s.gold * s.slit[0];
+    vignette.style.opacity = f3((1 - 0.7 * Math.min(1, pearlish)) * (1 - s.void * 0.5));
     stage.style.background = pearlish > 0.5 ? '#eef2f8' : '#04060c';
 
     // ---- the ring: a button called Home, then the place it became ----
@@ -955,7 +1137,7 @@
     var dip = function (t0) { var p = seg(t, t0, t0 + 0.75); return p <= 0 || p >= 1 ? 0 : (p < 0.4 ? Math.sin(Math.PI * p / 0.4) * 0.075 : -Math.sin(Math.PI * (p - 0.4) / 0.6) * 0.012); };
     var scale = 1 - dip(M.press1) - dip(M.press2);
     var morph = E.inOut(seg(t, M.morph, M.flash + 0.05));
-    var R = RING.r, cx = RING.x + HOME.shift * slide, cy = RING.y;
+    var R = pr, cx = RING.x, cy = RING.y, opened = (pr - RING.r) / (PORT.r - RING.r);
     var rw = lerp(2 * R, 1560 * 0.62, morph) * scale, rh = lerp(2 * R, 1040 * 0.62, morph) * scale, rr = lerp(R, 30 * 0.62, morph) * scale;
     var ringA = t < M.draw0 ? 0 : key(t, [[M.draw0, 1], [M.flash, 1], [M.flash + 0.1, 0, 'linear']]);
     show(ring, ringA > 0.001); show(ringGlow, ringA > 0.001);
@@ -969,9 +1151,7 @@
       ring.style.strokeDasharray = draw < 1 ? perimeter.toFixed(1) : 'none';
       ring.style.strokeDashoffset = draw < 1 ? ((1 - draw) * perimeter).toFixed(1) : '0';
       ringGlow.style.strokeDasharray = ring.style.strokeDasharray; ringGlow.style.strokeDashoffset = ring.style.strokeDashoffset;
-      // During the name, the ring takes the weight of the letters around it.
-      var asO = env(t, M.home + 0.1, M.press2 - 0.1, 0.6, 0.5);
-      ring.style.strokeWidth = lerp(2.6, HOME.stem, asO).toFixed(2);
+      ring.style.strokeWidth = lerp(2.6, 3.4, opened).toFixed(2);
       ring.style.opacity = f3(ringA);
       var breath = 0.32 + 0.12 * Math.sin(t * 2.1);
       ringGlow.style.opacity = f3(ringA * (draw < 1 ? 0.6 : breath + 0.5 * Math.max(pulse(t, M.press1, M.press1 + 0.75), pulse(t, M.press2, M.press2 + 0.75), Math.sin(Math.PI * morph))));
@@ -992,7 +1172,11 @@
     shock(t, M.press2 + 0.16, 0.5);
     if (t > M.press1 && t < M.press1 + 0.6) flare(cx, cy, pulse(t, M.press1, M.press1 + 0.6) * 0.8, 1.3);
     if (t > M.press2 && t < M.press2 + 0.8) flare(cx, cy, pulse(t, M.press2, M.press2 + 0.8), 1.8);
-    sweep(t, M.home + 0.75, 0.1, 1.2);
+    // The circle opening: light runs once round its rim
+    if (t > M.home + 0.5 && t < M.home + 1.9) {
+      var bp = E.inOut(seg(t, M.home + 0.5, M.home + 1.8)), ba = -Math.PI / 2 + bp * TAU;
+      glow(lctx, cx + R * Math.cos(ba), cy + R * Math.sin(ba), 26, 26, [[0, 'rgba(255,255,255,' + f3(0.85 * Math.sin(Math.PI * bp)) + ')'], [0.35, 'rgba(190,220,255,' + f3(0.32 * Math.sin(Math.PI * bp)) + ')'], [1, 'rgba(160,200,255,0)']]);
+    }
     // The base and the exploded view
     scanLine(t);
     if (spread > 0.001) {
@@ -1014,7 +1198,8 @@
     var wordWidth = Math.max(typed.offsetWidth, 90);
     if (t > M.fly - 0.03 && t < M.fly + 0.62) flight(seg(t, M.fly, M.fly + 0.52), wordWidth, 1 - 0.85 * seg(t, M.fly + 0.5, M.fly + 0.62));
     if (t > M.fly + 0.5 && t < M.warp + 0.7) { var ga = toStage(1307, 356); flare(ga[0], ga[1], pulse(t, M.fly + 0.5, M.warp + 0.7), 1.2 + 2 * seg(t, M.warp, M.warp + 0.6)); }
-    if (t > M.warp + 0.4 && t < M.back + 0.2) flare(960, 470, 0.5 * env(t, M.warp + 0.4, M.back + 0.2, 0.5, 0.3) * (0.85 + 0.15 * Math.sin(t * 9)), 1.6);
+    // The narrow way opens onto the golden world, drawn in lines
+    goldWorld(t, s);
     if (t > R0 + 0.74 && t < R0 + 1.76) { // the rehearsal: out to the arrow and back, played in reverse
       var rp = t < R0 + 1.25 ? seg(t, R0 + 0.75, R0 + 1.25) : 1 - seg(t, R0 + 1.25, R0 + 1.75);
       flight(rp, wordWidth, 0.95);
@@ -1025,12 +1210,19 @@
     if (t > M.lasers - 0.3 && t < M.console + 0.35) lasers(t);
     [M.flash + 0.9, M.launch + 0.1, M.sheet - 0.1].forEach(function (t0) { sweep(t, t0, 0.06); });
     sweep(t, M.console + 0.05, 0.22, 0.9);
-    // One place, four names
-    if (ci >= 0) { var cpp = (t - M.montage - ci * CUT) / CUT; streak(960, 540 + (ci % 2 ? 150 : -150), 0.5 * (1 - clamp(cpp * 3)), 1900); }
-    if (t > M.merge + 0.2 && t < M.merge + 1.4) streak(1022, 510, 0.8 * pulse(t, M.merge + 0.25, M.merge + 1.3), 1600);
+    // Four pillars: the line they become, the point it becomes
+    if (t > M.converge + 0.3 && t < M.lock + 0.6) {
+      var pt = E.out(seg(t, M.point, M.point + 0.42)) * (1 - E.sine(seg(t, M.lock, M.lock + 0.5)));
+      var lineA = E.sine(seg(t, M.converge + 0.3, M.point)) * (1 - seg(t, M.point, M.point + 0.4));
+      if (lineA > 0) flare(960, 540, 0.5 * lineA, 0.9);
+      flare(960, 540, pt * (0.75 + 0.1 * Math.sin(t * 6)), 0.9 + 0.4 * pt);
+      var burst = pulse(t, M.point + 0.3, M.point + 1.3);
+      if (burst > 0) flare(960, 540, burst, 1.6 + 1.6 * seg(t, M.point + 0.3, M.point + 1.3));
+    }
     sweep(t, M.lock + 2.2, 0.16, 1.3);
     // Residents
     constellation(t);
+    loopLine(t);
     if (t > ENC.hit - 0.05 && t < ENC.hit + 0.5) { // a contact, in light
       var cpa = lueurPosition(3, ENC.hit), cpb = lueurPosition(4, ENC.hit), mid = toStage((cpa[0] + cpb[0]) / 2, (cpa[1] + cpb[1]) / 2);
       flare(mid[0], mid[1], 0.8 * pulse(t, ENC.hit - 0.04, ENC.hit + 0.45), 0.6);
@@ -1043,7 +1235,6 @@
       beam(lerp(450, 980, Math.max(0, up - 0.3) / 0.7 * 0.96), 668, lerp(450, 980, up), 668, 1.2, ua * 0.95);
       if (t > M.flash2 - 0.6) flare(980, 668, E.in2(seg(t, M.flash2 - 0.6, M.flash2)), 1 + 3 * E.in2(seg(t, M.flash2 - 0.6, M.flash2)));
     }
-
     // The ring returns, small and in ink: the place you come back to.
     var ringEnd = E.inOut(seg(t, M.flash2 + 1.9, M.flash2 + 2.9));
     if (ringEnd > 0) {
@@ -1071,17 +1262,31 @@
   render(time);
   var fonts = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
   var ready = fonts.then(function () {
-    return document.fonts ? Promise.all(['300 150px "Film Serif"', '200 330px "Film Latin"', '100 240px "Film Sans"'].map(function (f) { return document.fonts.load(f, '灵感Home键'); })) : null;
+    return document.fonts ? Promise.all(['300 150px "Film Serif"', 'italic 300 168px "Film Display"', '300 15px "Film Display"'].map(function (f) { return document.fonts.load(f, '灵感Home'); })) : null;
   }).catch(function () {}).then(function () { layoutHome(); sampleLockup(); render(time); });
 
   if (CAPTURE) {
-    window.__film = { duration: DURATION, ready: ready, seek: function (t) { time = t; render(t); } };
+    window.__film = { duration: DURATION, marks: M, ready: ready, seek: function (t) { time = t; render(t); } };
     return;
   }
 
-  // ---------- player ----------
+  // ---------- player: picture and score on one clock ----------
   var controls = $('controls'), title = $('title'), playBtn = $('play'), scrub = $('scrub'), clock = $('time');
-  var playing = false, last = 0, idleTimer = 0, scrubbing = false;
+  var startBtn = $('start'), soundBtn = $('sound'), audio = $('score');
+  var playing = false, last = 0, idleTimer = 0, scrubbing = false, muted = false;
+  try { muted = window.localStorage.getItem('lucent-film:muted') === '1'; } catch (error) { muted = false; }
+  function audible() { return audio && !audio.error && audio.readyState >= 2; }
+  function setMuted(on) {
+    muted = on; audio.muted = on; controls.classList.toggle('muted', on);
+    try { window.localStorage.setItem('lucent-film:muted', on ? '1' : '0'); } catch (error) { /* a private window */ }
+  }
+  setMuted(muted);
+  function syncAudio() {
+    if (!audio || audio.error) return;
+    if (!playing || time >= DURATION) { if (!audio.paused) audio.pause(); return; }
+    if (Math.abs(audio.currentTime - time) > 0.15) { try { audio.currentTime = time; } catch (error) { /* not seekable yet */ } }
+    if (audio.paused) { var p = audio.play(); if (p && p.catch) p.catch(function () {}); }
+  }
   function fmt(s) { s = Math.max(0, Math.floor(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
   function sync() {
     controls.classList.toggle('playing', playing);
@@ -1096,36 +1301,42 @@
   function setPlaying(on) {
     if (on && time >= DURATION) time = 0;
     playing = on;
-    last = 0; sync(); wake();
+    if (on) startBtn.classList.add('gone');
+    last = 0; syncAudio(); sync(); wake();
   }
+  function seekTo(t) { time = clamp(t, 0, DURATION); render(time); if (audio && !audio.error) { try { audio.currentTime = time; } catch (error) { /* later */ } } sync(); }
   function tick(now) {
     if (playing) {
-      if (last) time = Math.min(DURATION, time + (now - last) / 1000);
+      // While the score plays, it keeps the time; otherwise the clock of the page does.
+      if (audible() && !audio.paused) time = Math.min(DURATION, audio.currentTime);
+      else if (last) time = Math.min(DURATION, time + (now - last) / 1000);
       last = now;
       render(time);
-      if (time >= DURATION) { playing = false; wake(); }
+      if (time >= DURATION) { playing = false; syncAudio(); wake(); }
       sync();
     } else last = 0;
     window.requestAnimationFrame(tick);
   }
+  startBtn.addEventListener('click', function () { if (time >= DURATION - 0.05) time = 0; setPlaying(true); });
   playBtn.addEventListener('click', function () { setPlaying(!playing); });
-  $('replay').addEventListener('click', function () { time = 0; render(0); setPlaying(true); });
+  $('replay').addEventListener('click', function () { seekTo(0); setPlaying(true); });
+  soundBtn.addEventListener('click', function () { setMuted(!muted); });
   $('full').addEventListener('click', function () {
     if (document.fullscreenElement) document.exitFullscreen().catch(function () {});
     else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function () {});
   });
-  scrub.addEventListener('input', function () { scrubbing = true; time = Number(scrub.value) / 1000 * DURATION; render(time); sync(); });
-  scrub.addEventListener('change', function () { scrubbing = false; });
+  scrub.addEventListener('input', function () { scrubbing = true; seekTo(Number(scrub.value) / 1000 * DURATION); });
+  scrub.addEventListener('change', function () { scrubbing = false; syncAudio(); });
   document.addEventListener('pointermove', wake);
   document.addEventListener('keydown', function (event) {
     if (event.target === scrub && /Arrow/.test(event.key)) return;
     if (event.key === ' ' || event.key === 'k') { event.preventDefault(); setPlaying(!playing); }
-    else if (event.key === 'ArrowRight') { time = Math.min(DURATION, time + 5); render(time); sync(); wake(); }
-    else if (event.key === 'ArrowLeft') { time = Math.max(0, time - 5); render(time); sync(); wake(); }
+    else if (event.key === 'ArrowRight') { seekTo(time + 5); wake(); }
+    else if (event.key === 'ArrowLeft') { seekTo(time - 5); wake(); }
+    else if (event.key === 'm' || event.key === 'M') setMuted(!muted);
     else if (event.key === 'f' || event.key === 'F') $('full').click();
     else if (event.key === 'r' || event.key === 'R') $('replay').click();
   });
-  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  ready.then(function () { sync(); if (!reduced) setPlaying(true); else wake(); });
+  ready.then(function () { sync(); wake(); });
   window.requestAnimationFrame(tick);
 })();
