@@ -84,7 +84,7 @@ node scripts/film.mjs --preview                                      # half size
 node scripts/film.mjs --from 20 --to 32 --out verification/film/part.mp4
 ```
 
-Two pages render in parallel (`--workers`); on two cores the full film takes about forty minutes (about 30 MB). The score reads the scene marks from `demo/film/film.js`, so after retiming a scene, compose it again (about half a minute; `--report score.png` draws its spectrogram and loudness against the marks). It is synthesized from nothing but code — pads, plucked strings, bells, a celesta, a music box, a choir of formants, drums and sound effects — and mastered to about −16 LUFS with true peaks under −1 dBTP. After changing any words in `demo/film/`, run `python3 scripts/film-fonts.py` (needs `fonttools` and `brotli`) so the bundled subsets cover them.
+Two pages render in parallel (`--workers`); on two cores the full film takes about fifty minutes (28 MB). The score reads the scene marks from `demo/film/film.js`, so after retiming a scene, compose it again (about half a minute; `--report score.png` draws its spectrogram and loudness against the marks). It is synthesized from nothing but code — pads, plucked strings, bells, a celesta, a music box, a choir of formants, drums and sound effects — and mastered to about −16 LUFS with true peaks under −1 dBTP. After changing any words in `demo/film/`, run `python3 scripts/film-fonts.py` (needs `fonttools` and `brotli`) so the bundled subsets cover them.
 
 The browser suite writes its own review captures to ignored `verification/screenshots/`; they are evidence for a run, not documentation.
 
