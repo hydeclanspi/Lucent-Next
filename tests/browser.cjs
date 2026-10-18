@@ -216,6 +216,26 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       assert.equal(await tab.evaluate(() => !!document.fullscreenElement), true);
       await fresh.close();
     });
+    await check('The concept film renders any moment of its single timeline; Home is the button, the place is Lucent', async () => {
+      const tab = await context.newPage();
+      tab.on('pageerror', e => errors.push(e.message));
+      await tab.setViewportSize({ width: 1920, height: 1080 });
+      await tab.goto(base + '/film/?capture');
+      await tab.waitForFunction(() => window.__film);
+      await tab.evaluate(() => window.__film.ready);
+      const film = (t) => tab.evaluate(t => { window.__film.seek(t); return {
+        captions: [...document.querySelectorAll('.cap')].filter(n => n.style.visibility === 'visible' && Number(n.style.opacity) > 0.5).map(n => n.querySelector('.t').textContent),
+        key: Number(document.getElementById('hmKey').style.opacity), lockup: Number(document.getElementById('lkLing').style.opacity),
+        end: Number(document.getElementById('endmark').style.opacity)
+      }; }, t);
+      const duration = await tab.evaluate(() => window.__film.duration);
+      assert.ok(duration > 60 && duration < 120, 'about a minute and a half');
+      assert.ok((await film(5.8)).key > 0.95, 'the button is named as the Home button');
+      assert.deepEqual((await film(13.5)).captions, ['今天，我们把这个承诺，做成了一个地方。']);
+      assert.ok((await film(52.4)).lockup > 0.95, 'the place is named Lucent · 灵感台');
+      assert.ok((await film(duration)).end > 0.99, 'the film ends on the mark');
+      await tab.close();
+    });
     await check('No uncaught browser exceptions during the tested flows', async () => assert.deepEqual(errors, []));
   } finally {
     fs.mkdirSync(path.join(root, 'verification'), { recursive: true });
