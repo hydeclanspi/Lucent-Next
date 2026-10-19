@@ -12,7 +12,7 @@
  * and the three wallpapers), type (DOM and SVG), glints (WebGL points).
  *
  *   ?capture   no controls; window.__film = { duration, marks, ready, seek(t) } for the renderer
- *   ?t=42      start at 42 s; without it, the page shows the cover (20 s in) until the film is started
+ *   ?t=42      start at 42 s; without it, the page shows the back garden at 1:21 until the film is started
  */
 (function () {
   'use strict';
@@ -2165,9 +2165,9 @@
   window.addEventListener('resize', fit);
 
   var time = Math.max(0, Math.min(DURATION, parseFloat(params.get('t')) || 0));
-  // The film opens on black, so a viewer who arrives without ?t= first sees its cover, the frame 20 s in with the
-  // four layers apart (the poster's frame too), until the film is started or moved; the renderer never sees it.
-  var COVER = M.explode + 2.0, covered = !CAPTURE && !params.has('t');
+  // The film opens on black, so a viewer who arrives without ?t= first sees a frame of it behind the play button:
+  // 1:21, the back garden at night, its residents settled, until the film is started or moved. The renderer never sees it.
+  var COVER = M.garden + 2.25, covered = !CAPTURE && !params.has('t');
   function shown() { return covered ? COVER : time; }
   render(shown());
   var fonts = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
