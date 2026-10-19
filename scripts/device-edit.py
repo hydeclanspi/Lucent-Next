@@ -8,8 +8,8 @@ The recording itself (a 3120 x 2080 screen recording from the HUAWEI MatePad Edg
 the repository. The edit opens on the cover the README shows (scripts/film-media/slot.html): its words leave,
 the recording comes up in the device's screen and the camera moves in until the screen nearly fills the frame.
 The quiet stretches run faster, each marked with its speed; three moments are framed closer (the search box as
-a query becomes a line of light, the Lueurs' settings, the wallpapers); at the end the camera moves back out to
-the device. The recorder's own indicator, top left, is filled in from around it (ffmpeg delogo).
+a query becomes a line of light, slowed to half speed, the Lueurs' settings, the wallpapers); at the end the
+camera moves back out to the device. The recorder's own indicator, top left, is filled in from around it (ffmpeg delogo).
 
 The music is the concept film's score from the silence before the residents to the end (fusion2, rendered
 again with its sound effects muted), so the edit's 46 seconds were cut to its sections: the busiest
@@ -35,10 +35,10 @@ DELOGO = "delogo=x=132:y=8:w=196:h=92"    # the recorder's own indicator, top le
 
 # (source from, source to, speed): the cut, in order
 SEGMENTS = [
-    (0.4, 4.0, 1), (4.0, 6.6, 4), (6.6, 10.45, 1), (10.45, 12.45, 2), (12.45, 17.4, 4), (17.4, 18.9, 1),
-    (18.9, 27.8, 6), (27.8, 34.45, 4), (34.45, 40.14, 1.5), (40.14, 61.76, 4), (61.76, 66.42, 4),
-    (66.42, 67.8, 2), (67.8, 74.59, 1.5), (74.59, 76.49, 2), (76.49, 82.65, 3), (82.65, 83.83, 2),
-    (83.83, 87.24, 1.5), (87.24, 95.2, 3), (95.2, 102.11, 1),
+    (0.4, 4.0, 1), (4.0, 6.6, 4), (6.6, 9.35, 1), (9.35, 9.8, 0.5), (9.8, 10.45, 1), (10.45, 12.45, 2),
+    (12.45, 17.4, 4), (17.4, 18.9, 1), (18.9, 27.8, 6), (27.8, 34.45, 4), (34.45, 40.14, 1.5), (40.14, 61.76, 4),
+    (61.76, 66.42, 4), (66.42, 67.8, 2), (67.8, 74.59, 1.5), (74.59, 76.49, 2), (76.49, 82.65, 3), (82.65, 83.83, 2),
+    (83.83, 87.24, 1.5), (87.24, 95.2, 3), (95.65, 102.11, 1),
 ]
 TIMES = np.cumsum([0] + [(b - a) / s for a, b, s in SEGMENTS])   # where each segment starts in the edit
 DUR = float(TIMES[-1])
@@ -51,6 +51,8 @@ OY = SCREEN[1] + ((SCREEN[3] - SCREEN[1]) - SH * K) / 2   # its top: a sliver ab
 S = W / 1920                              # layout pixel -> output pixel at zoom 1
 FULL = (1.49, 960.0, (SCREEN[1] + SCREEN[3]) / 2)        # the screen nearly fills the frame
 COVERED = (1.0, 960.0, 540.0)
+# where the speed mark sits: inside the screen's top right corner (at the full view), under the status icons
+MARK = (W / 2 + (SCREEN[2] - FULL[1]) * FULL[0] * S - 36, int(H / 2 + (SCREEN[1] - FULL[2]) * FULL[0] * S + 64))
 
 
 def ease(u):
@@ -71,10 +73,10 @@ def close(z, sx, sy):
 # The camera: (time, (zoom, centre x, centre y) in layout pixels); eased between keys, zoom in log space.
 CAMERA = [
     (0.0, COVERED), (0.9, COVERED), (2.9, FULL),
-    (at(2, 7.0), FULL), (at(2, 8.0), close(1.75, 1990, 1000)),          # the search box as the words go in
-    (at(2, 9.95), close(1.75, 1990, 1000)), (at(2, 10.45), FULL),         # the line of light, then the page
-    (at(8, 35.0), FULL), (at(8, 36.2), close(1.2, 1560, 1000)), (at(8, 39.6), close(1.2, 1560, 1000)), (at(9, 41.0), FULL),
-    (at(12, 68.0), FULL), (at(12, 69.2), close(1.3, 1560, 860)), (at(12, 74.0), close(1.3, 1560, 860)), (at(13, 75.4), FULL),
+    (at(2, 7.0), FULL), (at(2, 8.0), close(1.75, 1990, 900)),           # the search box as the words go in
+    (at(4, 9.95), close(1.75, 1990, 900)), (at(4, 10.45), FULL),          # the line of light, slowed, then the page
+    (at(10, 35.0), FULL), (at(10, 36.2), close(1.2, 1560, 1000)), (at(10, 39.6), close(1.2, 1560, 1000)), (at(11, 41.0), FULL),
+    (at(14, 68.0), FULL), (at(14, 69.2), close(1.3, 1560, 860)), (at(14, 74.0), close(1.3, 1560, 860)), (at(15, 75.4), FULL),
     (DUR - 6.4, FULL), (DUR - 3.2, COVERED), (DUR, COVERED),
 ]
 
@@ -88,19 +90,19 @@ def camera(t):
     return CAMERA[-1][1]
 
 
-def chip(text):
+def chip(text, word):
     """The speed mark: a small dark glass pill, set at 2x and scaled down."""
     scale = 2
     f_big = ImageFont.truetype("/usr/share/fonts/opentype/inter/Inter-Medium.otf", 30 * scale)
     f_cjk = ImageFont.truetype("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", 22 * scale, index=2)
     pad, gap = 22 * scale, 10 * scale
-    wn, ww = f_big.getlength(text), f_cjk.getlength("快进")
+    wn, ww = f_big.getlength(text), f_cjk.getlength(word)
     w, h = int(pad * 2 + wn + gap + ww), 56 * scale
     im = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
     d.rounded_rectangle((0, 0, w - 1, h - 1), radius=h // 2, fill=(20, 26, 40, 168), outline=(255, 255, 255, 70), width=scale)
     d.text((pad, h / 2), text, font=f_big, fill=(244, 246, 250, 255), anchor="lm")
-    d.text((pad + wn + gap, h / 2 + scale), "快进", font=f_cjk, fill=(226, 232, 242, 210), anchor="lm")
+    d.text((pad + wn + gap, h / 2 + scale), word, font=f_cjk, fill=(226, 232, 242, 210), anchor="lm")
     a = np.asarray(im.resize((w // scale, h // scale), Image.LANCZOS)).astype(np.float32) / 255
     return a[..., [2, 1, 0]], a[..., 3:4]
 
@@ -112,11 +114,11 @@ def chip_at(t):
     seg = min(max(int(np.searchsorted(TIMES, t, side="right") - 1), 0), len(SEGMENTS) - 1)
     _, _, s = SEGMENTS[seg]
     t0, t1 = TIMES[seg], TIMES[seg + 1]
-    if s == 1 or t1 - t0 < 0.7:           # unmarked: real time, or a passing moment between two scenes
+    if s == 1 or (s > 1 and t1 - t0 < 0.7):   # unmarked: real time, or a passing moment between two scenes
         return None, 0.0
     label = f"{s:g}×"
     if label not in CHIPS:
-        CHIPS[label] = chip(label)
+        CHIPS[label] = chip(label, "慢放" if s < 1 else "快进")
     return CHIPS[label], max(0.0, min(1.0, (t - t0) / 0.18, (t1 - t) / 0.18))
 
 
@@ -141,7 +143,8 @@ class Edit:
         a, b, s = SEGMENTS[seg]
         n = int(round(TIMES[seg + 1] * FPS)) - int(round(TIMES[seg] * FPS))
         cmd = ["ffmpeg", "-v", "error", "-ss", f"{a:.3f}", "-to", f"{b + 0.2:.3f}", "-i", str(self.source),
-               "-vf", f"{DELOGO},setpts=(PTS-STARTPTS)/{s},fps={FPS}", "-f", "rawvideo", "-pix_fmt", "bgr24", "-"]
+               "-vf", f"{DELOGO},setpts=(PTS-STARTPTS)/{s}," + (f"framerate=fps={FPS}" if s < 1 else f"fps={FPS}"),
+               "-f", "rawvideo", "-pix_fmt", "bgr24", "-"]
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         size, last = SW * SH * 3, None
         for _ in range(n):
@@ -178,7 +181,7 @@ class Edit:
         if mark is not None and level > 0:
             rgb, alpha = mark
             h, w = rgb.shape[:2]
-            x0, y0 = W - 64 - w, 56
+            x0, y0 = int(MARK[0] - w), MARK[1]
             al = alpha * level
             base[y0:y0 + h, x0:x0 + w] = base[y0:y0 + h, x0:x0 + w] * (1 - al) + rgb * 255 * al
         return np.clip(base, 0, 255).astype(np.uint8)
