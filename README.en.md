@@ -89,7 +89,7 @@
 
 ## The film
 
-<p align="center"><a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="demo/media/film-poster.jpg" alt="The concept film: glints gather into 灵感台 against a dawn sky, with LUCENT and “The inspiration launcher” below" width="100%"></a></p>
+<p align="center"><a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="demo/media/film-poster.jpg" alt="The cover of the concept film: wallpaper, glass, interface and residents drawn apart in pale blue light, each labelled; below, “Wallpaper, glass, interface, residents: four layers, one screen.”" width="100%"></a></p>
 
 **A concept film**, one minute forty-eight seconds, with sound. In the dark, a beam of light draws the button; pressed, the camera dives to its rim until it is a great arc of light, with the Home button as everyone knew it inside and its name, Home 键. In a flash of white, the promise it made becomes a place. Four layers stack into one screen; the words you write become light and rush into the arrow; a door edged in every colour opens on the surface of a chip, a wave of light sweeps it, every core it strikes lifts off as a window onto the world, and the camera jumps into a tunnel of a thousand windows; stage lights rise, and lasers run through rings of platinum; over an aurora, the glass's six settings turn one by one; the four places stand as four pillars of light, close into a line, then a point, and 灵感台 rises from it; forty-nine residents move into the open space, form constellations and settle into a back garden; then it comes to rest on the screen it was made for, where three wallpapers turn to glass, one on each beat, hang in the air, and settle into its screen, and night falls on the one that is chosen.
 

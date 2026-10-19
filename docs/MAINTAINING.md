@@ -72,7 +72,7 @@ Frames and stills land in the ignored `verification/capture/`. `CAPTURE_QUICK=1`
 | `chronicle.jpg`, `roster.jpg` | the charts (top) and the terrain, drive log and roster (bottom) of `chronicle-sheet.png` |
 | `atelier.jpg` | the first 1,198 CSS px of `atelier.png`, 1600 px wide |
 | `lucent-film.mp4` | `node scripts/film.mjs` (below) |
-| `film-poster.jpg`, `film-teaser.webp`, `on-device.jpg` | `node scripts/film-media.mjs`: the film's frame 2.6 s after the name locks in (the name at dawn); seven passages of the MP4, placed by the film's own marks, joined by 0.35 s cross-fades, 20 fps, 1200 px wide; the slot for the on-device recording, from `scripts/film-media/slot.html` — replace it with a frame of the real recording when it arrives |
+| `film-poster.jpg`, `film-teaser.webp`, `on-device.jpg` | `node scripts/film-media.mjs`: the film's cover, its frame 20 s in with the four layers apart, at 2560 × 1440 (the film page shows the same frame until it is played, and `film-media.mjs cover` stores it in the MP4 as cover art); seven passages of the MP4, placed by the film's own marks, joined by 0.35 s cross-fades, 20 fps, 1200 px wide; the slot for the on-device recording, from `scripts/film-media/slot.html` — replace it with a frame of the real recording when it arrives |
 
 **The film** is rendered the same way, one exact frame at a time: the page is never played, only seeked.
 

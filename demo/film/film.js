@@ -12,7 +12,7 @@
  * and the three wallpapers), type (DOM and SVG), glints (WebGL points).
  *
  *   ?capture   no controls; window.__film = { duration, marks, ready, seek(t) } for the renderer
- *   ?t=42      start at 42 s
+ *   ?t=42      start at 42 s; without it, the page shows the cover (20 s in) until the film is started
  */
 (function () {
   'use strict';
@@ -2165,11 +2165,15 @@
   window.addEventListener('resize', fit);
 
   var time = Math.max(0, Math.min(DURATION, parseFloat(params.get('t')) || 0));
-  render(time);
+  // The film opens on black, so a viewer who arrives without ?t= first sees its cover, the frame 20 s in with the
+  // four layers apart (the poster's frame too), until the film is started or moved; the renderer never sees it.
+  var COVER = M.explode + 2.0, covered = !CAPTURE && !params.has('t');
+  function shown() { return covered ? COVER : time; }
+  render(shown());
   var fonts = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
   var ready = fonts.then(function () {
     return document.fonts ? Promise.all(['300 150px "Film Serif"', 'italic 300 168px "Film Display"', '300 15px "Film Display"', '300 92px "Film Latin"', '500 40px "Film Latin"', '500 26px "Film Sans"', '400 22px "Film Sans"'].map(function (f) { return document.fonts.load(f, '灵感Home星期六23°17+12.4%'); })) : null;
-  }).catch(function () {}).then(function () { BEYOND.rebuild(); sampleLockup(); render(time); });
+  }).catch(function () {}).then(function () { BEYOND.rebuild(); sampleLockup(); render(shown()); });
 
   if (CAPTURE) {
     // The renderer waits for the wallpapers too; a viewer's film starts without them and they arrive long before 1:31.
@@ -2208,20 +2212,37 @@
     clearTimeout(idleTimer);
     idleTimer = setTimeout(function () { if (playing) { controls.classList.add('idle'); title.classList.add('idle'); } }, 2600);
   }
+  // Leave the cover: at once when the viewer moves the film, through black when it starts playing (its first
+  // second is black, so the dissolve lands on the film's own opening while the score begins). The dissolve runs
+  // on the frame clock below, so it never outlasts or outruns the picture.
+  var DISSOLVE = 600, dissolving = 0;
+  function uncover(fade) {
+    if (!covered) return;
+    if (fade) { dissolving = dissolving || -1; return; }
+    covered = false; dissolving = 0; stage.style.opacity = '';
+  }
+  function dissolve(now) {
+    if (dissolving === -1) dissolving = now;
+    var k = (now - dissolving) / DISSOLVE;
+    if (k < 1) { stage.style.opacity = (1 - k * k * (3 - 2 * k)).toFixed(3); return; }
+    uncover(false);
+    if (!playing) render(time);
+  }
   function setPlaying(on) {
     if (on && time >= DURATION) time = 0;
     playing = on;
-    if (on) startBtn.classList.add('gone');
+    if (on) { startBtn.classList.add('gone'); uncover(true); }
     last = 0; syncAudio(); sync(); wake();
   }
-  function seekTo(t) { time = clamp(t, 0, DURATION); render(time); if (audio && !audio.error) { try { audio.currentTime = time; } catch (error) { /* later */ } } sync(); }
+  function seekTo(t) { uncover(false); time = clamp(t, 0, DURATION); render(time); if (audio && !audio.error) { try { audio.currentTime = time; } catch (error) { /* later */ } } sync(); }
   function tick(now) {
+    if (dissolving) dissolve(now);
     if (playing) {
       // While the score plays, it keeps the time; otherwise the clock of the page does.
       if (audible() && !audio.paused) time = Math.min(DURATION, audio.currentTime);
       else if (last) time = Math.min(DURATION, time + (now - last) / 1000);
       last = now;
-      render(time);
+      render(shown());
       if (time >= DURATION) { playing = false; syncAudio(); wake(); }
       sync();
     } else last = 0;
