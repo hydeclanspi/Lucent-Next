@@ -99,9 +99,11 @@ Every frame and every sound is made in code: one timeline, with WebGL for the sk
 
 ### On the device
 
-<p align="center"><img src="demo/media/on-device.jpg" alt="On the device: filmed on a HUAWEI MatePad Edge, coming soon" width="100%"></p>
+<p align="center"><a href="https://hydeclanspi.github.io/Lucent-Next/device/"><img src="demo/media/on-device.jpg" alt="On the device: filmed on a HUAWEI MatePad Edge, now showing; open it to play" width="100%"></a></p>
 
-A demonstration filmed on a HUAWEI MatePad Edge, coming soon.
+Recorded on a HUAWEI MatePad Edge, forty-six seconds, with sound: a search and its Lightline, the six ways to arrive, the Lueurs' settings and their history, the wallpapers, the card and the backup. The quiet stretches run faster, each marked with its speed in the top right corner; the music is the second half of the concept film's score.
+
+→ [Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/device/) · [Download the MP4 (1440p, 60 fps, with sound)](demo/device/lucent-on-device.mp4)
 
 ## Made for one screen
 
@@ -297,6 +299,7 @@ I defined the product, designed it, and signed off every version; the implementa
 |---|---|
 | **Live** | [hydeclanspi.github.io/Lucent-Next](https://hydeclanspi.github.io/Lucent-Next/): use it on the MatePad Edge; on a computer, the first tap goes full screen |
 | **The concept film** | [Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/film/) · [MP4](demo/media/lucent-film.mp4) |
+| **On the device** | [Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/device/) · [MP4](demo/device/lucent-on-device.mp4) |
 | **Sixteen motion studies** | [hydeclanspi.github.io/Lucent-Next/atelier](https://hydeclanspi.github.io/Lucent-Next/atelier/) |
 | **Deep links** | Seven links that open a state directly — boosted Drive, Random's platinum rings, the chronicle, wallpaper and glass… all on the [demo page](demo/) |
 
@@ -322,6 +325,7 @@ src/                        the source: Lucent itself
   web/                      the web edition: demonstration layer, deep links, immersive full screen, manifest and icons
 demo/                       demonstrations
   film/                     the concept film (a web page that plays on open)
+  device/                   the on-device recording, edited, and its player page
   atelier/                  the sixteen search-motion studies
   media/                    screenshots, animations and the film
 native/                     the HarmonyOS Aira package (5.0, preserved as shipped)

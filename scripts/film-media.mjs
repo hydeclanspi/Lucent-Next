@@ -1,12 +1,14 @@
 // Media made from the concept film, for the README and the demo page:
 //   demo/media/film-poster.jpg   the film's cover: the four layers apart, 20 s in, straight from the page at 2560 × 1440
 //   demo/media/film-teaser.webp  seven passages of the rendered film, cross-faded, 1200 px wide
-//   demo/media/on-device.jpg     the slot for the on-device recording (scripts/film-media/slot.html)
+//   demo/media/on-device.jpg     the cover of the on-device recording (scripts/film-media/slot.html)
 //   demo/media/lucent-film.mp4   gets the poster as its cover art, for players and file browsers
-//   verification/film/lucent-film-readme.mp4   only when asked for: the cut GitHub plays in the README (see below)
 //
 //   npm run build && node scripts/film.mjs          # first, the film itself
-//   AIRA_BROWSER_PATH=/path/to/chromium node scripts/film-media.mjs [poster] [teaser] [slot] [cover] [readme]
+//   verification/device/cover-2x.png and cover-bare-2x.png   only when asked for: the slot at 2x, with and without its
+//                                 words, for scripts/device-edit.py
+//
+//   AIRA_BROWSER_PATH=/path/to/chromium node scripts/film-media.mjs [poster] [teaser] [slot] [cover] [device]
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -20,6 +22,7 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const media = path.join(root, 'demo/media');
 const wanted = process.argv.slice(2);
 const want = (name) => !wanted.length || wanted.includes(name);
+const asked = (name) => wanted.includes(name);
 const launch = () => chromium.launch({ headless: true, ...(process.env.AIRA_BROWSER_PATH ? { executablePath: process.env.AIRA_BROWSER_PATH } : {}) });
 
 // The film's scene marks, read from the page itself, so the media follow the film when it is retimed.
@@ -101,4 +104,20 @@ if (want('cover')) {
   if (run.status !== 0) throw new Error('ffmpeg failed');
   fs.renameSync(temp, film);
   console.log('Set the cover of demo/media/lucent-film.mp4');
+}
+
+if (asked('device')) {
+  // The cover the edited recording opens on, at twice its size so the camera can move in, and the same with the
+  // screen left dark and empty (?bare) for the recording to come up in.
+  const dir = path.join(root, 'verification/device');
+  fs.mkdirSync(dir, { recursive: true });
+  const browser = await launch();
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 2 });
+  for (const [query, name] of [['', 'cover-2x.png'], ['?bare', 'cover-bare-2x.png']]) {
+    await page.goto('file://' + path.join(root, 'scripts/film-media/slot.html') + query);
+    await page.evaluate(() => document.fonts.ready);
+    await page.screenshot({ path: path.join(dir, name) });
+  }
+  await browser.close();
+  console.log('Rendered verification/device/cover-2x.png and cover-bare-2x.png');
 }

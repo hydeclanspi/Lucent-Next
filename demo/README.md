@@ -27,10 +27,12 @@ One minute forty-eight seconds; turn the sound on. Every frame and every sound i
 
 ## 实机 · On the device
 
-<p align="center"><img src="media/on-device.jpg" alt="实机演示：在 HUAWEI MatePad Edge 上拍摄，即将放映 · On the device: filmed on a HUAWEI MatePad Edge, coming soon" width="100%"></p>
+<p align="center"><a href="https://hydeclanspi.github.io/Lucent-Next/device/"><img src="media/on-device.jpg" alt="实机演示：在 HUAWEI MatePad Edge 上拍摄，现已放映 · On the device: filmed on a HUAWEI MatePad Edge, now showing" width="100%"></a></p>
 
-在 HUAWEI MatePad Edge 上拍摄的实机演示，即将放映。
-A demonstration filmed on a HUAWEI MatePad Edge, coming soon.
+**[在浏览器中观看 · Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/device/)** &nbsp;·&nbsp; [MP4（2K，2560×1440，60 帧，有声 · 1440p, 60 fps, with sound）](device/lucent-on-device.mp4)
+
+四十六秒的实机录屏，安静的段落加速播放，右上角标着倍速；配乐取自概念影片的后半段。剪辑由 `scripts/device-edit.py` 完成。
+Forty-six seconds recorded on the device; the quiet stretches run faster, each marked with its speed; the music is the second half of the film's score.
 
 ## 一键直达 · Deep links
 

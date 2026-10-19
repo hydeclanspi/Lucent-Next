@@ -97,9 +97,11 @@
 
 ### 实机
 
-<p align="center"><img src="demo/media/on-device.jpg" alt="实机演示：在 HUAWEI MatePad Edge 上拍摄，即将放映" width="100%"></p>
+<p align="center"><a href="https://hydeclanspi.github.io/Lucent-Next/device/"><img src="demo/media/on-device.jpg" alt="实机演示：在 HUAWEI MatePad Edge 上拍摄，现已放映，点开播放" width="100%"></a></p>
 
-在 HUAWEI MatePad Edge 上拍摄的实机演示，即将放映。
+在 HUAWEI MatePad Edge 上录下的实机演示，四十六秒，有声：一次搜索和它的一线入光，念起光行，浮光的设置与历史统计，壁纸，名片与备份。安静的段落加速播放，右上角标着倍速；配乐取自概念影片的后半段。
+
+→ [在浏览器中观看](https://hydeclanspi.github.io/Lucent-Next/device/) · [下载 MP4（2K，2560×1440，60 帧，有声）](demo/device/lucent-on-device.mp4)
 
 ## 为一块屏幕而生
 
@@ -295,6 +297,7 @@
 |---|---|
 | **在线体验** | [hydeclanspi.github.io/Lucent-Next](https://hydeclanspi.github.io/Lucent-Next/)：在 MatePad Edge 上直接使用；在电脑上，第一次轻点即进入全屏 |
 | **概念影片** | [在浏览器中观看](https://hydeclanspi.github.io/Lucent-Next/film/) · [MP4](demo/media/lucent-film.mp4) |
+| **实机演示** | [在浏览器中观看](https://hydeclanspi.github.io/Lucent-Next/device/) · [MP4](demo/device/lucent-on-device.mp4) |
 | **十六款动效品鉴** | [hydeclanspi.github.io/Lucent-Next/atelier](https://hydeclanspi.github.io/Lucent-Next/atelier/) |
 | **一键直达** | 直接打开某个状态的七个链接——增强驾驶、Random 白金环、场志、壁纸与玻璃……都在[演示入口](demo/) |
 
@@ -320,6 +323,7 @@ src/                        源码：灵感台本体
   web/                      网页版：浏览器演示层、一键直达、沉浸全屏、应用清单与图标
 demo/                       演示
   film/                     概念影片（网页，打开即播）
+  device/                   实机演示（录屏剪辑与播放页）
   atelier/                  十六款搜索动效品鉴
   media/                    演示图、动图与影片
 native/                     鸿蒙 Aira 原生安装包（5.0，原样保存）

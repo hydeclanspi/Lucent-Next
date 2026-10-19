@@ -1,6 +1,7 @@
 <!doctype html>
-<!-- Lucent · 灵感台 — the slot for the on-device recording (demo/media/on-device.jpg), rendered by
-     scripts/film-media.mjs at 1920×1080. The ring from the film's first frame becomes a play button.
+<!-- Lucent · 灵感台 — the cover of the on-device recording (demo/media/on-device.jpg), rendered by
+     scripts/film-media.mjs at 1920×1080; the edited recording opens on this frame. The ring from the film's
+     first frame becomes a play button. ?bare leaves the screen dark and empty, for the edit to play into.
      Type: Inter, Noto Serif CJK SC and Noto Sans CJK SC, as installed on the rendering machine. -->
 <html lang="zh-CN"><head><meta charset="utf-8">
 <style>
@@ -34,14 +35,16 @@
   .mark { position: absolute; left: 0; right: 0; bottom: 74px; text-align: center; color: #0d1220; }
   .mark strong { font: 300 24px/1 "Inter", sans-serif; letter-spacing: 10px; }
   .mark span { margin-left: 18px; padding-left: 18px; border-left: 1px solid rgba(13, 18, 32, .4); font: 300 20px/1 "Noto Serif CJK SC", serif; letter-spacing: 6px; }
+  .bare .center { display: none; }
 </style></head>
 <body>
+  <script>if (location.search.indexOf("bare") >= 0) document.body.className = "bare";</script>
   <div class="device"><div class="screen">
     <div class="center">
       <svg viewBox="-52 -52 104 104" aria-hidden="true"><circle class="glow" r="46"/><circle r="46"/><path d="M-11 -17 L19 0 L-11 17 Z"/></svg>
       <h1>实机演示</h1>
       <p>在 <b>HUAWEI MatePad Edge</b> 上拍摄</p>
-      <div class="pill">即将放映<i>Coming soon</i></div>
+      <div class="pill">现已放映<i>Now showing</i></div>
     </div>
   </div></div>
   <div class="mark"><strong>LUCENT</strong><span>灵感台</span></div>

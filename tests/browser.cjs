@@ -13,7 +13,7 @@ const server = http.createServer((req, res) => {
     let file = path.resolve(dist, '.' + pathname);
     if (file !== dist && !file.startsWith(dist + path.sep)) return res.writeHead(403).end();
     if (fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
-    res.setHeader('Content-Type', ({ '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.png': 'image/png', '.woff2': 'font/woff2', '.m4a': 'audio/mp4', '.webm': 'audio/webm' })[path.extname(file)] || 'application/octet-stream');
+    res.setHeader('Content-Type', ({ '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.png': 'image/png', '.woff2': 'font/woff2', '.m4a': 'audio/mp4', '.webm': 'audio/webm', '.mp4': 'video/mp4' })[path.extname(file)] || 'application/octet-stream');
     res.end(fs.readFileSync(file));
   } catch { res.writeHead(404).end(); }
 });
@@ -266,6 +266,17 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       await tab.click('#start');
       await tab.waitForFunction(() => document.getElementById('stage').style.opacity === '' && ![...document.querySelectorAll('.cap')].some(n => n.style.visibility === 'visible' && Number(n.style.opacity) > 0.5), null, { timeout: 8000 });
       assert.ok((await tab.evaluate(() => Number(document.getElementById('scrub').value))) < 60, 'the garden has dissolved into the opening of the film');
+      await tab.close();
+    });
+    await check('The on-device recording opens on its cover and plays with a tap', async () => {
+      const tab = await context.newPage();
+      tab.on('pageerror', e => errors.push(e.message));
+      await tab.goto(base + '/device/');
+      const video = await tab.evaluate(() => { const v = document.getElementById('film'); return { src: v.getAttribute('src'), poster: v.getAttribute('poster'), controls: v.controls }; });
+      assert.deepEqual(video, { src: './lucent-on-device.mp4', poster: './poster.jpg', controls: false }, 'the cover, no controls yet');
+      for (const file of ['lucent-on-device.mp4', 'poster.jpg']) assert.equal((await tab.request.head(base + '/device/' + file)).status(), 200, file + ' is published');
+      await tab.click('#play');
+      assert.deepEqual(await tab.evaluate(() => [document.getElementById('film').controls, !!document.getElementById('play')]), [true, false], 'a tap starts it and hands over the controls');
       await tab.close();
     });
     await check('No uncaught browser exceptions during the tested flows', async () => assert.deepEqual(errors, []));
