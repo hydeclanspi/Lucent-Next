@@ -11,7 +11,7 @@ const path = require('node:path');
 const { chromium } = require(process.env.AIRA_PLAYWRIGHT_MODULE || 'playwright');
 
 const root = path.resolve(__dirname, '../..');
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.png': 'image/png', '.json': 'application/json', '.txt': 'text/plain' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.png': 'image/png', '.json': 'application/json', '.txt': 'text/plain', '.woff2': 'font/woff2' };
 
 function serve(dir) {
   const server = http.createServer((request, response) => {

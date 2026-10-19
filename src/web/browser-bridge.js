@@ -67,18 +67,18 @@
     var path = document.createElementNS(SVG_NS, "path"); path.setAttribute("d", paths[name] || paths.page); svg.appendChild(path); return svg;
   }
   function svgUrl(markup) { return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(markup); }
-  // Small locally drawn marks; no favicon service, font download or remote image request.
+  // Small locally drawn marks sized like the favicons Aira shows on the device; no favicon service or
+  // remote image request. The custom entry has no mark, so it shows its initial, as it does on the device.
   var engineIcons = {
-    baidu: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><g fill="#346afa"><ellipse cx="10" cy="13" rx="4" ry="6" transform="rotate(-25 10 13)"/><ellipse cx="20" cy="8" rx="4" ry="6"/><ellipse cx="30" cy="13" rx="4" ry="6" transform="rotate(25 30 13)"/><path d="M8 30c0-6 7-13 12-13s12 7 12 13c0 8-8 6-12 6s-12 2-12-6"/></g><text x="20" y="32" text-anchor="middle" font-family="Arial" font-size="14" fill="white" font-weight="bold">du</text></svg>'),
+    baidu: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><g fill="#3d71e6"><ellipse cx="6.6" cy="15.2" rx="4" ry="4.9" transform="rotate(-16 6.6 15.2)"/><ellipse cx="15.3" cy="6.9" rx="4.2" ry="5" transform="rotate(-6 15.3 6.9)"/><ellipse cx="26.2" cy="7.2" rx="4.2" ry="5" transform="rotate(6 26.2 7.2)"/><ellipse cx="33.2" cy="17.4" rx="4" ry="4.9" transform="rotate(16 33.2 17.4)"/><path d="M20 16.8C23.6 16.8 26 20.2 28.8 23.6S35.4 29.2 35.4 32.8 32.6 37.9 29.4 37.9C25.9 37.9 23.6 36.6 20 36.6S14.1 37.9 10.6 37.9 4.6 36.2 4.6 32.8 8.4 27 11.2 23.6 16.4 16.8 20 16.8Z"/></g><path fill="#fff" d="M17.3 23H19.4V34.4H17.6Q17.5 33.5 17.5 33.2Q17.1 33.9 16.4 34.2Q15.8 34.6 15 34.6Q14 34.6 13.2 34.1Q12.4 33.6 12 32.7Q11.5 31.8 11.5 30.5Q11.5 29.2 12 28.3Q12.4 27.4 13.2 26.9Q14 26.4 15 26.4Q15.7 26.4 16.3 26.7Q16.9 27 17.3 27.6ZM17.3 30.5Q17.3 29.4 16.8 28.8Q16.2 28.3 15.5 28.3Q14.6 28.3 14.1 28.9Q13.6 29.5 13.6 30.5Q13.6 31.6 14.1 32.2Q14.6 32.8 15.5 32.8Q16.2 32.8 16.8 32.2Q17.3 31.7 17.3 30.5ZM26 26.6H28.1V34.4H26.2Q26.2 33.5 26.1 33.2Q25.7 33.9 25.1 34.2Q24.5 34.6 23.6 34.6Q22.3 34.6 21.6 33.7Q20.8 32.9 20.8 31.3V26.6H22.9V30.6Q22.9 32.7 24.3 32.7Q25.1 32.7 25.5 32.1Q26 31.6 26 30.5Z"/></svg>'),
     google: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><path d="M33 10A16 16 0 0 0 8 10" fill="none" stroke="#ea4335" stroke-width="7"/><path d="M8 10A16 16 0 0 0 8 30" fill="none" stroke="#fbbc05" stroke-width="7"/><path d="M8 30A16 16 0 0 0 31 31" fill="none" stroke="#34a853" stroke-width="7"/><path d="M31 31c4-4 5-8 4-12H20" fill="none" stroke="#4285f4" stroke-width="7"/></svg>'),
-    bing: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><path d="M9 3l9 4v22l11-6-8-4 3-8 12 7v10L15 39l-6-5z" fill="#40b8ef"/><path d="m18 29 11-6-8-4 3-8 12 7v10L15 39l-6-5z" fill="#38a3d7" opacity=".5"/></svg>'),
-    hydeclanspi: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect x="3" y="3" width="34" height="34" rx="10" fill="#d8d8d6"/><text x="20" y="30" text-anchor="middle" font-family="Arial" font-size="29" fill="#8a8d91">h</text></svg>')
+    bing: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="2 1.2 37 37"><path d="M9 3l9 4v22l11-6-8-4 3-8 12 7v10L15 39l-6-5z" fill="#40b8ef"/><path d="m18 29 11-6-8-4 3-8 12 7v10L15 39l-6-5z" fill="#38a3d7" opacity=".5"/></svg>')
   };
   var engines = [
     { id: "baidu", name: "Baidu", kind: "built_in", icon: engineIcons.baidu },
     { id: "google", name: "Google", kind: "built_in", icon: engineIcons.google },
     { id: "bing", name: "Bing", kind: "built_in", icon: engineIcons.bing },
-    { id: "hydeclanspi", name: "hydeclanspi", kind: "custom", icon: engineIcons.hydeclanspi }
+    { id: "hydeclanspi", name: "hydeclanspi", kind: "custom", icon: "" }
   ];
   var initialShortcuts = [
     { id: "demo-bookmarks", kind: "system", iconId: "browser.shortcut.bookmarks", title: "书签", url: "", position: 0, icon: "", iconRendering: "" },
@@ -473,9 +473,6 @@
         // was Light, Dark or Random; a wallpaper picked during the visit holds until the page is opened again.
         if (key === "wallpaper" && !wallpaperShown) { wallpaperShown = true; return "light"; }
         if (raw === null && key === "wallpaper") return "light";
-        // The supplied London image includes a device dock near its bottom.
-        // Frame the city above it; preserve the original bitmap and crop controls.
-        if (raw === null && key === "wallpaperCrop") return { light: { x: 0, y: 0, w: 3120, h: 1760 } };
         return raw === null ? copy(fallback) : JSON.parse(raw);
       }); },
       set: function (key, value) { return promise(function () { localStorage.setItem(HOME_PREFIX + key, JSON.stringify(value)); }); },

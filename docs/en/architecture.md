@@ -190,7 +190,7 @@ Four systems. Each lists what a person sees first, then why it works; formulas a
 
 ## Across · Trust
 
-- **Privacy.** Zero network requests after load; data stays on the device; the backup leaves only through the clipboard.
+- **Privacy.** No request to any other site after load (the one exception: the first time a rare character appears, its small slice of the typeface comes from this site); data stays on the device; the backup leaves only through the clipboard.
 - **Storage discipline.** Two slots with canonical checksums; a failed read never overwrites history; migrations keep totals; writes guard their shape; copies verify themselves first.
 - **Accessibility.** Arrow keys move Lueurs; every long press has a keyboard equivalent; reduced motion and reduced transparency are honoured; sheets trap focus and return it on close.
 - **Performance discipline.** One frame loop; about 30 Hz when idle; fully paused in the background, under a sheet or when hidden; zero glass animation at rest.
