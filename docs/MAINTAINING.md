@@ -95,7 +95,7 @@ python3 scripts/device-edit.py SVID_20261019_173443_1.mp4        # the edit, its
 python3 scripts/device-edit.py SVID_20261019_173443_1.mp4 --stills 3.3 7.3 28.5   # a few frames to check
 ```
 
-It opens on the cover the README shows (`scripts/film-media/slot.html`, whose `?bare` variant leaves the screen empty), moves into the device's screen, runs the quiet stretches faster with their speed marked, frames three moments closer and moves back out to the device at the end; the recorder's own indicator is filled in from around it. Its music is the film's score from the silence before the residents to the end, rendered again with its sound effects muted, and the cut follows its sections. The cut, the speeds and the camera are tables at the top of the script.
+It opens on the cover the README shows (`scripts/film-media/slot.html`, whose `?bare` variant leaves the screen empty): the cover's words leave and the recording comes up in the device's 3:2 screen. The device keeps its size, with only a slight lean in, so its name stays under it; the search plays at its own pace, the line of light and the page it opens included, and the quiet stretches run faster with their speed marked above the device; the recorder's own indicator is filled in from around it. Its music is the film's score from the silence before the residents to the end, rendered again with its sound effects muted, and the cut follows its sections. The cut, the speeds and the camera are tables at the top of the script.
 
 The browser suite writes its own review captures to ignored `verification/screenshots/`; they are evidence for a run, not documentation.
 

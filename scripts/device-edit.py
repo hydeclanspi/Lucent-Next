@@ -5,11 +5,11 @@
     python3 scripts/device-edit.py REC.mp4 --stills 3.3 7.3 28.5   # a few frames into verification/device/, to check
 
 The recording itself (a 3120 x 2080 screen recording from the HUAWEI MatePad Edge, 1:47, silent) is not kept in
-the repository. The edit opens on the cover the README shows (scripts/film-media/slot.html): its words leave,
-the recording comes up in the device's screen and the camera moves in until the screen nearly fills the frame.
-The quiet stretches run faster, each marked with its speed; three moments are framed closer (the search box as
-a query becomes a line of light, slowed to half speed, the Lueurs' settings, the wallpapers); at the end the
-camera moves back out to the device. The recorder's own indicator, top left, is filled in from around it (ffmpeg delogo).
+the repository. The edit opens on the cover the README shows (scripts/film-media/slot.html): its words leave and
+the recording comes up in the device's screen. The device keeps its size, with only a slight lean in, so its
+name stays under it throughout; the search plays at its own pace, the line of light and the page it opens
+included. The quiet stretches run faster, each marked with its speed above the device's top right corner. The
+recorder's own indicator, top left, is filled in from around it (ffmpeg delogo).
 
 The music is the concept film's score from the silence before the residents to the end (fusion2, rendered
 again with its sound effects muted), so the edit's 46 seconds were cut to its sections: the busiest
@@ -35,24 +35,25 @@ DELOGO = "delogo=x=132:y=8:w=196:h=92"    # the recorder's own indicator, top le
 
 # (source from, source to, speed): the cut, in order
 SEGMENTS = [
-    (0.4, 4.0, 1), (4.0, 6.6, 4), (6.6, 9.35, 1), (9.35, 9.8, 0.5), (9.8, 10.45, 1), (10.45, 12.45, 2),
-    (12.45, 17.4, 4), (17.4, 18.9, 1), (18.9, 27.8, 6), (27.8, 34.45, 4), (34.45, 40.14, 1.5), (40.14, 61.76, 4),
-    (61.76, 66.42, 4), (66.42, 67.8, 2), (67.8, 74.59, 1.5), (74.59, 76.49, 2), (76.49, 82.65, 3), (82.65, 83.83, 2),
-    (83.83, 87.24, 1.5), (87.24, 95.2, 3), (95.65, 102.11, 1),
+    (0.4, 4.0, 1), (4.0, 6.6, 4), (6.6, 10.45, 1), (10.45, 12.45, 2), (12.45, 17.4, 4), (17.4, 18.9, 1),
+    (18.9, 27.8, 3), (27.8, 34.45, 4), (34.45, 40.14, 1.5), (40.14, 61.76, 4), (61.76, 66.42, 4),
+    (66.42, 67.8, 2), (67.8, 74.59, 1.5), (74.59, 76.49, 2), (76.49, 82.65, 3), (82.65, 83.83, 2),
+    (83.83, 87.24, 1.5), (87.24, 95.2, 3), (96.68, 102.11, 1),
 ]
 TIMES = np.cumsum([0] + [(b - a) / s for a, b, s in SEGMENTS])   # where each segment starts in the edit
 DUR = float(TIMES[-1])
 
 # The cover (scripts/film-media/slot.html) is laid out at 1920 x 1080; the device's screen sits inside it.
-SCREEN = (426, 180, 1494, 875)
+DEVICE = (402, 152, 1518, 904)
+SCREEN = (414, 164, 1506, 892)            # 3:2, like the recording
 RADIUS = 34
-K = (SCREEN[2] - SCREEN[0]) / SW          # recording pixel -> layout pixel (the recording fills the width)
-OY = SCREEN[1] + ((SCREEN[3] - SCREEN[1]) - SH * K) / 2   # its top: a sliver above and below is cropped
+K = (SCREEN[2] - SCREEN[0]) / SW          # recording pixel -> layout pixel
+OY = SCREEN[1] + ((SCREEN[3] - SCREEN[1]) - SH * K) / 2
 S = W / 1920                              # layout pixel -> output pixel at zoom 1
-FULL = (1.49, 960.0, (SCREEN[1] + SCREEN[3]) / 2)        # the screen nearly fills the frame
 COVERED = (1.0, 960.0, 540.0)
-# where the speed mark sits: inside the screen's top right corner (at the full view), under the status icons
-MARK = (W / 2 + (SCREEN[2] - FULL[1]) * FULL[0] * S - 36, int(H / 2 + (SCREEN[1] - FULL[2]) * FULL[0] * S + 64))
+FULL = (1.08, 960.0, (DEVICE[1] + DEVICE[3]) / 2)        # a slight lean in: the device keeps its size and its name
+# where the speed mark sits: above the device, flush with its right edge
+MARK = (W / 2 + (DEVICE[2] - FULL[1]) * FULL[0] * S, int(H / 2 + (DEVICE[1] - FULL[2]) * FULL[0] * S) - 30 - 56)
 
 
 def ease(u):
@@ -65,20 +66,8 @@ def at(seg, src_t):
     return float(TIMES[seg] + (src_t - a) / s)
 
 
-def close(z, sx, sy):
-    """Framed closer on a point of the recording (in its pixels): z times the full view."""
-    return (FULL[0] * z, SCREEN[0] + sx * K, OY + sy * K)
-
-
 # The camera: (time, (zoom, centre x, centre y) in layout pixels); eased between keys, zoom in log space.
-CAMERA = [
-    (0.0, COVERED), (0.9, COVERED), (2.9, FULL),
-    (at(2, 7.0), FULL), (at(2, 8.0), close(1.75, 1990, 900)),           # the search box as the words go in
-    (at(4, 9.95), close(1.75, 1990, 900)), (at(4, 10.45), FULL),          # the line of light, slowed, then the page
-    (at(10, 35.0), FULL), (at(10, 36.2), close(1.2, 1560, 1000)), (at(10, 39.6), close(1.2, 1560, 1000)), (at(11, 41.0), FULL),
-    (at(14, 68.0), FULL), (at(14, 69.2), close(1.3, 1560, 860)), (at(14, 74.0), close(1.3, 1560, 860)), (at(15, 75.4), FULL),
-    (DUR - 6.4, FULL), (DUR - 3.2, COVERED), (DUR, COVERED),
-]
+CAMERA = [(0.0, COVERED), (0.9, COVERED), (3.4, FULL), (DUR - 6.4, FULL), (DUR - 3.2, COVERED), (DUR, COVERED)]
 
 
 def camera(t):
