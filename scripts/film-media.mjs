@@ -1,10 +1,12 @@
 // Media made from the concept film, for the README and the demo page:
-//   demo/media/film-poster.jpg   the name at dawn, straight from the page
+//   demo/media/film-poster.jpg   the film's cover: the four layers apart, 20 s in, straight from the page at 2560 × 1440
 //   demo/media/film-teaser.webp  seven passages of the rendered film, cross-faded, 1200 px wide
 //   demo/media/on-device.jpg     the slot for the on-device recording (scripts/film-media/slot.html)
+//   demo/media/lucent-film.mp4   gets the poster as its cover art, for players and file browsers
+//   verification/film/lucent-film-readme.mp4   only when asked for: the cut GitHub plays in the README (see below)
 //
 //   npm run build && node scripts/film.mjs          # first, the film itself
-//   AIRA_BROWSER_PATH=/path/to/chromium node scripts/film-media.mjs [poster] [teaser] [slot]
+//   AIRA_BROWSER_PATH=/path/to/chromium node scripts/film-media.mjs [poster] [teaser] [slot] [cover] [readme]
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -29,6 +31,8 @@ const M = Object.fromEntries([...fs.readFileSync(path.join(root, 'demo/film/film
 const PASSAGES = [[M.home + 0.65, M.home + 2.35], [M.explode + 0.8, M.explode + 2.5], [M.rise - 0.05, M.jump + 0.9],
   [M.show - 0.2, M.show + 1.3], [M.console + 0.9, M.console + 2.4], [M.pillars + 0.1, M.pillars + 2.1], [M.lock + 0.4, M.lock + 2.7]];
 const FADE = 0.35;
+// The cover: wallpaper, glass, interface and residents apart, two seconds into the exploded view (20 s).
+const COVER = M.explode + 2.0;
 
 if (want('poster')) {
   const dist = path.join(root, 'dist');
@@ -37,18 +41,19 @@ if (want('poster')) {
       let file = path.resolve(dist, '.' + decodeURIComponent(new URL(request.url, 'http://x').pathname));
       if (!file.startsWith(dist)) throw new Error('outside');
       if (fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
-      response.setHeader('Content-Type', { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.png': 'image/png' }[path.extname(file)] || 'application/octet-stream');
+      response.setHeader('Content-Type', { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml' }[path.extname(file)] || 'application/octet-stream');
       response.end(fs.readFileSync(file));
     } catch { response.writeHead(404).end(); }
   });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const browser = await launch();
-  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+  // the film's own frame size: 1920 × 1080 CSS pixels at 4/3, so 2560 × 1440
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 4 / 3 });
   await page.goto(`http://127.0.0.1:${server.address().port}/film/?capture`);
   await page.waitForFunction(() => window.__film);
   await page.evaluate(() => window.__film.ready);
-  await page.evaluate((t) => window.__film.seek(t), M.lock + 2.6);
-  await page.screenshot({ path: path.join(media, 'film-poster.jpg'), type: 'jpeg', quality: 88 });
+  await page.evaluate((t) => window.__film.seek(t), COVER);
+  await page.screenshot({ path: path.join(media, 'film-poster.jpg'), type: 'jpeg', quality: 90 });
   await browser.close();
   server.close();
   console.log('Rendered demo/media/film-poster.jpg');
@@ -84,4 +89,16 @@ if (want('teaser')) {
     '-c:v', 'libwebp', '-quality', '80', '-compression_level', '4', '-loop', '0', '-an', out], { stdio: 'inherit' });
   if (run.status !== 0) throw new Error('ffmpeg failed');
   console.log(`Rendered demo/media/film-teaser.webp — ${offset.toFixed(1)} s, ${(fs.statSync(out).size / 1048576).toFixed(1)} MB`);
+}
+
+if (want('cover')) {
+  // The poster as the MP4's cover art (an attached picture, stored as metadata; the streams are copied untouched).
+  const film = path.join(media, 'lucent-film.mp4'), poster = path.join(media, 'film-poster.jpg');
+  if (!fs.existsSync(film) || !fs.existsSync(poster)) throw new Error('Render the film and the poster first');
+  const temp = film.replace(/\.mp4$/, '.cover.mp4');
+  const run = spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', film, '-i', poster, '-map', '0:v:0', '-map', '0:a:0', '-map', '1', '-c', 'copy',
+    '-disposition:v:1', 'attached_pic', '-movflags', '+faststart', temp], { stdio: 'inherit' });
+  if (run.status !== 0) throw new Error('ffmpeg failed');
+  fs.renameSync(temp, film);
+  console.log('Set the cover of demo/media/lucent-film.mp4');
 }
