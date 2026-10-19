@@ -65,7 +65,8 @@ def render(style, out, wav=None, figure=None):
         path = wav or str(pathlib.Path(tmp) / "score.wav")
         wavfile.write(path, SR, pcm)
         webm = out.with_suffix(".webm")
-        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", path, "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", str(out)], check=True)
+        # 256 kb/s: at 192 the AAC encoder overshoots the true-peak ceiling by almost 2 dB on the hits
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", path, "-c:a", "aac", "-b:a", "256k", "-movflags", "+faststart", str(out)], check=True)
         subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", path, "-c:a", "libopus", "-b:a", "144k", str(webm)], check=True)
     for p in (out, webm):
         print(f"  wrote {shown(p)} ({p.stat().st_size // 1024} KB)")
