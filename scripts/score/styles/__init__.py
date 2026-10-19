@@ -8,4 +8,4 @@ STYLES = {
     "refined": "现版精修 · Refined — the launch score as it stood, on the new instruments, with its dynamics written in",
     "fusion2": "新融合 · New Fusion — piano and mallets in front, the cinema behind, a keynote pulse under, the launch hook as a trace",
 }
-DEFAULT = "fusion"
+DEFAULT = "fusion2"

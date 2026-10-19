@@ -49,7 +49,7 @@ class Mixer:
     def __init__(self):
         self.buses = {}
         self.kicks = []
-        self.breaths = []   # windows of silence: (start, end, fade out, fade in)
+        self.breaths = []   # windows of silence: (start, end, fade out, fade in[, buses that keep sounding])
         self.room_tone = []
 
     def bus(self, name, **opts):
@@ -75,11 +75,14 @@ class Mixer:
             g[i:i + n] = np.minimum(g[i:i + n], 1 - d)
         return g
 
-    def breath(self):
-        """1 everywhere except the held breaths, where the music falls silent."""
+    def breath(self, name=None):
+        """1 everywhere except the held breaths, where the music falls silent. A breath may name buses that keep
+        sounding through it (the sound for the picture): `name` asks for that bus's gate, None for the rooms'."""
         g = np.ones(LENGTH + PAD)
         t = times(LENGTH + PAD)
-        for a, b, fo, fi in self.breaths:
+        for a, b, fo, fi, *keep in self.breaths:
+            if name is not None and keep and name in keep[0]:
+                continue
             down = np.clip((t - a) / fo, 0, 1)
             up = np.clip((t - b) / fi, 0, 1) if fi > 0 else (t >= b).astype(float)
             gate = np.cos(down * np.pi / 2) ** 2
@@ -93,6 +96,7 @@ class Mixer:
         dry = np.zeros((2, LENGTH + PAD))
         stems = {}
         breath = self.breath()
+        gates = {}
         for b in self.buses.values():
             x = b.x
             if not np.any(x):
@@ -115,7 +119,10 @@ class Mixer:
             g = float(db(b.gain))
             if b.auto is not None:
                 g = g * db(b.auto(t))
-            x = x * g * breath
+            key = tuple(len(br) > 4 and b.name in br[4] for br in self.breaths)  # which breaths spare this bus
+            if key not in gates:
+                gates[key] = self.breath(b.name)
+            x = x * g * gates[key]
             if b.width != 1.0:
                 x = width(x, b.width)
             stems[b.name] = x

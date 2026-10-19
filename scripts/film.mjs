@@ -67,7 +67,8 @@ fs.mkdirSync(path.dirname(out), { recursive: true });
 const score = path.join(dist, 'film', 'score.m4a');
 const sound = fs.existsSync(score) && !args.includes('--mute');
 const ffmpeg = spawn('ffmpeg', ['-v', 'error', '-y', '-f', 'image2pipe', '-c:v', 'mjpeg', '-framerate', String(fps), '-i', '-',
-  ...(sound ? ['-ss', String(from), '-t', String(frames / fps), '-i', score, '-map', '0:v', '-map', '1:a', '-c:a', 'aac', '-b:a', '192k'] : []),
+  // The whole film takes the score's AAC as it is; a part is cut from it and encoded again.
+  ...(sound ? ['-ss', String(from), '-t', String(frames / fps), '-i', score, '-map', '0:v', '-map', '1:a', ...(from === 0 ? ['-c:a', 'copy'] : ['-c:a', 'aac', '-b:a', '256k'])] : []),
   '-vf', 'scale=out_color_matrix=bt709:out_range=tv,format=yuv420p',
   '-c:v', 'libx264', '-preset', preview ? 'veryfast' : 'slow', '-crf', crf, '-tune', 'film', '-profile:v', 'high',
   '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', '-movflags', '+faststart', out], { stdio: ['pipe', 'inherit', 'inherit'] });

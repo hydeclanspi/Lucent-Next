@@ -8,6 +8,8 @@ hook as a soft synth line an octave under the theme, and the residents' tune. No
 
 F major with D minor's colours; night falls in G minor, and the end lifts a whole step into G major.
 """
+import numpy as np
+
 from .. import kit, tonal
 from ..clock import BEAT, GARDEN, M, WALL
 from ..song import Song, q
@@ -18,6 +20,10 @@ from .mallets import CELL as MALLET_HOOK
 from .piano import THEME as PIANO_THEME
 
 SWING = 0.1
+CUT_OUT, HOME_IN = 3.55, 5.0   # the opening stops dead here; the Home music begins here
+# From the four pillars to the name: the piano's line (beats from the converge mark).
+LINE = ((-2, "E5", .5), (-1.5, "G5", .5), (-1, "C6", 1), (0, "D6", 1), (1, "C6", .5), (1.5, "Bb5", .5), (2, "C6", 1), (3, "F6", .5),
+        (3.5, "G6", .5), (4, "F6", .75), (4.75, "C6", .25), (5, "E6", .5), (5.5, "G6", .5), (6, "C7", 1))
 BOUNCE = "X.xx.xx.X.xx.x.x"        # the marimba's figure in sixteenths
 BOUNCE_ORDER = (0, 2, 3, 1, 2, 3, 0, 3, 1, 2)
 
@@ -184,60 +190,64 @@ def compose():
         s.groove(a, b, {"kick": "X.....x.X.......", "snap": "....x.......x...", "shaker": "xoxoxoxoxoxoxoxo", "conga": ("......x.......x.", -4.0)}, g - 1, swing=SWING)
         s.bassline(a, b, "x..x....x..x..x.", "finger", vel=0.75, gain=g - 1, swing=SWING)
 
-    # ---------------------------------------------------------------- once upon a time: a felt piano, a kalimba answering
+    # ---------------------------------------------------------------- once upon a time: a felt piano, a kalimba answering;
+    # at 3.55 s it stops dead, and the silence holds (but for the button's click) until the Home music at 5 s
     s.changes(0.0, [(4, "Fmaj9"), (4, "Bbmaj7")])
     for beat, nm, beats, v in ((1, "A4", 1, .42), (2, "C5", 1, .45), (3, "E5", .5, .45), (3.5, "F5", .5, .4),
-                               (5, "D5", 1, .45), (6, "F5", .5, .5), (6.5, "A5", .5, .52), (7, "C6", 1, .5)):
+                               (5, "D5", 1, .45), (6, "F5", .5, .5), (6.5, "A5", .5, .55)):
         s.piano(beat * BEAT, [midi(nm)], v, beats * BEAT * 1.8, felt=True, gain=5, role="melody")
     s.piano(0.0, notes("F2 C3"), 0.45, 1.9, felt=True, gain=3)
     s.piano(2.0, notes("Bb1 F2"), 0.45, 1.9, felt=True, gain=3)
     s.note("mallet", "kalimba", 2.0, midi("F6"), 0.5, 0.8, 0, pan=0.3)
     s.note("mallet", "kalimba", 2.25, midi("D6"), 0.45, 0.8, -1, pan=0.3)
+    s.note("mallet", "kalimba", 3.25, midi("A6"), 0.5, 0.6, -1, pan=-0.3)
     s.sustain(0.6, m["press1"], "air", 60, 79, 3, -6, attack=2.0, release=1.2, bright=0.35)
-    for i, t0 in enumerate((m["draw0"], m["draw0"] + 0.75, m["draw1"], m["draw1"] + 0.5)):
+    for i, t0 in enumerate((m["draw0"], m["draw0"] + 0.75, m["draw1"])):
         s.strike("snap", "", t0, 0.45, -8, i)
-    claps_roll(m["press1"] - 0.75, m["press1"], -20, -12)
-    s.swell_into(m["press1"], 0.8, -6)
 
-    # ---------------------------------------------------------------- the Home button: the pulse and the kalimba begin
+    # ---------------------------------------------------------------- the Home music, out of the silence: the name, the pulse, the kalimba
     P1, P2 = m["press1"], m["press2"]
-    s.changes(P1, [(4, "Bbmaj7"), (2, "C")])
-    s.impact(P1, 0.4, -8, crash=False)
-    pulse(P1, P2, 0.5, -1)
-    bounce(P1, P2, 0.42, -4, "kalimba", 65, 84)
-    s.groove(P1, P2, {"kick:soft": "X.......x.......", "shaker": ("..x...x...x...x.", -4.0)}, swing=SWING)
-    s.sustain(P1, P2, "sub", gain=-6)
-    s.piano(m["home"] + 0.5, notes("C6 F6 A6"), 0.5, 1.0, gain=-2, role="melody")
+    B1 = P2 + 1.0  # the build, two seconds shorter than the film's own: 8 s to the flash
+    s.changes(HOME_IN, [(4, "Bbmaj7"), (2, "C")])
+    s.piano(HOME_IN, notes("C6 F6 A6"), 0.55, 1.0, gain=-1, role="melody")
+    pulse(HOME_IN, B1, 0.5, -1)
+    bounce(HOME_IN, B1, 0.42, -4, "kalimba", 65, 84)
+    s.groove(HOME_IN, B1, {"kick:soft": "X.......x.......", "shaker": ("..x...x...x...x.", -4.0)}, swing=SWING)
+    s.sustain(HOME_IN, B1, "sub", gain=-6)
     for i, nn in enumerate(notes("F5 A5 C6 D6 F6 A6 C7 D7 F7 A7")):  # a bead of light runs the arc
         s.note("mallet", "glock", m["home"] + 1.0 + 0.125 * i, nn, 0.4 + 0.03 * i, 0.4, -7, pan=-0.6 + 0.13 * i)
-    claps_roll(P2 - 0.5, P2, -18, -8)
+    s.piano(P2, notes("C5 E5 G5 C6"), 0.5, 0.8, gain=-3)  # pressed again: the light pours out
+    s.note("mallet", "kalimba", P2 + 0.125, midi("G6"), 0.45, 0.5, -2, pan=0.3)
+    s.note("mallet", "kalimba", P2 + 0.25, midi("C7"), 0.45, 0.5, -2, pan=0.35)
+    claps_roll(B1 - 0.5, B1, -18, -9)
 
-    # ---------------------------------------------------------------- the build: the strings come in, the old hook under them
-    s.changes(P2, [(4, "Dm"), (2, "Bb"), (2, "C"), (2, "Csus4")])
-    s.impact(P2, 0.7, -3)
-    s.strike("taiko", "", P2, 0.8, -5)
-    bounce(P2, m["flash"], 0.58, -1)
-    pulse(P2, m["flash"], 0.5, -2)
-    ostinato(P2 + 1.0, m["flash"], 0.5, -5)
-    s.sustain(P2, m["flash"], "strings", 46, 72, 4, -5, 0.7, attack=2.0, release=0.4)
-    launch_hook(P2, ["Dm", "Dm", "Bb", "C"], gain=-1)
-    s.groove(P2, m["flash"] - 0.5, {"kick:deep": "X.......X......."}, -4)
-    s.groove(P2 + 2.0, m["flash"] - 0.5, {"clap": "....X.......X...", "tamb": "x-x-x-x-x-x-x-x-", "conga": ("..x..x....x..x..", -4.0)}, -3, swing=SWING)
-    s.bassline(P2 + 2.0, m["flash"] - 0.25, "x.x.x.x.x.x.x.x.", "finger", vel=0.7, gain=-2)
-    s.rise(m["morph"], m["flash"], -2, seed=1)
-    claps_roll(m["flash"] - 2.0, m["flash"], -14, 0)
-    s.swell_into(m["flash"], 1.2, -1)
+    # ---------------------------------------------------------------- the build: the strings come in, the old hook under them,
+    # and a short run-up: the piano climbs into the place
+    s.changes(B1, [(4, "Dm"), (2, "Bb"), (2, "Csus4")])
+    s.strike("taiko", "", B1, 0.7, -6)
+    bounce(B1, m["flash"], 0.55, -2)
+    pulse(B1, m["flash"], 0.5, -2)
+    s.sustain(B1, m["flash"], "strings", 46, 72, 4, -6, 0.65, attack=1.6, release=0.4)
+    launch_hook(B1, ["Dm", "Dm"], gain=-1)
+    s.groove(B1, m["flash"] - 0.5, {"kick:deep": "X.......X......."}, -5)
+    ostinato(B1 + 2.0, m["flash"], 0.42, -7)
+    for t0, nm in ((B1 + 2.0, "D5"), (B1 + 2.5, "F5"), (B1 + 3.0, "G5"), (B1 + 3.5, "C6")):
+        s.piano(t0, [midi(nm), midi(nm) - 12], 0.6, 0.45, gain=-1, role="melody")
+    s.rise(B1 + 2.0, m["flash"], -7, seed=1)
+    claps_roll(m["flash"] - 1.0, m["flash"], -18, -6)
+    s.swell_into(m["flash"], 1.0, -5)
 
-    # ---------------------------------------------------------------- a place: the piano's theme over the band of hands
+    # ---------------------------------------------------------------- a place: the piano's theme, plainly, over hands and a kalimba
     F0 = m["flash"]
     s.changes(F0, [(2, "F"), (2, "C/E"), (2, "Dm7"), (2, "Bbmaj7")])
-    s.impact(F0, 1.4)
-    band(F0, m["bench"])
-    bass(F0, m["bench"])
-    theme(F0, ["F", "C/E", "Dm7", "Bbmaj7"], 0.92, gain=1, whistle=True)
-    bounce(F0, m["bench"], 0.7, 1)
-    strum(F0, m["bench"], "x.x.x.xx.xx.x.x.", 0.58, -2)
-    s.sustain(F0, m["bench"], "strings", 46, 72, 4, -8, 0.7, attack=0.3)
+    s.impact(F0, 0.6, -7, crash=False)
+    s.groove(F0, m["bench"], {"kick:soft": "X.......X.......", "clap": ("....x.......x...", -2.0), "shaker": ("xoxoxoxoxoxoxoxo", -3.0),
+                              "conga": ("..x..x....x..x..", -6.0)}, -2, swing=SWING)
+    s.bassline(F0, m["bench"], "X..x..x.X..x..x.", "finger", vel=0.75, gain=-2, swing=SWING)
+    theme(F0, ["F", "C/E", "Dm7", "Bbmaj7"], 0.78, strings=False)
+    bounce(F0, m["bench"], 0.5, -4, "kalimba", 67, 88)
+    strum(F0, m["bench"], "x...x...x...x...", 0.48, -4)
+    s.sustain(F0, m["bench"], "strings", 46, 72, 4, -10, 0.6, attack=0.4)
 
     # ---------------------------------------------------------------- the workbench: kalimba and pulse, four layers part
     B0 = m["bench"]
@@ -377,20 +387,25 @@ def compose():
         roll(t0, [n0 + 12 for n0 in notes(ch)], 0.42, 0.75, -2)
         s.strike("taiko", "", t0, 0.95, -2, k)
         s.strike("clap", "", t0, 0.9, -2, k)
-    s.groove(m["pillars"] + 2.0, m["converge"], {"kick:deep": "X.......X.......", "clap": "........X......."}, -2)
-    s.sustain(m["pillars"] + 2.0, m["converge"], "sub", gain=-4)
+    # one line, one point: the piano carries the line from the four pillars to the name, a marimba under it; no climax yet
+    LP = m["pillars"] + 2.0
+    s.groove(LP, m["point"], {"kick:soft": "X.......X.......", "snap": ("....x.......x...", -3.0), "shaker": ("x-x-x-x-x-x-x-x-", -5.0)}, -3, swing=SWING)
+    s.sustain(LP, m["converge"], "sub", gain=-6)
     s.changes(m["converge"], [(2, "Bb"), (3, "Csus4"), (2, "C")])
-    ostinato(m["converge"], m["lock"] - 0.125, 0.6, -2)
-    bounce(m["converge"], m["lock"] - 0.125, 0.55, -3)
-    s.sustain(m["converge"], m["lock"], "strings", 48, 77, 5, -3, 0.85, attack=2.0, release=0.2)
-    s.sustain(m["point"], m["lock"], "choir", 60, 79, 4, -6, 0.7, attack=1.8, release=0.2, vowel="a")
-    s.rise(m["converge"], m["point"], -4, seed=6)
-    s.kick(m["point"], "deep", 1.0, -1)
-    s.groove(m["point"], m["lock"] - 0.125, {"taiko": "X.......X...x.x.", "tom": ("....x.......xxxx", -4.0, 115)}, -4)
-    kick_ramp(m["lock"] - 1.0, m["lock"])
-    claps_roll(m["lock"] - 1.5, m["lock"] - 0.125, -12, 2)
-    s.rise(m["point"], m["lock"], 0, 260, 12000, seed=7)
-    s.swell_into(m["lock"], 1.0, 2)
+    s.comp(LP, m["lock"] - 0.25, "xxxx", 43, 62, 3, 0.52, 0.3, order=(0, 1, 2, 1), step=0.25)
+    for beat, nm, beats in LINE:
+        t0 = m["converge"] + beat * BEAT
+        s.piano(t0, [midi(nm)], 0.78, beats * BEAT * 0.95 + 0.2, gain=1, role="melody")
+        s.note("mallet", "marimba", t0, midi(nm) - 12, 0.55, beats * BEAT * 0.9, -2, pan=-0.15)
+    bounce(m["converge"], m["lock"] - 0.25, 0.4, -6, "kalimba", 67, 88, pat="x.x.x.x.x.x.x.x.")
+    s.sustain(m["converge"], m["lock"], "strings", 48, 74, 4, -6, 0.7, attack=1.5, release=0.2)
+    ostinato(m["point"], m["lock"] - 0.125, 0.45, -6)
+    s.sustain(m["point"], m["lock"], "choir", 60, 79, 4, -9, 0.6, attack=1.2, release=0.2, vowel="a")
+    s.groove(m["point"], m["lock"] - 0.25, {"kick": "X.......X.......", "clap": "....x.......x...", "shaker": ("xoxoxoxoxoxoxoxo", -4.0)}, -3, swing=SWING)
+    s.bassline(m["point"], m["lock"] - 0.125, "x..x..x.x..x..x.", "finger", vel=0.7, gain=-2, swing=SWING)
+    claps_roll(m["lock"] - 0.75, m["lock"] - 0.125, -14, -2)
+    s.rise(m["point"], m["lock"], -6, 260, 9000, seed=7)
+    s.swell_into(m["lock"], 0.8, -2)
 
     # ---------------------------------------------------------------- the name
     Z0 = m["lock"]
@@ -542,4 +557,26 @@ def compose():
     s.strike("conga", "", end, 1.0, 0, 0, "slap")
     for i, nn in enumerate(notes("G6 B6 D7 G7")):
         s.note("mallet", "glock", end + 0.25 * i, nn, 0.55, 1.0, -5, pan=-0.3 + 0.2 * i)
+
+    # ---------------------------------------------------------------- the silences
+    # The opening stops dead at 3.55 s and the music is silent until 5 s; of the sound for the picture only the
+    # button's click at 4 s and the bell that rings in the Home music are left. Before the dark, the music fades
+    # over 1.1 s instead of stopping; the machine winding down is heard whole.
+    keep = {"sfx", "sfx_tuned"}
+    s.mix.breaths[:] = [(CUT_OUT, HOME_IN, 0.05, 0.0, keep), (m["dark"] - 1.1, m["cut"] - 0.03, 1.1, 0.0, keep)]
+    hush = window([(CUT_OUT, P1, 0.05, 0.0), (P1 + 0.07, HOME_IN - 0.1, 0.03, 0.0)])
+    for name in keep:
+        s.mix[name].auto = lambda t, hush=hush: 20 * np.log10(np.maximum(hush(t), 1e-6))
     return s
+
+
+def window(spans):
+    """A gain that is 1 outside the spans (start, end, fade out, fade in) and 0 inside them."""
+    def gain(t):
+        out = np.ones_like(t)
+        for a, b, fo, fi in spans:
+            down = np.cos(np.clip((t - a) / fo, 0, 1) * np.pi / 2) ** 2
+            up = np.sin(np.clip((t - b) / fi, 0, 1) * np.pi / 2) ** 2 if fi > 0 else (t >= b).astype(float)
+            out = np.minimum(out, np.where(t < b, down, up))
+        return out
+    return gain
