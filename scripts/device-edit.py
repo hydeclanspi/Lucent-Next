@@ -238,7 +238,8 @@ def main():
                     print(f"  {n / FPS:.0f} s", flush=True)
         writer.stdin.close()
         writer.wait()
-    print(f"Rendered {args.out.relative_to(ROOT)} — {n} frames, {n / FPS:.1f} s, {args.out.stat().st_size / 1048576:.1f} MB")
+    shown = args.out.resolve().relative_to(ROOT) if args.out.resolve().is_relative_to(ROOT) else args.out
+    print(f"Rendered {shown} — {n} frames, {n / FPS:.1f} s, {args.out.stat().st_size / 1048576:.1f} MB")
 
 
 if __name__ == "__main__":
