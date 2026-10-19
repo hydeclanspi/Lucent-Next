@@ -82,11 +82,20 @@
   ];
   var initialShortcuts = [
     { id: "demo-bookmarks", kind: "system", iconId: "browser.shortcut.bookmarks", title: "书签", url: "", position: 0, icon: "", iconRendering: "" },
-    { id: "demo-moodle", kind: "web", iconId: "", title: "Moodle", url: "https://moodle.ucl.ac.uk/", position: 1, icon: "", iconRendering: "", demoMark: "ucl" },
-    { id: "demo-claude", kind: "web", iconId: "", title: "Claude Code", url: "https://claude.ai/code", position: 2, icon: "", iconRendering: "", demoMark: "claude" }
+    { id: "demo-kimi", kind: "web", iconId: "", title: "Kimi K3", url: "https://www.kimi.com/", position: 1, icon: "", iconRendering: "", demoMark: "kimi" },
+    { id: "demo-apple", kind: "web", iconId: "", title: "Apple", url: "https://www.apple.com/", position: 2, icon: "", iconRendering: "", demoMark: "apple" }
   ];
+  // The sites' own icons, kept with the demo so the page makes no request for them: kimi.com's app icon,
+  // and apple.com's favicon drawn with the mark from apple.com's navigation bar.
+  var demoMarks = { kimi: "web/shortcuts/kimi.png", apple: "web/shortcuts/apple.svg" };
   var shortcuts = read("shortcuts", initialShortcuts);
   if (!Array.isArray(shortcuts)) shortcuts = copy(initialShortcuts);
+  // An earlier demo shipped Moodle and Claude Code in these two places; a visitor's stored copy follows.
+  var retired = { "demo-moodle": 1, "demo-claude": 2 };
+  shortcuts = shortcuts.map(function (item) {
+    if (!item || !retired[item.id]) return item;
+    var next = copy(initialShortcuts[retired[item.id]]); next.position = item.position; return next;
+  });
   var selectedEngine = read("engine", "google");
   if (!engines.some(function (item) { return item.id === selectedEngine; })) selectedEngine = "google";
   var themeMode = read("theme", "light");
@@ -95,7 +104,7 @@
   var examples = [
     { title: "HarmonyOS · 设计与开发", url: "https://developer.huawei.com/consumer/cn/", tag: "示例" },
     { title: "GitHub · 灵感从这里开始", url: "https://github.com/", tag: "示例" },
-    { title: "UCL Moodle", url: "https://moodle.ucl.ac.uk/", tag: "示例" }
+    { title: "Kimi K3", url: "https://www.kimi.com/", tag: "示例" }
   ];
 
   function notify(message) {
@@ -408,7 +417,7 @@
       shortcuts.forEach(function (item) {
         row(content, item.title, item.kind === "system" ? "系统入口 · 书签" : item.url, function () { editShortcut(item.id); }, "bookmarks");
       });
-      note(content, "主页点击「排序」可拖动排列，长按图标可编辑图标样式与管理入口。Moodle 与 Claude Code 使用公开示例地址，可自由编辑。");
+      note(content, "主页点击「排序」可拖动排列，长按图标可编辑图标样式与管理入口。Kimi K3 与 Apple 指向各自官网，可自由编辑。");
       actions(content, [button("添加网页", addShortcut, "primary"), button("添加书签入口", function () { var item = copy(initialShortcuts[0]); item.id += "-" + Date.now(); saveShortcuts(shortcuts.concat([item])); openShortcutManager(); })]);
     });
   }
@@ -439,12 +448,12 @@
   function copyFallback(url) { show("复制链接", "选中下面的地址即可复制。", "page", function (content) { var input = field(content, "网址", url); input.readOnly = true; input.setAttribute("data-autofocus", ""); input.addEventListener("focus", function () { input.select(); }); }); }
   function renderShortcutIcon(container, item) {
     if (item.kind === "system") { container.appendChild(icon("bookmarks")); return true; }
-    if (item.demoMark === "ucl") { var logo = el("span", "ab-ucl-mark", "UCL"); logo.setAttribute("aria-hidden", "true"); container.appendChild(logo); return true; }
-    if (item.demoMark === "claude") {
-      var mark = el("span", "ab-claude-mark");
-      var svg = document.createElementNS(SVG_NS, "svg"); svg.setAttribute("viewBox", "0 0 40 40"); svg.setAttribute("aria-hidden", "true");
-      for (var i = 0; i < 12; i++) { var ray = document.createElementNS(SVG_NS, "path"); ray.setAttribute("d", "M20 6v28"); ray.setAttribute("stroke", "#fff5e7"); ray.setAttribute("stroke-width", "1.8"); ray.setAttribute("transform", "rotate(" + (i * 15) + " 20 20)"); svg.appendChild(ray); }
-      mark.appendChild(svg); container.appendChild(mark); return true;
+    if (demoMarks[item.demoMark]) {
+      // Framed as the device frames a fetched site icon: a white plate inside the glass tile.
+      var plate = container;
+      if (!container.classList.contains("plate")) { plate = el("span", "plate"); container.classList.add("framed"); container.appendChild(plate); }
+      var img = document.createElement("img"); img.alt = ""; img.src = demoMarks[item.demoMark]; img.decoding = "sync";
+      plate.appendChild(img); return true;
     }
     return false;
   }
@@ -454,12 +463,15 @@
   function nativeMethod(name, fallback) { return function () { var args = arguments; if (window.AiraHome && typeof window.AiraHome[name] === "function") return window.AiraHome[name].apply(window.AiraHome, args); if (isActive()) return fallback.apply(null, args); }; }
   function uiMethod(name, fn) { return nativeMethod(name, function () { var args = arguments; defer(function () { fn.apply(null, args); }); }); }
 
+  var wallpaperShown = false;
   var bridge = {
     __isBrowserDemo: true,
     storage: {
       get: function (key, fallback) { return promise(function () {
         var raw = localStorage.getItem(HOME_PREFIX + key);
-        // Restore the supplied reference's London wallpaper for a new browser demo.
+        // Every visit opens on the London night (Light), whatever was chosen last time, and whether the choice
+        // was Light, Dark or Random; a wallpaper picked during the visit holds until the page is opened again.
+        if (key === "wallpaper" && !wallpaperShown) { wallpaperShown = true; return "light"; }
         if (raw === null && key === "wallpaper") return "light";
         // The supplied London image includes a device dock near its bottom.
         // Frame the city above it; preserve the original bitmap and crop controls.

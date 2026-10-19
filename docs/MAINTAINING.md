@@ -87,6 +87,16 @@ node scripts/film.mjs --from 20 --to 32 --out verification/film/part.mp4
 
 Two pages render in parallel (`--workers`) at 2560 × 1440 (`--scale 1` for 1080p). A page that follows the camera into the screen holds on to memory for every scale it passes through, so when memory in use passes 65 % (`--recycle-at`) every page is replaced by a fresh one; the film is a function of time, so the frames are unchanged. On two cores with 6 GB the full film takes about an hour and a half (49 MB); it was rendered in three silent parts of about half an hour each (`--from`, `--to`, `--mute`), joined with ffmpeg's concat demuxer and laid over the score. The score reads the scene marks from `demo/film/film.js`, and the film's form from `scripts/score/form.py`: every section with an energy from 0 to 5, which sets how many instruments play and where the faders sit. So after retiming a scene, compose it again (about a minute; `--report score.png` draws its spectrogram and its loudness against the form). It is synthesized from nothing but code — pianos, mallets, plucked and bowed strings, voices, brass, basses and leads, drums and percussion from physical and subtractive models, a desk with buses, sidechains, rooms and a master — and mastered to −16 LUFS with true peaks under −1 dBTP; every run checks the harmony and prints the loudness of each section against the energy it was written for. After changing any words in `demo/film/`, run `python3 scripts/film-fonts.py` (needs `fonttools` and `brotli`) so the bundled subsets cover them.
 
+**The on-device recording** (`demo/device/lucent-on-device.mp4`, played by the page at `/device/`) is an edit of a 1:47 screen recording made on the MatePad Edge; the recording itself is not kept in the repository.
+
+```sh
+node scripts/film-media.mjs device                              # the cover at 2x, with and without its words
+python3 scripts/device-edit.py SVID_20261019_173443_1.mp4        # the edit, its music and demo/device/poster.jpg
+python3 scripts/device-edit.py SVID_20261019_173443_1.mp4 --stills 3.3 7.3 28.5   # a few frames to check
+```
+
+It opens on the cover the README shows (`scripts/film-media/slot.html`, whose `?bare` variant leaves the screen empty): the cover's words leave and the recording comes up in the device's 3:2 screen. The device keeps its size, with only a slight lean in, so its name stays under it; the search plays at its own pace, the line of light and the page it opens included, and the quiet stretches run faster with their speed marked above the device; the recorder's own indicator is filled in from around it. Its music is the film's score from the silence before the residents to the end, rendered again with its sound effects muted, and the cut follows its sections. The cut, the speeds and the camera are tables at the top of the script.
+
 The browser suite writes its own review captures to ignored `verification/screenshots/`; they are evidence for a run, not documentation.
 
 ## Work sequence

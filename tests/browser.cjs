@@ -13,7 +13,7 @@ const server = http.createServer((req, res) => {
     let file = path.resolve(dist, '.' + pathname);
     if (file !== dist && !file.startsWith(dist + path.sep)) return res.writeHead(403).end();
     if (fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
-    res.setHeader('Content-Type', ({ '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.png': 'image/png', '.woff2': 'font/woff2', '.m4a': 'audio/mp4', '.webm': 'audio/webm' })[path.extname(file)] || 'application/octet-stream');
+    res.setHeader('Content-Type', ({ '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.png': 'image/png', '.woff2': 'font/woff2', '.m4a': 'audio/mp4', '.webm': 'audio/webm', '.mp4': 'video/mp4' })[path.extname(file)] || 'application/octet-stream');
     res.end(fs.readFileSync(file));
   } catch { res.writeHead(404).end(); }
 });
@@ -45,7 +45,7 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       assert.equal(await page.locator('#profileName').textContent(), 'hydeclanspi');
       assert.equal(await page.locator('#profileSign').textContent(), '我真的是活着玩的。都别压力我。');
       assert.equal((await bridge('getSearchEngineState')).selectedEngineId, 'google');
-      assert.deepEqual((await bridge('getShortcuts')).map(x => x.title), ['书签', 'Moodle', 'Claude Code']);
+      assert.deepEqual((await bridge('getShortcuts')).map(x => x.title), ['书签', 'Kimi K3', 'Apple']);
       assert.equal(await page.locator('#btnSystemSearch').evaluate(n => getComputedStyle(n).backgroundColor), 'rgb(10, 89, 247)');
       assert.equal(external.length, 0, 'Initial load must not contact remote sites');
     });
@@ -154,6 +154,12 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       assert.equal(await page.locator('.sm-radio[value="prism"]').isChecked(), true);
       await page.locator('.sm-choice').filter({ has: page.locator('input[value="beam"]') }).click();
       await page.keyboard.press('Escape');
+    });
+    await check('Every visit opens on the Light wallpaper, whatever was chosen before', async () => {
+      for (const choice of ['dark', 'random']) {
+        await page.evaluate(choice => localStorage.setItem('aira-profile-card:wallpaper', JSON.stringify(choice)), choice);
+        await page.reload(); await page.waitForFunction(() => /wallpaper-yang\.jpg/.test(document.body.style.backgroundImage), null, { timeout: 8000 });
+      }
     });
     await check('Web assets work under a repository subpath', async () => {
       await page.goto(base + '/Lucent-Next/'); await page.waitForFunction(() => document.querySelectorAll('#engineChips .chip').length === 4);
@@ -266,6 +272,17 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       await tab.click('#start');
       await tab.waitForFunction(() => document.getElementById('stage').style.opacity === '' && ![...document.querySelectorAll('.cap')].some(n => n.style.visibility === 'visible' && Number(n.style.opacity) > 0.5), null, { timeout: 8000 });
       assert.ok((await tab.evaluate(() => Number(document.getElementById('scrub').value))) < 60, 'the garden has dissolved into the opening of the film');
+      await tab.close();
+    });
+    await check('The on-device recording opens on its cover and plays with a tap', async () => {
+      const tab = await context.newPage();
+      tab.on('pageerror', e => errors.push(e.message));
+      await tab.goto(base + '/device/');
+      const video = await tab.evaluate(() => { const v = document.getElementById('film'); return { src: v.getAttribute('src'), poster: v.getAttribute('poster'), controls: v.controls }; });
+      assert.deepEqual(video, { src: './lucent-on-device.mp4', poster: './poster.jpg', controls: false }, 'the cover, no controls yet');
+      for (const file of ['lucent-on-device.mp4', 'poster.jpg']) assert.equal((await tab.request.head(base + '/device/' + file)).status(), 200, file + ' is published');
+      await tab.click('#play');
+      assert.deepEqual(await tab.evaluate(() => [document.getElementById('film').controls, !!document.getElementById('play')]), [true, false], 'a tap starts it and hands over the controls');
       await tab.close();
     });
     await check('No uncaught browser exceptions during the tested flows', async () => assert.deepEqual(errors, []));
