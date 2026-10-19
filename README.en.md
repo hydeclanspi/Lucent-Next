@@ -271,10 +271,10 @@ Lucent keeps one standard: **inspired, and incisive** — 灵感与犀利并存.
 |---|---|
 | **Size** | About 9,300 lines of JavaScript and 3,800 of CSS; zero runtime dependencies, no framework |
 | **Rendering** | DOM, Canvas 2D and hand-written SVG charts; every chart and animation is drawn by hand |
-| **Privacy** | Zero network requests after load; data stays on the device and leaves only through the clipboard |
+| **Privacy** | No request to any other site after load (the one exception: the first time a rare character appears, its small slice of the typeface comes from this site); data stays on the device and leaves only through the clipboard |
 | **Accessibility** | Lueurs move with the arrow keys (Shift for long steps); every long press has a keyboard equivalent; reduced motion and reduced transparency are honoured; sheets trap focus and return it on close |
 | **Performance discipline** | One frame loop for the whole engine: every frame while dragging or driving, about 30 Hz when idle, fully paused in the background, under a sheet, or when the page is hidden |
-| **Verification** | 41 unit tests (engine invariants, renderer determinism, storage integrity) and 18 browser flows, run in CI on every push |
+| **Verification** | 41 unit tests (engine invariants, renderer determinism, storage integrity) and 21 browser flows, run in CI on every push |
 | **Reproducibility** | The algorithm figures are drawn by the engine's own functions; the screenshots, animations and the film are rendered frame by frame under a fake clock, and come out the same on any machine |
 
 ## Evolution
@@ -311,7 +311,7 @@ Node.js 22 or later. Build and preview use only the Node standard library.
 npm start            # build dist/ and preview at http://127.0.0.1:4173 (the film is at /film/)
 npm run check        # syntax, release identity, native package digest
 npm test             # 41 unit tests
-npm install && npm run test:browser   # 18 browser flows (Playwright)
+npm install && npm run test:browser   # 21 browser flows (Playwright)
 ```
 
 `dist/` can be served by any static host; pushes to `main` deploy to GitHub Pages.

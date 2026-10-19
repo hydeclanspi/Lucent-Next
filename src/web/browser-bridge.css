@@ -1,6 +1,6 @@
 /* Lucent · 灵感台 — web surfaces and narrow presentation refinements. */
 :root { --aira-accent: #0a59f7; --aira-on-accent: #fff; }
-:root[data-browser-demo] .tile .ticon > svg { width: 24px; height: 24px; }
+:root[data-browser-demo] .tile:not(.add) .ticon > svg { width: 24px; height: 24px; }
 :root[data-browser-demo] .abtn.primary { box-shadow: 0 6px 22px rgba(10,89,247,.24), inset 0 1px 0 rgba(255,255,255,.26); }
 @media (min-width:900px) { :root[data-browser-demo] .page { padding-bottom:60px; } }
 @media (max-width:899px) {
@@ -26,7 +26,7 @@
   --ab-line: rgba(96, 126, 168, .15);
   --ab-accent: #0a59f7;
   --ab-accent-ink: #2c6fd8;
-  --ab-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Mono", Menlo, monospace;
+  --ab-mono: var(--mono);
   position: fixed; inset: 0; z-index: 2147482000; display: grid; place-items: center;
   padding: clamp(16px, 4vw, 56px);
   background:
@@ -34,7 +34,7 @@
     rgba(9, 20, 39, .36);
   isolation: isolate;
   color: var(--ab-ink);
-  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font: 15px/1.5 var(--sans);
   -webkit-backdrop-filter: blur(11px) saturate(.94);
   backdrop-filter: blur(11px) saturate(.94);
 }
@@ -366,7 +366,7 @@ button.ab-row:hover .ab-row-arrow { opacity: 1; transform: translateX(2px); colo
   display: inline-flex; align-items: center; gap: 14px;
   padding: 10px 18px; border-radius: 999px;
   color: rgba(248, 249, 253, .94);
-  font: 500 13px/1.2 "HarmonyOS Sans SC", "HarmonyOS Sans", system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font: 500 13px/1.2 var(--sans);
   letter-spacing: .04em; white-space: nowrap;
   background: rgba(16, 18, 28, .42);
   border: 1px solid rgba(255, 255, 255, .2);
@@ -381,7 +381,7 @@ button.ab-row:hover .ab-row-arrow { opacity: 1; transform: translateX(2px); colo
 .lx-immersive-keys { color: rgba(248, 249, 253, .62); font-size: 12px; }
 .lx-immersive-hint kbd {
   display: inline-block; min-width: 1.5em; padding: 2px 5px; border-radius: 5px; text-align: center;
-  font: 600 11px/1 ui-monospace, "SF Mono", Menlo, monospace;
+  font: 600 11px/1 var(--mono);
   border: 1px solid rgba(255, 255, 255, .26); background: rgba(255, 255, 255, .08);
 }
 @media (prefers-reduced-motion: reduce) { .lx-immersive-hint { transition: none; } }

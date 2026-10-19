@@ -3106,8 +3106,11 @@
         document.body.style.backgroundSize = geo.size;
         document.body.style.backgroundPosition = geo.position;
         if (el.wpImg) {
-          el.wpImg.style.backgroundSize = geo.size;
-          el.wpImg.style.backgroundPosition = geo.position;
+          /* 壁纸层比屏幕四边各大出一截（柔焦不露边），取景要按这一层自己的盒子铺：
+             与不取景时的 cover 同一规则，中心对准屏幕中心，不会整体偏向左上。 */
+          var layer = wpLayerBox(crop, el.wpImg.offsetWidth || view.w, el.wpImg.offsetHeight || view.h, source.size);
+          el.wpImg.style.backgroundSize = layer.size;
+          el.wpImg.style.backgroundPosition = layer.position;
         }
       } else {
         document.body.style.backgroundSize = "cover";
