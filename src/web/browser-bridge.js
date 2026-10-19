@@ -463,12 +463,15 @@
   function nativeMethod(name, fallback) { return function () { var args = arguments; if (window.AiraHome && typeof window.AiraHome[name] === "function") return window.AiraHome[name].apply(window.AiraHome, args); if (isActive()) return fallback.apply(null, args); }; }
   function uiMethod(name, fn) { return nativeMethod(name, function () { var args = arguments; defer(function () { fn.apply(null, args); }); }); }
 
+  var wallpaperShown = false;
   var bridge = {
     __isBrowserDemo: true,
     storage: {
       get: function (key, fallback) { return promise(function () {
         var raw = localStorage.getItem(HOME_PREFIX + key);
-        // Restore the supplied reference's London wallpaper for a new browser demo.
+        // Every visit opens on the London night (Light), whatever was chosen last time, and whether the choice
+        // was Light, Dark or Random; a wallpaper picked during the visit holds until the page is opened again.
+        if (key === "wallpaper" && !wallpaperShown) { wallpaperShown = true; return "light"; }
         if (raw === null && key === "wallpaper") return "light";
         // The supplied London image includes a device dock near its bottom.
         // Frame the city above it; preserve the original bitmap and crop controls.
