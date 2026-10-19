@@ -8,8 +8,8 @@
  *
  * Back to front: the world (WebGL, gl.js: night, pearl, aurora and dawn, with rays, stage lights and
  * four pillars), the place (one 1560 × 1040 screen in DOM, seen through a camera), light (Canvas 2D:
- * beams, lasers, the Home button's arc, and the world beyond the slit: silicon, then a thousand
- * windows), type (DOM and SVG), glints (WebGL points).
+ * beams, lasers, the Home button's arc, the world beyond the slit: silicon, then a thousand windows;
+ * and the three wallpapers), type (DOM and SVG), glints (WebGL points).
  *
  *   ?capture   no controls; window.__film = { duration, marks, ready, seek(t) } for the renderer
  *   ?t=42      start at 42 s
@@ -25,7 +25,7 @@
     rehearse: 37.25, burst: 39.0, sheet: 40.0, lasers: 41.5, show: 43.5, console: 46.5, knobs: 48.0,
     pillars: 52.5, converge: 55.5, point: 56.5, lock: 59.0, dark: 62.5,
     cut: 65.0, pen: 65.3, lueurs: 66.0, swarm: 67.0, meet: 70.0, stars: 71.0, hold: 72.5, loop: 75.5, garden: 78.75,
-    device: 83.0, specs: 84.5, tag: 91.0, flash2: 93.0, end: 99.0
+    device: 83.0, specs: 84.5, walls: 91.0, tag: 100.5, flash2: 102.5, end: 108.5
   };
   var DURATION = M.end;
   var params = new URLSearchParams(window.location.search);
@@ -116,6 +116,8 @@
   function at(x, y, s, X, Y) { return [(X === undefined ? 960 : X) + (SCX - x) * s, (Y === undefined ? 470 : Y) + (SCY - y) * s, s]; }
   var OVER = [960, 470, 0.62];
   var SWARM_CAM = at(650, 300, 1.42, 960, 450);
+  // The wallpapers: the screen just wider than the frame; the device below the frame, then risen, with its picker.
+  var WALL_FULL = [960, 540, 1.25], WALL_LOW = [960, 1560, 0.7], WALL_PICK = [960, 490, 0.7];
   var CAMERA = [
     [0, OVER], [M.explode, OVER],
     [M.explode + 1.5, [960, 540, 0.48]],
@@ -140,9 +142,14 @@
     [M.garden, at(650, 300, 1.44, 960, 450), 'sine'],
     [M.device, at(640, 320, 1.34, 960, 460), 'sine'],
     [M.device + 1.8, [690, 470, 0.5]],
-    [M.tag, [690, 470, 0.52], 'sine'],
-    [M.tag + 0.8, [690, 430, 0.46], 'in'],
-    [DURATION, [690, 430, 0.46]]
+    [M.walls - 1.0, [690, 470, 0.52], 'sine'],
+    [M.walls, WALL_FULL, 'in'],
+    [M.walls + 5.29, WALL_FULL],
+    [M.walls + 5.3, WALL_LOW, 'linear'],
+    [M.walls + 6.15, WALL_PICK, 'out'],
+    [M.walls + 8.1, [960, 492, 0.712], 'sine'],
+    [M.walls + 9.0, WALL_FULL],
+    [DURATION, WALL_FULL]
   ];
   // The device in space: [rotateX, rotateY, rotateZ], and how far its four layers stand apart.
   var ROT = [
@@ -153,8 +160,9 @@
     [M.device + 0.1, [0, 0, 0]],
     [M.device + 1.3, [9, -36, 0]],
     [M.device + 2.8, [5, -15, 0], 'out'],
-    [M.tag, [3, -9, 0], 'sine'],
-    [DURATION, [3, -9, 0]]
+    [M.walls - 1.2, [3, -9, 0], 'sine'],
+    [M.walls - 0.35, [0, 0, 0]],
+    [DURATION, [0, 0, 0]]
   ];
   var SPREAD = [[0, 0], [M.explode + 0.4, 0], [M.explode + 1.8, 1], [M.implode, 1], [M.implode + 0.9, 0]];
   var LAYERS = [$('lySky'), $('lyGlass'), $('ui'), $('lyTop'), $('lyLueurs')], LAYER_Z = [0, 1, 2, 2, 3], GAP = 170;
@@ -211,7 +219,8 @@
     { a: 73.1, b: 75.4, top: 862, zh: '每次回来，它们都在。', en: 'Whenever you come back, they are here.' },
     { a: 75.7, b: 78.55, top: 836, zh: '你拨动它们，它们改写你的下一张壁纸。', sub: '每一次相遇，场志都一一记下。', en: 'You move them, and they rewrite your next wallpaper. Every meeting is kept in the chronicle.' },
     { a: 78.85, b: 82.6, top: 836, size: 'l', zh: '一座自己生长的后花园。', sub: '推开门，放下一天的疲惫。', en: 'A back garden that grows on its own. Open the door, and set the day down.' },
-    { a: 83.8, b: 90.2, top: 868, x: 690, ink: true, title: '为一块屏幕而生。', spec: 'HUAWEI MatePad Edge', en: 'Made for one screen.' }
+    { a: 83.8, b: 90.2, top: 868, x: 690, ink: true, title: '为一块屏幕而生。', spec: 'HUAWEI MatePad Edge', en: 'Made for one screen.' },
+    { a: M.walls + 3.9, b: M.walls + 5.6, top: 880, ink: true, zh: '三张壁纸，三种夜色。', en: 'Three wallpapers, three shades of night.' }
   ];
   function revealSpan(cls, text, parent) {
     var wrap = el('span', 'reveal' + (cls ? ' ' + cls : ''), parent);
@@ -461,8 +470,25 @@
     stops.forEach(function (s) { g.addColorStop(s[0], s[1]); });
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, rx, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   }
+  // Each sky is painted in the 1620 × 1080 space it fills on the screen, at the canvas's own resolution
+  // (res times that), so the same city stays sharp when the wallpapers fill the frame. Shapes that share
+  // a blur are drawn together on a layer and blurred once: to the eye the same picture as a blur per
+  // shape, and fifty times quicker. A canvas blur is measured in the canvas's own pixels, so it scales by res.
   function paintSky(canvas, seed, look) {
-    var ctx = canvas.getContext('2d'), w = canvas.width, h = canvas.height, r = rng(seed);
+    var res = canvas.width / 1620, main = canvas.getContext('2d'), ctx = main, w = 1620, h = 1080, r = rng(seed);
+    var layer = null, layerBlur = 0;
+    function flush() {
+      if (!layer) return;
+      main.save(); main.setTransform(1, 0, 0, 1, 0, 0); main.filter = 'blur(' + (layerBlur * res).toFixed(2) + 'px)';
+      main.drawImage(layer, 0, 0); main.restore();
+      layer = null; ctx = main;
+    }
+    function group(px) {
+      flush();
+      layer = document.createElement('canvas'); layer.width = canvas.width; layer.height = canvas.height;
+      ctx = layer.getContext('2d'); ctx.setTransform(res, 0, 0, res, 0, 0); layerBlur = px;
+    }
+    main.setTransform(res, 0, 0, res, 0, 0);
     var g = ctx.createLinearGradient(0, 0, 0, h);
     look.sky.forEach(function (s) { g.addColorStop(s[0], s[1]); });
     ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
@@ -474,34 +500,46 @@
         ctx.beginPath(); ctx.arc(sx, sy, sr, 0, TAU); ctx.fill();
       }
     }
-    ctx.filter = 'blur(28px)';
+    if (look.moon) { // a disc lit a little from the upper left, with a few soft darker seas; the clouds pass in front
+      var mo = look.moon, ox = w * mo[0], oy = h * mo[1], or = mo[2];
+      var mg = ctx.createRadialGradient(ox - or * 0.3, oy - or * 0.3, 0, ox, oy, or);
+      mg.addColorStop(0, '#fffdf7'); mg.addColorStop(0.75, '#f6efe0'); mg.addColorStop(1, '#e6dcc6');
+      ctx.fillStyle = mg; ctx.beginPath(); ctx.arc(ox, oy, or, 0, TAU); ctx.fill();
+      [[-0.3, -0.18, 0.34], [0.22, 0.12, 0.28], [-0.05, 0.38, 0.22]].forEach(function (m) {
+        var sg = ctx.createRadialGradient(ox + m[0] * or, oy + m[1] * or, 0, ox + m[0] * or, oy + m[1] * or, m[2] * or);
+        sg.addColorStop(0, 'rgba(168,162,152,0.34)'); sg.addColorStop(1, 'rgba(168,162,152,0)');
+        ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(ox + m[0] * or, oy + m[1] * or, m[2] * or, 0, TAU); ctx.fill();
+      });
+    }
+    group(28);
     for (var i = 0; i < 18; i++) {
       var cx = r() * w, cy = h * (0.1 + r() * 0.42), rw = 160 + r() * 320, rh = 16 + r() * 38;
       ctx.fillStyle = 'rgba(' + (16 + r() * 12 | 0) + ',' + (26 + r() * 14 | 0) + ',' + (58 + r() * 20 | 0) + ',' + (look.cloud * (0.22 + r() * 0.22)).toFixed(2) + ')';
       ctx.beginPath(); ctx.ellipse(cx, cy, rw, rh, (r() - 0.5) * 0.12, 0, Math.PI * 2); ctx.fill();
     }
-    ctx.filter = 'blur(10px)';
+    group(10);
     for (var c = 0; c < 26; c++) {
       var bx = r() * w, bw = 30 + r() * 90, bh = 40 + r() * 230;
       ctx.fillStyle = 'rgba(10,14,26,' + (0.18 + r() * 0.25).toFixed(2) + ')';
       ctx.fillRect(bx, h * 0.64 - bh * 0.4 + r() * 40, bw, bh + h * 0.4);
     }
     var palette = look.lights;
-    ctx.filter = 'blur(1.4px)';
-    for (var k = 0; k < 230; k++) {
+    group(1.4);
+    for (var n = 0; n < 230; n++) {
       var p = palette[(r() * palette.length) | 0], x = w * (0.04 + 0.96 * Math.pow(r(), 0.85)), y = h * (0.58 + 0.42 * Math.pow(r(), 0.9)), rad = 1.5 + Math.pow(r(), 3) * 16;
       var a = rad > 9 ? 0.12 + r() * 0.16 : 0.32 + r() * 0.5;
       var gr = ctx.createRadialGradient(x, y, 0, x, y, rad);
       gr.addColorStop(0, 'rgba(' + p + ',' + a.toFixed(2) + ')'); gr.addColorStop(0.7, 'rgba(' + p + ',' + (a * 0.55).toFixed(2) + ')'); gr.addColorStop(1, 'rgba(' + p + ',0)');
       ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2); ctx.fill();
     }
-    ctx.filter = 'blur(8px)';
+    group(8);
     for (var m = 0; m < 16; m++) {
       var q2 = palette[(r() * palette.length) | 0], mx = r() * w, my = h * (0.55 + r() * 0.45), mr = 34 + r() * 70;
       ctx.fillStyle = 'rgba(' + q2 + ',' + (0.05 + r() * 0.07).toFixed(2) + ')';
       ctx.beginPath(); ctx.arc(mx, my, mr, 0, Math.PI * 2); ctx.fill();
     }
-    ctx.filter = 'none';
+    flush();
+    main.setTransform(1, 0, 0, 1, 0, 0);
   }
   paintSky(innerSky, 20261017, {
     sky: [[0, '#0d2350'], [0.2, '#183870'], [0.38, '#30508c'], [0.5, '#5a6294'], [0.58, '#6a5a82'], [0.66, '#3a3756'], [0.78, '#1d2236'], [1, '#0e121c']],
@@ -514,11 +552,11 @@
   // The next wallpaper: the same city later in the evening, under a moon and the first stars.
   paintSky(innerSkyB, 20261018, {
     sky: [[0, '#060c24'], [0.22, '#0e1d4c'], [0.4, '#22397c'], [0.52, '#3f4a8a'], [0.6, '#33335e'], [0.7, '#1b1d34'], [0.82, '#11131f'], [1, '#090b12']],
-    glows: [[0.82, 0.16, 0.08, 0.08, [[0, 'rgba(255,250,236,0.95)'], [0.3, 'rgba(255,244,220,0.5)'], [1, 'rgba(255,240,210,0)']]],
+    glows: [[0.82, 0.16, 0.06, 0.09, [[0, 'rgba(255,248,232,0.55)'], [0.28, 'rgba(255,244,222,0.24)'], [1, 'rgba(255,240,210,0)']]],
       [0.82, 0.16, 0.42, 0.34, [[0, 'rgba(170,190,255,0.22)'], [1, 'rgba(170,190,255,0)']]],
       [0.2, 0.56, 0.6, 0.14, [[0, 'rgba(255,170,120,0.32)'], [1, 'rgba(255,170,120,0)']]],
       [0.6, 0.88, 0.7, 0.2, [[0, 'rgba(255,190,130,0.18)'], [1, 'rgba(255,190,130,0)']]]],
-    cloud: 0.7, stars: 260, lights: [[255, 200, 120], [255, 226, 170], [255, 244, 228], [180, 214, 255], [255, 176, 140]]
+    cloud: 0.7, stars: 260, moon: [0.82, 0.16, 17], lights: [[255, 200, 120], [255, 226, 170], [255, 244, 228], [180, 214, 255], [255, 176, 140]]
   });
 
   // ---------- the world, frame by frame ----------
@@ -532,7 +570,7 @@
     [M.lock, NIGHT], [M.lock + 1.1, DAWN],
     [M.dark + 0.3, DAWN], [M.dark + 0.31, NIGHT, 'linear'],
     [M.device - 0.2, NIGHT], [M.device + 1.1, PEARL],
-    [M.tag + 0.1, PEARL], [M.tag + 0.9, NIGHT],
+    [M.walls + 8.4, PEARL], [M.walls + 9.0, NIGHT], // night falls on the chosen city and on the world around it
     [M.flash2 + 0.1, NIGHT], [M.flash2 + 0.11, PEARL, 'linear'],
     [DURATION, PEARL]
   ];
@@ -1432,6 +1470,417 @@
     };
   })();
 
+  // ---------- three wallpapers: a roll call, glass in the air, a picker, the one you choose ----------
+  // Light and Dark ship with Lucent: a photograph of London at night and an anime dusk. The third is the
+  // city this film paints. Each crosses the full screen behind a pane of glass, on the beat. Then the last
+  // becomes a card of glass, the other two fly in beside it, and the three float free in a curve while the
+  // camera turns about them. The device rises; the cards fly into its screen and settle there as its
+  // picker; the city is chosen, opens to the whole screen, night falls on it, and it gives way to the night
+  // where the last words begin. The screen is drawn in the light layer, in its own coordinates, through
+  // the camera (the device faces the camera squarely throughout); the floating cards are glass in CSS 3D.
+  var WALLS = (function () {
+    var W = M.walls, SW = 1560, SH = 1040;
+    var CALL = [W, W + 1, W + 2], CROSS = 0.25;           // each pane crosses the middle of the screen on its beat
+    var FLOAT = W + 3.0, SWAP = W + 3.55;                 // the last becomes a card of glass, then floats free
+    var RISE = [W + 5.3, W + 6.15], LAND = [W + 6.0, W + 6.25, W + 6.5];   // the device rises; the cards land on it
+    var SHEEN = [W + 6.85, W + 7.55], TAP = W + 7.45, PICK = W + 7.6, OPEN = W + 8.0;
+    var FALL = [W + 8.4, W + 9.3], GONE = [W + 9.15, W + 9.95];
+    // A card: the wallpaper set in glass, its name below. Three in a row under a heading.
+    var CW = 432, CH = 288, PAD = 15, FOOT = 66, GAP = 34, OW = CW + 2 * PAD, OH = CH + PAD + FOOT;
+    var X0 = (SW - 3 * OW - 2 * GAP) / 2, Y0 = 384;
+    var BW = 250, LEAN = 150;                             // the pane: its width, and how far its top leads its foot
+    // In the air: how much larger than on the screen; the curve they hang in (x, y, z about the centre of
+    // the frame, and their turn in degrees, facing in); where the first two come from.
+    var FK = 1.1, CX = 960, CY = 520;
+    var SLOTS = [[-610, 12, -230, 27], [0, -18, 40, 0], [610, 12, -230, -27]];
+    var FROM = [[-1600, 90, -700, 75, 0], [0, -980, -520, 0, -40]];
+
+    function canvasOf(w, h) { var c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+    // A small blurred copy for frosted glass, and a sharp one for the cards.
+    function frostOf(src, b) {
+      var c = canvasOf(312, 208), x = c.getContext('2d');
+      x.filter = 'blur(6px)'; x.drawImage(src, b[0], b[1], b[2], b[3], -12, -8, 336, 224);
+      return c;
+    }
+    function thumbOf(src, b) {
+      var c = canvasOf(840, 560), x = c.getContext('2d');
+      x.imageSmoothingQuality = 'high'; x.drawImage(src, b[0], b[1], b[2], b[3], 0, 0, 840, 560);
+      return c;
+    }
+    function photo(src) {
+      var img = new Image(), p = { img: img, ok: false };
+      img.decoding = 'async'; img.src = src;
+      p.ready = img.decode().then(function () {
+        p.box = [0, 0, img.naturalWidth, img.naturalHeight];
+        p.frost = frostOf(img, p.box); p.thumb = thumbOf(img, p.box); p.ok = true;
+      }, function () { p.ok = false; });
+      return p;
+    }
+    // The painted city as the screen frames it (its sky overhangs the screen by 30 and 20), at dusk and at night.
+    var ck = innerSky.width / 1620, cb = [30 * ck, 20 * ck, 1560 * ck, 1040 * ck];
+    var city = { img: innerSky, night: innerSkyB, box: cb, ok: true, ready: Promise.resolve(),
+      frost: frostOf(innerSky, cb), frostNight: frostOf(innerSkyB, cb), thumb: thumbOf(innerSky, cb), thumbNight: thumbOf(innerSkyB, cb) };
+    var PAPERS = [
+      { name: 'Light', note: '伦敦夜景', p: photo('../assets/wallpaper-yang.jpg'), zoom: 1.18, focus: [0.42, 0.3] },
+      { name: 'Dark', note: '日漫黄昏', p: photo('../assets/wallpaper.jpg'), zoom: 1, focus: [0.68, 0.48] },
+      { name: 'Dusk', note: '城市入夜', p: city, zoom: 1, focus: [0.2, 0.58] }
+    ];
+
+    var SCREEN = null, RES = 1, night = 0;
+    function round(c, x, y, w, h, r) { c.beginPath(); c.roundRect(x, y, w, h, r); }
+    function dev(v) { return v * RES; }                  // a length in the canvas's own pixels, for blurs, shadows, detail
+    function kb(t, t0) { return 1 + 0.035 * E.out(seg(t, t0 - CROSS, t0 + 1.7)); }   // each one pushes in a little
+    // Fill x, y, w, h with a wallpaper, z times larger about its focus: sharp, or frosted; on the city, night may fall.
+    function paint(c, pp, x, y, w, h, z, o) {
+      var p = pp.p, f = (o && o.focus) || pp.focus, frost = o && o.frost, nt = (o && o.night) || 0;
+      var dw = w * z, dh = h * z, dx = x - (dw - w) * f[0], dy = y - (dh - h) * f[1];
+      if (!p.ok) { c.fillStyle = '#1a2133'; c.fillRect(x, y, w, h); return; }
+      var small = !frost && dev(dw) <= 900;
+      function one(src, frosted, thumb) {
+        if (frosted || small) c.drawImage(frosted || thumb, dx, dy, dw, dh);
+        else c.drawImage(src, p.box[0], p.box[1], p.box[2], p.box[3], dx, dy, dw, dh);
+      }
+      one(p.img, frost ? p.frost : null, p.thumb);
+      if (nt > 0.002 && p.night) {
+        var a = c.globalAlpha; c.globalAlpha = a * nt;
+        one(p.night, frost ? p.frostNight : null, p.thumbNight);
+        c.globalAlpha = a;
+      }
+    }
+
+    // ---- the roll call ----
+    // A pane of glass crosses the screen from left to right, leaning forward; behind it, the next wallpaper.
+    function pane(c, pp, z, e) {
+      var xc = lerp(-BW / 2 - LEAN, SW + BW / 2 + LEAN, e), base = c.getTransform();
+      function lean() { c.setTransform(base); c.transform(1, 0, -LEAN / SH, 1, xc, SH / 2); } // u across the pane, v along it
+      c.save(); lean(); c.beginPath(); c.rect(-3 * SW, -SH, 3 * SW - BW / 2, 2 * SH); c.setTransform(base); c.clip();
+      paint(c, pp, 0, 0, SW, SH, z);
+      c.restore();
+      // through the pane: magnified across it, softened, brighter towards the leading edge
+      c.save(); lean(); c.beginPath(); c.rect(-BW / 2, -SH, BW, 2 * SH); c.setTransform(base); c.clip();
+      c.translate(xc, SH / 2); c.scale(1.14, 1.03); c.translate(-xc, -SH / 2);
+      paint(c, pp, 0, 0, SW, SH, z);
+      c.globalAlpha = 0.45; paint(c, pp, 0, 0, SW, SH, z, { frost: true }); c.globalAlpha = 1;
+      lean();
+      var g = c.createLinearGradient(-BW / 2, 0, BW / 2, 0);
+      g.addColorStop(0, 'rgba(255,255,255,0.03)'); g.addColorStop(0.55, 'rgba(255,255,255,0.08)'); g.addColorStop(0.9, 'rgba(236,244,255,0.24)'); g.addColorStop(1, 'rgba(255,255,255,0.06)');
+      c.globalCompositeOperation = 'lighter'; c.fillStyle = g; c.fillRect(-BW / 2, -SH, BW, 2 * SH);
+      c.restore();
+      // a soft shadow ahead of it; its edges, the leading one bright and fringed with colour
+      c.save(); lean();
+      var s = c.createLinearGradient(BW / 2, 0, BW / 2 + 90, 0);
+      s.addColorStop(0, 'rgba(2,6,16,0.3)'); s.addColorStop(1, 'rgba(2,6,16,0)');
+      c.fillStyle = s; c.fillRect(BW / 2, -SH, 90, 2 * SH);
+      c.globalCompositeOperation = 'lighter';
+      [[BW / 2 - 1.2, 'rgba(255,255,255,0.9)', 2.4, 10], [BW / 2 + 2.6, 'rgba(255,96,130,0.4)', 1.4, 0], [BW / 2 - 4.8, 'rgba(96,206,255,0.4)', 1.4, 0], [-BW / 2 + 0.6, 'rgba(255,255,255,0.32)', 1.2, 0]].forEach(function (l) {
+        c.shadowColor = 'rgba(150,200,255,0.9)'; c.shadowBlur = l[3] ? dev(l[3]) : 0;
+        c.strokeStyle = l[1]; c.lineWidth = l[2]; c.beginPath(); c.moveTo(l[0], -SH); c.lineTo(l[0], SH); c.stroke();
+      });
+      c.restore();
+    }
+    function rollCall(c, t) {
+      var held = -1, crossing = -1;
+      CALL.forEach(function (t0, i) { if (t >= t0 + CROSS) held = i; else if (t >= t0 - CROSS) crossing = i; });
+      if (held >= 0) paint(c, PAPERS[held], 0, 0, SW, SH, PAPERS[held].zoom * kb(t, CALL[held]));
+      if (crossing >= 0) pane(c, PAPERS[crossing], PAPERS[crossing].zoom * kb(t, CALL[crossing]), E.inOut(seg(t, CALL[crossing] - CROSS, CALL[crossing] + CROSS)));
+    }
+    // Its name, in a pill of glass in the corner of the frame.
+    function chip(c, t) {
+      var i = t < CALL[1] ? 0 : t < CALL[2] ? 1 : 2, t0 = CALL[i], pp = PAPERS[i];
+      var on = E.out(seg(t, t0 + 0.04, t0 + 0.42));
+      var off = E.sine(i < 2 ? seg(t, CALL[i + 1] - CROSS - 0.1, CALL[i + 1] - CROSS + 0.05) : seg(t, FLOAT - 0.05, FLOAT + 0.3));
+      var a = on * (1 - off);
+      if (a <= 0.003) return;
+      c.save(); c.setTransform(LDPR, 0, 0, LDPR, 0, 0); c.globalAlpha = a;
+      c.font = '500 28px "Film Latin"'; c.letterSpacing = '0.5px'; var w1 = c.measureText(pp.name).width;
+      c.font = '400 24px "Film Sans"'; c.letterSpacing = '3px'; var w2 = c.measureText(pp.note).width;
+      var H = 70, w = 32 + w1 + 20 + 1 + 20 + w2 + 29, x = 96, y = 1080 - 92 - H + (1 - on) * 14;
+      c.shadowColor = 'rgba(2,6,16,0.35)'; c.shadowBlur = 22 * LDPR; c.shadowOffsetY = 8 * LDPR;
+      round(c, x, y, w, H, H / 2); c.fillStyle = 'rgba(30,40,60,0.6)'; c.fill();
+      c.shadowColor = 'transparent';
+      c.save(); round(c, x, y, w, H, H / 2); c.clip();
+      c.setTransform(SCREEN); paint(c, pp, 0, 0, SW, SH, pp.zoom * kb(t, t0), { frost: true });
+      c.restore();
+      var g = c.createLinearGradient(0, y, 0, y + H);
+      g.addColorStop(0, 'rgba(255,255,255,0.32)'); g.addColorStop(1, 'rgba(255,255,255,0.14)');
+      c.fillStyle = g; round(c, x, y, w, H, H / 2); c.fill();
+      var rim = c.createLinearGradient(0, y, 0, y + H);
+      rim.addColorStop(0, 'rgba(255,255,255,0.78)'); rim.addColorStop(1, 'rgba(255,255,255,0.24)');
+      c.strokeStyle = rim; c.lineWidth = 1.3; round(c, x + 0.65, y + 0.65, w - 1.3, H - 1.3, H / 2 - 0.65); c.stroke();
+      c.fillStyle = '#ffffff'; c.font = '500 28px "Film Latin"'; c.letterSpacing = '0.5px';
+      c.fillText(pp.name, x + 32, y + 45);
+      c.fillStyle = 'rgba(255,255,255,0.5)'; c.fillRect(x + 32 + w1 + 20, y + 23, 1, 24);
+      c.fillStyle = 'rgba(255,255,255,0.9)'; c.font = '400 24px "Film Sans"'; c.letterSpacing = '3px';
+      c.fillText(pp.note, x + 32 + w1 + 41, y + 44.5);
+      c.restore();
+    }
+
+    // ---- glass in the air ----
+    // A card as it floats free, in card units: clear glass that the light comes through, a bright rim and a
+    // brighter edge where the glass is thick, the picture set in it, the name in ink.
+    function airGlass(c, a, parts) {
+      c.save(); c.globalAlpha *= a;
+      round(c, 0, 0, OW, OH, 30);
+      var g = c.createLinearGradient(0, 0, OW, OH);
+      g.addColorStop(0, 'rgba(255,255,255,0.46)'); g.addColorStop(0.5, 'rgba(244,248,255,0.2)'); g.addColorStop(1, 'rgba(255,255,255,0.32)');
+      c.fillStyle = g; c.fill();
+      c.save(); round(c, 0, 0, OW, OH, 30); c.clip();
+      c.lineWidth = 9; c.strokeStyle = 'rgba(255,255,255,0.32)'; round(c, 0, 0, OW, OH, 30); c.stroke();
+      c.restore();
+      var rim = c.createLinearGradient(0, 0, OW * 0.6, OH);
+      rim.addColorStop(0, 'rgba(255,255,255,0.98)'); rim.addColorStop(0.45, 'rgba(255,255,255,0.4)'); rim.addColorStop(1, 'rgba(255,255,255,0.75)');
+      round(c, 0.75, 0.75, OW - 1.5, OH - 1.5, 29.25); c.strokeStyle = rim; c.lineWidth = 1.5; c.stroke();
+      round(c, 5.5, 5.5, OW - 11, OH - 11, 24.5); c.strokeStyle = 'rgba(120,140,180,0.16)'; c.lineWidth = 1; c.stroke();
+      if (parts.label) {
+        var by = PAD + CH + 44;
+        c.font = '500 26px "Film Latin"'; c.letterSpacing = '0.3px'; c.fillStyle = '#0d1220'; c.textAlign = 'left';
+        c.fillText(parts.pp.name, PAD + 6, by);
+        c.font = '400 21px "Film Sans"'; c.letterSpacing = '2px'; c.fillStyle = 'rgba(28,36,54,0.68)'; c.textAlign = 'right';
+        c.fillText(parts.pp.note, OW - PAD - 4, by - 1);
+      }
+      c.restore();
+    }
+    // The floating cards are glass in CSS 3D: a face (drawn once), plates behind it for the thickness of the
+    // glass, a glint that slides across as they turn, and a soft shadow on the floor of the light.
+    var layer = document.createElement('div');
+    layer.className = 'layer'; layer.id = 'wallCards';
+    stage.insertBefore(layer, scrim);
+    var floor = PAPERS.map(function () { return el('i', 'wc-shadow', layer); });
+    var rig = el('div', 'wc-rig', layer);
+    var AIR = PAPERS.map(function (pp) {
+      var node = el('div', 'wc', rig);
+      [18, 12, 6].forEach(function (z, k) { var pl = el('i', 'wc-plate', node); pl.style.transform = 'translateZ(-' + z + 'px)'; pl.style.opacity = f3(0.5 + 0.2 * k); });
+      var face = el('canvas', 'wc-face', node);
+      face.width = OW * 2; face.height = OH * 2;
+      var glint = el('i', 'wc-glint', node);
+      return { node: node, face: face, glint: glint, shown: null };
+    });
+    function drawFaces() {
+      AIR.forEach(function (a, i) {
+        var c = a.face.getContext('2d');
+        c.setTransform(2, 0, 0, 2, 0, 0); c.clearRect(0, 0, OW, OH); c.imageSmoothingQuality = 'high';
+        RES = 2;
+        airGlass(c, 1, { pp: PAPERS[i], label: true });
+        picture(c, PAPERS[i], PAD, PAD, CW, CH, 16, 1, 0, null);
+      });
+    }
+    var ready = Promise.all(PAPERS.map(function (pp) { return pp.p.ready; }).concat(document.fonts ? [document.fonts.load('500 26px "Film Latin"', 'LightDarkDusk'), document.fonts.load('400 21px "Film Sans"', '伦敦夜景日漫黄昏城市入夜')] : []))
+      .catch(function () {}).then(drawFaces);
+    var P = 2400;   // the perspective of the layer, in px
+    // The camera about the floating cards: square to them at the hand-over, then turning slowly from one
+    // side to the other and drifting in, then square again for the device.
+    function rigNow(t) {
+      var into = E.inOut(seg(t, SWAP, W + 4.2)), orbit = E.inOut(seg(t, W + 3.9, W + 5.3)), back = E.inOut(seg(t, W + 4.95, W + 5.5));
+      var k = into * (1 - back);
+      return { yaw: lerp(7, -7, orbit) * k, pitch: (3 - 2 * orbit) * k, dolly: 70 * orbit * k };
+    }
+    // Where card i's centre should be on the screen of the device, in the frame (it tracks the camera).
+    function onScreen(i, t) {
+      var at = cardAt(i, t);
+      return [cam.tx + cam.s * (at[0] + OW / 2), cam.ty + cam.s * (at[1] + OH / 2), cam.s];
+    }
+    // A floating card's pose: x, y, z (about the frame's centre), turn, tilt, scale, opacity.
+    function poseOf(i, t) {
+      var slot = SLOTS[i], bob = 7 * Math.sin((t - W) * 2.25 + i * 2.1), sway = 2.2 * Math.sin((t - W) * 1.7 + i * 1.3);
+      var x = slot[0], y = slot[1] + bob, z = slot[2], turn = slot[3] + sway, tilt = 1.5 * Math.sin((t - W) * 1.9 + i), k = FK, a = 1;
+      if (i < 2) { // fly in from the side, from above
+        var f = FROM[i], p = E.out(seg(t, SWAP + 0.1 * i, W + 4.3 + 0.1 * i));
+        x = lerp(f[0], x, p); y = lerp(f[1], y, p); z = lerp(f[2], z, p); turn = lerp(f[3], turn, p); tilt = lerp(f[4], tilt, p);
+        a = Math.min(1, seg(t, SWAP + 0.1 * i, SWAP + 0.1 * i + 0.25) * 1.5);
+      } else { // handed over at the centre, facing us, then away to its place
+        var q = E.inOut(seg(t, SWAP, W + 4.35));
+        x = lerp(0, x, q); y = lerp(0, y, q); z = lerp(0, z, q); turn = lerp(0, turn, q); tilt = lerp(0, tilt, q);
+      }
+      // then down into the device's screen, facing us, the size of a card on it
+      var flight = E.inOut(seg(t, LAND[i] - 0.5 - 0.15 * i, LAND[i]));
+      if (flight > 0) {
+        var to = onScreen(i, t);
+        x = lerp(x, to[0] - CX, flight); y = lerp(y, to[1] - CY, flight) - 60 * Math.sin(Math.PI * flight);
+        z = lerp(z, 0, flight); turn = lerp(turn, 0, flight); tilt = lerp(tilt, 0, flight); k = lerp(k, to[2], flight);
+      }
+      a *= 1 - seg(t, LAND[i], LAND[i] + 0.12);
+      return { x: x, y: y, z: z, turn: turn, tilt: tilt, k: k, a: a };
+    }
+    function floatCards(t) {
+      var on = t >= SWAP && t < LAND[2] + 0.13;
+      show(layer, on);
+      if (!on) return;
+      var r = rigNow(t);
+      rig.style.transform = 'translateZ(' + r.dolly.toFixed(2) + 'px) rotateX(' + r.pitch.toFixed(3) + 'deg) rotateY(' + r.yaw.toFixed(3) + 'deg)';
+      AIR.forEach(function (card, i) {
+        var o = poseOf(i, t);
+        card.node.style.opacity = f3(o.a);
+        card.node.style.transform = 'translate3d(' + px(CX - OW / 2 + o.x) + ',' + px(CY - OH / 2 + o.y) + ',' + o.z.toFixed(2) + 'px) rotateY(' + o.turn.toFixed(3) + 'deg) rotateX(' + o.tilt.toFixed(3) + 'deg) scale(' + o.k.toFixed(4) + ')';
+        var eff = o.turn + r.yaw;   // the light catches the glass as it turns
+        card.glint.style.backgroundPosition = (50 + 2.6 * eff + 12 * Math.sin((t - W) * 0.9 + i)).toFixed(2) + '% 0';
+        card.glint.style.opacity = f3(E.sine(seg(t, SWAP + 0.05, SWAP + 0.55)));
+        var depth = P / (P - o.z - r.dolly), sx = CX + (o.x * Math.cos(r.yaw * DEG) + o.z * Math.sin(r.yaw * DEG)) * depth;
+        var lift = (o.y + 20) * 0.05, fl = 1 - E.sine(seg(t, RISE[0] - 0.1, RISE[0] + 0.35));   // gone before the device arrives
+        floor[i].style.opacity = f3(0.9 * o.a * fl * Math.min(1, seg(t, SWAP, SWAP + 0.4) * 1.4));
+        floor[i].style.transform = 'translate(' + px(sx) + ',' + px(840 + 70 * (depth - 1) * 4) + ') scale(' + (o.k * depth * (1 - 0.02 * lift)).toFixed(4) + ',' + (depth).toFixed(4) + ')';
+      });
+    }
+    // Handing over: the last wallpaper shrinks from the whole frame to its card, and the glass gathers round it.
+    function handoff(c, t) {
+      var p = E.inOut(seg(t, FLOAT, SWAP));
+      var fx = CX - OW * FK / 2, fy = CY - OH * FK / 2;
+      var pic = [fx + PAD * FK, fy + PAD * FK, CW * FK, CH * FK, 16 * FK];
+      var whole = [cam.tx, cam.ty, SW * cam.s, SH * cam.s, 0];
+      var r = whole.map(function (v, k) { return lerp(v, pic[k], p); });
+      var glassA = E.out(seg(t, FLOAT + 0.22, SWAP));
+      if (glassA > 0.003) { c.save(); c.translate(fx, fy); c.scale(FK, FK); airGlass(c, glassA, { pp: PAPERS[2], label: true }); c.restore(); }
+      picture(c, PAPERS[2], r[0], r[1], r[2], r[3], r[4], lerp(PAPERS[2].zoom * kb(FLOAT, CALL[2]), 1, p), 0, null);
+    }
+
+    // ---- the picker ----
+    function cardAt(i, t) { return [X0 + i * (OW + GAP), Y0 + 1.6 * Math.sin((t - W) * 2.4 + i * 1.9)]; }   // they float a little
+    function backdrop(c) {
+      paint(c, PAPERS[2], 0, 0, SW, SH, 1.08, { frost: true, night: night });
+      c.fillStyle = 'rgba(6,10,22,0.36)'; c.fillRect(0, 0, SW, SH);
+    }
+    function heading(c, a) {
+      c.save(); c.globalAlpha *= a;
+      c.font = '500 30px "Film Sans"'; c.letterSpacing = '8px'; c.fillStyle = 'rgba(255,255,255,0.92)';
+      var hx = X0 + 6, hy = Y0 - 58, w = c.measureText('壁纸').width;
+      c.fillText('壁纸', hx, hy);
+      var g = c.createLinearGradient(hx + w + 14, 0, SW - X0, 0);
+      g.addColorStop(0, 'rgba(255,255,255,0.4)'); g.addColorStop(1, 'rgba(255,255,255,0.04)');
+      c.fillStyle = g; c.fillRect(hx + w + 14, hy - 11, SW - X0 - hx - w - 14, 1.2);
+      c.restore();
+    }
+    // A card of glass at x, y, scaled s about its centre. o: label (0–1), sel (0–1), sheen (0–1 across the row), bare (no picture).
+    function card(c, i, x, y, s, a, o) {
+      if (a <= 0.003) return;
+      var pp = PAPERS[i];
+      c.save(); c.globalAlpha *= a;
+      c.translate(x + OW / 2, y + OH / 2); c.scale(s, s); c.translate(-OW / 2, -OH / 2);
+      var local = c.getTransform();
+      // its shadow, and when chosen a glow
+      round(c, 0, 0, OW, OH, 30); c.fillStyle = 'rgba(40,50,72,0.9)';
+      c.shadowColor = 'rgba(2,6,18,0.5)'; c.shadowBlur = dev(34 * s); c.shadowOffsetY = dev(16 * s); c.fill();
+      if (o.sel > 0.003) { c.shadowColor = 'rgba(120,180,255,' + f3(0.9 * o.sel) + ')'; c.shadowBlur = dev(34 * s); c.shadowOffsetY = 0; c.fill(); }
+      c.shadowColor = 'transparent'; c.shadowBlur = 0; c.shadowOffsetY = 0;
+      // the glass: what lies behind it, frosted and lifted
+      c.save(); round(c, 0, 0, OW, OH, 30); c.clip();
+      c.setTransform(SCREEN); paint(c, PAPERS[2], 0, 0, SW, SH, 1.08, { frost: true, night: night }); c.setTransform(local);
+      var g = c.createLinearGradient(0, 0, OW, OH);
+      g.addColorStop(0, 'rgba(255,255,255,0.22)'); g.addColorStop(0.5, 'rgba(255,255,255,0.08)'); g.addColorStop(1, 'rgba(255,255,255,0.14)');
+      c.fillStyle = g; c.fillRect(0, 0, OW, OH);
+      c.restore();
+      var rim = c.createLinearGradient(0, 0, OW * 0.6, OH);
+      rim.addColorStop(0, 'rgba(255,255,255,0.9)'); rim.addColorStop(0.45, 'rgba(255,255,255,0.26)'); rim.addColorStop(1, 'rgba(255,255,255,0.5)');
+      round(c, 0.75, 0.75, OW - 1.5, OH - 1.5, 29.25); c.strokeStyle = rim; c.lineWidth = 1.5; c.stroke();
+      round(c, 3.5, 3.5, OW - 7, OH - 7, 26.5); c.strokeStyle = 'rgba(255,255,255,0.14)'; c.lineWidth = 1; c.stroke();
+      if (o.sel > 0.003) { round(c, 0.75, 0.75, OW - 1.5, OH - 1.5, 29.25); c.strokeStyle = 'rgba(200,226,255,' + f3(0.95 * o.sel) + ')'; c.lineWidth = 2.6; c.stroke(); }
+      if (!o.bare) picture(c, pp, PAD, PAD, CW, CH, 16, 1, 0, null);
+      if (o.label > 0.003) {
+        c.globalAlpha *= o.label;
+        var by = PAD + CH + 44 + (1 - o.label) * 6;
+        c.font = '500 26px "Film Latin"'; c.letterSpacing = '0.3px'; c.fillStyle = '#ffffff'; c.textAlign = 'left';
+        c.fillText(pp.name, PAD + 6, by);
+        c.font = '400 21px "Film Sans"'; c.letterSpacing = '2px'; c.fillStyle = 'rgba(255,255,255,0.74)'; c.textAlign = 'right';
+        c.fillText(pp.note, OW - PAD - 4, by - 1);
+      }
+      c.restore();
+      if (!o.bare) gloss(c, x, y, s, a, o.sheen);
+    }
+    // One light passes over the whole row of glass, picture and all.
+    function gloss(c, x, y, s, a, u) {
+      if (!(u > 0 && u < 1) || a <= 0.003) return;
+      c.save(); c.globalAlpha *= a;
+      c.translate(x + OW / 2, y + OH / 2); c.scale(s, s); c.translate(-OW / 2, -OH / 2);
+      round(c, 0, 0, OW, OH, 30); c.clip();
+      c.translate(lerp(X0 - 300, SW - X0 + 300, E.inOut(u)) - x, OH / 2); c.rotate(0.42);
+      var sh = c.createLinearGradient(-80, 0, 80, 0);
+      sh.addColorStop(0, 'rgba(255,255,255,0)'); sh.addColorStop(0.5, 'rgba(255,255,255,0.26)'); sh.addColorStop(1, 'rgba(255,255,255,0)');
+      c.globalCompositeOperation = 'lighter'; c.fillStyle = sh; c.fillRect(-80, -OH, 160, 2 * OH);
+      c.restore();
+    }
+    // A wallpaper set into the glass: rounded, a little shade along its top edge, a hairline of light round it.
+    function picture(c, pp, x, y, w, h, r, z, nt, focus) {
+      c.save(); round(c, x, y, w, h, r); c.clip();
+      paint(c, pp, x, y, w, h, z, { night: nt, focus: focus });
+      var sh = c.createLinearGradient(0, y, 0, y + 22 * (w / CW || 1));
+      sh.addColorStop(0, 'rgba(0,0,0,0.22)'); sh.addColorStop(1, 'rgba(0,0,0,0)');
+      c.fillStyle = sh; c.fillRect(x, y, w, 22 * (w / CW || 1));
+      c.restore();
+      round(c, x + 0.5, y + 0.5, w - 1, h - 1, Math.max(0, r - 0.5)); c.strokeStyle = 'rgba(255,255,255,0.2)'; c.lineWidth = 1; c.stroke();
+    }
+    function check(c, x, y, p) {
+      if (p <= 0.003) return;
+      var k = E.back(p);
+      c.save(); c.translate(x, y); c.scale(k, k);
+      c.shadowColor = 'rgba(0,10,40,0.35)'; c.shadowBlur = dev(8); c.shadowOffsetY = dev(2);
+      c.beginPath(); c.arc(0, 0, 16, 0, TAU); c.fillStyle = '#ffffff'; c.fill();
+      c.shadowColor = 'transparent';
+      c.strokeStyle = '#0a59f7'; c.lineWidth = 3.2; c.lineCap = 'round'; c.lineJoin = 'round';
+      c.beginPath(); c.moveTo(-6.4, 0.6); c.lineTo(-1.9, 5); c.lineTo(6.6, -4.6); c.stroke();
+      c.restore();
+    }
+    function touchAt(c, t, x, y) {
+      var a = env(t, TAP - 0.12, TAP + 0.55, 0.12, 0.3);
+      if (a <= 0.003) return;
+      var k = 1.25 - 0.25 * E.out(seg(t, TAP - 0.12, TAP + 0.1));
+      c.save(); c.globalAlpha *= a;
+      var g = c.createRadialGradient(x, y, 0, x, y, 38 * k);
+      g.addColorStop(0, 'rgba(255,255,255,0.24)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+      c.fillStyle = g; c.beginPath(); c.arc(x, y, 38 * k, 0, TAU); c.fill();
+      c.strokeStyle = 'rgba(255,255,255,0.72)'; c.lineWidth = 2.2; c.beginPath(); c.arc(x, y, 35 * k, 0, TAU); c.stroke();
+      c.restore();
+    }
+    function picker(c, t) {
+      var gone = 1 - E.sine(seg(t, GONE[0], GONE[1]));
+      if (gone <= 0.002) return;
+      c.globalAlpha = gone;
+      var open = E.inOut(seg(t, OPEN, OPEN + 0.9));
+      var chrome = E.out(seg(t, LAND[0] - 0.1, LAND[0] + 0.4)) * (1 - E.out(seg(t, OPEN, OPEN + 0.3)));
+      var sheen = seg(t, SHEEN[0], SHEEN[1]), leave = E.out(seg(t, OPEN, OPEN + 0.35));
+      if (open < 1) {
+        backdrop(c);
+        if (chrome > 0.003) heading(c, chrome);
+        for (var i = 0; i < 2; i++) { // the first two, once they have landed
+          var at0 = cardAt(i, t), on = E.out(seg(t, LAND[i], LAND[i] + 0.12));
+          card(c, i, at0[0], at0[1], 1 - 0.06 * leave, on * (1 - leave), { label: on, sel: 0, sheen: sheen });
+        }
+      }
+      // The city: landed, pressed, chosen; then open to the whole screen.
+      var at2 = cardAt(2, t), s3 = 1 - 0.03 * pulse(t, TAP, TAP + 0.24) + 0.035 * E.out(seg(t, PICK, PICK + 0.35));
+      var landed = E.out(seg(t, LAND[2], LAND[2] + 0.12));
+      if (landed <= 0.003) return;
+      var sel = E.out(seg(t, PICK, PICK + 0.3)) * (1 - E.out(seg(t, OPEN, OPEN + 0.2)));
+      var frame = landed * (1 - E.out(seg(t, OPEN, OPEN + 0.25)));
+      card(c, 2, at2[0], at2[1], s3, frame, { label: landed, sel: sel, sheen: sheen, bare: true });
+      var cx = at2[0] + OW / 2, cy = at2[1] + OH / 2 - (OH / 2 - PAD - CH / 2) * s3, cw = CW * s3, ch = CH * s3;
+      var inCard = [cx - cw / 2, cy - ch / 2, cw, ch, 16 * s3], whole = [0, 0, SW, SH, 30], r = inCard, z = 1, focus = null;
+      if (t >= OPEN) { r = inCard.map(function (v, k) { return lerp(v, whole[k], open); }); z = 1 + 0.07 * E.inOut(seg(t, OPEN + 0.5, GONE[1])); focus = [0.62, 0.32]; }
+      c.save(); c.globalAlpha *= t < OPEN ? landed : 1;
+      picture(c, PAPERS[2], r[0], r[1], r[2], r[3], r[4], z, night, focus);
+      c.restore();
+      gloss(c, at2[0], at2[1], s3, frame, sheen);
+      check(c, r[0] + r[2] - 24 * s3, r[1] + 24 * s3, sel > 0.003 ? seg(t, PICK + 0.05, PICK + 0.4) * (1 - E.out(seg(t, OPEN, OPEN + 0.2))) : 0);
+      touchAt(c, t, cx, cy);
+    }
+
+    return {
+      ready: ready,
+      FLOAT: FLOAT, RISE: RISE,
+      draw: function (c, t) {
+        floatCards(t);
+        if (t < CALL[0] - CROSS - 0.02 || t > GONE[1]) return;
+        night = E.inOut(seg(t, FALL[0], FALL[1]));
+        c.save();
+        c.setTransform(LDPR * cam.s, 0, 0, LDPR * cam.s, LDPR * cam.tx, LDPR * cam.ty);
+        c.imageSmoothingQuality = 'high';
+        SCREEN = c.getTransform(); RES = LDPR * cam.s;
+        if (t < FLOAT) { round(c, 0, 0, SW, SH, 30); c.clip(); rollCall(c, t); }
+        else if (t < SWAP) { c.setTransform(LDPR, 0, 0, LDPR, 0, 0); RES = LDPR * FK; handoff(c, t); }
+        else if (t >= RISE[0]) { round(c, 0, 0, SW, SH, 30); c.clip(); picker(c, t); }
+        c.restore();
+        if (t < FLOAT + 0.35) { RES = LDPR * cam.s; chip(c, t); }
+      }
+    };
+  })();
+
   // ---------- one frame ----------
   function appear(node, t, t0, dur, dy, blur) {
     var p = E.out(seg(t, t0, t0 + (dur || 0.7)));
@@ -1450,7 +1899,7 @@
     cam.s = c[2]; cam.tx = c[0] - SCX * c[2]; cam.ty = c[1] - SCY * c[2];
     camera.style.transform = 'translate(' + px(cam.tx) + ',' + px(cam.ty) + ') scale(' + cam.s.toFixed(5) + ')';
     var r3 = key(t, ROT); rot.ax = r3[0]; rot.ay = r3[1]; rot.az = r3[2];
-    var spread = key(t, SPREAD), solid = t > D && t < T + 1;
+    var WL = M.walls, spread = key(t, SPREAD), solid = t > D && t < WL + 9;
     device.classList.toggle('space', spread > 0.001);
     device.classList.toggle('solid', solid);
     device.style.transform = (rot.ax || rot.ay || rot.az) ? 'rotateX(' + rot.ax.toFixed(3) + 'deg) rotateY(' + rot.ay.toFixed(3) + 'deg) rotateZ(' + rot.az.toFixed(3) + 'deg)' : 'none';
@@ -1458,12 +1907,14 @@
       layer.style.transform = spread > 0.001 ? 'translateZ(' + (LAYER_Z[i] * GAP * spread).toFixed(2) + 'px)' : 'none';
       if (i) layer.style.setProperty('--frame', f3(0.9 * E.sine(seg(spread, 0.25, 1))));
     });
-    var screenA = key(t, [[0, 0], [M.morph + 0.4, 0], [M.flash - 0.1, 1], [M.warp + 0.3, 1], [M.warp + 0.55, 0], [M.back, 0], [M.back + 0.25, 1], [M.console, 1], [M.console + 0.5, 0], [M.cut - 0.01, 0], [M.cut, 1, 'linear'], [T, 1], [T + 0.7, 0]]);
-    show(camera, screenA > 0.001);
+    // From the first wallpaper on, the screen is drawn in light (WALLS) and the device keeps only its shell.
+    var screenA = key(t, [[0, 0], [M.morph + 0.4, 0], [M.flash - 0.1, 1], [M.warp + 0.3, 1], [M.warp + 0.55, 0], [M.back, 0], [M.back + 0.25, 1], [M.console, 1], [M.console + 0.5, 0], [M.cut - 0.01, 0], [M.cut, 1, 'linear'], [WL + 0.3, 1], [WL + 0.31, 0, 'linear']]);
+    // while the wallpapers float free the device is away; it rises again for the picker
+    var shell = key(t, [[D + 0.2, 0], [D + 1.5, 1], [WL + 3.0, 1], [WL + 3.01, 0, 'linear'], [WL + 5.3, 0], [WL + 5.31, 1, 'linear'], [WL + 8.97, 1], [WL + 8.98, 0, 'linear']]);
+    show(camera, screenA > 0.001 || shell > 0.001);
     screen.style.opacity = screenA < 0.999 ? f3(screenA) : '';
-    var shell = key(t, [[D + 0.2, 0], [D + 1.5, 1], [T, 1], [T + 0.7, 0]]);
     bezel.style.opacity = f3(shell); edgeR.style.opacity = f3(solid ? shell : 0);
-    halo.style.opacity = f3(key(t, [[D, 0], [D + 1.8, 0.9], [T, 0.9], [T + 0.7, 0]]));
+    halo.style.opacity = f3(key(t, [[D, 0], [D + 1.8, 0.9], [WL - 0.6, 0.9], [WL - 0.1, 0], [WL + 3.0, 0], [WL + 3.8, 0.75], [WL + 5.6, 0.75], [WL + 6.3, 0.9], [WL + 8.3, 0.9], [WL + 8.9, 0]]));
     innerSky.style.transform = innerSkyB.style.transform = 'scale(' + (1.01 + 0.012 * Math.sin(t * 0.21)).toFixed(4) + ')';
     innerSkyB.style.opacity = f3(E.inOut(seg(t, LOOP.flick + 0.1, LOOP.flick + 1.2)));
     screenDim.style.opacity = f3(key(t, [[M.cut - 0.01, 0, 'linear'], [M.cut, 0.52, 'linear'], [M.cut + 3, 0.52], [M.cut + 4, 0.46], [M.garden, 0.46], [M.garden + 1.5, 0.32], [D, 0.32], [D + 1.6, 0]]));
@@ -1481,9 +1932,11 @@
     q('.avatar').style.setProperty('--spin', ((t * 360 / 14) % 360).toFixed(2) + 'deg');
     // In the back garden, the interface steps back and leaves the night to the residents.
     var recede = Math.min(E.inOut(seg(t, M.garden - 0.3, M.garden + 1.5)), 1 - E.inOut(seg(t, D + 0.1, D + 1.3)));
+    var clearing = E.inOut(seg(t, WL - 1.0, WL - 0.45)); // then it clears, down to its wallpaper, for the wallpapers
     [ui, LAYERS[1]].forEach(function (layer) {
-      layer.style.opacity = recede > 0.001 ? f3(1 - 0.74 * recede) : '';
-      layer.style.filter = recede > 0.001 ? blurOf(3.5 * recede) : '';
+      var dim = Math.max(0.74 * recede, clearing);
+      layer.style.opacity = dim > 0.001 ? f3(1 - dim) : '';
+      layer.style.filter = dim > 0.001 ? blurOf(3.5 * recede + 8 * clearing) : '';
     });
 
     // ---- launch pad: typing, the flight, the arrow; then the stage: rehearsal and bursts ----
@@ -1557,10 +2010,10 @@
         lu.idNode.style.opacity = '0'; lu.node.style.setProperty('--held', '0'); lu.glint.style.opacity = '0';
         return;
       }
-      if (t < lu.in || t < M.cut || t > T + 0.8) { lu.node.style.opacity = '0'; return; }
+      if (t < lu.in || t < M.cut || t > WL - 0.4) { lu.node.style.opacity = '0'; return; }
       var pop = E.back(seg(t, lu.in, lu.in + 0.55));
       pos = lueurPosition(i, t);
-      lu.node.style.opacity = f3(Math.min(1, seg(t, lu.in, lu.in + 0.3) * 1.2));
+      lu.node.style.opacity = f3(Math.min(1, seg(t, lu.in, lu.in + 0.3) * 1.2) * (1 - clearing));
       lu.node.style.transform = 'translate(' + px(pos[0]) + ',' + px(pos[1]) + ') scale(' + f3(0.4 + 0.6 * pop) + ')';
       lu.idNode.style.opacity = f3(Math.max(env(t, lu.in + 0.12, lu.in + 1.35, 0.25, 0.4), i === 6 ? env(t, M.hold + 0.15, M.hold + 1.95, 0.3, 0.45) : 0));
       lu.node.style.setProperty('--held', f3(i === 6 ? env(t, M.hold + 0.05, M.hold + 1.5, 0.3, 0.35) : i === 8 ? env(t, LOOP.flick - 0.1, LOOP.flick + 0.9, 0.2, 0.4) : 0));
@@ -1616,8 +2069,8 @@
     lkKicker.style.transform = 'translateY(' + ((1 - kick) * 10).toFixed(2) + 'px)';
 
     // ---- made for one screen ----
-    var specsOut = 1 - E.sine(seg(t, T - 0.3, T + 0.2));
-    show(specsBox, t > M.specs - 0.1 && t < T + 0.3);
+    var specsOut = 1 - E.sine(seg(t, WL - 1.0, WL - 0.55));
+    show(specsBox, t > M.specs - 0.1 && t < WL - 0.5);
     SPECS.forEach(function (s) {
       var p = seg(t, s.t0, s.t0 + 0.36), slam = E.out5(p), count = E.out(seg(t, s.t0, s.t0 + 0.9));
       s.row.style.opacity = f3(Math.min(1, p * 2.5) * specsOut);
@@ -1757,6 +2210,8 @@
     }
     // The spec slam: each number lands with a flash of light
     SPECS.forEach(function (sp, i) { if (t > sp.t0 && t < sp.t0 + 0.5 && !lit) streak(1290, 300 + i * 150, 0.4 * pulse(t, sp.t0, sp.t0 + 0.5), 900); });
+    // Three wallpapers, and the one you choose
+    WALLS.draw(lctx, t);
     // Under the last words, a line of light
     if (t > T + 0.9 && t < M.flash2 + 0.1) {
       var up = E.inOut(seg(t, T + 0.95, T + 1.9)), ua = 1 - seg(t, M.flash2 - 0.2, M.flash2 + 0.05);
@@ -1789,11 +2244,12 @@
   render(time);
   var fonts = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
   var ready = fonts.then(function () {
-    return document.fonts ? Promise.all(['300 150px "Film Serif"', 'italic 300 168px "Film Display"', '300 15px "Film Display"', '300 92px "Film Latin"', '500 40px "Film Latin"', '500 26px "Film Sans"'].map(function (f) { return document.fonts.load(f, '灵感Home星期六23°17+12.4%'); })) : null;
+    return document.fonts ? Promise.all(['300 150px "Film Serif"', 'italic 300 168px "Film Display"', '300 15px "Film Display"', '300 92px "Film Latin"', '500 40px "Film Latin"', '500 26px "Film Sans"', '400 22px "Film Sans"'].map(function (f) { return document.fonts.load(f, '灵感Home星期六23°17+12.4%'); })) : null;
   }).catch(function () {}).then(function () { BEYOND.rebuild(); sampleLockup(); render(time); });
 
   if (CAPTURE) {
-    window.__film = { duration: DURATION, marks: M, ready: ready, seek: function (t) { time = t; render(t); } };
+    // The renderer waits for the wallpapers too; a viewer's film starts without them and they arrive long before 1:31.
+    window.__film = { duration: DURATION, marks: M, ready: ready.then(function () { return WALLS.ready; }).then(function () { render(time); }), seek: function (t) { time = t; render(t); } };
     return;
   }
 
