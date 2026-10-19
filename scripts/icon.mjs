@@ -1,4 +1,4 @@
-// Render the app icon (web/icon-*.png) from scripts/icon/icon.html.
+// Render the app icon (src/web/icon-*.png) from scripts/icon/icon.html.
 //   AIRA_BROWSER_PATH=/path/to/chromium node scripts/icon.mjs
 // Sizes are downsampled by the browser from a 1024 px render, so every size stays crisp.
 import { createRequire } from 'node:module';
@@ -14,8 +14,8 @@ for (const size of [512, 192, 180, 32]) {
   const page = await browser.newPage({ viewport: { width: 1024, height: 1024 }, deviceScaleFactor: size / 1024 });
   await page.goto(source);
   await page.waitForTimeout(200);
-  await page.screenshot({ path: path.join(root, 'web', `icon-${size}.png`) });
+  await page.screenshot({ path: path.join(root, 'src/web', `icon-${size}.png`) });
   await page.close();
 }
 await browser.close();
-console.log('Rendered web/icon-{512,192,180,32}.png');
+console.log('Rendered src/web/icon-{512,192,180,32}.png');

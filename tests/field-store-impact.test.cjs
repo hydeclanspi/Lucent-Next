@@ -1,8 +1,8 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { create, _test: util } = require('../assets/field-store.js');
-const legacy = require('../assets/field-store.js');
+const { create, _test: util } = require('../src/assets/field-store.js');
+const legacy = require('../src/assets/field-store.js');
 function memory(seed = {}) {
   const values = structuredClone(seed), writes = [];
   return { values, writes, async get(key, fallback) { return Object.hasOwn(values, key) ? structuredClone(values[key]) : fallback; }, async set(key, value) { writes.push(key); values[key] = structuredClone(value); } };

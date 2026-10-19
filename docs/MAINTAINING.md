@@ -6,22 +6,24 @@ Product: **Lucent · 灵感台**. The floating-lens engine is **Lueurs** (小浮
 
 | Path | Owns |
 |---|---|
-| `assets/app.js`, `app.css` | Profile card, search lifecycle, shortcuts, wallpaper, panels, backup and export, About |
-| `assets/interaction.js`, `interaction.css` | The Lueurs engine: region geometry, motion, contacts, Drive (FSD), encounters, placement, identities. `_test` exports are used by the tests and the documentation figures |
-| `assets/stats-store.js`, `field-store.js`, `stats-panel.js` | Aggregate statistics, the field chronicle, and the hand-written SVG charts |
-| `assets/glass-material.{js,css}` | The glass material |
-| `assets/search-motion*.{js,css}`, `search-simulation.{js,css}` | 念起，光行: renderers, player, panel, Random lasers, simulated launch |
-| `web/browser-bridge.{js,css}` | The browser demonstration layer: host panels, history, theme palette, search URLs, shortcut fixtures |
-| `web/showcase.js` | Deep links (`?lueurs=`, `?fsd=`, `?open=`) that press the product's own controls |
-| `web/immersive.js` | Immersive full screen on large screens: the first real click, F to toggle, a respected exit |
-| `web/manifest.webmanifest`, `web/icon-*.png` | Install as an app that opens full screen; the icon is rendered by `scripts/icon.mjs` from `scripts/icon/icon.html` |
-| `web/og.jpg` | Social preview (1280×640): the mark and tagline set over the hero capture by `scripts/og.mjs` from `scripts/og/og.html` |
-| `atelier/` | The sixteen-study motion atelier, a standalone page |
+| `src/assets/app.js`, `app.css` | Profile card, search lifecycle, shortcuts, wallpaper, panels, backup and export, About |
+| `src/assets/interaction.js`, `interaction.css` | The Lueurs engine: region geometry, motion, contacts, Drive (FSD), encounters, placement, identities. `_test` exports are used by the tests and the documentation figures |
+| `src/assets/stats-store.js`, `field-store.js`, `stats-panel.js` | Aggregate statistics, the field chronicle, and the hand-written SVG charts |
+| `src/assets/glass-material.{js,css}` | The glass material |
+| `src/assets/search-motion*.{js,css}`, `search-simulation.{js,css}` | 念起，光行: renderers, player, panel, Random lasers, simulated launch |
+| `src/web/browser-bridge.{js,css}` | The browser demonstration layer: host panels, history, theme palette, search URLs, shortcut fixtures |
+| `src/web/showcase.js` | Deep links (`?lueurs=`, `?fsd=`, `?open=`) that press the product's own controls |
+| `src/web/immersive.js` | Immersive full screen on large screens: the first real click, F to toggle, a respected exit |
+| `src/web/manifest.webmanifest`, `src/web/icon-*.png` | Install as an app that opens full screen; the icon is rendered by `scripts/icon.mjs` from `scripts/icon/icon.html` |
+| `src/web/og.jpg` | Social preview (1280×640): the mark and tagline set over the hero capture by `scripts/og.mjs` from `scripts/og/og.html` |
+| `demo/film/` | The concept film: one timeline, a pure function of time — `gl.js` paints the worlds and the glints in WebGL, `film.js` drives the camera, the interface, the light and the words. `fonts/` holds OFL subsets made by `scripts/film-fonts.py`; `score.webm` and `score.m4a` are its score, synthesized by `scripts/film-score.py` from the package `scripts/score/`; `scripts/film.mjs` renders it to video |
+| `demo/atelier/` | The sixteen-study motion atelier, a standalone page |
+| `demo/media/` | The screenshots, animations and film renders shown in the README and the docs |
 | `native/` | The original Aira 5.0 package, byte for byte; its SHA-256 is checked by `scripts/check.mjs` |
-| `scripts/` | Build, preview, checks, documentation figures (`figures.mjs`) and media capture (`capture/`) |
+| `scripts/` | Build, preview, checks, documentation figures (`figures.mjs`), media capture (`capture/`), the film renderer (`film.mjs`), its score (`film-score.py`, over the package `score/`: one module per version of the score in `score/styles/`), its font subsetter (`film-fonts.py`) and the media made from it (`film-media.mjs`) |
 | `docs/` | Deep documentation in Chinese, `docs/en/` in English, `docs/llms.txt` for crawlers |
 
-`scripts/build.mjs` copies `index.html`, `assets/`, `web/` and `atelier/` into `dist/`; editing `dist/` directly is lost on the next build.
+`scripts/build.mjs` publishes `src/` at the root of `dist/`, `demo/film/` at `film/` and `demo/atelier/` at `atelier/`, so published addresses never depend on the repository layout. Editing `dist/` directly is lost on the next build.
 
 ## Details that have caused mistakes
 
@@ -32,7 +34,7 @@ Product: **Lucent · 灵感台**. The floating-lens engine is **Lueurs** (小浮
 5. **Names and keys.** Display names are Lucent / 灵感台 / Lueurs. Storage keys keep the `aira-profile-card:` prefix and environment variables keep `AIRA_`: they are compatibility keys, not branding.
 6. **Private browsing is a demonstration.** It only stops the local history record; it is not a real incognito mode, and the example history is not anyone's real history.
 7. **Relative paths only.** The site must keep working under a repository subpath.
-8. **Docs anchor to source lines.** `docs/*.md` and `docs/en/*.md` link to `assets/…#Lnn`. When code moves, search for `#L` and update both languages.
+8. **Docs anchor to source lines.** `docs/*.md` and `docs/en/*.md` link to `src/assets/…#Lnn`. When code moves, search for `#L` and update both languages.
 9. **Documented numbers are test-backed.** Changing an engine constant means updating the test that pins it, the figure that draws it, and both language versions of the docs.
 10. **Short landscape screens.** On wide screens the card is centred vertically, so a short screen lifts it until the history tag meets the top bar. `guardCardClearance` in `app.js` lowers the card just enough to keep 16 px clear. Do not move the tag itself, and keep the tablet layout untouched (card top 303 px at 1560×1040): the browser suite checks both.
 11. **Immersive full screen is web-only.** It is armed only on large screens and only by a real click; leaving full screen is respected for the rest of the visit (`sessionStorage`). The browser suite and the capture scripts start as a visitor who has already declined, so it never interferes with them; immersive mode has its own check.
@@ -46,7 +48,7 @@ AIRA_BROWSER_PATH=/path/to/chromium node scripts/figures.mjs            # all ni
 node scripts/figures.mjs architecture gestures                        # or some of them
 ```
 
-They are written to `docs/images/figures/<name>.{zh,en}.png`. `architecture` is the layered product map; `gestures` annotates `docs/images/hero.jpg`, so re-render it after a new hero. The app icon and the social preview are rendered the same way: `node scripts/icon.mjs` and `node scripts/og.mjs` (the preview also follows a new hero).
+They are written to `docs/figures/<name>.{zh,en}.png`. `architecture` is the layered product map; `gestures` annotates `demo/media/hero.jpg`, so re-render it after a new hero. The app icon and the social preview are rendered the same way: `node scripts/icon.mjs` and `node scripts/og.mjs` (the preview also follows a new hero).
 
 **Screens and animations** are rendered, not screen-recorded: the product runs on a fake clock and a frozen CSS timeline, and every frame is its exact state at an exact virtual time ([`scripts/capture/recorder.cjs`](../scripts/capture/recorder.cjs)).
 
@@ -60,14 +62,30 @@ Frames and stills land in the ignored `verification/capture/`. `CAPTURE_QUICK=1`
 
 | Output | From |
 |---|---|
-| `hero.jpg` | `hero.png` resized to 1920×1280, JPEG quality 85 |
+| `hero.jpg` | `hero.png` (the `lueurs` scene: nine Lueurs, spread across the open space) resized to 1920×1280, JPEG quality 85 |
 | `lueurs.webp`, `motion-six.webp`, `random-current.webp` | `ffmpeg -framerate 25 -i <scene>/%04d.png -vf scale=1200:-2:flags=lanczos -c:v libwebp_anim -q:v 90 -compression_level 6 -loop 0 <name>.webp` |
+| | `lueurs/` is captured at 12.5 fps and clipped to the open space, so the same command plays it as a 2× time-lapse |
 | `simulation.webp` | the first 180 frames of `simulation/`, 1200 px wide, WebP quality 90 |
 | `focus.jpg` | `focus.png` resized to 1920×1280, JPEG quality 85 |
 | `glass-macro.jpg` | `glass-macro.png` (rendered at 4×) |
 | `glass-compare.jpg` | left half of `glass-warm.png`, right half of `glass-classic.png`, 1 px divider |
 | `chronicle.jpg`, `roster.jpg` | the charts (top) and the terrain, drive log and roster (bottom) of `chronicle-sheet.png` |
 | `atelier.jpg` | the first 1,198 CSS px of `atelier.png`, 1600 px wide |
+| `lucent-film.mp4` | `node scripts/film.mjs` (below) |
+| `film-poster.jpg`, `film-teaser.webp`, `on-device.jpg` | `node scripts/film-media.mjs`: the film's frame 2.6 s after the name locks in (the name at dawn); seven passages of the MP4, placed by the film's own marks, joined by 0.35 s cross-fades, 20 fps, 1200 px wide; the slot for the on-device recording, from `scripts/film-media/slot.html` — replace it with a frame of the real recording when it arrives |
+
+**The film** is rendered the same way, one exact frame at a time: the page is never played, only seeked.
+
+```sh
+python3 scripts/film-score.py                                        # demo/film/score.webm and score.m4a (numpy, scipy, ffmpeg)
+python3 scripts/film-score.py --list                                 # the versions of the score; --style <name> renders one, --all --out <dir> every one
+npm run build
+AIRA_BROWSER_PATH=/path/to/chromium node scripts/film.mjs              # demo/media/lucent-film.mp4, 1440p60 H.264 with the score
+node scripts/film.mjs --preview                                      # half size, 24 fps, into verification/film/
+node scripts/film.mjs --from 20 --to 32 --out verification/film/part.mp4
+```
+
+Two pages render in parallel (`--workers`) at 2560 × 1440 (`--scale 1` for 1080p). A page that follows the camera into the screen holds on to memory for every scale it passes through, so when memory in use passes 65 % (`--recycle-at`) every page is replaced by a fresh one; the film is a function of time, so the frames are unchanged. On two cores with 6 GB the full film takes about an hour and a half (49 MB); it was rendered in three silent parts of about half an hour each (`--from`, `--to`, `--mute`), joined with ffmpeg's concat demuxer and laid over the score. The score reads the scene marks from `demo/film/film.js`, and the film's form from `scripts/score/form.py`: every section with an energy from 0 to 5, which sets how many instruments play and where the faders sit. So after retiming a scene, compose it again (about a minute; `--report score.png` draws its spectrogram and its loudness against the form). It is synthesized from nothing but code — pianos, mallets, plucked and bowed strings, voices, brass, basses and leads, drums and percussion from physical and subtractive models, a desk with buses, sidechains, rooms and a master — and mastered to −16 LUFS with true peaks under −1 dBTP; every run checks the harmony and prints the loudness of each section against the energy it was written for. After changing any words in `demo/film/`, run `python3 scripts/film-fonts.py` (needs `fonttools` and `brotli`) so the bundled subsets cover them.
 
 The browser suite writes its own review captures to ignored `verification/screenshots/`; they are evidence for a run, not documentation.
 

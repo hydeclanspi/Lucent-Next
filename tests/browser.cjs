@@ -13,7 +13,7 @@ const server = http.createServer((req, res) => {
     let file = path.resolve(dist, '.' + pathname);
     if (file !== dist && !file.startsWith(dist + path.sep)) return res.writeHead(403).end();
     if (fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
-    res.setHeader('Content-Type', ({ '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.png': 'image/png' })[path.extname(file)] || 'application/octet-stream');
+    res.setHeader('Content-Type', ({ '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.png': 'image/png', '.woff2': 'font/woff2', '.m4a': 'audio/mp4', '.webm': 'audio/webm' })[path.extname(file)] || 'application/octet-stream');
     res.end(fs.readFileSync(file));
   } catch { res.writeHead(404).end(); }
 });
@@ -215,6 +215,46 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       assert.equal(await tab.locator('#searchInput').inputValue(), 'f', 'F types normally in the search field');
       assert.equal(await tab.evaluate(() => !!document.fullscreenElement), true);
       await fresh.close();
+    });
+    await check('The concept film renders any moment of its single timeline; Home is the button, the place is Lucent', async () => {
+      const tab = await context.newPage();
+      tab.on('pageerror', e => errors.push(e.message));
+      await tab.setViewportSize({ width: 1920, height: 1080 });
+      await tab.goto(base + '/film/?capture');
+      await tab.waitForFunction(() => window.__film);
+      await tab.evaluate(() => window.__film.ready);
+      const film = (t) => tab.evaluate(t => { window.__film.seek(t); return {
+        captions: [...document.querySelectorAll('.cap')].filter(n => n.style.visibility === 'visible' && Number(n.style.opacity) > 0.5).map(n => n.querySelector('.t').textContent),
+        name: Number(document.getElementById('hmName').style.opacity), icon: Number(document.getElementById('hmIcon').getAttribute('opacity')),
+        ring: Number(document.getElementById('ring').getAttribute('width')),
+        beyond: document.getElementById('light').getContext('2d').getImageData(120, 120, 1, 1).data[3],
+        lockup: Number(document.getElementById('lkLing').style.opacity), end: Number(document.getElementById('endmark').style.opacity)
+      }; }, t);
+      const { duration, marks } = await tab.evaluate(() => ({ duration: window.__film.duration, marks: window.__film.marks }));
+      assert.ok(duration > 60 && duration < 120, 'about a minute and a half');
+      const named = await film(marks.home + 1.6);
+      assert.ok(named.name > 0.95, 'the button is named as the Home button');
+      assert.ok(named.icon > 0.95, 'the Home button as everyone knew it stands inside the arc');
+      assert.ok(named.ring > 1800, 'so close to the button that it is only an arc');
+      assert.deepEqual((await film(13.5)).captions, ['今天，我们把这个承诺，做成了一个地方。']);
+      const world = await film(marks.jump + 1.5);
+      assert.deepEqual(world.captions, ['去往整个世界。']);
+      assert.equal(world.beyond, 255, 'beyond the slit, the tunnel of windows fills the frame');
+      assert.deepEqual(await tab.evaluate(() => [...document.querySelectorAll('.pillar b')].map(n => n.textContent)), ['工作台', '发射台', '控制台', '舞台'], 'the four places end on the stage');
+      assert.ok((await film(marks.lock + 2.6)).lockup > 0.95, 'the place is named Lucent · 灵感台');
+      const roll = await tab.evaluate(t => { window.__film.seek(t); return {
+        layer: getComputedStyle(document.getElementById('wallCards')).visibility,
+        shown: [...document.querySelectorAll('#wallCards .wc')].map(n => Number(n.style.opacity) > 0.5),
+        corner: document.getElementById('light').getContext('2d').getImageData(120, 120, 1, 1).data[3]
+      }; }, marks.walls + 1.5);
+      assert.equal(roll.layer, 'visible', 'the wallpapers come as cards of glass');
+      assert.deepEqual(roll.shown, [true, true, false], 'one on each beat');
+      assert.ok(roll.corner < 255, 'none of them fills the frame');
+      assert.deepEqual((await film(marks.walls + 5.0)).captions, ['三张壁纸，三种夜色。'], 'then the three stand together as cards of glass');
+      assert.ok((await film(duration)).end > 0.99, 'the film ends on the mark');
+      assert.equal(await tab.evaluate(() => document.body.textContent.includes('明白了吗')), false, 'the film never quizzes its audience');
+      assert.deepEqual(await tab.evaluate(() => [...document.querySelectorAll('#score source')].map(n => n.getAttribute('src'))), ['./score.webm', './score.m4a'], 'the score, in Opus and in AAC');
+      await tab.close();
     });
     await check('No uncaught browser exceptions during the tested flows', async () => assert.deepEqual(errors, []));
   } finally {

@@ -12,7 +12,7 @@
 
 ## 1. 品鉴：十六选六
 
-<p align="center"><img src="images/atelier.jpg" alt="动效品鉴页：念起，光行。四组十六款搜索动效，可逐帧拖动与慢看" width="100%"></p>
+<p align="center"><img src="../demo/media/atelier.jpg" alt="动效品鉴页：念起，光行。四组十六款搜索动效，可逐帧拖动与慢看" width="100%"></p>
 
 在进入产品之前，先做了一个独立的[品鉴页](https://hydeclanspi.github.io/Lucent-Next/atelier/)，四组十六款：
 
@@ -29,7 +29,7 @@
 
 ## 2. 六款
 
-<p align="center"><img src="images/motion-six.webp" alt="六款动效以 0.35 倍慢放依次播放" width="100%"></p>
+<p align="center"><img src="../demo/media/motion-six.webp" alt="六款动效以 0.35 倍慢放依次播放" width="100%"></p>
 
 | 编号 | 名字 | 时长 | 一句话 | 发生了什么 |
 |:-:|---|:-:|---|---|
@@ -44,7 +44,7 @@
 
 ## 3. 每一帧都是进度的纯函数
 
-渲染器的签名是 `renderer(ctx, state, t)`，`t ∈ [0, 1]`（[`search-motion-renderers.js`](../assets/search-motion-renderers.js)）：
+渲染器的签名是 `renderer(ctx, state, t)`，`t ∈ [0, 1]`（[`search-motion-renderers.js`](../src/assets/search-motion-renderers.js)）：
 
 - `t ≤ 0` 画出原样的文字；`t ≥ 1` 什么也不画——交接时画布是干净的。
 - 渲染器内部不读时间、不调用随机数。同一个 `t` 永远画出同一帧。
@@ -54,17 +54,17 @@
 
 ## 4. 播放器
 
-[`search-motion.js`](../assets/search-motion.js) 负责把一段动画安全地放进真实的搜索框：
+[`search-motion.js`](../src/assets/search-motion.js) 负责把一段动画安全地放进真实的搜索框：
 
 - **量真实的字。** 读取输入框的计算字体、字距、内边距与当前横向滚动；只有在输入框可见范围内的字参与动画。
-- **按字形簇切分。** 中文、emoji 与组合字符用 `Intl.Segmenter('zh', { granularity: 'grapheme' })` 切分，不会把一个 emoji 拆成两半（[L44-L45](../assets/search-motion.js#L44-L45)）。
+- **按字形簇切分。** 中文、emoji 与组合字符用 `Intl.Segmenter('zh', { granularity: 'grapheme' })` 切分，不会把一个 emoji 拆成两半（[L44-L45](../src/assets/search-motion.js#L44-L45)）。
 - **一张画布，一个循环。** 画布覆盖搜索框并上下各外扩 54 px 给光留出空间，设备像素比封顶 2。
-- **永远不会卡住搜索。** 渲染器抛错、页面隐藏、页面卸载都会立刻结束动画并交还控制；另有一个「时长 + 100 ms」的计时器兜底——即使宿主 WebView 在导航时暂停了帧回调，搜索也一定且只会发出一次（[L89-L93](../assets/search-motion.js#L89-L93)）。
+- **永远不会卡住搜索。** 渲染器抛错、页面隐藏、页面卸载都会立刻结束动画并交还控制；另有一个「时长 + 100 ms」的计时器兜底——即使宿主 WebView 在导航时暂停了帧回调，搜索也一定且只会发出一次（[L89-L93](../src/assets/search-motion.js#L89-L93)）。
 - **系统要求减少动态效果时**，不播放，直接出发。
 
 ## 5. 提交流程
 
-回车与箭头走同一条表单提交（[`bindMainSearch`](../assets/app.js#L4799-L4898)）：
+回车与箭头走同一条表单提交（[`bindMainSearch`](../src/assets/app.js#L4799-L4898)）：
 
 - 输入法组字时的回车只提交给输入法，不触发搜索；空白内容不出发；动画进行中不重复提交。
 - 动画结束才真正导航；导航之前清空输入框的当前值与默认值，从浏览器返回时输入框干净如初；若导航失败，原文回到输入框。
@@ -72,7 +72,7 @@
 
 ## 6. Random：白金环与蓝白激光
 
-<p align="center"><img src="images/random-current.webp" alt="Random 开启后的六张卡片：缝隙中香槟铂金的导流环与奔跑的蓝白激光" width="100%"></p>
+<p align="center"><img src="../demo/media/random-current.webp" alt="Random 开启后的六张卡片：缝隙中香槟铂金的导流环与奔跑的蓝白激光" width="100%"></p>
 
 打开 Random，选择卡片的那一块区域会变成一块电路板：
 
@@ -80,7 +80,7 @@
 - **香槟导流环。** 每两张卡片之间的缝隙里，各有两道 1 px 的香槟色虚线（`#B49560 → #FFF2CF → #FFFFFF`），外加一圈 1.4 px 的冰蓝光晕；横向 1.1 s、纵向 1.3 s 一个周期流动。按卡片序号错开相位（−0.43 s、−0.79 s），整块电路不会齐步走。
 - **蓝白激光。** 1.3 × 100 px 的光脉冲（`#69ACFF → #B4DDFF → #FFFFFF`），带一层蓝色辉光，只在卡片之间的通道里奔跑。
 
-激光的排班是一个小算法（[`scheduleLaser`](../assets/search-motion-panel.js#L86-L150)）：
+激光的排班是一个小算法（[`scheduleLaser`](../src/assets/search-motion-panel.js#L86-L150)）：
 
 1. **从真实布局取车道。** 每一波出发前，都从卡片的实际位置算出车道：行与行之间是横向车道，列与列之间是纵向车道。双列时，横向车道合计权重 0.7，纵向 0.3；单列时只有横向。
 2. **每一波的规模。** 73% 单束、20% 双束、7% 三束，不超过车道数。
@@ -90,16 +90,16 @@
 6. **等上一波落地。** 下一波在 1.53–3.17 s 之后出发，且不早于上一波最长那一束结束后 90 ms。
 7. **开场编舞。** 打开 Random 后 275 ms，三条车道同时出发：竖缝自上而下、第二道横缝自右向左、第一道横缝自左向右。
 
-<p align="center"><img src="images/figures/speeds.zh.png" alt="图 04：激光速度的截断正态分布" width="100%"></p>
+<p align="center"><img src="figures/speeds.zh.png" alt="图 04：激光速度的截断正态分布" width="100%"></p>
 
 页面隐藏时暂停排班；系统开启「减少动态效果」时，导流环与激光都不出现。
 
 ## 7. 模拟发射
 
-<p align="center"><img src="images/simulation.webp" alt="无限模拟发射：第一发沿原路飞出又倒放回到原处，随后按住回车，光一发接一发地射向箭头，每一发换一种姿态" width="100%"></p>
+<p align="center"><img src="../demo/media/simulation.webp" alt="无限模拟发射：第一发沿原路飞出又倒放回到原处，随后按住回车，光一发接一发地射向箭头，每一发换一种姿态" width="100%"></p>
 <p align="center"><sub>开启 Random 与模拟发射：第一发是彩排，回到原处；按住回车之后，每一发换一种姿态，字随光离开。</sub></p>
 
-一个只会把人送走的启动台，是一扇门。面板右上角有一枚「无限模拟发射循环」开关——一个只在这一次访问里有效的彩蛋（[`search-simulation.js`](../assets/search-simulation.js)）。打开之后，主页的搜索框只发射光，不发出任何搜索，基地在自己内部闭环：
+一个只会把人送走的启动台，是一扇门。面板右上角有一枚「无限模拟发射循环」开关——一个只在这一次访问里有效的彩蛋（[`search-simulation.js`](../src/assets/search-simulation.js)）。打开之后，主页的搜索框只发射光，不发出任何搜索，基地在自己内部闭环：
 
 - **第一发会回弹。** 如果输入框是空的，先浮现一句随机的话（其中一句是「念起，光行」），180 ms 升起；第一发是一次彩排，沿原路飞出再倒放回来，文字一个不差地回到原处——这正是渲染器为纯函数的回报。之后的每一发，字都随光离开。
 - **长按回车连发。** 按住超过 280 ms，或两次按下间隔小于 300 ms，就进入连发：每一发 160 ms，从这一款「光开始出现」的那一刻起播，只画光路、不画字；同一张画布、同一个帧循环，连发过程中不重新测量、不分离节点、不切换只读状态。

@@ -6,10 +6,10 @@
 
 ---
 
-<p align="center"><img src="../images/roster.jpg" alt="The field chronicle: the residency terrain, the drive log and the roster of 49 residents; #14 is selected, showing its file, closest companions, relationship web and strongest triangle" width="100%"></p>
+<p align="center"><img src="../../demo/media/roster.jpg" alt="The field chronicle: the residency terrain, the drive log and the roster of 49 residents; #14 is selected, showing its file, closest companions, relationship web and strongest triangle" width="100%"></p>
 <p align="center"><sub>The data in these screenshots was produced by the real engine: the product ran for a simulated week under a fake clock, with Lueurs summoned session by session, cruise and boosted Drive switched on, and a few lenses dragged by hand.</sub></p>
 
-All of Lucent's data stays on the device. The chronicle's question is not how much it stores, but whether after long use the numbers can still be trusted, mean the same thing they always did, and recover by themselves when half of them break.
+All of Lucent's data stays on the device. The chronicle answers three questions about long use: can the numbers still be trusted, do they still mean what they always meant, and can they recover by themselves when half of them break?
 
 ## 1. Two layers, two definitions
 
@@ -19,27 +19,27 @@ All of Lucent's data stays on the device. The chronicle's question is not how mu
 | What is stored | 28 integers of aggregates per time bucket | 49 personal files, a relationship table, an event ring, a residency grid, driving time, a strength histogram |
 | What is not | The moment, coordinates or details of any drag | Triangles (computed on read) |
 | Budget | 160 KiB | 96 KiB |
-| Source | [`stats-store.js`](../../assets/stats-store.js) | [`field-store.js`](../../assets/field-store.js) |
+| Source | [`stats-store.js`](../../src/assets/stats-store.js) | [`field-store.js`](../../src/assets/field-store.js) |
 
 **The statistics must mean exactly what they say.** Light tendency is a statistic of the probability values produced by interaction, not the share of wallpapers that actually came up Light. One complete drag counts as one operation — not every `pointermove`, not every collision effect. The manual slider, the arrow keys and adding a Lueur each keep their own count. Periods without data stay empty. Merged means are weighted by sample count; two days' averages are never simply averaged again.
 
 ## 2. Two slots, written in turn
 
-<p align="center"><img src="../images/figures/storage.en.png" alt="Figure 7: two slots written in turn, hierarchical time compaction, and the chronicle's ledger" width="100%"></p>
+<p align="center"><img src="../figures/storage.en.png" alt="Figure 7: two slots written in turn, hierarchical time compaction, and the chronicle's ledger" width="100%"></p>
 
-Both stores share one storage discipline ([`stats-store.js` L119-L181](../../assets/stats-store.js#L119-L181), [`field-store.js` L151-L191](../../assets/field-store.js#L151-L191)):
+Both stores share one storage discipline ([`stats-store.js` L119-L181](../../src/assets/stats-store.js#L119-L181), [`field-store.js` L151-L191](../../src/assets/field-store.js#L151-L191)):
 
 - **Snapshot**: `{ version, checksum, data }`. The checksum is FNV-1a over **canonical JSON with sorted keys** — the same data gives the same checksum whatever order its keys arrive in.
 - **Write**: the next write always goes to the other slot, with an incremented `rev`. Writes are serialized; the byte budget is checked before writing, and an oversize write is refused and reported, never half-written.
 - **Read**: both slots are decoded and verified; the valid snapshot with the highest `rev` wins. If one slot is damaged, the other restores it, with a note that the latest changes in the damaged snapshot may be missing.
 - **A failed read**: the existing data is kept — **history is never overwritten with an empty table**.
-- **New data during a write**: the statistics store compares versions after a write completes; if more records arrived meanwhile, it writes again, until what is on disk is the latest ([L157-L181](../../assets/stats-store.js#L157-L181)).
+- **New data during a write**: the statistics store compares versions after a write completes; if more records arrived meanwhile, it writes again, until what is on disk is the latest ([L157-L181](../../src/assets/stats-store.js#L157-L181)).
 
-Decoding also checks the data's own invariants ([L45-L61](../../assets/stats-store.js#L45-L61)): in every time bucket, "sum of the 20-bin distribution = sum of the four sources = sample count" and "minimum ≤ mean ≤ maximum"; buckets never overlap and are aligned to the boundaries of their own unit. A bucket that fails is treated as damaged, rather than carried into a chart.
+Decoding also checks the data's own invariants ([L45-L61](../../src/assets/stats-store.js#L45-L61)): in every time bucket, "sum of the 20-bin distribution = sum of the four sources = sample count" and "minimum ≤ mean ≤ maximum"; buckets never overlap and are aligned to the boundaries of their own unit. A bucket that fails is treated as damaged, rather than carried into a chart.
 
 ## 3. Coarser with age, never lighter
 
-**History statistics** are merged by time tier ([`compact`](../../assets/stats-store.js#L74-L93)):
+**History statistics** are merged by time tier ([`compact`](../../src/assets/stats-store.js#L74-L93)):
 
 | Tier | Kept for |
 |---|---|
@@ -50,7 +50,7 @@ Decoding also checks the data's own invariants ([L45-L61](../../assets/stats-sto
 
 Merging adds counts and keeps minima and maxima — no sample is dropped. If the data is still over budget, a whole tier is promoted one level and the check runs again. When the clock is turned back, hourly data that falls inside an already compacted period merges into the bucket covering it, so nothing overlaps. When the panel switches to a longer range it honestly uses the coarser grain, never pretending to hourly precision.
 
-**The chronicle** prunes by retention and quantizes ([`prune` / `quantize`](../../assets/field-store.js#L46-L140)): driving and encounters are kept by day for 450 days; the residency grid by day for 40 days and by month for 18 months; the event ring holds at most 200 entries; counts are capped at 16-bit integers, and residency seconds are quantized to 4 s in 8 bits.
+**The chronicle** prunes by retention and quantizes ([`prune` / `quantize`](../../src/assets/field-store.js#L46-L140)): driving and encounters are kept by day for 450 days; the residency grid by day for 40 days and by month for 18 months; the event ring holds at most 200 entries; counts are capped at 16-bit integers, and residency seconds are quantized to 4 s in 8 bits.
 
 ## 4. Changing a definition without losing history
 
@@ -60,7 +60,7 @@ The collision-strength histogram started with 8 bins. Later, following the real 
 [0, 10) [10, 20) [20, 25) [25, 30) [30, 36) [36, 42) [42, 50) [50, 60) [60, 75) [75, 100) [100, 140) [140, 220) [220, 420) [420, ∞)
 ```
 
-At the moment the bins changed, the old code cleared the whole table — an on-device data receipt showed just 138 entries in the histogram while 824 collisions had happened in the same period. The fix ([`redistributeCounts`](../../assets/field-store.js#L85-L113)):
+At the moment the bins changed, the old code cleared the whole table — an on-device data receipt showed just 138 entries in the histogram while 824 collisions had happened in the same period. The fix ([`redistributeCounts`](../../src/assets/field-store.js#L85-L113)):
 
 1. Each old bin is spread over the new bins in proportion to **interval overlap**; the last old bin is treated as unbounded.
 2. After spreading, counts are rounded, and the **largest-remainder method** gives the rounding difference to the bins with the largest fractional parts — **the total is exactly preserved**.
@@ -68,7 +68,7 @@ At the moment the bins changed, the old code cleared the whole table — an on-d
 
 This does not increase the resolution of old data; what it does is trade "cleared, total lost" for "total kept, older data a little coarser". The fix adds not one byte to the data: the bin definitions live in code.
 
-A **grid guard** handles the same class of problem ([`currentGrid`](../../assets/field-store.js#L57-L68)): when the residency grid changed shape between versions, an old array is first resampled proportionally to 26×12 before anything is written — adding to out-of-range indices would leave holes and NaN that silently become 0 on disk.
+A **grid guard** handles the same class of problem ([`currentGrid`](../../src/assets/field-store.js#L57-L68)): when the residency grid changed shape between versions, an old array is first resampled proportionally to 26×12 before anything is written — adding to out-of-range indices would leave holes and NaN that silently become 0 on disk.
 
 ## 5. Forty-nine files
 
@@ -86,9 +86,9 @@ A pulse every 4 seconds records time present, minutes close, residency position 
 
 ## 6. A family of charts
 
-<p align="center"><img src="../images/chronicle.jpg" alt="History statistics: Light tendency, interaction counts, probability distribution and relative collision speed, over the last 7 days" width="100%"></p>
+<p align="center"><img src="../../demo/media/chronicle.jpg" alt="History statistics: Light tendency, interaction counts, probability distribution and relative collision speed, over the last 7 days" width="100%"></p>
 
-Every chart is hand-written SVG ([`stats-panel.js`](../../assets/stats-panel.js)); there is no chart library:
+Every chart is hand-written SVG ([`stats-panel.js`](../../src/assets/stats-panel.js)); there is no chart library:
 
 - **Light tendency**: the mean probability after active adjustment in each period; a thin line that fades toward the axis beneath it.
 - **Interaction counts**: dragging, arrow keys, the manual slider and adding Lueurs, each viewable on its own.

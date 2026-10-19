@@ -6,7 +6,7 @@
 
 ---
 
-<p align="center"><img src="images/figures/architecture.zh.png" alt="图 00：产品架构，五层自上而下——场景、基地、系统、机制、像素；主权与可信贯穿所有层级" width="100%"></p>
+<p align="center"><img src="figures/architecture.zh.png" alt="图 00：产品架构，五层自上而下——场景、基地、系统、机制、像素；主权与可信贯穿所有层级" width="100%"></p>
 
 这一页是灵感台的完整清单：从它运行的那块屏幕，到落在像素上的每一个数。每一层只回答一个问题——
 
@@ -27,7 +27,7 @@
 |---|---|
 | **设备** | 华为 MatePad Edge：14.2 英寸 OLED，3:2，3120×2080，120 Hz，触屏。整套版面以 1560×1040 CSS 像素（2× 设备像素比）为参照。 |
 | **宿主** | 鸿蒙上的 Aira 浏览器，以「自定义主页」安装包运行。宿主提供系统搜索、标签后台、隐私模式、历史记录、书签、下载、设置、扫码等入口，以及主题色与本地存储。原生安装包按交付原样保存在 [`native/`](../native/README.md)。 |
-| **网页版** | 就是这个仓库。[`web/browser-bridge.js`](../web/browser-bridge.js) 在浏览器里实现宿主接口，每个宿主入口都有一块可用的演示面板；[`web/showcase.js`](../web/showcase.js) 提供一键直达链接；[`web/immersive.js`](../web/immersive.js) 让大屏首次轻点即进入全屏；[`web/manifest.webmanifest`](../web/manifest.webmanifest) 让它可以安装为全屏启动的应用。 |
+| **网页版** | 就是这个仓库。[`src/web/browser-bridge.js`](../src/web/browser-bridge.js) 在浏览器里实现宿主接口，每个宿主入口都有一块可用的演示面板；[`src/web/showcase.js`](../src/web/showcase.js) 提供一键直达链接；[`src/web/immersive.js`](../src/web/immersive.js) 让大屏首次轻点即进入全屏；[`src/web/manifest.webmanifest`](../src/web/manifest.webmanifest) 让它可以安装为全屏启动的应用。 |
 
 ## L1 · 基地：表面
 
@@ -72,7 +72,7 @@
 
 - **两栏。** 大屏（≥ 900 px）左侧名片、右侧主卡片；≥ 1240 px 时内容宽 1240 px，名字 38 px。
 - **专注态。** 两段都折叠时，卡片下沉到视觉中心，搜索成为唯一的焦点。
-- **短屏守卫。** 主卡片在宽屏下垂直居中，屏幕一矮就会上移，浮在它右上方的历史记录标签会顶到顶栏。守卫只把卡片下移到刚好留出 16 px 的间隙；1560×1040 与更高的屏幕不受影响（[`guardCardClearance`](../assets/app.js)）。
+- **短屏守卫。** 主卡片在宽屏下垂直居中，屏幕一矮就会上移，浮在它右上方的历史记录标签会顶到顶栏。守卫只把卡片下移到刚好留出 16 px 的间隙；1560×1040 与更高的屏幕不受影响（[`guardCardClearance`](../src/assets/app.js)）。
 
 ## L2 · 系统，与 L3 · 机制
 
@@ -194,7 +194,7 @@
 - **存储纪律。** 双槽轮写与规范化校验；读失败绝不覆盖历史；迁移保总量；写入守形状；复制前自检。
 - **无障碍。** 方向键移动浮光；每个长按都有键盘等价；尊重「减少动态」与「减少透明度」；弹窗有焦点陷阱，关闭后焦点归位。
 - **性能纪律。** 一个帧循环；空闲约 30 Hz；后台、弹窗、隐藏时整体暂停；静止时玻璃零动画。
-- **验证。** 41 项单元测试与 17 组浏览器流程，每次推送在 CI 运行；文档里的图由引擎函数直接渲染，截图与动图在伪时钟下逐帧录制。→ [验证](VERIFICATION.md)
+- **验证。** 41 项单元测试与 18 组浏览器流程，每次推送在 CI 运行；文档里的图由引擎函数直接渲染，截图、动图与概念影片都在伪时钟下逐帧渲染。→ [验证](VERIFICATION.md)
 
 ## 交互全表
 
@@ -220,14 +220,14 @@
 
 | 文件 | 负责 |
 |---|---|
-| [`index.html`](../index.html) | 基地的骨架、元信息、应用清单 |
-| [`assets/app.js`](../assets/app.js) · [`app.css`](../assets/app.css) | 名片、搜索生命周期、快捷方式、壁纸、各面板、备份导出、关于、短屏守卫 |
-| [`assets/interaction.js`](../assets/interaction.js) · [`interaction.css`](../assets/interaction.css) | 小浮光引擎 |
-| [`assets/stats-store.js`](../assets/stats-store.js) · [`field-store.js`](../assets/field-store.js) · [`stats-panel.js`](../assets/stats-panel.js) | 统计、场志与手写 SVG 图表 |
-| [`assets/glass-material.js`](../assets/glass-material.js) · [`glass-material.css`](../assets/glass-material.css) | 通透玻璃 |
-| [`assets/search-motion-renderers.js`](../assets/search-motion-renderers.js) · [`search-motion.js`](../assets/search-motion.js) · [`search-motion-panel.js`](../assets/search-motion-panel.js) | 六式渲染器、播放器、面板与 Random 激光 |
-| [`assets/search-simulation.js`](../assets/search-simulation.js) | 模拟发射与连发 |
-| [`web/`](../web/) | 浏览器演示层、一键直达、沉浸全屏、应用清单与图标 |
-| [`atelier/`](../atelier/index.html) | 十六款品鉴页 |
+| [`src/index.html`](../src/index.html) | 基地的骨架、元信息、应用清单 |
+| [`src/assets/app.js`](../src/assets/app.js) · [`app.css`](../src/assets/app.css) | 名片、搜索生命周期、快捷方式、壁纸、各面板、备份导出、关于、短屏守卫 |
+| [`src/assets/interaction.js`](../src/assets/interaction.js) · [`interaction.css`](../src/assets/interaction.css) | 小浮光引擎 |
+| [`src/assets/stats-store.js`](../src/assets/stats-store.js) · [`field-store.js`](../src/assets/field-store.js) · [`stats-panel.js`](../src/assets/stats-panel.js) | 统计、场志与手写 SVG 图表 |
+| [`src/assets/glass-material.js`](../src/assets/glass-material.js) · [`glass-material.css`](../src/assets/glass-material.css) | 通透玻璃 |
+| [`src/assets/search-motion-renderers.js`](../src/assets/search-motion-renderers.js) · [`search-motion.js`](../src/assets/search-motion.js) · [`search-motion-panel.js`](../src/assets/search-motion-panel.js) | 六式渲染器、播放器、面板与 Random 激光 |
+| [`src/assets/search-simulation.js`](../src/assets/search-simulation.js) | 模拟发射与连发 |
+| [`src/web/`](../src/web/) | 浏览器演示层、一键直达、沉浸全屏、应用清单与图标 |
+| [`demo/atelier/`](../demo/atelier/index.html) | 十六款品鉴页 |
 | [`scripts/`](../scripts/) | 构建、预览、检查、图表（`figures.mjs`）、媒体录制（`capture/`）、图标（`icon.mjs`） |
 | [`tests/`](../tests/) | 引擎、渲染器、存储与浏览器测试 |
