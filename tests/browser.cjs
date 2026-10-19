@@ -155,6 +155,12 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       await page.locator('.sm-choice').filter({ has: page.locator('input[value="beam"]') }).click();
       await page.keyboard.press('Escape');
     });
+    await check('Every visit opens on the Light wallpaper, whatever was chosen before', async () => {
+      for (const choice of ['dark', 'random']) {
+        await page.evaluate(choice => localStorage.setItem('aira-profile-card:wallpaper', JSON.stringify(choice)), choice);
+        await page.reload(); await page.waitForFunction(() => /wallpaper-yang\.jpg/.test(document.body.style.backgroundImage), null, { timeout: 8000 });
+      }
+    });
     await check('Web assets work under a repository subpath', async () => {
       await page.goto(base + '/Lucent-Next/'); await page.waitForFunction(() => document.querySelectorAll('#engineChips .chip').length === 4);
       assert.equal(await page.title(), 'Lucent · 灵感台');
