@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Lucent · 灵感台 — 实机演示</title>
+  <meta name="description" content="Lucent · 灵感台在 HUAWEI MatePad Edge 上的实机录屏：搜索与一线入光、念起光行、浮光与历史统计、壁纸、名片与备份。安静的段落加速播放，画面上标着倍速。An on-device recording of Lucent on the HUAWEI MatePad Edge.">
+  <meta name="theme-color" content="#eef1f8">
+  <link rel="icon" type="image/png" sizes="32x32" href="../web/icon-32.png">
+  <style>
+    /* The page is the cover: the recording opens on the same frame the README shows, and a tap plays it. */
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #eef1f8; }
+    video { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #eef1f8; }
+    #play { position: fixed; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; background: transparent; cursor: pointer; }
+    #play:focus-visible { outline: 3px solid #4f7dff; outline-offset: -6px; }
+  </style>
+</head>
+<body>
+  <video id="film" src="./lucent-on-device.mp4" poster="./poster.jpg" preload="metadata" playsinline></video>
+  <button type="button" id="play" aria-label="播放实机演示（有声） · Play the on-device recording, with sound"></button>
+  <script>
+    (function () {
+      var film = document.getElementById('film'), play = document.getElementById('play');
+      function start() {
+        play.remove();
+        film.controls = true;
+        var p = film.play(); if (p && p.catch) p.catch(function () { /* the controls stay, for a second try */ });
+      }
+      play.addEventListener('click', start);
+      document.addEventListener('keydown', function (event) {
+        if (document.body.contains(play) && (event.key === ' ' || event.key === 'Enter')) { event.preventDefault(); start(); }
+      });
+      play.focus({ preventScroll: true });
+    })();
+  </script>
+</body>
+</html>
