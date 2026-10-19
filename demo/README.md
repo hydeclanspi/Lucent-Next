@@ -17,7 +17,7 @@ Made for the HUAWEI MatePad Edge; use it there as it is. On a computer, full scr
 
 ## 概念影片 · The concept film
 
-<p align="center"><a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="media/film-poster.jpg" alt="概念影片：光点在黎明的天色里聚成「灵感台」 · The concept film: glints gather into 灵感台 against a dawn sky" width="100%"></a></p>
+<p align="center"><a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="media/film-poster.jpg" alt="概念影片的封面：四层分开，叠成一块屏幕 · The cover of the concept film: four layers apart, one screen" width="100%"></a></p>
 
 **[在浏览器中观看 · Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/film/)** &nbsp;·&nbsp; [MP4（2K，2560×1440，60 帧，有声 · 1440p, 60 fps, with sound）](media/lucent-film.mp4)
 

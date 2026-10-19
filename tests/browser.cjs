@@ -254,6 +254,18 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       assert.ok((await film(duration)).end > 0.99, 'the film ends on the mark');
       assert.equal(await tab.evaluate(() => document.body.textContent.includes('明白了吗')), false, 'the film never quizzes its audience');
       assert.deepEqual(await tab.evaluate(() => [...document.querySelectorAll('#score source')].map(n => n.getAttribute('src'))), ['./score.webm', './score.m4a'], 'the score, in Opus and in AAC');
+      // A viewer arrives on the cover, not on the black of the opening; starting dissolves it into the film.
+      await tab.goto(base + '/film/');
+      await tab.waitForFunction(() => document.querySelector('#time').textContent === '0:00 / 1:48');
+      await tab.evaluate(() => document.fonts.ready);
+      const cover = () => tab.evaluate(() => ({
+        stage: getComputedStyle(document.getElementById('stage')).backgroundColor,
+        captions: [...document.querySelectorAll('.cap')].filter(n => n.style.visibility === 'visible' && Number(n.style.opacity) > 0.5).map(n => n.querySelector('.t').textContent)
+      }));
+      assert.deepEqual(await cover(), { stage: 'rgb(238, 242, 248)', captions: ['壁纸、玻璃、界面、居民：四层，叠成一块屏幕。'] }, 'the page opens on the cover, the four layers apart');
+      await tab.click('#start');
+      await tab.waitForFunction(() => getComputedStyle(document.getElementById('stage')).backgroundColor === 'rgb(4, 6, 12)', null, { timeout: 8000 });
+      assert.equal(await tab.evaluate(() => document.getElementById('stage').style.opacity), '', 'the cover has dissolved into the film');
       await tab.close();
     });
     await check('No uncaught browser exceptions during the tested flows', async () => assert.deepEqual(errors, []));
