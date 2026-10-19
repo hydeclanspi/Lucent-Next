@@ -6,5 +6,6 @@ STYLES = {
     "keynote": "发布会 · Keynote — electro-pop: four on the floor, a pumping pad, a syncopated lead, brass stabs",
     "cinematic": "电影感 · Cinematic — spiccato strings, taiko, braams, brass and choir",
     "refined": "现版精修 · Refined — the launch score as it stood, on the new instruments, with its dynamics written in",
+    "fusion2": "新融合 · New Fusion — piano and mallets in front, the cinema behind, a keynote pulse under, the launch hook as a trace",
 }
 DEFAULT = "fusion"
