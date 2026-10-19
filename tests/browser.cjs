@@ -45,7 +45,7 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       assert.equal(await page.locator('#profileName').textContent(), 'hydeclanspi');
       assert.equal(await page.locator('#profileSign').textContent(), '我真的是活着玩的。都别压力我。');
       assert.equal((await bridge('getSearchEngineState')).selectedEngineId, 'google');
-      assert.deepEqual((await bridge('getShortcuts')).map(x => x.title), ['书签', 'Moodle', 'Claude Code']);
+      assert.deepEqual((await bridge('getShortcuts')).map(x => x.title), ['书签', 'Kimi K3', 'Apple']);
       assert.equal(await page.locator('#btnSystemSearch').evaluate(n => getComputedStyle(n).backgroundColor), 'rgb(10, 89, 247)');
       assert.equal(external.length, 0, 'Initial load must not contact remote sites');
     });
