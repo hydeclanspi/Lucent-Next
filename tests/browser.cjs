@@ -242,7 +242,14 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       assert.equal(world.beyond, 255, 'beyond the slit, the tunnel of windows fills the frame');
       assert.deepEqual(await tab.evaluate(() => [...document.querySelectorAll('.pillar b')].map(n => n.textContent)), ['工作台', '发射台', '控制台', '舞台'], 'the four places end on the stage');
       assert.ok((await film(marks.lock + 2.6)).lockup > 0.95, 'the place is named Lucent · 灵感台');
-      assert.equal((await film(marks.walls + 1.5)).beyond, 255, 'each wallpaper in turn fills the frame');
+      const roll = await tab.evaluate(t => { window.__film.seek(t); return {
+        layer: getComputedStyle(document.getElementById('wallCards')).visibility,
+        shown: [...document.querySelectorAll('#wallCards .wc')].map(n => Number(n.style.opacity) > 0.5),
+        corner: document.getElementById('light').getContext('2d').getImageData(120, 120, 1, 1).data[3]
+      }; }, marks.walls + 1.5);
+      assert.equal(roll.layer, 'visible', 'the wallpapers come as cards of glass');
+      assert.deepEqual(roll.shown, [true, true, false], 'one on each beat');
+      assert.ok(roll.corner < 255, 'none of them fills the frame');
       assert.deepEqual((await film(marks.walls + 5.0)).captions, ['三张壁纸，三种夜色。'], 'then the three stand together as cards of glass');
       assert.ok((await film(duration)).end > 0.99, 'the film ends on the mark');
       assert.equal(await tab.evaluate(() => document.body.textContent.includes('明白了吗')), false, 'the film never quizzes its audience');

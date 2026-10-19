@@ -143,8 +143,9 @@
     [M.device, at(640, 320, 1.34, 960, 460), 'sine'],
     [M.device + 1.8, [690, 470, 0.5]],
     [M.walls - 1.0, [690, 470, 0.52], 'sine'],
-    [M.walls, WALL_FULL, 'in'],
-    [M.walls + 5.29, WALL_FULL],
+    [M.walls - 0.6, [700, 490, 0.53], 'sine'],
+    [M.walls - 0.05, [920, 1480, 0.58], 'in'],    // the device sinks away; the wallpapers come down to us as glass
+    [M.walls + 5.29, WALL_LOW],
     [M.walls + 5.3, WALL_LOW, 'linear'],
     [M.walls + 6.15, WALL_PICK, 'out'],
     [M.walls + 8.1, [960, 492, 0.712], 'sine'],
@@ -1470,30 +1471,33 @@
     };
   })();
 
-  // ---------- three wallpapers: a roll call, glass in the air, a picker, the one you choose ----------
+  // ---------- three wallpapers: glass on the beat, glass in the air, a picker, the one you choose ----------
   // Light and Dark ship with Lucent: a photograph of London at night and an anime dusk. The third is the
-  // city this film paints. Each crosses the full screen behind a pane of glass, on the beat. Then the last
-  // becomes a card of glass, the other two fly in beside it, and the three float free in a curve while the
-  // camera turns about them. The device rises; the cards fly into its screen and settle there as its
-  // picker; the city is chosen, opens to the whole screen, night falls on it, and it gives way to the night
-  // where the last words begin. The screen is drawn in the light layer, in its own coordinates, through
-  // the camera (the device faces the camera squarely throughout); the floating cards are glass in CSS 3D.
+  // city this film paints. The device sinks away, and on each beat one wallpaper comes down to the middle of
+  // the frame as a card of glass, then steps back into a curve as the next arrives: the first to the left, the
+  // second to the right, the city in front. The three float free while the camera turns about them. The
+  // device rises; the cards fly into its screen and settle there as its picker, two in the first row and the
+  // city centred below; the city is chosen, opens to the whole screen, night falls on it, and it gives way
+  // to the night where the last words begin. The cards in the air are glass in CSS 3D; the screen is drawn in
+  // the light layer, in its own coordinates, through the camera (the device faces the camera squarely).
   var WALLS = (function () {
     var W = M.walls, SW = 1560, SH = 1040;
-    var CALL = [W, W + 1, W + 2], CROSS = 0.25;           // each pane crosses the middle of the screen on its beat
-    var FLOAT = W + 3.0, SWAP = W + 3.55;                 // the last becomes a card of glass, then floats free
+    var CALL = [W, W + 1, W + 2];                         // each comes to the middle on its beat
+    var FLOAT = W + 3.0, SWAP = W + 3.55;                 // the city steps back among the others; the camera turns about them
     var RISE = [W + 5.3, W + 6.15], LAND = [W + 6.0, W + 6.25, W + 6.5];   // the device rises; the cards land on it
     var SHEEN = [W + 6.85, W + 7.55], TAP = W + 7.45, PICK = W + 7.6, OPEN = W + 8.0;
     var FALL = [W + 8.4, W + 9.3], GONE = [W + 9.15, W + 9.95];
-    // A card: the wallpaper set in glass, its name below. Three in a row under a heading.
+    // A card: the wallpaper set in glass, its name below. On the device: two in a row under a heading, the third
+    // centred under them.
     var CW = 432, CH = 288, PAD = 15, FOOT = 66, GAP = 34, OW = CW + 2 * PAD, OH = CH + PAD + FOOT;
-    var X0 = (SW - 3 * OW - 2 * GAP) / 2, Y0 = 384;
-    var BW = 250, LEAN = 150;                             // the pane: its width, and how far its top leads its foot
-    // In the air: how much larger than on the screen; the curve they hang in (x, y, z about the centre of
-    // the frame, and their turn in degrees, facing in); where the first two come from.
-    var FK = 1.1, CX = 960, CY = 520;
-    var SLOTS = [[-610, 12, -230, 27], [0, -18, 40, 0], [610, 12, -230, -27]];
-    var FROM = [[-1600, 90, -700, 75, 0], [0, -980, -520, 0, -40]];
+    var X0 = (SW - 2 * OW - GAP) / 2, Y0 = 168, ROW = OH + GAP;
+    // In the air: how much larger than on the screen; how large, and where, each is shown on its beat (x, y, z
+    // about the centre of the frame, turn and tilt in degrees); the curve they hang in, facing in (the first on
+    // the left, the second on the right, the city in front); where each comes from.
+    var FK = 1.1, CX = 960, CY = 520, PK = FK * 1.15;
+    var PRESENT = [0, -20, 260, 0, 0];
+    var SLOTS = [[-610, 12, -230, 27], [610, 12, -230, -27], [0, -18, 40, 0]];
+    var ENTER = [[140, -960, -420, 8, -24], [-140, -960, -420, -8, -24], [0, -980, -300, 0, -28]];
 
     function canvasOf(w, h) { var c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
     // A small blurred copy for frosted glass, and a sharp one for the cards.
@@ -1521,15 +1525,14 @@
     var city = { img: innerSky, night: innerSkyB, box: cb, ok: true, ready: Promise.resolve(),
       frost: frostOf(innerSky, cb), frostNight: frostOf(innerSkyB, cb), thumb: thumbOf(innerSky, cb), thumbNight: thumbOf(innerSkyB, cb) };
     var PAPERS = [
-      { name: 'Light', note: '伦敦夜景', p: photo('../assets/wallpaper-yang.jpg'), zoom: 1.18, focus: [0.42, 0.3] },
-      { name: 'Dark', note: '日漫黄昏', p: photo('../assets/wallpaper.jpg'), zoom: 1, focus: [0.68, 0.48] },
-      { name: 'Dusk', note: '城市入夜', p: city, zoom: 1, focus: [0.2, 0.58] }
+      { name: 'Light', note: '伦敦夜景', p: photo('../assets/wallpaper-yang.jpg'), zoom: 1.18, focus: [0.42, 0.3] },   // past the dock
+      { name: 'Dark', note: '日漫黄昏', p: photo('../assets/wallpaper.jpg'), focus: [0.68, 0.48] },
+      { name: 'Dusk', note: '城市入夜', p: city, focus: [0.2, 0.58] }
     ];
 
     var SCREEN = null, RES = 1, night = 0;
     function round(c, x, y, w, h, r) { c.beginPath(); c.roundRect(x, y, w, h, r); }
     function dev(v) { return v * RES; }                  // a length in the canvas's own pixels, for blurs, shadows, detail
-    function kb(t, t0) { return 1 + 0.035 * E.out(seg(t, t0 - CROSS, t0 + 1.7)); }   // each one pushes in a little
     // Fill x, y, w, h with a wallpaper, z times larger about its focus: sharp, or frosted; on the city, night may fall.
     function paint(c, pp, x, y, w, h, z, o) {
       var p = pp.p, f = (o && o.focus) || pp.focus, frost = o && o.frost, nt = (o && o.night) || 0;
@@ -1546,73 +1549,6 @@
         one(p.night, frost ? p.frostNight : null, p.thumbNight);
         c.globalAlpha = a;
       }
-    }
-
-    // ---- the roll call ----
-    // A pane of glass crosses the screen from left to right, leaning forward; behind it, the next wallpaper.
-    function pane(c, pp, z, e) {
-      var xc = lerp(-BW / 2 - LEAN, SW + BW / 2 + LEAN, e), base = c.getTransform();
-      function lean() { c.setTransform(base); c.transform(1, 0, -LEAN / SH, 1, xc, SH / 2); } // u across the pane, v along it
-      c.save(); lean(); c.beginPath(); c.rect(-3 * SW, -SH, 3 * SW - BW / 2, 2 * SH); c.setTransform(base); c.clip();
-      paint(c, pp, 0, 0, SW, SH, z);
-      c.restore();
-      // through the pane: magnified across it, softened, brighter towards the leading edge
-      c.save(); lean(); c.beginPath(); c.rect(-BW / 2, -SH, BW, 2 * SH); c.setTransform(base); c.clip();
-      c.translate(xc, SH / 2); c.scale(1.14, 1.03); c.translate(-xc, -SH / 2);
-      paint(c, pp, 0, 0, SW, SH, z);
-      c.globalAlpha = 0.45; paint(c, pp, 0, 0, SW, SH, z, { frost: true }); c.globalAlpha = 1;
-      lean();
-      var g = c.createLinearGradient(-BW / 2, 0, BW / 2, 0);
-      g.addColorStop(0, 'rgba(255,255,255,0.03)'); g.addColorStop(0.55, 'rgba(255,255,255,0.08)'); g.addColorStop(0.9, 'rgba(236,244,255,0.24)'); g.addColorStop(1, 'rgba(255,255,255,0.06)');
-      c.globalCompositeOperation = 'lighter'; c.fillStyle = g; c.fillRect(-BW / 2, -SH, BW, 2 * SH);
-      c.restore();
-      // a soft shadow ahead of it; its edges, the leading one bright and fringed with colour
-      c.save(); lean();
-      var s = c.createLinearGradient(BW / 2, 0, BW / 2 + 90, 0);
-      s.addColorStop(0, 'rgba(2,6,16,0.3)'); s.addColorStop(1, 'rgba(2,6,16,0)');
-      c.fillStyle = s; c.fillRect(BW / 2, -SH, 90, 2 * SH);
-      c.globalCompositeOperation = 'lighter';
-      [[BW / 2 - 1.2, 'rgba(255,255,255,0.9)', 2.4, 10], [BW / 2 + 2.6, 'rgba(255,96,130,0.4)', 1.4, 0], [BW / 2 - 4.8, 'rgba(96,206,255,0.4)', 1.4, 0], [-BW / 2 + 0.6, 'rgba(255,255,255,0.32)', 1.2, 0]].forEach(function (l) {
-        c.shadowColor = 'rgba(150,200,255,0.9)'; c.shadowBlur = l[3] ? dev(l[3]) : 0;
-        c.strokeStyle = l[1]; c.lineWidth = l[2]; c.beginPath(); c.moveTo(l[0], -SH); c.lineTo(l[0], SH); c.stroke();
-      });
-      c.restore();
-    }
-    function rollCall(c, t) {
-      var held = -1, crossing = -1;
-      CALL.forEach(function (t0, i) { if (t >= t0 + CROSS) held = i; else if (t >= t0 - CROSS) crossing = i; });
-      if (held >= 0) paint(c, PAPERS[held], 0, 0, SW, SH, PAPERS[held].zoom * kb(t, CALL[held]));
-      if (crossing >= 0) pane(c, PAPERS[crossing], PAPERS[crossing].zoom * kb(t, CALL[crossing]), E.inOut(seg(t, CALL[crossing] - CROSS, CALL[crossing] + CROSS)));
-    }
-    // Its name, in a pill of glass in the corner of the frame.
-    function chip(c, t) {
-      var i = t < CALL[1] ? 0 : t < CALL[2] ? 1 : 2, t0 = CALL[i], pp = PAPERS[i];
-      var on = E.out(seg(t, t0 + 0.04, t0 + 0.42));
-      var off = E.sine(i < 2 ? seg(t, CALL[i + 1] - CROSS - 0.1, CALL[i + 1] - CROSS + 0.05) : seg(t, FLOAT - 0.05, FLOAT + 0.3));
-      var a = on * (1 - off);
-      if (a <= 0.003) return;
-      c.save(); c.setTransform(LDPR, 0, 0, LDPR, 0, 0); c.globalAlpha = a;
-      c.font = '500 28px "Film Latin"'; c.letterSpacing = '0.5px'; var w1 = c.measureText(pp.name).width;
-      c.font = '400 24px "Film Sans"'; c.letterSpacing = '3px'; var w2 = c.measureText(pp.note).width;
-      var H = 70, w = 32 + w1 + 20 + 1 + 20 + w2 + 29, x = 96, y = 1080 - 92 - H + (1 - on) * 14;
-      c.shadowColor = 'rgba(2,6,16,0.35)'; c.shadowBlur = 22 * LDPR; c.shadowOffsetY = 8 * LDPR;
-      round(c, x, y, w, H, H / 2); c.fillStyle = 'rgba(30,40,60,0.6)'; c.fill();
-      c.shadowColor = 'transparent';
-      c.save(); round(c, x, y, w, H, H / 2); c.clip();
-      c.setTransform(SCREEN); paint(c, pp, 0, 0, SW, SH, pp.zoom * kb(t, t0), { frost: true });
-      c.restore();
-      var g = c.createLinearGradient(0, y, 0, y + H);
-      g.addColorStop(0, 'rgba(255,255,255,0.32)'); g.addColorStop(1, 'rgba(255,255,255,0.14)');
-      c.fillStyle = g; round(c, x, y, w, H, H / 2); c.fill();
-      var rim = c.createLinearGradient(0, y, 0, y + H);
-      rim.addColorStop(0, 'rgba(255,255,255,0.78)'); rim.addColorStop(1, 'rgba(255,255,255,0.24)');
-      c.strokeStyle = rim; c.lineWidth = 1.3; round(c, x + 0.65, y + 0.65, w - 1.3, H - 1.3, H / 2 - 0.65); c.stroke();
-      c.fillStyle = '#ffffff'; c.font = '500 28px "Film Latin"'; c.letterSpacing = '0.5px';
-      c.fillText(pp.name, x + 32, y + 45);
-      c.fillStyle = 'rgba(255,255,255,0.5)'; c.fillRect(x + 32 + w1 + 20, y + 23, 1, 24);
-      c.fillStyle = 'rgba(255,255,255,0.9)'; c.font = '400 24px "Film Sans"'; c.letterSpacing = '3px';
-      c.fillText(pp.note, x + 32 + w1 + 41, y + 44.5);
-      c.restore();
     }
 
     // ---- glass in the air ----
@@ -1661,7 +1597,7 @@
         c.setTransform(2, 0, 0, 2, 0, 0); c.clearRect(0, 0, OW, OH); c.imageSmoothingQuality = 'high';
         RES = 2;
         airGlass(c, 1, { pp: PAPERS[i], label: true });
-        picture(c, PAPERS[i], PAD, PAD, CW, CH, 16, 1, 0, null);
+        picture(c, PAPERS[i], PAD, PAD, CW, CH, 16, PAPERS[i].zoom || 1, 0, null);
       });
     }
     var ready = Promise.all(PAPERS.map(function (pp) { return pp.p.ready; }).concat(document.fonts ? [document.fonts.load('500 26px "Film Latin"', 'LightDarkDusk'), document.fonts.load('400 21px "Film Sans"', '伦敦夜景日漫黄昏城市入夜')] : []))
@@ -1679,18 +1615,19 @@
       var at = cardAt(i, t);
       return [cam.tx + cam.s * (at[0] + OW / 2), cam.ty + cam.s * (at[1] + OH / 2), cam.s];
     }
-    // A floating card's pose: x, y, z (about the frame's centre), turn, tilt, scale, opacity.
+    // A card's pose in the air: x, y, z (about the frame's centre), turn, tilt, scale, opacity. On its beat it comes
+    // down to the middle, large and facing us, and breathes there; on the next beat it steps back to its place in
+    // the curve, where it bobs and sways; the city, last, steps back as the camera begins to turn.
     function poseOf(i, t) {
       var slot = SLOTS[i], bob = 7 * Math.sin((t - W) * 2.25 + i * 2.1), sway = 2.2 * Math.sin((t - W) * 1.7 + i * 1.3);
-      var x = slot[0], y = slot[1] + bob, z = slot[2], turn = slot[3] + sway, tilt = 1.5 * Math.sin((t - W) * 1.9 + i), k = FK, a = 1;
-      if (i < 2) { // fly in from the side, from above
-        var f = FROM[i], p = E.out(seg(t, SWAP + 0.1 * i, W + 4.3 + 0.1 * i));
-        x = lerp(f[0], x, p); y = lerp(f[1], y, p); z = lerp(f[2], z, p); turn = lerp(f[3], turn, p); tilt = lerp(f[4], tilt, p);
-        a = Math.min(1, seg(t, SWAP + 0.1 * i, SWAP + 0.1 * i + 0.25) * 1.5);
-      } else { // handed over at the centre, facing us, then away to its place
-        var q = E.inOut(seg(t, SWAP, W + 4.35));
-        x = lerp(0, x, q); y = lerp(0, y, q); z = lerp(0, z, q); turn = lerp(0, turn, q); tilt = lerp(0, tilt, q);
-      }
+      var wide = 1 + 0.25 * (1 - E.inOut(seg(t, FLOAT, W + 4.35)));   // further out while one is shown in the middle
+      var settled = [slot[0] * wide, slot[1] + bob, slot[2], slot[3] + sway, 1.5 * Math.sin((t - W) * 1.9 + i)];
+      var held = PRESENT.slice(); held[1] += 6 * Math.sin((t - CALL[i]) * 2.0);
+      var come = E.out(seg(t, CALL[i] - 0.3, CALL[i] + 0.2));
+      var leave = i < 2 ? [CALL[i + 1] - 0.55, CALL[i + 1] + 0.2] : [FLOAT, W + 4.35], back = E.inOut(seg(t, leave[0], leave[1]));
+      var o = ENTER[i].map(function (v, k) { return lerp(lerp(v, held[k], come), settled[k], back); });
+      var k = lerp(lerp(FK * 0.9, PK, come), FK, back) * (1 + 0.025 * E.out(seg(t, CALL[i], leave[0])) * (1 - back));
+      var x = o[0], y = o[1], z = o[2], turn = o[3], tilt = o[4], a = Math.min(1, seg(t, CALL[i] - 0.3, CALL[i] - 0.08));
       // then down into the device's screen, facing us, the size of a card on it
       var flight = E.inOut(seg(t, LAND[i] - 0.5 - 0.15 * i, LAND[i]));
       if (flight > 0) {
@@ -1702,7 +1639,7 @@
       return { x: x, y: y, z: z, turn: turn, tilt: tilt, k: k, a: a };
     }
     function floatCards(t) {
-      var on = t >= SWAP && t < LAND[2] + 0.13;
+      var on = t >= CALL[0] - 0.4 && t < LAND[2] + 0.13;
       show(layer, on);
       if (!on) return;
       var r = rigNow(t);
@@ -1713,27 +1650,17 @@
         card.node.style.transform = 'translate3d(' + px(CX - OW / 2 + o.x) + ',' + px(CY - OH / 2 + o.y) + ',' + o.z.toFixed(2) + 'px) rotateY(' + o.turn.toFixed(3) + 'deg) rotateX(' + o.tilt.toFixed(3) + 'deg) scale(' + o.k.toFixed(4) + ')';
         var eff = o.turn + r.yaw;   // the light catches the glass as it turns
         card.glint.style.backgroundPosition = (50 + 2.6 * eff + 12 * Math.sin((t - W) * 0.9 + i)).toFixed(2) + '% 0';
-        card.glint.style.opacity = f3(E.sine(seg(t, SWAP + 0.05, SWAP + 0.55)));
+        card.glint.style.opacity = f3(E.sine(seg(t, CALL[i] - 0.1, CALL[i] + 0.45)));
         var depth = P / (P - o.z - r.dolly), sx = CX + (o.x * Math.cos(r.yaw * DEG) + o.z * Math.sin(r.yaw * DEG)) * depth;
         var lift = (o.y + 20) * 0.05, fl = 1 - E.sine(seg(t, RISE[0] - 0.1, RISE[0] + 0.35));   // gone before the device arrives
-        floor[i].style.opacity = f3(0.9 * o.a * fl * Math.min(1, seg(t, SWAP, SWAP + 0.4) * 1.4));
+        floor[i].style.opacity = f3(0.9 * o.a * fl * Math.min(1, seg(t, CALL[i] - 0.2, CALL[i] + 0.3) * 1.4));
         floor[i].style.transform = 'translate(' + px(sx) + ',' + px(840 + 70 * (depth - 1) * 4) + ') scale(' + (o.k * depth * (1 - 0.02 * lift)).toFixed(4) + ',' + (depth).toFixed(4) + ')';
       });
     }
-    // Handing over: the last wallpaper shrinks from the whole frame to its card, and the glass gathers round it.
-    function handoff(c, t) {
-      var p = E.inOut(seg(t, FLOAT, SWAP));
-      var fx = CX - OW * FK / 2, fy = CY - OH * FK / 2;
-      var pic = [fx + PAD * FK, fy + PAD * FK, CW * FK, CH * FK, 16 * FK];
-      var whole = [cam.tx, cam.ty, SW * cam.s, SH * cam.s, 0];
-      var r = whole.map(function (v, k) { return lerp(v, pic[k], p); });
-      var glassA = E.out(seg(t, FLOAT + 0.22, SWAP));
-      if (glassA > 0.003) { c.save(); c.translate(fx, fy); c.scale(FK, FK); airGlass(c, glassA, { pp: PAPERS[2], label: true }); c.restore(); }
-      picture(c, PAPERS[2], r[0], r[1], r[2], r[3], r[4], lerp(PAPERS[2].zoom * kb(FLOAT, CALL[2]), 1, p), 0, null);
-    }
-
     // ---- the picker ----
-    function cardAt(i, t) { return [X0 + i * (OW + GAP), Y0 + 1.6 * Math.sin((t - W) * 2.4 + i * 1.9)]; }   // they float a little
+    function cardAt(i, t) {   // two in the first row, the city centred under them; they float a little
+      return [i < 2 ? X0 + i * (OW + GAP) : (SW - OW) / 2, Y0 + (i < 2 ? 0 : ROW) + 1.6 * Math.sin((t - W) * 2.4 + i * 1.9)];
+    }
     function backdrop(c) {
       paint(c, PAPERS[2], 0, 0, SW, SH, 1.08, { frost: true, night: night });
       c.fillStyle = 'rgba(6,10,22,0.36)'; c.fillRect(0, 0, SW, SH);
@@ -1772,7 +1699,7 @@
       round(c, 0.75, 0.75, OW - 1.5, OH - 1.5, 29.25); c.strokeStyle = rim; c.lineWidth = 1.5; c.stroke();
       round(c, 3.5, 3.5, OW - 7, OH - 7, 26.5); c.strokeStyle = 'rgba(255,255,255,0.14)'; c.lineWidth = 1; c.stroke();
       if (o.sel > 0.003) { round(c, 0.75, 0.75, OW - 1.5, OH - 1.5, 29.25); c.strokeStyle = 'rgba(200,226,255,' + f3(0.95 * o.sel) + ')'; c.lineWidth = 2.6; c.stroke(); }
-      if (!o.bare) picture(c, pp, PAD, PAD, CW, CH, 16, 1, 0, null);
+      if (!o.bare) picture(c, pp, PAD, PAD, CW, CH, 16, pp.zoom || 1, 0, null);
       if (o.label > 0.003) {
         c.globalAlpha *= o.label;
         var by = PAD + CH + 44 + (1 - o.label) * 6;
@@ -1784,7 +1711,7 @@
       c.restore();
       if (!o.bare) gloss(c, x, y, s, a, o.sheen);
     }
-    // One light passes over the whole row of glass, picture and all.
+    // One light passes over all the glass, picture and all.
     function gloss(c, x, y, s, a, u) {
       if (!(u > 0 && u < 1) || a <= 0.003) return;
       c.save(); c.globalAlpha *= a;
@@ -1866,17 +1793,14 @@
       FLOAT: FLOAT, RISE: RISE,
       draw: function (c, t) {
         floatCards(t);
-        if (t < CALL[0] - CROSS - 0.02 || t > GONE[1]) return;
+        if (t < RISE[0] || t > GONE[1]) return;
         night = E.inOut(seg(t, FALL[0], FALL[1]));
         c.save();
         c.setTransform(LDPR * cam.s, 0, 0, LDPR * cam.s, LDPR * cam.tx, LDPR * cam.ty);
         c.imageSmoothingQuality = 'high';
         SCREEN = c.getTransform(); RES = LDPR * cam.s;
-        if (t < FLOAT) { round(c, 0, 0, SW, SH, 30); c.clip(); rollCall(c, t); }
-        else if (t < SWAP) { c.setTransform(LDPR, 0, 0, LDPR, 0, 0); RES = LDPR * FK; handoff(c, t); }
-        else if (t >= RISE[0]) { round(c, 0, 0, SW, SH, 30); c.clip(); picker(c, t); }
+        round(c, 0, 0, SW, SH, 30); c.clip(); picker(c, t);
         c.restore();
-        if (t < FLOAT + 0.35) { RES = LDPR * cam.s; chip(c, t); }
       }
     };
   })();
@@ -1909,12 +1833,12 @@
     });
     // From the first wallpaper on, the screen is drawn in light (WALLS) and the device keeps only its shell.
     var screenA = key(t, [[0, 0], [M.morph + 0.4, 0], [M.flash - 0.1, 1], [M.warp + 0.3, 1], [M.warp + 0.55, 0], [M.back, 0], [M.back + 0.25, 1], [M.console, 1], [M.console + 0.5, 0], [M.cut - 0.01, 0], [M.cut, 1, 'linear'], [WL + 0.3, 1], [WL + 0.31, 0, 'linear']]);
-    // while the wallpapers float free the device is away; it rises again for the picker
-    var shell = key(t, [[D + 0.2, 0], [D + 1.5, 1], [WL + 3.0, 1], [WL + 3.01, 0, 'linear'], [WL + 5.3, 0], [WL + 5.31, 1, 'linear'], [WL + 8.97, 1], [WL + 8.98, 0, 'linear']]);
+    // while the wallpapers come and float free as glass the device is away; it rises again for the picker
+    var shell = key(t, [[D + 0.2, 0], [D + 1.5, 1], [WL - 0.05, 1], [WL - 0.04, 0, 'linear'], [WL + 5.3, 0], [WL + 5.31, 1, 'linear'], [WL + 8.97, 1], [WL + 8.98, 0, 'linear']]);
     show(camera, screenA > 0.001 || shell > 0.001);
     screen.style.opacity = screenA < 0.999 ? f3(screenA) : '';
     bezel.style.opacity = f3(shell); edgeR.style.opacity = f3(solid ? shell : 0);
-    halo.style.opacity = f3(key(t, [[D, 0], [D + 1.8, 0.9], [WL - 0.6, 0.9], [WL - 0.1, 0], [WL + 3.0, 0], [WL + 3.8, 0.75], [WL + 5.6, 0.75], [WL + 6.3, 0.9], [WL + 8.3, 0.9], [WL + 8.9, 0]]));
+    halo.style.opacity = f3(key(t, [[D, 0], [D + 1.8, 0.9], [WL - 0.6, 0.9], [WL - 0.1, 0], [WL + 0.2, 0], [WL + 1.0, 0.7], [WL + 5.6, 0.75], [WL + 6.3, 0.9], [WL + 8.3, 0.9], [WL + 8.9, 0]]));
     innerSky.style.transform = innerSkyB.style.transform = 'scale(' + (1.01 + 0.012 * Math.sin(t * 0.21)).toFixed(4) + ')';
     innerSkyB.style.opacity = f3(E.inOut(seg(t, LOOP.flick + 0.1, LOOP.flick + 1.2)));
     screenDim.style.opacity = f3(key(t, [[M.cut - 0.01, 0, 'linear'], [M.cut, 0.52, 'linear'], [M.cut + 3, 0.52], [M.cut + 4, 0.46], [M.garden, 0.46], [M.garden + 1.5, 0.32], [D, 0.32], [D + 1.6, 0]]));
