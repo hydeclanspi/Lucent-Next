@@ -179,7 +179,7 @@
     return toStage(SCX + x2 * k, SCY + y3 * k);
   }
 
-  // ---------- the base, assembled by a passing line of light ----------
+  // ---------- the surface, assembled by a passing line of light ----------
   var ui = $('ui');
   function q(sel) { return ui.querySelector(sel); }
   function list(sel) { return Array.prototype.slice.call(ui.querySelectorAll(sel)); }
@@ -1848,7 +1848,7 @@
     glare.style.opacity = f3(Math.max(Math.sin(Math.PI * gp) * 0.8, Math.sin(Math.PI * gp2)));
     glare.style.transform = 'translateX(' + lerp(-55, 55, gp2 > 0 ? gp2 : gp).toFixed(2) + '%)';
 
-    // ---- the base, assembled by the passing light ----
+    // ---- the surface, assembled by the passing light ----
     ASSEMBLY.forEach(function (a) { appear(a[0], t, a[1], a[0] === card ? 0.95 : 0.7, a[0] === card ? 22 : 12, a[0] === card ? 8 : 0); });
     appear(cardGlass, t, cardStart, 0.95, 22, 0);
     var spot = 1 - 0.78 * env(t, M.type - 1.1, M.sheet + 1.0, 0.7, 0.8);
@@ -2074,7 +2074,7 @@
     if (t > M.press2 && t < M.press2 + 0.8) flare(RING.x, RING.y, pulse(t, M.press2, M.press2 + 0.8), 1.8);
     // So close to the button: the dome of light under its rim, the rim's glow, a bead of light along it
     if (opened > 0.002) homeArc(t, hz);
-    // The base and the exploded view
+    // The surface and the exploded view
     scanLine(t);
     if (spread > 0.001) {
       var spots = ANCHORS.map(function (an, i) {
