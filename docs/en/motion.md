@@ -108,6 +108,14 @@ A launcher that only sends you away is a door. At the top right of the panel sit
 
 This controller touches no storage and calls no host interface.
 
+**Silk light and gold motes.** While the loop is on, the search field also takes on a rim of gold ([`search-aura.js`](../../src/assets/search-aura.js)). A canvas sits right behind the field, drawn above the glass and below the text:
+
+<p align="center"><img src="../../demo/media/search-aura.webp" alt="Recorded on the device: first the search field as it is; a tap on ✧ 理, and the endless simulated-launch loop is switched on at the top right of the 念起，光行 panel; back on the main screen, two gold silk ribbons flow round the search field's outline while gold motes rise and sink" width="100%"></p>
+
+- **Silk.** Two ribbons, each 42% of the perimeter and half a lap apart, travel the rounded rectangle at an even pace by arc length, one lap in ten seconds, as fast through the corners as along the edges. In a burst they run three times as fast, and each beam that reaches the arrow gives them a nudge.
+- **Motes.** Gold motes rise slowly from the top edge and sink gently from the bottom, 12–22 at a time; every 4–7.65 s their number and their split between the edges are drawn again (55–68% on top). Six in ten new motes take the brightest of three candidate places along the silk, so most lift from where the silk is passing. Each launch swells them to 1.25–1.6× their number (40 at most), and after 1.6 s they settle back slowly.
+- **Reads, never writes.** It reads only signals the field already carries — in flight, bursting, and the beam's arrival on the launch button — and not one line of the launch logic changed. On light glass the gold is a shade deeper; on dark glass it is brighter and blended additively. With reduced motion the silk stands still as a ring and no motes appear.
+
 ## 8. Verification
 
 - [`tests/motion-renderers.test.cjs`](../../tests/motion-renderers.test.cjs): determinism of the six renderers over 21,618 states, the first and last frames, and burst mode.

@@ -53,7 +53,7 @@ node scripts/figures.mjs architecture gestures                        # or some 
 
 They are written to `docs/figures/<name>.{zh,en}.png`. `architecture` is the layered product map; `gestures` annotates `demo/media/hero.jpg`, so re-render it after a new hero. The app icon and the social preview are rendered the same way: `node scripts/icon.mjs` and `node scripts/og.mjs` (the preview also follows a new hero).
 
-**Screens and animations** are rendered, not screen-recorded: the product runs on a fake clock and a frozen CSS timeline, and every frame is its exact state at an exact virtual time ([`scripts/capture/recorder.cjs`](../scripts/capture/recorder.cjs)).
+**Screens and animations** are rendered, not screen-recorded (one exception, `search-aura.webp`, is cut from the device; see the table): the product runs on a fake clock and a frozen CSS timeline, and every frame is its exact state at an exact virtual time ([`scripts/capture/recorder.cjs`](../scripts/capture/recorder.cjs)).
 
 ```sh
 npm run build
@@ -69,6 +69,7 @@ Frames and stills land in the ignored `verification/capture/`. `CAPTURE_QUICK=1`
 | `lueurs.webp`, `motion-six.webp`, `random-current.webp` | `ffmpeg -framerate 25 -i <scene>/%04d.png -vf scale=1200:-2:flags=lanczos -c:v libwebp_anim -q:v 90 -compression_level 6 -loop 0 <name>.webp` |
 | | `lueurs/` is captured at 12.5 fps and clipped to the open space, so the same command plays it as a 2× time-lapse |
 | `simulation.webp` | the first 180 frames of `simulation/`, 1200 px wide, WebP quality 90 |
+| `search-aura.webp` | `python3 scripts/device-clip.py <recording>`: cut from the author's MatePad recording (not in the repository) — the search box, a tap on ✧ 理, the loop switched on at the panel's top right, the box again with its silk and motes; each tap marked with a ring, the waits run 2–2.5× faster; 25 fps, 1200 × 660, WebP quality 85 with a key frame every third frame (between key frames libwebp keeps 8 × 8 blocks that barely changed, and under a moving camera they show as squares) |
 | `focus.jpg` | `focus.png` resized to 1920×1280, JPEG quality 85 |
 | `glass-macro.jpg` | `glass-macro.png` (rendered at 4×) |
 | `glass-compare.jpg` | left half of `glass-warm.png`, right half of `glass-classic.png`, 1 px divider |
