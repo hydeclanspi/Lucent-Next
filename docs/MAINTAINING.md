@@ -74,7 +74,7 @@ Frames and stills land in the ignored `verification/capture/`. `CAPTURE_QUICK=1`
 | `chronicle.jpg`, `roster.jpg` | the charts (top) and the terrain, drive log and roster (bottom) of `chronicle-sheet.png` |
 | `atelier.jpg` | the first 1,198 CSS px of `atelier.png`, 1600 px wide |
 | `lucent-film.mp4` | `node scripts/film.mjs` (below) |
-| `film-poster.jpg`, `film-teaser.webp`, `on-device.jpg` | `node scripts/film-media.mjs`: the film's cover, its frame 20 s in with the four layers apart, at 2560 × 1440 (`film-media.mjs cover` stores it in the MP4 as cover art; the film page itself opens on the back garden at 1:21 until it is played); seven passages of the MP4, placed by the film's own marks, joined by 0.35 s cross-fades, 20 fps, 1200 px wide; the slot for the on-device recording, from `scripts/film-media/slot.html` — replace it with a frame of the real recording when it arrives |
+| `film-poster.jpg`, `film-poster-play.jpg`, `film-teaser.webp`, `on-device.jpg` | `node scripts/film-media.mjs`: the film's cover, its frame 20 s in with the four layers apart, at 2560 × 1440 (`film-media.mjs cover` stores it in the MP4 as cover art; the film page itself opens on the back garden at 1:21 until it is played), and the README's copy of it with the on-device cover's play button in the middle (`scripts/film-media/play.html`); seven passages of the MP4, placed by the film's own marks, joined by 0.35 s cross-fades, 20 fps, 1200 px wide; the slot for the on-device recording, from `scripts/film-media/slot.html` — replace it with a frame of the real recording when it arrives |
 
 **The film** is rendered the same way, one exact frame at a time: the page is never played, only seeked.
 
