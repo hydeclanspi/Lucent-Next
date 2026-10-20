@@ -45,7 +45,8 @@
      without them gets the web edition's copies (src/fonts, scripts/web-fonts.py), never PingFang or Songti. */
   --sans: "HarmonyOS Sans SC", "HarmonyOS Sans", "Lucent Sans", system-ui, -apple-system, "PingFang SC",
     "Noto Sans SC", "Microsoft YaHei", sans-serif;
-  --mono: "Lucent Mono", var(--sans);
+  /* If the web copy cannot load, a monospace still sets the figures; Chinese falls through to --sans. */
+  --mono: "Lucent Mono", "Noto Sans Mono", ui-monospace, "SF Mono", Menlo, Consolas, var(--sans);
 
   --name-grad: linear-gradient(100deg, #ff6a3c, #ffa14e 52%, #ffd07a);
   --ring: conic-gradient(from 200deg, #ffb259, #e8452a, #ff8fae, #ffd07a, #ffb259);
@@ -128,6 +129,9 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   text-shadow: 0 2px 18px rgba(0, 0, 0, 0.42);
 }
 .clock span {
+  /* Set as on the MatePad: the line sits 0.86 px lower there (measured), the strut of its system font. */
+  position: relative;
+  top: 0.86px;
   margin-top: 6px;
   font-family: var(--sans);
   font-size: 12px;

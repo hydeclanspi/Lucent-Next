@@ -463,16 +463,29 @@
   function nativeMethod(name, fallback) { return function () { var args = arguments; if (window.AiraHome && typeof window.AiraHome[name] === "function") return window.AiraHome[name].apply(window.AiraHome, args); if (isActive()) return fallback.apply(null, args); }; }
   function uiMethod(name, fn) { return nativeMethod(name, function () { var args = arguments; defer(function () { fn.apply(null, args); }); }); }
 
-  var wallpaperShown = false;
+  // Every visit opens on the showcase's defaults, whatever an earlier visit left behind: six Lueurs,
+  // and the wallpaper on Random with the odds at Light 99 : Dark 1. Within a visit every choice holds.
+  // A framing an earlier version of the demo wrote for the London night (it hid the bitmap's dock)
+  // is dropped, so the picture sits where it sits on the MatePad.
+  (function showcaseDefaults() {
+    try {
+      localStorage.setItem(HOME_PREFIX + "wallpaper", JSON.stringify("random"));
+      localStorage.setItem(HOME_PREFIX + "probabilityDefaults", JSON.stringify({ version: 1, light: 0.99 }));
+      localStorage.setItem(HOME_PREFIX + "interactionSettings", JSON.stringify({ version: 1, defaultCount: 6 }));
+      var crop = JSON.parse(localStorage.getItem(HOME_PREFIX + "wallpaperCrop") || "null");
+      var light = crop && crop.light;
+      if (light && light.x === 0 && light.y === 0 && light.w === 3120 && light.h === 1760) {
+        delete crop.light;
+        localStorage.setItem(HOME_PREFIX + "wallpaperCrop", JSON.stringify(crop));
+      }
+    } catch (_) {}
+  })();
+
   var bridge = {
     __isBrowserDemo: true,
     storage: {
       get: function (key, fallback) { return promise(function () {
         var raw = localStorage.getItem(HOME_PREFIX + key);
-        // Every visit opens on the London night (Light), whatever was chosen last time, and whether the choice
-        // was Light, Dark or Random; a wallpaper picked during the visit holds until the page is opened again.
-        if (key === "wallpaper" && !wallpaperShown) { wallpaperShown = true; return "light"; }
-        if (raw === null && key === "wallpaper") return "light";
         return raw === null ? copy(fallback) : JSON.parse(raw);
       }); },
       set: function (key, value) { return promise(function () { localStorage.setItem(HOME_PREFIX + key, JSON.stringify(value)); }); },
@@ -502,6 +515,63 @@
   window.AiraBrowserBridge = bridge;
   document.documentElement.dataset.browserDemo = "true";
 
+  // The MatePad's own chrome, drawn for the web edition (CSS shows it on large screens only): HarmonyOS's
+  // status bar above, Aira's toolbar and the gesture bar below, at the device's sizes. The status bar
+  // gives the page the same top inset the device does; the toolbar's buttons open the demo's own panels.
+  var STATUS_ICONS = "M15.09 9.50 14.81 10.12 14.81 12.05 14.98 12.51 15.38 12.62 16.74 11.31 16.86 10.63 15.95 10.46 15.61 9.67ZM9.24 8.93 8.67 9.16 8.11 9.78 8.05 10.86 9.01 12.00 9.87 12.05 10.95 11.26 11.12 10.06 10.44 9.10ZM5.72 7.85 5.72 8.59 6.46 9.33 7.20 9.10 8.90 7.96 10.38 7.96 12.37 9.27 13.16 9.10 13.45 8.42 13.33 7.79 12.31 6.77 10.26 6.03 9.07 5.97 7.82 6.26ZM48.50 4.04 48.05 4.50 48.05 7.68 48.28 7.91 49.01 7.91 49.36 7.68 49.53 7.00 49.47 4.61 49.07 4.16ZM3.45 5.97 3.56 6.77 4.24 7.22 5.15 7.00 6.97 5.46 9.01 4.95 11.51 5.29 13.16 6.03 14.53 7.28 15.26 7.05 15.66 5.92 14.07 4.38 12.37 3.53 10.26 3.02 8.22 3.08 6.63 3.59 4.13 5.06ZM26.63 2.85 26.40 4.67 26.46 8.25 26.69 9.27 27.37 10.12 43.28 10.29 44.53 10.06 45.15 9.16 45.26 3.47 44.98 2.45 44.07 1.83 43.22 1.66 28.67 1.66 27.31 1.94ZM28.16 3.19 28.45 2.91 29.01 2.91 32.82 4.61 32.94 3.19 33.39 2.79 35.95 4.44 36.17 2.85 36.57 2.68 43.56 8.64 43.56 9.04 43.11 9.33 39.24 7.62 39.01 7.85 39.07 8.99 38.73 9.33 38.05 9.16 35.95 7.79 35.72 8.02 35.66 9.16 35.44 9.38 34.98 9.33 28.45 3.76ZM5.32 1.03 5.44 3.08 8.28 2.17 10.38 2.05 13.62 3.02 16.40 5.18 17.48 5.06 17.82 4.27 17.31 3.36 15.89 2.11 12.31 0.35 10.15 0.12 7.76 0.24ZM24.92 2.39 24.87 9.44 25.49 10.75 27.37 11.94 43.62 12.00 45.04 11.71 45.83 11.20 46.74 9.95 47.03 8.59 47.03 3.25 46.63 1.83 46.06 1.03 45.04 0.24 43.05 -0.05 27.31 0.06 26.00 0.75ZM25.89 2.39 26.97 1.26 27.94 0.97 43.11 0.92 44.41 1.14 45.55 1.94 46.06 3.36 46.12 8.19 45.83 9.55 44.98 10.69 43.11 11.14 37.31 10.92 36.12 11.14 35.61 10.97 28.67 11.09 27.31 10.86 26.12 9.89 25.66 8.36 25.66 4.04ZM2.03 -0.16 0.49 1.94 -0.13 3.81 0.09 4.61 0.89 5.41 1.57 5.69 3.16 5.58 3.33 5.06 3.79 4.72 3.90 3.08 3.11 2.17 1.91 1.88 2.99 0.12 2.71 -0.16ZM1.74 2.91 2.71 3.25 2.71 4.04 2.25 4.78 1.40 4.55 1.06 4.04 1.23 3.30Z";
+  var deviceChrome = (function () {
+    var svg = function (box, inner) { return '<svg viewBox="' + box + '" aria-hidden="true" focusable="false">' + inner + "</svg>"; };
+    var bar = el("div", "ab-statusbar");
+    bar.setAttribute("aria-hidden", "true");
+    var time = el("span", "ab-sb-time");
+    var handle = el("span", "ab-sb-handle");
+    handle.innerHTML = "<i></i><i></i><i></i>";
+    var icons = el("span", "ab-sb-icons");
+    // Wi-Fi 6 and the battery, full and charging: traced from the device's own status bar at 2.2×.
+    icons.innerHTML = svg("0 0 49.6 12.8", '<path fill-rule="evenodd" d="' + STATUS_ICONS + '"/>');
+    bar.appendChild(time); bar.appendChild(handle); bar.appendChild(icons);
+
+    var tools = el("nav", "ab-toolbar");
+    tools.setAttribute("aria-label", "Aira 工具栏");
+    var round = function (className, label, icon) {
+      var node = el("button", "ab-tb-round " + className); node.type = "button"; node.setAttribute("aria-label", label); node.innerHTML = icon; return node;
+    };
+    var arrow = function (d) { return svg("0 0 14 11.4", '<path d="' + d + '" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>'); };
+    var back = round("ab-tb-back", "后退", arrow("M13 5.7H1.2M5.9 1 1.2 5.7l4.7 4.7"));
+    back.disabled = true;
+    var pill = el("div", "ab-tb-bar");
+    var forward = el("button", "ab-tb-forward"); forward.type = "button"; forward.setAttribute("aria-label", "前进"); forward.disabled = true;
+    forward.innerHTML = arrow("M1 5.7h11.8M8.1 1l4.7 4.7-4.7 4.7");
+    var address = el("button", "ab-tb-address", "搜索或输入网址"); address.type = "button";
+    var tabs = el("button", "ab-tb-tabs"); tabs.type = "button"; tabs.setAttribute("aria-label", "标签页");
+    tabs.innerHTML = svg("0 0 16.4 16", '<rect x="1" y="1" width="14.4" height="14" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M1.4 5.2h13.6" stroke="currentColor" stroke-width="1.7"/><circle cx="3.9" cy="3.15" r=".85"/>');
+    pill.appendChild(forward); pill.appendChild(address); pill.appendChild(tabs);
+    var menu = round("ab-tb-menu", "菜单", svg("0 0 16 13", '<path d="M1.1 1.2h13.8M1.1 6.5h13.8M1.1 11.8h13.8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>'));
+    tools.appendChild(back); tools.appendChild(pill); tools.appendChild(menu);
+    address.addEventListener("click", function () { if (isActive()) openSearch(); });
+    tabs.addEventListener("click", function () { if (isActive()) openTabs(); });
+    menu.addEventListener("click", function () { if (isActive()) openSettings(); });
+
+    var gesture = el("div", "ab-gesture");
+    gesture.setAttribute("aria-hidden", "true");
+
+    var timer = 0;
+    function tick() {
+      var now = new Date(), pad = function (n) { return (n < 10 ? "0" : "") + n; };
+      time.innerHTML = pad(now.getHours()) + '<span class="ab-sb-colon">:</span>' + pad(now.getMinutes());
+      clearTimeout(timer);
+      timer = setTimeout(tick, 60000 - (now.getSeconds() * 1000 + now.getMilliseconds()) + 20);
+    }
+    function mount() {
+      if (!document.body) return;
+      document.body.appendChild(bar); document.body.appendChild(tools); document.body.appendChild(gesture);
+      tick();
+    }
+    function unmount() { clearTimeout(timer); [bar, tools, gesture].forEach(function (node) { if (node.parentNode) node.parentNode.removeChild(node); }); }
+    if (document.body) mount(); else document.addEventListener("DOMContentLoaded", mount, { once: true });
+    return { unmount: unmount };
+  })();
+
   listen(document, "keydown", function (event) {
     if (!isActive()) return;
     if (overlay) {
@@ -522,6 +592,6 @@
     if (event.key === PREFIX + "engine") { var id = read("engine", "google"); if (engines.some(function (item) { return item.id === id; })) { selectedEngine = id; emit("aira-home-search-engines-changed", engineState()); } }
     if (event.key === PREFIX + "theme") { var mode = read("theme", "light"); if (["light", "dark", "system"].indexOf(mode) >= 0) { themeMode = mode; emit("aira-home-theme-changed", theme()); } }
   });
-  function deactivate() { if (!active) return; active = false; close(); listeners.splice(0).forEach(function (off) { off(); }); delete document.documentElement.dataset.browserDemo; }
+  function deactivate() { if (!active) return; active = false; close(); deviceChrome.unmount(); listeners.splice(0).forEach(function (off) { off(); }); delete document.documentElement.dataset.browserDemo; }
   listen(window, "aira-home-ready", function () { if (window.AiraHome) deactivate(); });
 })();

@@ -2402,8 +2402,9 @@
     var pad = function (n) { return n < 10 ? "0" + n : String(n); };
     var days = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
     el.clockTime.textContent = pad(now.getHours()) + ":" + pad(now.getMinutes());
+    // The dot is spaced by hair spaces: the MatePad sets it that tight (measured from the device).
     el.clockDate.textContent = (now.getMonth() + 1) + "月" + now.getDate() + "日 " + days[now.getDay()] +
-      " · " + greetingFor(now.getHours());
+      "\u200a·\u200a" + greetingFor(now.getHours());
   }
 
   /* ---------- 初始化 ---------- */
