@@ -227,6 +227,8 @@ The Lueurs are what bring Lucent to life. They began as a red circle drawn on a 
 
 → Deep dives: [the Lueurs engine](docs/en/lueurs.md) · [the chronicle](docs/en/chronicle.md)
 
+<br>
+
 ## The second layer: press and hold
 
 <p align="center"><img src="docs/figures/gestures.en.png" alt="Figure 8: a long-press map over the real interface, marking every second-layer entry — Switch, planet, scan, sun, FSD, shortcuts, the note, the search field, the folds, the motion panel and the Lueurs" width="100%"></p>
