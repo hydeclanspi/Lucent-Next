@@ -37,7 +37,7 @@
 
 <p align="center">Today, we have made that promise into a place.</p>
 
-<p align="center"><img src="demo/media/hero.jpg" alt="Lucent: a personal base over a London night wallpaper; profile, search and shortcuts each in place, nine small glass Lueurs scattered across the open space above" width="100%"></p>
+<p align="center"><img src="demo/media/hero.jpg" alt="Lucent: a personal base over a London night wallpaper; profile, the open search panel and shortcuts each in place, six small glass Lueurs scattered across the open space above" width="100%"></p>
 
 <h3 align="center">Today, we're introducing four things.</h3>
 

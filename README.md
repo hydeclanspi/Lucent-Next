@@ -37,7 +37,7 @@
 
 <p align="center">今天，我们把这个承诺，做成了一个地方。</p>
 
-<p align="center"><img src="demo/media/hero.jpg" alt="灵感台：伦敦夜景之上的个人基地；名片、搜索与快捷方式各就各位，九枚玻璃浮光散落在上方的留白里" width="100%"></p>
+<p align="center"><img src="demo/media/hero.jpg" alt="灵感台：伦敦夜景之上的个人基地；名片、展开的搜索面板与快捷方式各就各位，六枚玻璃浮光散落在上方的留白里" width="100%"></p>
 
 <h3 align="center">今天，我们带来四样东西。</h3>
 
