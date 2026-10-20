@@ -12,22 +12,23 @@ Everything uses relative URLs, so the product works under the `/Lucent-Next/` su
 
 ## What the build contains
 
-The repository layout and the published URLs are independent: the source lives in `src/` and the demos in `showcase/`, but the site keeps the same addresses.
+The repository layout and the published URLs are independent: the source lives in `src/`, the films in `showcase/` and the atelier in `design/`, and the site keeps the same addresses.
 
 | Published at | From | Content |
 |---|---|---|
-| `/` | `src/` | The base (`index.html`, `assets/`, `web/`): its browser demonstration layer, immersive full screen, and the app manifest and icons (installable; opens full screen) |
+| `/` | `src/` | Lucent itself (`index.html`, `assets/`, `web/`, `fonts/`): its browser demonstration layer, immersive full screen, and the app manifest and icons (installable; opens full screen) |
 | `/film/` | `showcase/film/` | The concept film, drawn and scored in code, played in the browser |
+| `/device/` | `showcase/device/` | The on-device film and its player page |
 | `/atelier/` | `design/atelier/` | The sixteen-study search-motion atelier |
 | `/llms.txt` | `docs/llms.txt` | A plain-text summary for language-model crawlers |
 | `/robots.txt`, `/sitemap.xml`, `/.nojekyll` | generated | Written by `scripts/build.mjs` |
 
-The native package (`product-finale/`), the demo media (`showcase/media/`), the documentation, tests and scripts are not part of the web build.
+The site carries the product and its films; the device packages (`product-finale/`), `Lucent-Film.mp4`, the README media (`showcase/media/`), the design sources, the documentation, tests and scripts stay in the repository.
 
 ## Checks
 
 ```sh
-npm run check                         # syntax, release identity, native package digest
+npm run check                         # syntax, release identity, device package digests
 npm test                              # unit tests
 npm run build
 npm install && npx playwright install chromium

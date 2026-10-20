@@ -86,7 +86,7 @@ Scheduling the lasers is a small algorithm of its own ([`scheduleLaser`](../../s
 2. **Wave size.** One beam 73% of the time, two 20%, three 7% — never more than there are lanes.
 3. **Lanes without replacement.** Lanes are drawn by weighted roulette and removed once chosen, so two beams in one wave never meet head-on in the same channel.
 4. **Direction.** Horizontal beams go either way, fifty-fifty; vertical beams run upward with probability 4/30 only.
-5. **Speed.** Each beam is sampled independently from a truncated normal N(0.70, 0.10²) relative to version 4.8.3, generated with the Box–Muller transform and redrawn when |z| > 3. What is sampled is a speed, not a duration: duration = 680 ms (horizontal) or 840 ms (vertical) ÷ speed. About 68.5% land in 0.60–0.80, 27.2% in 0.50–0.60 or 0.80–0.90, and 4.3% at the two ends.
+5. **Speed.** Each beam is sampled independently from a truncated normal N(0.70, 0.10²) relative to version 4.8.3, generated with the Box–Muller transform and redrawn when |z| > 3. What is sampled is a speed, and the duration follows from it: duration = 680 ms (horizontal) or 840 ms (vertical) ÷ speed. About 68.5% land in 0.60–0.80, 27.2% in 0.50–0.60 or 0.80–0.90, and 4.3% at the two ends.
 6. **Wait for the last wave to land.** The next wave leaves after 1.53–3.17 s, and never earlier than 90 ms after the slowest beam of the previous wave ends.
 7. **An opening choreography.** 275 ms after Random turns on, three lanes leave at once: the vertical gap top to bottom, the second horizontal gap right to left, the first horizontal gap left to right.
 
@@ -99,11 +99,11 @@ Scheduling pauses while the page is hidden; with reduced motion neither conduits
 <p align="center"><img src="../../showcase/media/simulation.webp" alt="Endless simulated launch: the first shot flies out and plays back to where it started; then Enter is held and light fires at the arrow shot after shot, each in a different gesture" width="100%"></p>
 <p align="center"><sub>Random and the simulated launch together: the first shot is a rehearsal and comes back; with Enter held, each shot takes a different gesture and the words leave with the light.</sub></p>
 
-A launcher that only sends you away is a door. At the top right of the panel sits a switch for an endless simulated-launch loop — an easter egg that lasts only for this visit ([`search-simulation.js`](../../src/assets/search-simulation.js)). With it on, the homepage's search field launches light and never sends a search, and the base closes the loop on itself:
+Lucent is also a place to stay. At the top right of the panel sits a switch for an endless simulated-launch loop — an easter egg that lasts only for this visit ([`search-simulation.js`](../../src/assets/search-simulation.js)). With it on, the search field launches light while the search itself stays home, and the light closes its own loop on the stage:
 
 - **The first shot flies back.** If the field is empty, a random line rises in over 180 ms (one of them is 念起，光行). The first shot is a rehearsal: it flies out along its path and plays back in reverse, and every character lands exactly where it was — the dividend of renderers being pure functions. Every shot after it takes the words away with the light.
 - **Hold Enter for bursts.** Hold for more than 280 ms, or press twice less than 300 ms apart, and it bursts: each shot is 160 ms, starting from the moment this motion's light first appears, drawing only the light path and never the text — the same canvas and the same frame loop, with no re-measuring, no detaching nodes and no toggling of read-only state during a burst.
-- **Demand is one bit.** Pressing again while a shot is in flight records only "one more", never an ever-growing queue.
+- **Demand is one bit.** Pressing again while a shot is in flight records only "one more", so the queue always holds a single slot.
 - **Honest about keyboards.** Some keyboards emit pairs of keydown and keyup while auto-repeating, so after a keyup it waits 80 ms before deciding the key was really released. Typing, composing, losing focus or hiding the page cancels at once; leaving the page or returning from the back-forward cache ends the mode.
 
 This controller touches no storage and calls no host interface.
