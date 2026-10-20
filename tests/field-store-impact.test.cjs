@@ -36,14 +36,23 @@ test('only physical collisions count: encounters, relays and missing speeds stay
   assert.deepEqual(view.impacts, new Array(14).fill(0));
   assert.equal(view.impactPeak[0], 0);
 });
-test('a hand push records its speed without touching the individual files', async t => {
+test('a hand push records its speed and counts one Manual strike, nothing else', async t => {
   const { store } = await fixture(t);
   const before = store.getView('7d').profiles[6];
   store.record({ kind: 'push', a: 7, b: 12, power: 63 });
   const view = store.getView('7d');
   assert.deepEqual(view.impacts, [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]);
-  assert.deepEqual(view.profiles[6], before, 'bump / taken / dodge stay untouched');
+  assert.deepEqual(view.profiles[6], Object.assign({}, before, { manual: before.manual + 1 }), 'only Manual moves; bump / taken / dodge stay untouched');
+  assert.equal(view.totals.manual, 1);
   assert.equal(view.pairs.length, 0, 'no pair record is created');
+});
+test('a thrown or nudged Lueur that strikes another counts as Manual too', async t => {
+  const { store } = await fixture(t);
+  store.record({ kind: 'manual', a: 7, b: 12, power: 30 });
+  const view = store.getView('7d');
+  assert.equal(view.profiles[6].manual, 1);
+  assert.equal(view.profiles[11].taken, 0, 'the struck Lueur is not charged with a contact');
+  assert.equal(view.impacts.reduce((sum, n) => sum + n, 0), 1, 'its speed joins the impact histogram');
 });
 test('the histogram survives a save/load round trip', async t => {
   const storage = memory();

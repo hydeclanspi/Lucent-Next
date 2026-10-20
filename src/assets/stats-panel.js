@@ -115,7 +115,7 @@
       return m ? h + ' 小时 ' + m + ' 分' : h + ' 小时';
     }
     function fmtEventTime(time) { var d = new Date(time); return (d.getMonth() + 1) + '月' + d.getDate() + '日'; }
-    var fieldEventNames = { contact: '自然碰撞', bump: '撞撞', dodge: '回避', charge: '出击', miss: '扑空', autoHit: '命中', relay: '接力', pilot: '得舵', push: '手拨' };
+    var fieldEventNames = { contact: '自然碰撞', bump: '撞撞', dodge: '回避', charge: '出击', miss: '扑空', autoHit: '命中', relay: '接力', pilot: '得舵', push: '手拨', manual: '手动出击' };
     function aggregateDays(rows, pick) {
       if (rows.length <= 60) return rows.map(function (row) { return { day: row.day, values: pick(row) }; });
       var per = Math.ceil(rows.length / 52), out = [];
@@ -295,9 +295,9 @@
       })();
       // 驾驶志
       (function () {
-        var t = fieldView.totals, shots = t.hit + t.miss, missRate = shots ? Math.round(100 * t.miss / shots) : null;
+        var t = fieldView.totals, tManual = t.manual || 0, shots = t.hit + t.miss + tManual, missRate = shots ? Math.round(100 * t.miss / shots) : null;
         driveNumbers.textContent = '蓝档 ' + fmtDuration(t.blue) + ' · 橙档 ' + fmtDuration(t.rage)
-          + ' · 出击 ' + shots + ' 次 · 命中 ' + t.hit + ' 次' + (missRate == null ? '' : ' · 扑空率 ' + missRate + '%')
+          + ' · 出击 ' + shots + ' 次 · Manual ' + tManual + ' 次 · 命中 ' + (t.hit + tManual) + ' 次' + (missRate == null ? '' : ' · 扑空率 ' + missRate + '%')
           + ' · 接力 ' + t.relay + ' 次 · 得舵 ' + t.pilot + ' 次';
         driveHost.textContent = '';
         var rows = aggregateDays(fieldView.drive, function (row) { return [row.blue, row.rage]; });
@@ -335,7 +335,7 @@
         fieldView.profiles.forEach(function (p) {
           var chip = element('button', 'stats-roster-chip', pad2(p.id));
           chip.type = 'button'; chip.dataset.id = p.id;
-          var hasData = p.appearances || p.minutes || p.bump || p.taken || p.dodge || p.hit || p.miss;
+          var hasData = p.appearances || p.minutes || p.bump || p.taken || p.dodge || p.hit || p.miss || p.manual;
           var tone = toneOf(p);
           if (tone >= 0) chip.classList.add('is-tone-' + tone);
           chip.classList.toggle('is-active', active.has(p.id));
@@ -351,12 +351,12 @@
         });
         rosterDetail.textContent = '';
         if (rosterPick) {
-          var p = fieldView.profiles[rosterPick - 1], shots = p.hit + p.miss;
+          var p = fieldView.profiles[rosterPick - 1], pManual = p.manual || 0, shots = p.hit + p.miss + pManual;
           var card = element('div', 'stats-roster-card');
           card.appendChild(element('strong', '', '#' + pad2(rosterPick) + ' 号浮光'));
           card.appendChild(element('p', '', '出场 ' + p.appearances + ' 次 · 在场 ' + fmtDuration(p.minutes * 60)
             + ' · 撞人 ' + p.bump + ' · 被撞 ' + p.taken + ' · 回避 ' + p.dodge));
-          card.appendChild(element('p', '', '出击 ' + shots + ' · 命中 ' + p.hit + (shots ? ' · 扑空率 ' + Math.round(100 * p.miss / shots) + '%' : ' · 尚未出击')
+          card.appendChild(element('p', '', '出击 ' + shots + ' · Manual ' + pManual + ' · 命中 ' + (p.hit + pManual) + (shots ? ' · 扑空率 ' + Math.round(100 * p.miss / shots) + '%' : ' · 尚未出击')
             + ' · 得舵 ' + p.pilot + ' · 接力 ' + p.relayIn + '/' + p.relayOut));
           var friendsAll = fieldView.pairs.filter(function (pair) { return pair.a === rosterPick || pair.b === rosterPick; });
           if (friendsAll.length) {
