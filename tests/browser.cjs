@@ -24,7 +24,7 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
   const browser = await chromium.launch({ headless: true, ...(process.env.AIRA_BROWSER_CHANNEL ? { channel: process.env.AIRA_BROWSER_CHANNEL } : {}), ...(process.env.AIRA_BROWSER_PATH ? { executablePath: process.env.AIRA_BROWSER_PATH } : {}) });
   const context = await browser.newContext({ viewport: { width: 1560, height: 1040 }, colorScheme: 'light' });
   // The flows below act as a visitor who has already left full screen once; immersive mode has its own check.
-  await context.addInitScript(() => { try { sessionStorage.setItem('lucent:immersive:declined', '1'); } catch (_) {} });
+  await context.addInitScript(() => { try { sessionStorage.setItem('lucent:immersive:off', '1'); } catch (_) {} });
   const page = await context.newPage();
   page.setDefaultTimeout(8000);
   page.on('pageerror', e => errors.push(e.message));
@@ -171,16 +171,18 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       for (let tries = 0; !(await page.evaluate(() => /wallpaper-yang\.jpg/.test(document.body.style.backgroundImage))) && tries < 5; tries++) { await page.reload(); await home(); }
       assert.match(await page.evaluate(() => document.body.style.backgroundImage), /wallpaper-yang\.jpg/);
     });
-    await check("Large screens wear the MatePad's chrome: the status bar insets the page as on the device, Aira's toolbar opens the demo's panels", async () => {
+    await check("Large screens wear the MatePad's chrome: the status bar insets the page as on the device, Aira's toolbar (in full screen) opens the demo's panels", async () => {
       const chrome = () => page.evaluate(() => ({
         bar: getComputedStyle(document.querySelector('.ab-statusbar')).display, tools: getComputedStyle(document.querySelector('.ab-toolbar')).display,
         time: document.querySelector('.ab-sb-time').textContent, inset: getComputedStyle(document.querySelector('.topbar')).paddingTop
       }));
-      const large = await chrome();
-      assert.equal(large.bar, 'block'); assert.equal(large.tools, 'flex'); assert.match(large.time, /^\d\d:\d\d$/); assert.equal(large.inset, '69px');
-      await page.locator('.ab-tb-address').click(); await panel('搜索'); await close();
-      await page.locator('.ab-tb-tabs').click(); await panel('全部标签'); await close();
-      await page.locator('.ab-tb-round.ab-tb-menu').click(); await panel('设置'); await close();
+      const windowed = await chrome();
+      assert.equal(windowed.bar, 'block'); assert.equal(windowed.tools, 'none', 'a window has its own browser chrome'); assert.match(windowed.time, /^\d\d:\d\d$/); assert.equal(windowed.inset, '69px');
+      // Aira's toolbar shows in full screen (the immersive check enters it for real); its buttons open the panels.
+      const press = selector => page.evaluate(selector => document.querySelector(selector).click(), selector);
+      await press('.ab-tb-address'); await panel('搜索'); await close();
+      await press('.ab-tb-tabs'); await panel('全部标签'); await close();
+      await press('.ab-tb-round.ab-tb-menu'); await panel('设置'); await close();
       assert.equal(await page.locator('.ab-tb-back').isDisabled(), true);
       for (const size of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
         await page.setViewportSize(size);
@@ -279,10 +281,12 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       // In full screen: the prompt goes, and the lower left says this is the web demo.
       await tab.waitForFunction(() => !document.querySelector('.lx-immersive-hint') && document.querySelector('.lx-demo-note.is-visible'));
       assert.equal(await tab.locator('.lx-demo-note').textContent(), '仅为 Web 端 demo 模拟，旗舰最佳效果为 Pad 端的触屏体验');
+      assert.equal(await tab.locator('.ab-toolbar').evaluate(n => getComputedStyle(n).display), 'flex', "Aira's toolbar in full screen");
       await tab.evaluate(() => document.exitFullscreen());
       await tab.waitForFunction(() => !document.fullscreenElement);
       await tab.waitForSelector('.lx-immersive-hint.is-visible');
       assert.equal(await tab.locator('.lx-demo-note').evaluate(n => n.classList.contains('is-visible')), false);
+      assert.equal(await tab.locator('.ab-toolbar').evaluate(n => getComputedStyle(n).display), 'none', 'no toolbar in a window');
       await tab.mouse.click(300, 900); await tab.waitForTimeout(300);
       assert.equal(await tab.evaluate(() => !!document.fullscreenElement), false, 'after leaving, a click must not force full screen again');
       // The prompt's own button still goes full screen; its × hides it for the visit.
@@ -293,6 +297,11 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       await tab.locator('.lx-immersive-close').click();
       await tab.waitForFunction(() => !document.querySelector('.lx-immersive-hint'));
       assert.equal(await tab.evaluate(() => !!document.fullscreenElement), false, 'hiding the prompt does not go full screen');
+      // Opening the page again arms the first click afresh, even after leaving full screen in this tab.
+      await tab.reload(); await tab.waitForFunction(() => document.querySelectorAll('#engineChips .chip').length === 4);
+      await tab.mouse.click(300, 900);
+      await tab.waitForFunction(() => !!document.fullscreenElement);
+      await tab.evaluate(() => document.exitFullscreen()); await tab.waitForFunction(() => !document.fullscreenElement);
       await tab.keyboard.press('f');
       await tab.waitForFunction(() => !!document.fullscreenElement);
       await tab.locator('#searchInput').click(); await tab.keyboard.press('f');
