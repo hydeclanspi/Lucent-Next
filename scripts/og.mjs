@@ -1,4 +1,4 @@
-// Render the social preview (src/web/og.jpg) from design/brand/og.html over showcase/media/hero.jpg.
+// Render the social preview (src/web/og.jpg) from design/brand/og.html over design/brand/backdrop.jpg.
 //   AIRA_BROWSER_PATH=/path/to/chromium node scripts/og.mjs
 // The card is laid out at 1280×640, rendered at 2× and downsampled in the browser, so the type stays crisp.
 import { createRequire } from 'node:module';
