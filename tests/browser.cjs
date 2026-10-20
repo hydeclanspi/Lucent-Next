@@ -268,7 +268,7 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       }
       assert.equal((await gap({ width: 1560, height: 1040 })).card, 343, 'the tablet layout is untouched: 304 px, under the 39 px status bar of the device');
     });
-    await check('Large screens go full screen on the first click; leaving is respected; F toggles', async () => {
+    await check('Large screens go full screen on a click, every time; Esc leaves; F toggles', async () => {
       const fresh = await browser.newContext({ viewport: { width: 1560, height: 1040 } });
       await fresh.route('**/*', route => route.request().url().startsWith(base) ? route.continue() : route.abort());
       const tab = await fresh.newPage();
@@ -287,9 +287,11 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       await tab.waitForSelector('.lx-immersive-hint.is-visible');
       assert.equal(await tab.locator('.lx-demo-note').evaluate(n => n.classList.contains('is-visible')), false);
       assert.equal(await tab.locator('.ab-toolbar').evaluate(n => getComputedStyle(n).display), 'none', 'no toolbar in a window');
-      await tab.mouse.click(300, 900); await tab.waitForTimeout(300);
-      assert.equal(await tab.evaluate(() => !!document.fullscreenElement), false, 'after leaving, a click must not force full screen again');
-      // The prompt's own button still goes full screen; its × hides it for the visit.
+      // Every click out of full screen asks for it again.
+      await tab.mouse.click(300, 900);
+      await tab.waitForFunction(() => !!document.fullscreenElement);
+      await tab.evaluate(() => document.exitFullscreen()); await tab.waitForFunction(() => !document.fullscreenElement);
+      // The prompt's own button goes full screen too; its × hides it for the visit, and does not.
       await tab.locator('.lx-immersive-go').click();
       await tab.waitForFunction(() => !!document.fullscreenElement);
       await tab.evaluate(() => document.exitFullscreen()); await tab.waitForFunction(() => !document.fullscreenElement);
