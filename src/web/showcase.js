@@ -1,5 +1,5 @@
 /* Lucent · 灵感台 — showcase links for the web demo · hydeclanspi
- * Web-only. The native Aira package never loads this file.
+ * Web-only. The device packages never load this file.
  *
  *   ?lueurs=16             summon up to 16 Lueurs (0–49), exactly as tapping the planet would
  *   ?fsd=on | ?fsd=rage    start Drive (FSD) in cruise or boosted mode
@@ -88,7 +88,7 @@
   }
 
   async function run() {
-    // Wait for the homepage to finish its first render: engines, shortcuts, and stored preferences.
+    // Wait for Lucent to finish its first render: engines, shortcuts, and stored preferences.
     await until(function () { return document.querySelectorAll("#engineChips .chip").length > 0; }, 10000);
     await wait(700);
     if (count >= 0) await summon(count);

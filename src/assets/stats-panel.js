@@ -71,7 +71,7 @@
     var fieldColumns = null;
     if (field) {
       var intro = element('div', 'stats-field-intro');
-      intro.appendChild(element('p', 'stats-field-intro-text', '浮光不是无名的。#01–#49，四十九位固定居民：每次回到主页，抽签决定谁在场；撞过谁、躲过谁、为谁出过击，都写进各自的档案。名册在此，故事开始。'));
+      intro.appendChild(element('p', 'stats-field-intro-text', '浮光不是无名的。#01–#49，四十九位固定居民：每次回到灵感台，抽签决定谁在场；撞过谁、躲过谁、为谁出过击，都写进各自的档案。名册在此，故事开始。'));
       var introRow = element('div', 'stats-field-intro-row');
       var badgeToggle = element('button', 'wp-random collision-random stats-badge-toggle');
       badgeToggle.type = 'button';

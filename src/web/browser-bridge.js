@@ -1,6 +1,6 @@
 /* Lucent · 灵感台 — browser demonstration bridge · hydeclanspi
  * Optional web-only adapter. It never assigns window.AiraHome.
- * Native packages omit this file. Callers prefer AiraHome over AiraBrowserBridge.
+ * The device packages omit this file. Callers prefer AiraHome, the host's own interface, over AiraBrowserBridge.
  */
 (function () {
   "use strict";
@@ -365,7 +365,7 @@
       row(content, "快捷方式", "添加、编辑与管理常用入口", openShortcutManager, "bookmarks");
       row(content, "演示隐私模式", privateMode ? "已开启 · 暂停打开请求记录" : "已关闭", togglePrivacy, "shield");
       row(content, "导出演示偏好", "保存在本地的 JSON 文件", saveJson, "download");
-      note(content, "浏览器演示在本地保存偏好。主页原有的名片、材质、壁纸与交互设置保持独立；长按太阳图标可查看关于。");
+      note(content, "浏览器演示在本地保存偏好。灵感台自己的名片、材质、壁纸与交互设置保持独立；长按太阳图标可查看关于。");
     });
   }
   function scanQr() {
@@ -419,7 +419,7 @@
       shortcuts.forEach(function (item) {
         row(content, item.title, item.kind === "system" ? "系统入口 · 书签" : item.url, function () { editShortcut(item.id); }, "bookmarks");
       });
-      note(content, "主页点击「排序」可拖动排列，长按图标可编辑图标样式与管理入口。Kimi K3 与 Apple 指向各自官网，可自由编辑。");
+      note(content, "在灵感台上点「排序」可拖动排列，长按图标可编辑图标样式与管理入口。Kimi K3 与 Apple 指向各自官网，可自由编辑。");
       actions(content, [button("添加网页", addShortcut, "primary"), button("添加书签入口", function () { var item = copy(initialShortcuts[0]); item.id += "-" + Date.now(); saveShortcuts(shortcuts.concat([item])); openShortcutManager(); })]);
     });
   }

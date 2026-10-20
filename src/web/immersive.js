@@ -1,6 +1,6 @@
 /* Lucent · 灵感台 — immersive full screen for the web edition · hydeclanspi
  *
- * On the tablet the base fills the whole screen. A desktop browser wraps it in tabs, an
+ * On the tablet Lucent fills the whole screen. A desktop browser wraps it in tabs, an
  * address bar and a dock, so on large screens the web edition goes full screen on the
  * first real click or tap anywhere. (No browser lets a page do that before a gesture.)
  *

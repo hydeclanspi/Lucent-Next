@@ -1,5 +1,5 @@
 /* ============================================================
-   名片主页 · 落日与灯火
+   Lucent · 灵感台 · 落日与灯火
    壁纸是 body 的背景图（遮罩已烤进图片），画面分两层：
    外壳（顶栏 + 名片区）站在照片上——浅字、深玻璃；
    卡片浮在画面中——浅玻璃、深字。
@@ -1312,7 +1312,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 .sheet-title { margin: 0 0 4px; font-size: 16.5px; font-weight: 700; letter-spacing: 0.4px; }
 .sheet-sub { margin: 0 0 14px; font-size: 12px; color: var(--ink-3); line-height: 1.55; letter-spacing: 0.3px; }
 
-/* 长按太阳图标浮出的「关于」窗口：左上两行题词，右侧主页预览，左侧产品自述，右下落款签名 */
+/* 长按太阳图标浮出的「关于」窗口：左上两行题词，右侧灵感台预览，左侧产品自述，右下落款签名 */
 #btnSettings { touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .about-body {
   display: grid;
