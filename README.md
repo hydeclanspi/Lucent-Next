@@ -313,7 +313,7 @@
 
 | | |
 |---|---|
-| **在线体验** | [hydeclanspi.github.io/Lucent-Next](https://hydeclanspi.github.io/Lucent-Next/)：在 MatePad Edge 上直接使用；在电脑上，第一次轻点即进入全屏。七个一键直达的链接在 [LIVE.md](LIVE.md) |
+| **在线体验** | [hydeclanspi.github.io/Lucent-Next](https://hydeclanspi.github.io/Lucent-Next/)：在 MatePad Edge 上直接使用；在电脑上，第一次轻点即进入全屏。七个一键直达的链接在 [Live-web.md](Live-web.md) |
 | **概念影片** | [在浏览器中观看](https://hydeclanspi.github.io/Lucent-Next/film/) · [MP4](Lucent-Film.mp4) |
 | **实机演示** | [在浏览器中观看](https://hydeclanspi.github.io/Lucent-Next/device/) · [MP4](showcase/device/lucent-on-device.mp4) |
 | **十六款动效品鉴** | [hydeclanspi.github.io/Lucent-Next/atelier](https://hydeclanspi.github.io/Lucent-Next/atelier/) |
@@ -336,7 +336,7 @@ npm install && npm run test:browser   # 22 组浏览器流程（Playwright）
 
 ```text
 Lucent-Film.mp4             概念影片，2560 × 1440，60 帧，有声
-LIVE.md                     在线体验与一键直达
+Live-web.md                 在线体验与一键直达
 product-finale/             实机安装包：5.1.3 与 5.0.0，按交付原样保存
 design/                     设计源文件：动效品鉴、应用图标、分享卡片、封面、文档图表
 src/                        灵感台本体（网页版）

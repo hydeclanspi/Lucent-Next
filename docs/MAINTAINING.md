@@ -23,7 +23,7 @@ Product: **Lucent · 灵感台**, the inspiration studio. The floating-lens engi
 | `showcase/device/` | The on-device film and its player page |
 | `showcase/media/` | The screenshots and animations shown in the README and the docs |
 | `Lucent-Film.mp4` | The concept film, rendered from `showcase/film/` |
-| `LIVE.md` | The live link, the deep links and the other pages of the site |
+| `Live-web.md` | The live link, the deep links and the other pages of the site |
 | `product-finale/` | The device packages, 5.1.3 and 5.0.0, byte for byte; their SHA-256 digests are checked by `scripts/check.mjs` |
 | `scripts/` | Build, preview, checks, documentation figures (`figures.mjs`), media capture (`capture/`), the film renderer (`film.mjs`), its score (`film-score.py`, over the package `score/`: one module per version of the score in `score/styles/`), its font subsetter (`film-fonts.py`) and the media made from it (`film-media.mjs`), the on-device film and animation (`device-edit.py`, `device-clip.py`), and the web edition's typefaces (`web-fonts.py`) |
 | `docs/` | Deep documentation in Chinese, `docs/en/` in English, `docs/llms.txt` for crawlers |

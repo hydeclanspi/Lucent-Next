@@ -315,7 +315,7 @@ I defined the product, designed it, and signed off every version; the implementa
 
 | | |
 |---|---|
-| **Live** | [hydeclanspi.github.io/Lucent-Next](https://hydeclanspi.github.io/Lucent-Next/): use it on the MatePad Edge; on a computer, the first tap goes full screen. Seven deep links are in [LIVE.md](LIVE.md) |
+| **Live** | [hydeclanspi.github.io/Lucent-Next](https://hydeclanspi.github.io/Lucent-Next/): use it on the MatePad Edge; on a computer, the first tap goes full screen. Seven deep links are in [Live-web.md](Live-web.md) |
 | **The concept film** | [Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/film/) · [MP4](Lucent-Film.mp4) |
 | **On the device** | [Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/device/) · [MP4](showcase/device/lucent-on-device.mp4) |
 | **Sixteen motion studies** | [hydeclanspi.github.io/Lucent-Next/atelier](https://hydeclanspi.github.io/Lucent-Next/atelier/) |
@@ -338,7 +338,7 @@ npm install && npm run test:browser   # 22 browser flows (Playwright)
 
 ```text
 Lucent-Film.mp4             the concept film, 2560 × 1440, 60 fps, with sound
-LIVE.md                     the live product and its deep links
+Live-web.md                 the live product and its deep links
 product-finale/             the device packages: 5.1.3 and 5.0.0, kept as shipped
 design/                     design sources: the motion atelier, app icon, share card, covers, figures
 src/                        Lucent itself (the web edition)

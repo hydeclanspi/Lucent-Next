@@ -5,7 +5,7 @@
   Lucent as it ships to the HUAWEI MatePad Edge. Import a package into Aira, and it is ready.
 </p>
 
-<p align="center"><a href="../README.md">灵感台</a> &nbsp;·&nbsp; <a href="../README.en.md">Lucent</a> &nbsp;·&nbsp; <a href="../LIVE.md">在线体验 · Live</a></p>
+<p align="center"><a href="../README.md">灵感台</a> &nbsp;·&nbsp; <a href="../README.en.md">Lucent</a> &nbsp;·&nbsp; <a href="../Live-web.md">在线体验 · Live</a></p>
 
 ---
 
