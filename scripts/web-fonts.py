@@ -16,7 +16,8 @@ fonts the web edition carries instead, and the stylesheet that declares them, to
                 its file is not published, so each weight the page asks for is served by the nearest
                 static cut — 600 by Medium, as it measures on the device's screen.
   Lucent Mono   Noto Sans Mono, variable (@fontsource-variable/noto-sans-mono 5.3.0, Latin; SIL Open
-                Font License 1.1), copied as published.
+                Font License 1.1, no Reserved Font Name), cut to printable Latin and renamed Lucent
+                Mono inside the file, so no installed Noto Sans Mono can stand in for it.
 
 Chinese is cut in slices. The core slice holds every character the product sets itself, CJK and
 full-width punctuation and the 3,755 characters of GB 2312 level 1, about 490 KB a weight; it loads
@@ -147,9 +148,9 @@ def main():
     ]
 
     def face(family, weight, file, points=None, style="normal", display="block", variable=False):
-        src = f'url("./{file}") format("woff2-variations"), ' if variable else ""
+        # One plain woff2 source: every engine that reads woff2 finds the variation axes on its own.
         rule = f'@font-face {{ font-family: "{family}"; font-style: {style}; font-weight: {weight}; font-display: {display}; ' \
-               f'src: {src}url("./{file}") format("woff2");'
+               f'src: url("./{file}") format("woff2");'
         if points is not None:
             rule += f" unicode-range: {runs(points)};"
         css.append(rule + " }")
@@ -174,9 +175,22 @@ def main():
     for cut, key, weights in CUTS:
         face("Lucent Sans", weights, f"sans-{key}.woff2", style="italic")
         face("Lucent Sans", weights, "sans-latin-italic.woff2", italic_face, style="italic", variable=True)
-    shutil.copyfile(args.mono, OUT / "mono.woff2")
+    printable = set(range(0x20, 0x7F)) | set(range(0xA0, 0x100)) | {0x2013, 0x2014, 0x2018, 0x2019, 0x201C, 0x201D,
+        0x2022, 0x2026, 0x2032, 0x2033, 0x20AC, 0x2122, 0x2191, 0x2193, 0x2212}
+    mono_points = printable & set(TTFont(str(args.mono)).getBestCmap())
+    write(args.mono, mono_points, OUT / "mono.woff2")
+    mono = TTFont(str(OUT / "mono.woff2"))
+    for record in mono["name"].names:
+        if record.nameID in (1, 16):
+            record.string = "Lucent Mono"
+        elif record.nameID in (3, 4):
+            record.string = "Lucent Mono"
+        elif record.nameID == 6:
+            record.string = "LucentMono"
+    mono.flavor = "woff2"
+    mono.save(str(OUT / "mono.woff2"))
     sizes["mono.woff2"] = (OUT / "mono.woff2").stat().st_size
-    face("Lucent Mono", "1 1000", "mono.woff2", set(TTFont(str(args.mono)).getBestCmap()), variable=True)
+    face("Lucent Mono", "1 1000", "mono.woff2", mono_points, variable=True)
 
     (OUT / "fonts.css").write_text("\n".join(css) + "\n", "utf-8")
     shutil.copyfile(args.sc / "LICENSE.txt", OUT / "HarmonyOS-Sans-LICENSE.txt")

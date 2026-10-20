@@ -155,11 +155,38 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       await page.locator('.sm-choice').filter({ has: page.locator('input[value="beam"]') }).click();
       await page.keyboard.press('Escape');
     });
-    await check('Every visit opens on the Light wallpaper, whatever was chosen before', async () => {
-      for (const choice of ['dark', 'random']) {
-        await page.evaluate(choice => localStorage.setItem('aira-profile-card:wallpaper', JSON.stringify(choice)), choice);
-        await page.reload(); await page.waitForFunction(() => /wallpaper-yang\.jpg/.test(document.body.style.backgroundImage), null, { timeout: 8000 });
+    await check('Every visit opens on the showcase defaults: six Lueurs, the wallpaper on Random at Light 99 : 1', async () => {
+      await page.evaluate(() => {
+        const set = (key, value) => localStorage.setItem('aira-profile-card:' + key, JSON.stringify(value));
+        set('wallpaper', 'dark'); set('probabilityDefaults', { version: 1, light: 0.2 }); set('interactionSettings', { version: 1, defaultCount: 12 });
+        set('wallpaperCrop', { light: { x: 0, y: 0, w: 3120, h: 1760 } });
+      });
+      await page.reload(); await home();
+      await page.waitForFunction(() => document.querySelectorAll('#interactionField .interaction-item').length === 6, null, { timeout: 8000 });
+      const stored = await page.evaluate(() => ['wallpaper', 'probabilityDefaults', 'interactionSettings', 'wallpaperCrop'].map(key => JSON.parse(localStorage.getItem('aira-profile-card:' + key))));
+      assert.deepEqual(stored.slice(0, 3), ['random', { version: 1, light: 0.99 }, { version: 1, defaultCount: 6 }]);
+      assert.equal(stored[3].light, undefined, 'the old demo framing of the London night is gone');
+      // Random at 99 : 1 shows the London night; a 1 % roll of Dark is retried.
+      for (let tries = 0; !(await page.evaluate(() => /wallpaper-yang\.jpg/.test(document.body.style.backgroundImage))) && tries < 5; tries++) { await page.reload(); await home(); }
+      assert.match(await page.evaluate(() => document.body.style.backgroundImage), /wallpaper-yang\.jpg/);
+    });
+    await check("Large screens wear the MatePad's chrome: the status bar insets the page as on the device, Aira's toolbar opens the demo's panels", async () => {
+      const chrome = () => page.evaluate(() => ({
+        bar: getComputedStyle(document.querySelector('.ab-statusbar')).display, tools: getComputedStyle(document.querySelector('.ab-toolbar')).display,
+        time: document.querySelector('.ab-sb-time').textContent, inset: getComputedStyle(document.querySelector('.topbar')).paddingTop
+      }));
+      const large = await chrome();
+      assert.equal(large.bar, 'block'); assert.equal(large.tools, 'flex'); assert.match(large.time, /^\d\d:\d\d$/); assert.equal(large.inset, '69px');
+      await page.locator('.ab-tb-address').click(); await panel('搜索'); await close();
+      await page.locator('.ab-tb-tabs').click(); await panel('全部标签'); await close();
+      await page.locator('.ab-tb-round.ab-tb-menu').click(); await panel('设置'); await close();
+      assert.equal(await page.locator('.ab-tb-back').isDisabled(), true);
+      for (const size of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
+        await page.setViewportSize(size);
+        const small = await chrome();
+        assert.equal(small.bar, 'none'); assert.equal(small.tools, 'none'); assert.equal(small.inset, size.width >= 900 ? '30px' : '26px');
       }
+      await page.setViewportSize({ width: 1560, height: 1040 });
     });
     await check('The web edition is set like the MatePad: its typefaces, and the wallpaper framed as on the device', async () => {
       const fonts = [];
@@ -174,6 +201,7 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       }
       assert.match(await page.locator('.clock strong').evaluate(n => getComputedStyle(n).fontFamily), /^"Lucent Mono"/);
       assert.equal(await page.evaluate(() => document.fonts.check('500 13px "Lucent Sans"', '全部标签') && document.fonts.check('600 28px "Lucent Mono"', '22:24')), true);
+      assert.equal(await page.evaluate(() => [...document.fonts].some(face => face.family === 'Lucent Mono' && face.status === 'loaded')), true, 'the figures are set in Lucent Mono');
       // The page loads its core: the Latin face, the Chinese core at the weights on screen, the mono. No rare slice.
       assert.ok(['sans-latin.woff2', 'sans-400.woff2', 'sans-500.woff2', 'mono.woff2'].every(file => fonts.includes(file)), fonts.join(' '));
       assert.ok(!fonts.some(file => /^sans-\d+-\d+\.woff2$/.test(file)), fonts.join(' '));
@@ -186,7 +214,9 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       assert.equal(plain.size, 'cover'); assert.equal(plain.position, 'center center');
       // A framing the visitor chose is laid on the same layer, by the same rule: the whole picture framed is the default, to the pixel.
       await page.evaluate(() => localStorage.setItem('aira-profile-card:wallpaperCrop', JSON.stringify({ light: { x: 0, y: 0, w: 3120, h: 2079 } })));
-      await page.reload(); await home(); await page.waitForFunction(() => /px/.test(document.getElementById('wpImg').style.backgroundSize));
+      await page.reload(); await home();
+      for (let tries = 0; !(await page.evaluate(() => /wallpaper-yang\.jpg/.test(document.body.style.backgroundImage))) && tries < 5; tries++) { await page.reload(); await home(); }
+      await page.waitForFunction(() => /px/.test(document.getElementById('wpImg').style.backgroundSize));
       const framed = await layer();
       const scale = Math.max(framed.w / 3120, framed.h / 2079);
       const [sw, sh] = framed.size.split(' ').map(parseFloat), [px, py] = framed.position.split(' ').map(parseFloat);
@@ -233,7 +263,7 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       for (const size of [{ width: 1429, height: 763 }, { width: 1280, height: 720 }, { width: 1366, height: 768 }]) {
         assert.ok((await gap(size)).gap >= 12, `history tag must clear the top bar at ${size.width}×${size.height}`);
       }
-      assert.equal((await gap({ width: 1560, height: 1040 })).card, 304, 'the tablet layout is untouched (set in HarmonyOS Sans, as on the device)');
+      assert.equal((await gap({ width: 1560, height: 1040 })).card, 343, 'the tablet layout is untouched: 304 px, under the 39 px status bar of the device');
     });
     await check('Large screens go full screen on the first click; leaving is respected; F toggles', async () => {
       const fresh = await browser.newContext({ viewport: { width: 1560, height: 1040 } });

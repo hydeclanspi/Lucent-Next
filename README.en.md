@@ -111,7 +111,7 @@ Lucent is designed for the **HUAWEI MatePad Edge**: a 14.2-inch OLED, 3:2, 3120 
 
 - **Touch first.** A Lueur is 22 px to the eye and 44 px to the finger; the second layer belongs to the long press; flicks, drags and shoves all have physics.
 - **On the MatePad Edge**, it is the place you set out from and come back to every day: every gap, every beam of light, every touch, exactly as designed.
-- **On a computer**, full screen is a faithful simulation of that screen: tap anywhere to go full screen, F toggles it, Esc leaves; install it as an app and it opens full screen. On shorter landscape screens, the card makes room for the top bar by itself.
+- **On a computer**, full screen is a faithful simulation of that screen: tap anywhere to go full screen, F toggles it, Esc leaves; install it as an app and it opens full screen. The web edition draws the tablet's status bar, Aira's toolbar and the gesture bar from a screenshot of the device, at its sizes and spacing; shorter landscape screens leave them out, and the card makes room for the top bar by itself. Every visit opens on the showcase defaults: six Lueurs, the wallpaper on Random at Light 99 : 1.
 - **Phones and small screens** are outside its scope, and are not recommended.
 
 ## Five parts
@@ -274,7 +274,7 @@ Lucent keeps one standard: **inspired, and incisive** — 灵感与犀利并存.
 | **Privacy** | No request to any other site after load (the one exception: the first time a rare character appears, its small slice of the typeface comes from this site); data stays on the device and leaves only through the clipboard |
 | **Accessibility** | Lueurs move with the arrow keys (Shift for long steps); every long press has a keyboard equivalent; reduced motion and reduced transparency are honoured; sheets trap focus and return it on close |
 | **Performance discipline** | One frame loop for the whole engine: every frame while dragging or driving, about 30 Hz when idle, fully paused in the background, under a sheet, or when the page is hidden |
-| **Verification** | 41 unit tests (engine invariants, renderer determinism, storage integrity) and 21 browser flows, run in CI on every push |
+| **Verification** | 41 unit tests (engine invariants, renderer determinism, storage integrity) and 22 browser flows, run in CI on every push |
 | **Reproducibility** | The algorithm figures are drawn by the engine's own functions; the screenshots, animations and the film are rendered frame by frame under a fake clock, and come out the same on any machine |
 
 ## Evolution
@@ -311,7 +311,7 @@ Node.js 22 or later. Build and preview use only the Node standard library.
 npm start            # build dist/ and preview at http://127.0.0.1:4173 (the film is at /film/)
 npm run check        # syntax, release identity, native package digest
 npm test             # 41 unit tests
-npm install && npm run test:browser   # 21 browser flows (Playwright)
+npm install && npm run test:browser   # 22 browser flows (Playwright)
 ```
 
 `dist/` can be served by any static host; pushes to `main` deploy to GitHub Pages.

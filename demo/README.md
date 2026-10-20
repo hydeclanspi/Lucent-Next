@@ -11,9 +11,9 @@
 
 **[hydeclanspi.github.io/Lucent-Next](https://hydeclanspi.github.io/Lucent-Next/)**
 
-为 HUAWEI MatePad Edge 设计，在那块屏幕上直接使用。在电脑上，全屏是对它的忠实模拟：第一次轻点即进入全屏，F 切换，Esc 退出；也可以把它安装为应用，以全屏启动。手机与小尺寸屏幕不在适配范围内，不建议使用。
+为 HUAWEI MatePad Edge 设计，在那块屏幕上直接使用。在电脑上，全屏是对它的忠实模拟：第一次轻点即进入全屏，F 切换，Esc 退出；也可以把它安装为应用，以全屏启动。状态栏、Aira 底栏与手势条照实机画出；每次打开是六枚浮光、随机壁纸（明暗 99 : 1）。手机与小尺寸屏幕不在适配范围内，不建议使用。
 
-Made for the HUAWEI MatePad Edge; use it there as it is. On a computer, full screen is a faithful simulation of that screen: the first tap goes full screen, F toggles it and Esc leaves; install it as an app and it opens full screen. Phones and small screens are outside its scope, and are not recommended.
+Made for the HUAWEI MatePad Edge; use it there as it is. On a computer, full screen is a faithful simulation of that screen: the first tap goes full screen, F toggles it and Esc leaves; install it as an app and it opens full screen. The status bar, Aira's toolbar and the gesture bar are drawn as on the device; every visit opens on six Lueurs and a Random wallpaper at Light 99 : 1. Phones and small screens are outside its scope, and are not recommended.
 
 ## 概念影片 · The concept film
 
