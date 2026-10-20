@@ -29,7 +29,7 @@
   var enabled = document.fullscreenEnabled || document.webkitFullscreenEnabled;
   if (!request || !exit || !enabled || window.self !== window.top) return;
 
-  // OFF is for automated captures and tests only; a person's decline lasts for this load of the page.
+  // OFF is for automated captures and tests only: no full screen on click, no prompt, no note.
   var OFF = "lucent:immersive:off";
   var HIDDEN = "lucent:immersive:prompt-hidden";
   var LARGE = 900;
@@ -87,6 +87,7 @@
     return node;
   }
   function sync() {
+    if (declinedNow) return; // automation: no prompt, no note, and data-immersive is the capture's to set
     var wide = window.innerWidth >= LARGE, full = !!active() || installed();
     if (full) root.dataset.immersive = "full"; else delete root.dataset.immersive;
     var showHint = wide && !full && !hidden();

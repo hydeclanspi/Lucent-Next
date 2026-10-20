@@ -123,7 +123,7 @@ The surface is what you feel; underneath is what makes it hold.
 | 01 | [**Workbench**](#01--workbench-everything-in-place) | Clock and greeting, profile, search, shortcuts, direct entries and a one-line note, each in its place, held by one clear pane of glass | A layout set on 1560×1040, pixel-matched to a 3120×2080 wallpaper; a short-screen guard; focus mode |
 | 02 | [**Residents**](#02--residents-a-back-garden-that-gathers-stories) | Forty-nine numbered glass Lueurs drift, meet and chase in the open space; flick them and the next wallpaper changes; each one's history is kept | Ornstein–Uhlenbeck heading · 4 px sub-stepped impulse physics · breadth-first autonomous Drive · 70% encounters · weighted placement · checksummed files |
 | 03 | [**Launch&nbsp;pad**](#03--launch-pad-a-thought-in-flight) | The words you wrote turn into light, reach the arrow, and only then does the search depart | Six motions chosen from sixteen studies · every frame a pure function of progress · grapheme-aware text |
-| 04 | [**Stage**](#04--stage-stay-and-the-light-performs-for-you) | Stay, and the light stays too: a first shot that flies back, bursts while you hold Enter, blue-white lasers racing through platinum conduits | Reversal as rebound · one-bit demand · truncated-normal pacing · lanes without replacement |
+| 04 | [**Stage**](#04--stage-stay-and-the-light-performs-for-you) | Stay, and the light stays too: a first shot that flies back, bursts while you hold Enter, blue-white lasers racing through platinum conduits, gold silk and motes flowing round the search field | Reversal as rebound · one-bit demand · truncated-normal pacing · lanes without replacement · silk paced by arc length |
 | 05 | [**Console**](#05--console-every-dial-is-yours) | From six glass parameters to a long press on every control, the depth is handed to you | Three layers of defaults · two surfaces × two finishes × six dials · a second layer under long press |
 
 ## Architecture: from one screen to one pixel
@@ -195,6 +195,11 @@ Lucent is also a place you want to stay. Turn on the endless simulated-launch lo
 - **Platinum rings, blue-white lasers.** Turn Random on and the gaps between the cards become champagne-platinum conduits with blue-white lasers racing through them. Each beam's speed is drawn from a truncated normal N(0.70, 0.10²); lanes are drawn by weight without replacement, so the beams in one channel always run the same way; the opening sends three at once.
 
 <p align="center"><img src="demo/media/random-current.webp" alt="With Random on, champagne-platinum conduits light up in the gaps between the six cards and blue-white lasers race along them; the opening sends three beams at once" width="100%"></p>
+
+**Silk light and gold motes.** Turn the loop on and the search field takes on a rim of gold. Two ribbons of gold silk travel its outline at an even pace by arc length, one lap in ten seconds, the top edge and the bottom alike; gold motes rise slowly from the top edge and sink gently from the bottom, 12–22 at a time, redrawn every 4–7.65 s, most of them lifting from where the silk is passing. Each launch swells them to 1.25–1.6× their number, and they settle back slowly. It reads only signals the search field already carries; not one line of the launch logic changed.
+
+<p align="center"><img src="demo/media/search-aura.webp" alt="Recorded on the device: first the search field as it is; a tap on ✧ 理, and the endless simulated-launch loop is switched on at the top right of the 念起，光行 panel; back on the main screen, two gold silk ribbons flow round the search field's outline while gold motes rise and sink" width="100%"></p>
+<p align="center"><sub>Recorded on the HUAWEI MatePad Edge: tap ✧ 理, switch the loop on at the top right of 念起，光行, and back to the search field.</sub></p>
 
 On days you would rather do nothing, the light plays for you, in place. Recharge, then set off again.
 
