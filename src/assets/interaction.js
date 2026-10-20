@@ -620,6 +620,11 @@
       const neighbors = bodies.filter(candidate => candidate === body || candidate === other
         || Math.min(distance(candidate, body), distance(candidate, other)) < NATURAL.neighborRadius);
       if (energize) emitField({ kind: 'contact', a: body.identity, b: other.identity, power: Math.max(0, approach) });
+      // 甩出或键盘拨动中的那一颗撞上别的浮光：记一次 Manual 出击（拖着推挤记为 push，同样算 Manual）。
+      if (fresh && approach > 8 && isManual(body) && !(gesture && gesture.index === body.index) && !(body.naturalCooldown > autoClock)) {
+        emitField({ kind: 'manual', a: body.identity, b: other.identity, power: approach });
+        body.naturalCooldown = autoClock + NATURAL.cooldown;
+      }
       const kicked = resolveNaturalImpact(body, other, nx, ny, impactStrength, neighbors.length, energize);
       if (kicked) {
         naturalContacts.set(key, [body, other]);

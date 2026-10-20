@@ -1671,6 +1671,13 @@
       paragraph.textContent = line;
       copy.appendChild(paragraph);
     });
+    var news = document.createElement("p");
+    news.className = "about-news";
+    news.appendChild(document.createTextNode("现已上线 GitHub，附 2K产品宣传片 product film"));
+    var newsUrl = document.createElement("span");
+    newsUrl.className = "about-news-url";
+    newsUrl.textContent = "github.com/hydeclanspi/Lucent-Next";
+    news.appendChild(newsUrl);
 
     var meta = document.createElement("div");
     meta.className = "about-meta";
@@ -1679,7 +1686,7 @@
     version.textContent = "Lucent v5.0 · 2026-10 构建";
     var build = document.createElement("p");
     build.className = "about-build";
-    build.textContent = "鸿蒙 Aira 灵感台 · Lueurs 引擎 beta v0.7 · © 2026";
+    build.textContent = "鸿蒙 Aira 灵感工作台 · Lueurs 引擎 beta v0.7 · © 2026";
     meta.appendChild(version);
     meta.appendChild(build);
 
@@ -1691,6 +1698,7 @@
     shot.alt = "灵感台主页预览";
     shot.decoding = "async";
     frame.appendChild(shot);
+    frame.appendChild(news);
 
     var sign = document.createElement("span");
     sign.className = "about-sign";
@@ -1906,7 +1914,8 @@
         kind: "backup",
         exportedAt: new Date().toISOString(),
         timezoneOffsetMinutes: -new Date().getTimezoneOffset(),
-        homepage: { id: "com.example.aira-profile-card", version: "5.0.0" },
+        homepage: { id: "com.example.aira-profile-card", version: "5.1.3" },
+        legend: { fieldProfile: ["appearances", "seconds", "hit", "miss", "bump", "taken", "dodge", "pilot", "relayIn", "relayOut", "manual"] },
         summary: {
           keys: Object.keys(keys).length,
           logs: Array.isArray(keys.logs) ? keys.logs.length : 0,
@@ -1914,6 +1923,7 @@
           fieldProfiles: storeData.field ? Object.keys(storeData.field.profiles || {}).length : 0,
           fieldPairs: storeData.field ? Object.keys(storeData.field.pairs || {}).length : 0,
           fieldEvents: storeData.field && Array.isArray(storeData.field.events) ? storeData.field.events.length : 0,
+          fieldManual: storeData.field ? Object.keys(storeData.field.profiles || {}).reduce(function (sum, id) { var p = storeData.field.profiles[id]; return sum + (Array.isArray(p) && p[10] > 0 ? p[10] : 0); }, 0) : 0,
           statsRows: storeData.stats && Array.isArray(storeData.stats.rows) ? storeData.stats.rows.length : 0
         },
         notes: notes,
@@ -1971,7 +1981,7 @@
     var rows = [{ label: "全部数据", value: sizeText(pack.jsonBytes) + " → 备份文本 " + charText(pack.backup.text.length) + " 字" }];
     rows.push({ label: "名片与偏好", value: Object.keys(preference).length + " 项 · " + sizeText(bytesOf(preference)) });
     rows.push({ label: "日志 / 签名", value: (pack.payload.summary.logs + " + " + pack.payload.summary.signs) + " 条 · " + sizeText(bytesOf(history)) });
-    rows.push({ label: "场志", value: data.field ? (pack.payload.summary.fieldProfiles + " 位 · " + pack.payload.summary.fieldPairs + " 对 · " + pack.payload.summary.fieldEvents + " 事件 · " + sizeText(bytesOf(data.field))) : "本次没有" });
+    rows.push({ label: "场志", value: data.field ? (pack.payload.summary.fieldProfiles + " 位 · " + pack.payload.summary.fieldPairs + " 对 · " + pack.payload.summary.fieldEvents + " 事件 · Manual " + (pack.payload.summary.fieldManual || 0) + " · " + sizeText(bytesOf(data.field))) : "本次没有" });
     rows.push({ label: "历史统计", value: data.stats ? (pack.payload.summary.statsRows + " 行 · " + sizeText(bytesOf(data.stats))) : "本次没有" });
     return rows;
   }

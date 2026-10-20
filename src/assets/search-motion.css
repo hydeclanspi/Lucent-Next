@@ -429,3 +429,9 @@
   font-kerning: normal;
 }
 .wp-random.interaction-toolbar.sm-simulation { left: 5.37px; }
+
+/* 5.1.3 · 指向「无限模拟发射循环」的手绘箭头，手绘笔触，颜色同「开启搜索动效」开关里的浅薄荷绿 */
+.sm-simulation .sm-sim-hint { position: absolute; right: calc(100% + 15px); top: -26.25px; width: 34px; height: 42px; color: var(--sm-mint-knob); pointer-events: none; overflow: visible; transform: rotate(10deg); transform-origin: 50% 50%; }
+/* 按钮里的 svg 通用规则会把它改成描边空心，这里明确要实心墨迹 */
+.wp-random.sm-simulation .sm-sim-hint, .wp-random.sm-simulation .sm-sim-hint path { fill: currentColor !important; stroke: none !important; }
+@media (max-width: 560px) { .sm-simulation .sm-sim-hint { display: none; } }

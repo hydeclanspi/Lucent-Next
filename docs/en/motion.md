@@ -64,7 +64,7 @@ That buys three things directly: **slowing down** (0.35× simply divides the dur
 
 ## 5. The submit flow
 
-Enter and the arrow go through the same form submission ([`bindMainSearch`](../../src/assets/app.js#L4799-L4898)):
+Enter and the arrow go through the same form submission ([`bindMainSearch`](../../src/assets/app.js#L4809-L4908)):
 
 - Enter during IME composition goes to the input method and never triggers a search; empty input never departs; a submission in flight is never repeated.
 - Navigation happens only when the animation ends; just before it, the field's value and default value are cleared, so it is clean when you come back; if navigation fails, the text returns to the field.

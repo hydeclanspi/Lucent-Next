@@ -17,12 +17,13 @@ for (const dir of ['src/assets', 'src/web', 'demo/film', 'scripts', 'scripts/cap
 }
 
 const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
-if (pkg.name !== 'lucent' || pkg.version !== '5.0.0' || pkg.author !== 'hydeclanspi') throw new Error('Unexpected release identity');
+if (pkg.name !== 'lucent' || pkg.version !== '5.1.3' || pkg.author !== 'hydeclanspi') throw new Error('Unexpected release identity');
 
-// The original HarmonyOS package is kept byte-for-byte; its digest is documented in native/README.md.
-const NATIVE = 'native/lucent-5.0.0-aira.zip';
-const digest = createHash('sha256').update(await readFile(path.join(root, NATIVE))).digest('hex');
+// The HarmonyOS packages are kept byte-for-byte; their digests are documented in native/README.md.
 const documented = await readFile(path.join(root, 'native/README.md'), 'utf8');
-if (!documented.includes(digest)) throw new Error(`${NATIVE} does not match the documented SHA-256`);
+for (const NATIVE of ['native/lucent-5.0.0-aira.zip', 'native/lucent-5.1.3-aira.zip']) {
+  const digest = createHash('sha256').update(await readFile(path.join(root, NATIVE))).digest('hex');
+  if (!documented.includes(digest)) throw new Error(`${NATIVE} does not match the documented SHA-256`);
+}
 
-console.log(`${count} scripts passed syntax checks; release identity and native package digest verified.`);
+console.log(`${count} scripts passed syntax checks; release identity and native package digests verified.`);
