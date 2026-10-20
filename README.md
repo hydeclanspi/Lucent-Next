@@ -10,8 +10,9 @@
 </p>
 
 <p align="center">
-  <a href="https://hydeclanspi.github.io/Lucent-Next/film/"><b>观看影片 ›</b></a> &nbsp;&nbsp;&nbsp;
-  <a href="https://hydeclanspi.github.io/Lucent-Next/"><b>在线体验 ›</b></a><br>
+  <a href="https://hydeclanspi.github.io/Lucent-Next/"><b>在线体验试用 💎</b></a> &nbsp;·&nbsp;
+  <a href="https://hydeclanspi.github.io/Lucent-Next/film/"><b>观看旗舰影片 🎞️&ensp;(推荐)</b></a> &nbsp;·&nbsp;
+  <a href="https://hydeclanspi.github.io/Lucent-Next/film/">真的很推荐点击左边 ⭐</a><br>
   <sub>推荐先看影片：一分四十八秒，请打开声音。</sub>
 </p>
 
@@ -25,9 +26,9 @@
 
 <p align="center">
   <a href="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/check.yml"><img alt="Check" src="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/check.yml/badge.svg"></a>
-  <a href="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/pages.yml"><img alt="Pages" src="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/pages.yml/badge.svg"></a>
-  <img alt="Made for HUAWEI MatePad Edge" src="https://img.shields.io/badge/made%20for-HUAWEI%20MatePad%20Edge-1b2433?style=flat-square">
-  <img alt="Zero runtime dependencies" src="https://img.shields.io/badge/runtime%20dependencies-0-1b2433?style=flat-square">
+  <a href="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/pages.yml"><img alt="Pages" 
+                                                                                     src="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/pages.yml/badge.svg"></a>
+
 </p>
 
 <br>
