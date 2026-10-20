@@ -19,7 +19,6 @@
 
 <p align="center">
   <a href="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/check.yml"><img alt="Check" src="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/check.yml/badge.svg"></a>
-  
 </p>
 
 <br>
