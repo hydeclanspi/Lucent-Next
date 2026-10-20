@@ -8,7 +8,7 @@
   'use strict';
   var DAY = 86400000, LIMIT = 96 * 1024, EVENT_CAP = 200, GRID_W = 26, GRID_H = 12;
   var KEYS = ['interaction.field.v1.a', 'interaction.field.v1.b'];
-  var KINDS = { contact: 1, bump: 1, dodge: 1, charge: 1, miss: 1, autoHit: 1, relay: 1, pilot: 1, push: 1 };
+  var KINDS = { contact: 1, bump: 1, dodge: 1, charge: 1, miss: 1, autoHit: 1, relay: 1, pilot: 1, push: 1, manual: 1 };
   // 相对碰撞速度的分档（像素/秒）：开口向上的曲线——底部一档宽、高频段 5 一档、往上逐步放大、顶端开口。
   var IMPACT_EDGES = [10, 20, 25, 30, 36, 42, 50, 60, 75, 100, 140, 220, 420], IMPACT_BUCKETS = IMPACT_EDGES.length + 1;
   function blank() {
@@ -208,7 +208,7 @@
       if (!event || !KINDS[event.kind] || !Number.isInteger(event.a)) return;
       var a = event.a, b = Number.isInteger(event.b) ? event.b : 0, kind = event.kind;
       var pa = profile(a);
-      // [ap, min, hit, miss, bump, taken, dodge, pilot, relayIn, relayOut]
+      // [ap, min, hit, miss, bump, taken, dodge, pilot, relayIn, relayOut, manual]（manual 自 5.1.3 起记，旧档案按 0 读）
       if (kind === 'contact') { pa[4]++;
           if (b) { var p0 = profile(b); p0[5]++; var pr0 = pairOf(a, b); pr0.row[0]++; }
         }
@@ -228,10 +228,10 @@
         }
       else if (kind === 'relay') { pa[8]++; if (b) profile(b)[9]++; }
       else if (kind === 'pilot') { pa[7]++; }
-      else if (kind === 'push') { /* 手拨推挤只进力度分布与事件环，不进个体档案 */ }
+      else if (kind === 'push' || kind === 'manual') { pa[10] = (pa[10] || 0) + 1; }  // 我操控的出击：拖着推挤或甩出撞上
       if (kind === 'contact') socialRow()[0]++;
       // 只有物理碰撞记相对速度：自然碰撞（contact）、FSD 冲撞（autoHit）与手拨推挤（push）
-      if ((kind === 'contact' || kind === 'autoHit' || kind === 'push') && Number.isFinite(event.power) && event.power >= 0) {
+      if ((kind === 'contact' || kind === 'autoHit' || kind === 'push' || kind === 'manual') && Number.isFinite(event.power) && event.power >= 0) {
         data.impacts[impactBucket(event.power)]++;
         if (event.power > data.impactPeak[0]) data.impactPeak = [event.power, a, b, now()];
       }
@@ -308,15 +308,15 @@
       var profiles = [];
       for (var id = 1; id <= 49; id++) {
         var p = data.profiles[id] || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-        profiles.push({ id: id, appearances: p[0], minutes: Math.round(p[1] / 60), hit: p[2], miss: p[3], bump: p[4], taken: p[5], dodge: p[6], pilot: p[7], relayIn: p[8], relayOut: p[9] });
+        profiles.push({ id: id, appearances: p[0], minutes: Math.round(p[1] / 60), hit: p[2], miss: p[3], bump: p[4], taken: p[5], dodge: p[6], pilot: p[7], relayIn: p[8], relayOut: p[9], manual: p[10] || 0 });
       }
       var pairs = Object.keys(data.pairs).map(function (key) {
         var rc = data.pairs[key], ids = key.split(',').map(Number);
         return { a: ids[0], b: ids[1], contact: rc[0], hitAB: rc[1], hitBA: rc[2], dodgeAB: rc[3], dodgeBA: rc[4], nearMinutes: Math.round(rc[5]) };
       }).filter(function (pair) { return pair.contact + pair.nearMinutes > 0; })
         .sort(function (x, y) { return (y.contact * 3 + y.nearMinutes) - (x.contact * 3 + x.nearMinutes); });
-      var totals = { blue: 0, rage: 0, hit: 0, miss: 0, contact: 0, bump: 0, dodge: 0, autoHit: 0, relay: 0, pilot: 0 };
-      profiles.forEach(function (p) { totals.hit += p.hit; totals.miss += p.miss; totals.relay += p.relayIn; totals.pilot += p.pilot; });
+      var totals = { blue: 0, rage: 0, hit: 0, miss: 0, manual: 0, contact: 0, bump: 0, dodge: 0, autoHit: 0, relay: 0, pilot: 0 };
+      profiles.forEach(function (p) { totals.hit += p.hit; totals.miss += p.miss; totals.manual += p.manual; totals.relay += p.relayIn; totals.pilot += p.pilot; });
       social.forEach(function (day) { totals.contact += day.contact; totals.bump += day.bump; totals.dodge += day.dodge; totals.autoHit += day.autoHit; });
       drive.forEach(function (day) { totals.blue += day.blue; totals.rage += day.rage; });
       return { status: status, message: message, range: range || '7d', grid: grid, gridW: GRID_W, gridH: GRID_H,

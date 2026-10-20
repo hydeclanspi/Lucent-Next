@@ -1,0 +1,11 @@
+/* 5.1 · 绢光与浮金：画布贴在搜索框身后，画在玻璃之上、文字之下。 */
+.search-aura { position: absolute; z-index: -1; pointer-events: none; }
+
+/* 开启时收起底边那道白色内高光，描边转暖，让金色丝绢整圈连贯；关掉即复原。 */
+.search { transition: border-color .9s ease, box-shadow .9s ease; }
+.search.search-simulation-enabled {
+  border-color: rgba(246, 230, 202, .52);
+  box-shadow: inset 0 1px 3px rgba(20, 26, 52, 0.04);
+}
+:root[data-theme="dark"] .search.search-simulation-enabled { border-color: rgba(232, 208, 168, .16); }
+@media (prefers-reduced-motion: reduce) { .search { transition: none; } }
