@@ -385,3 +385,62 @@ button.ab-row:hover .ab-row-arrow { opacity: 1; transform: translateX(2px); colo
   border: 1px solid rgba(255, 255, 255, .26); background: rgba(255, 255, 255, .08);
 }
 @media (prefers-reduced-motion: reduce) { .lx-immersive-hint { transition: none; } }
+
+/* The MatePad's own chrome on large screens, measured from a screenshot of the device (1418 × 945 CSS px
+   at 2.2×): HarmonyOS's status bar, which insets the page by 39 px as it does on the device, then Aira's
+   toolbar and the gesture bar. Phones, narrow windows and screens shorter than 740 px (where the chrome
+   would sit on the card) keep their own browser's chrome. */
+.ab-statusbar, .ab-toolbar, .ab-gesture { display: none; }
+@media (min-width: 900px) and (min-height: 740px) {
+  :root[data-browser-demo] { --safe-t: 39px; }
+  :root[data-browser-demo] .ab-statusbar {
+    display: block; position: fixed; inset: 0 0 auto; height: 39px; z-index: 2147483000;
+    pointer-events: none; color: #fff; fill: currentColor; font-family: var(--sans);
+  }
+  .ab-sb-time { position: absolute; left: 15.8px; top: 12.6px; font-size: 14.5px; font-weight: 600; line-height: 1; letter-spacing: .45px; white-space: nowrap; text-shadow: 0 0 1px rgba(8, 16, 34, .35); }
+  .ab-sb-colon { position: relative; top: -1.1px; }
+  .ab-sb-handle { position: absolute; left: 50%; top: 12.7px; display: flex; gap: 5px; transform: translateX(-50%); }
+  .ab-sb-handle i { width: 5.5px; height: 5.5px; border-radius: 2.75px; background: rgba(255, 255, 255, .13); }
+  .ab-sb-handle i:nth-child(2) { width: 14.5px; }
+  .ab-sb-icons { position: absolute; right: 17.5px; top: 13.6px; width: 49.6px; height: 12.8px; }
+  .ab-sb-icons svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+  :root[data-browser-demo] .ab-toolbar {
+    display: flex; gap: 8.2px; position: fixed; left: 50%; bottom: 35.5px; z-index: 20;
+    transform: translateX(-50%); font-family: var(--sans);
+  }
+  .ab-tb-round, .ab-tb-bar {
+    height: 47.7px; border: 1px solid rgba(255, 255, 255, .42); color: #222529;
+    background: linear-gradient(180deg, rgba(222, 223, 228, .72) 0%, rgba(240, 241, 244, .8) 45%,
+      rgba(244, 245, 247, .82) 70%, rgba(228, 229, 233, .74) 100%);
+    box-shadow: 0 10px 26px rgba(4, 10, 24, .2), inset 0 1px 0 rgba(255, 255, 255, .62);
+    -webkit-backdrop-filter: blur(14px) saturate(150%); backdrop-filter: blur(14px) saturate(150%);
+  }
+  .ab-tb-round { width: 47.7px; padding: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; }
+  .ab-tb-round svg { display: block; }
+  .ab-tb-back svg { width: 14px; height: 11.4px; color: #7c7f86; }
+  .ab-tb-menu svg { width: 16px; height: 13px; }
+  .ab-tb-bar { position: relative; width: 827.7px; border-radius: 23.85px; }
+  .ab-tb-bar button { position: absolute; top: 0; height: 100%; padding: 0; border: 0; background: none; color: inherit; cursor: pointer; display: grid; place-items: center; }
+  .ab-tb-bar .ab-tb-forward { left: 18.6px; width: 14.6px; color: #7c7f86; }
+  .ab-tb-forward svg { width: 14px; height: 11.4px; }
+  .ab-tb-bar .ab-tb-address { left: 48px; right: 48px; font: 400 15px/1 var(--sans); color: #5d6168; }
+  .ab-tb-bar .ab-tb-tabs { right: 17.7px; width: 16.4px; }
+  .ab-tb-tabs svg { width: 16.4px; height: 16px; fill: currentColor; }
+  .ab-tb-round:disabled, .ab-tb-bar button:disabled { cursor: default; }
+  .ab-tb-round:focus-visible, .ab-tb-bar button:focus-visible { outline: 2px solid var(--aira-accent); outline-offset: 2px; }
+  :root[data-browser-demo] .ab-gesture {
+    display: block; position: fixed; left: 50%; bottom: 6.9px; z-index: 20; width: 305.5px; height: 4.6px;
+    border-radius: 2.3px; background: rgba(255, 255, 255, .1); transform: translateX(-50%); pointer-events: none;
+  }
+  :root[data-browser-demo] .lx-immersive-hint { bottom: 96px; }
+  /* Aira in dark mode: the same glass, smoked. */
+  :root[data-theme="dark"] .ab-tb-round, :root[data-theme="dark"] .ab-tb-bar {
+    color: #e8ebf1; border-color: rgba(255, 255, 255, .14);
+    background: linear-gradient(180deg, rgba(50, 54, 64, .74) 0%, rgba(40, 44, 54, .8) 60%, rgba(46, 50, 60, .76) 100%);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, .32), inset 0 1px 0 rgba(255, 255, 255, .12);
+  }
+  :root[data-theme="dark"] .ab-tb-back svg, :root[data-theme="dark"] .ab-tb-bar .ab-tb-forward { color: #8e939d; }
+  :root[data-theme="dark"] .ab-tb-bar .ab-tb-address { color: #b8bdc7; }
+  :root[data-theme="dark"][data-browser-demo] .ab-gesture { background: rgba(255, 255, 255, .14); }
+}
