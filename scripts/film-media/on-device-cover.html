@@ -1,0 +1,64 @@
+<!doctype html>
+<!-- Lucent · 灵感台 — the README cover of the on-device recording (demo/media/on-device.jpg), rendered by
+     scripts/film-media.mjs at 1920×1080. The screen is the recording at 25 s — the field chronicle — and the ring
+     from the film's first frame is the play button. The recording itself still opens on slot.html. -->
+<html lang="zh-CN"><head><meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+  body {
+    background:
+      radial-gradient(58% 72% at 16% 20%, rgba(160, 192, 255, .62), rgba(160, 192, 255, 0) 70%),
+      radial-gradient(56% 62% at 88% 26%, rgba(206, 192, 255, .58), rgba(206, 192, 255, 0) 70%),
+      radial-gradient(72% 62% at 72% 98%, rgba(255, 214, 186, .55), rgba(255, 214, 186, 0) 70%),
+      linear-gradient(180deg, #e7edf8, #f3f5fb);
+  }
+  /* The tablet sits left of centre, held by the same narrow brushed-metal band as the recording's cover. */
+  .device { position: absolute; left: 170px; top: 148px; width: 1116px; height: 784px; box-sizing: border-box; padding: 2.5px; border-radius: 46px;
+    background: linear-gradient(162deg, #f4f5f7 0%, #b9bdc4 14%, #7b7f87 34%, #55595f 52%, #8b8f97 74%, #d9dce1 92%, #f2f3f5 100%);
+    box-shadow: 0 60px 120px rgba(32, 44, 82, .24), 0 22px 44px rgba(32, 44, 82, .14), 0 3px 6px rgba(18, 24, 38, .16); }
+  .device::before { content: ""; position: absolute; inset: 0; border-radius: 46px; pointer-events: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .85), inset 0 -1px 0 rgba(0, 0, 0, .18); }
+  .bezel { position: relative; width: 100%; height: 100%; box-sizing: border-box; padding: 9.5px; border-radius: 43.5px; background: #040506;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07), inset 0 1px 1px rgba(255, 255, 255, .1); }
+  .bezel::after { content: ""; position: absolute; left: 50%; top: 2.75px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #4a5366 0%, #151922 55%, #07080b 100%); }
+  /* 25 s in: the field chronicle, filling the screen the recording itself fills. */
+  .screen { position: relative; width: 100%; height: 100%; border-radius: 34px; overflow: hidden;
+    background: #05080f url("on-device-screen.jpg") center / cover no-repeat; }
+  .screen::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, 0) 16%, rgba(0, 0, 0, 0) 84%, rgba(0, 0, 0, .08)); }
+  .screen::after { content: ""; position: absolute; inset: 0; border-radius: 34px; pointer-events: none;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .05); }
+  .play { position: absolute; left: 50%; top: 46%; width: 170px; height: 170px; transform: translate(-50%, -50%);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 2;
+    background: radial-gradient(circle, rgba(7, 12, 24, .30) 0%, rgba(7, 12, 24, .13) 46%, rgba(7, 12, 24, 0) 70%); }
+  .play svg { width: 104px; height: 104px; overflow: visible; filter: drop-shadow(0 3px 12px rgba(8, 14, 28, .55)); }
+  .play circle { fill: none; stroke: #f2f7ff; stroke-width: 2.4; }
+  .play .glow { stroke: #bcdcff; stroke-width: 9; opacity: .32; filter: blur(5px); }
+  .play path { fill: #f2f7ff; }
+  /* The words leave the dark screen and sit to its right, on the light ground. */
+  .copy { position: absolute; left: 1360px; top: 300px; width: 430px; height: 480px; display: flex; flex-direction: column;
+    justify-content: center; color: #0d1220; }
+  h1 { margin: 0 0 22px; font: 300 64px/1.2 "Noto Serif CJK SC", serif; letter-spacing: 12px; text-indent: 12px; }
+  p { margin: 0; font: 300 22px/1.5 "Noto Sans CJK SC", sans-serif; letter-spacing: 2px; color: rgba(13, 18, 32, .62); }
+  p b { font: 300 22px/1 "Inter", sans-serif; letter-spacing: .6px; }
+  .pill { margin-top: 36px; align-self: flex-start; padding: 11px 22px; border-radius: 999px; border: 1px solid rgba(13, 18, 32, .26);
+    background: rgba(255, 255, 255, .38); font: 300 17px/1 "Noto Sans CJK SC", sans-serif; letter-spacing: 3px; color: rgba(13, 18, 32, .76); }
+  .pill i { font: 300 17px/1 "Inter", sans-serif; font-style: normal; letter-spacing: .6px; margin-left: 10px; color: rgba(13, 18, 32, .46); }
+  .mark { position: absolute; left: 0; right: 0; bottom: 70px; text-align: center; color: #0d1220; }
+  .mark strong { font: 300 24px/1 "Inter", sans-serif; letter-spacing: 10px; }
+  .mark span { margin-left: 18px; padding-left: 18px; border-left: 1px solid rgba(13, 18, 32, .38); font: 300 20px/1 "Noto Serif CJK SC", serif; letter-spacing: 6px; }
+</style></head>
+<body>
+  <div class="device"><div class="bezel"><div class="screen">
+    <div class="play">
+      <svg viewBox="-52 -52 104 104" aria-hidden="true"><circle class="glow" r="46"/><circle r="46"/><path d="M-11 -17 L19 0 L-11 17 Z"/></svg>
+    </div>
+  </div></div></div>
+  <div class="copy">
+    <h1>实机演示</h1>
+    <p>在 <b>HUAWEI MatePad Edge</b> 上拍摄</p>
+    <div class="pill">现已放映<i>Now showing</i></div>
+  </div>
+  <div class="mark"><strong>LUCENT</strong><span>灵感台</span></div>
+</body></html>

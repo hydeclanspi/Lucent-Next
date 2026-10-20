@@ -7,8 +7,8 @@
 
 The recordings (3120 x 2080 screen recordings from the HUAWEI MatePad Edge, silent) are not kept in the repository:
 the first (1:47) runs from the search to the backup, the second (0:26) from the search box as it was to the
-gold silk of 5.1.3 and the folded card. The edit opens on the cover the README shows (scripts/film-media/slot.html):
-its words leave and the first recording comes up in the device's screen. The device keeps its size, with only a
+gold silk of 5.1.3 and the folded card. The edit opens on its own cover (scripts/film-media/slot.html): its words
+leave and the first recording comes up in the device's screen. The device keeps its size, with only a
 slight lean in, so its name stays under it throughout; the search plays at its own pace, the line of light and the
 page it opens included. The quiet stretches run faster, each marked with its speed above the device's top right
 corner. After the backup the second recording takes over, and the camera goes into the screen as the README's
@@ -66,7 +66,7 @@ JOIN = 0.06                                # each join is an equal-power crossfa
 # --head: the earlier render's frames (at 60 fps) that make everything before the second recording
 HEAD = [(0, 1740), (1860, 2335)]
 
-# The cover (scripts/film-media/slot.html) is laid out at 1920 x 1080; the device's screen sits inside it.
+# The recording's opening frame (scripts/film-media/slot.html) is laid out at 1920 x 1080; the device's screen sits inside it.
 DEVICE = (402, 152, 1518, 904)
 SCREEN = (414, 164, 1506, 892)            # 3:2, like the recording
 RADIUS = 34

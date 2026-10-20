@@ -2,12 +2,12 @@
 //   demo/media/film-poster.jpg   the film's cover: the four layers apart, 20 s in, straight from the page at 2560 × 1440
 //   demo/media/film-poster-play.jpg  the same with the on-device cover's play button over it, for the README
 //   demo/media/film-teaser.webp  seven passages of the rendered film, cross-faded, 1200 px wide
-//   demo/media/on-device.jpg     the cover of the on-device recording (scripts/film-media/slot.html)
+//   demo/media/on-device.jpg     the README cover of the on-device recording at 25 s (scripts/film-media/on-device-cover.html)
 //   demo/media/lucent-film.mp4   gets the poster as its cover art, for players and file browsers
 //
 //   npm run build && node scripts/film.mjs          # first, the film itself
-//   verification/device/cover-2x.png and cover-bare-2x.png   only when asked for: the slot at 2x, with and without its
-//                                 words, for scripts/device-edit.py
+//   verification/device/cover-2x.png and cover-bare-2x.png   only when asked for: the recording's opening frame at 2x,
+//                                 with and without its words, for scripts/device-edit.py
 //
 //   AIRA_BROWSER_PATH=/path/to/chromium node scripts/film-media.mjs [poster] [play] [teaser] [slot] [cover] [device]
 import http from 'node:http';
@@ -80,7 +80,7 @@ if (want('poster') || want('play')) {
 if (want('slot')) {
   const browser = await launch();
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
-  await page.goto('file://' + path.join(root, 'scripts/film-media/slot.html'));
+  await page.goto('file://' + path.join(root, 'scripts/film-media/on-device-cover.html'));
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({ path: path.join(media, 'on-device.jpg'), type: 'jpeg', quality: 88 });
   await browser.close();
