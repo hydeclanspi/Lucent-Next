@@ -142,7 +142,9 @@
     var h = el("h2", "", title); h.id = "ab-title"; headings.appendChild(h);
     var sub = el("p", "ab-subtitle", subtitle); sub.id = "ab-subtitle"; headings.appendChild(sub);
     var exit = button("", close, "icon"); exit.setAttribute("aria-label", "关闭"); exit.appendChild(icon("close"));
-    header.append(mark, headings, exit); dialog.appendChild(header);
+    // Every panel says what it is: a stand-in for the browser's own interface.
+    var demoNote = el("p", "ab-demo-note", "仅为 demo 模拟，实际效果调用的是浏览器系统接口");
+    header.append(mark, headings, exit, demoNote); dialog.appendChild(header);
     body = el("div", "ab-body"); dialog.appendChild(body);
     feedback = el("p", "ab-feedback"); feedback.setAttribute("role", "status"); feedback.hidden = true; dialog.appendChild(feedback);
     overlay.appendChild(dialog); build(body);

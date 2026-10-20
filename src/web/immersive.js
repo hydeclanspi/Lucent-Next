@@ -8,6 +8,8 @@
  *   - Esc leaves. Once you leave, it does not come back by itself during this visit.
  *   - F toggles full screen at any time (not while typing).
  *   - Installed as an app, Lucent already opens full screen, so nothing is armed.
+ *   - Out of full screen, a pill says full screen is best and offers a button for it (× hides it for the visit).
+ *   - In full screen, a line in the lower left says this is the web demo; the flagship is the tablet's touch.
  *
  * Web-only. The native Aira package never loads this file.
  */
@@ -20,8 +22,9 @@
   if (!request || !exit || !enabled || window.self !== window.top) return;
 
   var DECLINED = "lucent:immersive:declined";
+  var HIDDEN = "lucent:immersive:prompt-hidden";
   var LARGE = 900;
-  var leaving = false, seen = false, hint = null, hintTimer = 0; // seen: in full screen at some point, not yet seen leaving
+  var leaving = false, seen = false, hint = null, note = null; // seen: in full screen at some point, not yet seen leaving
 
   function active() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
   function installed() {
@@ -30,6 +33,7 @@
     });
   }
   function declined() { try { return sessionStorage.getItem(DECLINED) === "1"; } catch (_) { return false; } }
+  function hidden() { try { return sessionStorage.getItem(HIDDEN) === "1"; } catch (_) { return false; } }
   function decline() { try { sessionStorage.setItem(DECLINED, "1"); } catch (_) {} }
   function armed() { return window.innerWidth >= LARGE && !installed() && !declined() && !active(); }
   function typing(target) {
@@ -56,30 +60,53 @@
     leaving = false; seen = false;
   }
 
-  function dismissHint() {
-    clearTimeout(hintTimer);
-    if (!hint) return;
-    var node = hint;
-    hint = null;
-    node.classList.remove("is-visible");
-    setTimeout(function () { node.remove(); }, 420);
+  // The prompt stays while the page is out of full screen on a large screen; the note shows while it is in.
+  var ICON = {
+    expand: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg>',
+    close: '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2 2l8 8M10 2 2 10"/></svg>'
+  };
+  function buildHint() {
+    var node = document.createElement("div");
+    node.className = "lx-immersive-hint";
+    node.setAttribute("role", "region");
+    node.setAttribute("aria-label", "全屏提示");
+    node.innerHTML = '<span class="lx-immersive-main">全屏效果最佳</span>' +
+      '<button type="button" class="lx-immersive-go">' + ICON.expand + '进入全屏</button>' +
+      '<span class="lx-immersive-keys"><kbd>F</kbd> 切换 · <kbd>Esc</kbd> 退出</span>' +
+      '<button type="button" class="lx-immersive-close" aria-label="本次访问不再提示">' + ICON.close + '</button>';
+    node.querySelector(".lx-immersive-go").addEventListener("click", function () { enter(); });
+    node.querySelector(".lx-immersive-close").addEventListener("click", function () {
+      try { sessionStorage.setItem(HIDDEN, "1"); } catch (_) {}
+      sync();
+    });
+    return node;
   }
-  function showHint() {
-    if (!armed() || hint) return;
-    hint = document.createElement("div");
-    hint.className = "lx-immersive-hint";
-    hint.setAttribute("role", "status");
-    hint.innerHTML = '<span class="lx-immersive-main">轻点任意处，进入全屏</span><span class="lx-immersive-keys"><kbd>F</kbd> 切换 · <kbd>Esc</kbd> 退出</span>';
-    document.body.appendChild(hint);
-    requestAnimationFrame(function () { if (hint) hint.classList.add("is-visible"); });
-    hintTimer = setTimeout(dismissHint, 6500);
+  function sync() {
+    var wide = window.innerWidth >= LARGE, full = !!active() || installed();
+    var showHint = wide && !full && !hidden();
+    if (showHint && !hint) {
+      hint = buildHint();
+      document.body.appendChild(hint);
+      requestAnimationFrame(function () { if (hint) hint.classList.add("is-visible"); });
+    } else if (!showHint && hint) {
+      var gone = hint; hint = null;
+      gone.classList.remove("is-visible");
+      setTimeout(function () { gone.remove(); }, 420);
+    }
+    if (!note) {
+      note = document.createElement("p");
+      note.className = "lx-demo-note";
+      note.textContent = "仅为 Web 端 demo 模拟，旗舰最佳效果为 Pad 端的触屏体验";
+      document.body.appendChild(note);
+    }
+    note.classList.toggle("is-visible", wide && full);
   }
 
   // Capture phase, so a control that stops propagation still counts as the first gesture.
   // Only trusted events: the showcase links press buttons programmatically.
   window.addEventListener("click", function (event) {
     if (!event.isTrusted) return;
-    dismissHint();
+    if (event.target && event.target.closest && event.target.closest(".lx-immersive-hint")) return; // its own buttons decide
     if (seen && !active()) { left(); return; } // the exit event may not have arrived yet
     if (armed()) enter();
   }, true);
@@ -89,17 +116,18 @@
     if ((event.key !== "f" && event.key !== "F") || typing(event.target)) return;
     if (document.querySelector(".ab-overlay, .edit-root:not([hidden])")) return;
     event.preventDefault();
-    dismissHint();
     if (active()) leave(); else enter();
   });
 
   function changed() {
-    if (active()) { seen = true; dismissHint(); return; }
-    if (seen) left();
+    if (active()) seen = true;
+    else if (seen) left();
+    sync();
   }
   document.addEventListener("fullscreenchange", changed);
   document.addEventListener("webkitfullscreenchange", changed);
 
-  if (document.readyState === "complete") setTimeout(showHint, 900);
-  else window.addEventListener("load", function () { setTimeout(showHint, 900); }, { once: true });
+  window.addEventListener("resize", sync);
+  if (document.readyState === "complete") setTimeout(sync, 900);
+  else window.addEventListener("load", function () { setTimeout(sync, 900); }, { once: true });
 })();
