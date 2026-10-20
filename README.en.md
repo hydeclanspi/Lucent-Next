@@ -121,10 +121,10 @@ The surface is what you feel; underneath is what makes it hold.
 | | The 台 | What you feel | What is underneath |
 |:-:|---|---|---|
 | 01 | [**Workbench**](#01--workbench-everything-in-place) | Clock and greeting, profile, search, shortcuts, direct entries and a one-line note, each in its place, held by one clear pane of glass | A layout set on 1560×1040, pixel-matched to a 3120×2080 wallpaper; a short-screen guard; focus mode |
-| 02 | [**Residents**](#02--residents-a-back-garden-that-gathers-stories) | Forty-nine numbered glass Lueurs drift, meet and chase in the open space; flick them and the next wallpaper changes; each one's history is kept | Ornstein–Uhlenbeck heading · 4 px sub-stepped impulse physics · breadth-first autonomous Drive · 70% encounters · weighted placement · checksummed files |
-| 03 | [**Launch&nbsp;pad**](#03--launch-pad-a-thought-in-flight) | The words you wrote turn into light, reach the arrow, and only then does the search depart | Six motions chosen from sixteen studies · every frame a pure function of progress · grapheme-aware text |
-| 04 | [**Stage**](#04--stage-stay-and-the-light-performs-for-you) | Stay, and the light stays too: a first shot that flies back, bursts while you hold Enter, blue-white lasers racing through platinum conduits, gold silk and motes flowing round the search field | Reversal as rebound · one-bit demand · truncated-normal pacing · lanes without replacement · silk paced by arc length |
-| 05 | [**Console**](#05--console-every-dial-is-yours) | From six glass parameters to a long press on every control, the depth is handed to you | Three layers of defaults · two surfaces × two finishes × six dials · a second layer under long press |
+| 02 | [**Launch&nbsp;pad**](#02--launch-pad-a-thought-in-flight) | The words you wrote turn into light, reach the arrow, and only then does the search depart | Six motions chosen from sixteen studies · every frame a pure function of progress · grapheme-aware text |
+| 03 | [**Stage**](#03--stage-stay-and-the-light-performs-for-you) | Stay, and the light stays too: a first shot that flies back, bursts while you hold Enter, blue-white lasers racing through platinum conduits, gold silk and motes flowing round the search field | Reversal as rebound · one-bit demand · truncated-normal pacing · lanes without replacement · silk paced by arc length |
+| 04 | [**Console**](#04--console-every-dial-is-yours) | From six glass parameters to a long press on every control, the depth is handed to you | Three layers of defaults · two surfaces × two finishes × six dials · a second layer under long press |
+| 05 | [**Residents**](#05--residents-a-back-garden-that-gathers-stories) | Forty-nine numbered glass Lueurs drift, meet and chase in the open space; flick them and the next wallpaper changes; each one's history is kept | Ornstein–Uhlenbeck heading · 4 px sub-stepped impulse physics · breadth-first autonomous Drive · 70% encounters · weighted placement · checksummed files |
 
 ## Architecture: from one screen to one pixel
 
@@ -146,7 +146,55 @@ A day begins on a quiet surface. It holds only what you use every day, each thin
 - **Main card.** Search with four engines (one of them a custom template); shortcuts in three forms — automatic, framed, or an initial tile; direct entries to bookmarks, downloads, saved pages, tabs, search settings, user scripts and settings. In the lower right, a one-line note: long-press to rewrite it, archived to the second.
 - **Focus mode.** Fold both sections and the card sinks to the visual centre; search becomes the only focus.
 
-## 02 · Residents: a back garden that gathers stories
+## 02 · Launch pad: a thought, in flight
+
+<p align="center"><img src="demo/media/motion-six.webp" alt="The search-motion preview plays the six motions at 0.35× — Lightline, Microprism, Shutter, Platinum filament, Through the eye, Near orbit" width="100%"></p>
+
+Every search lifts off from here. The words you wrote become a beam of light first; when it reaches the blue arrow, the search departs — out of the base, into the world's interfaces: Google, Bing, Baidu, or an engine template of your own.
+
+- **Six from sixteen.** First came a standalone [atelier](https://hydeclanspi.github.io/Lucent-Next/atelier/): the speed of light, the order of letters, the breath of materials, the spirit of the Lueurs — sixteen studies you can scrub frame by frame or watch at 0.35×. Six made it into the product and kept their atelier numbers: 01 Lightline · 03 Microprism · 04 Shutter · 09 Platinum filament · 10 Through the eye · 14 Near orbit.
+- **Every frame is a pure function of progress.** The same t always draws the same frame, so a motion can be slowed, reversed, and tested frame by frame: across 21,618 progress states the six renderers keep finite coordinates, balanced drawing state and identical output on a second pass.
+- **Respect for the words.** Chinese and emoji are split by grapheme, so combined characters stay whole; Enter during IME composition belongs to the IME; navigation waits for the light, and the field is clean when you come back. Even if the host pauses frame callbacks, the search is sent exactly once.
+
+→ Deep dive: [A thought, in flight](docs/en/motion.md)
+
+## 03 · Stage: stay, and the light performs for you
+
+<p align="center"><img src="demo/media/simulation.webp" alt="Endless simulated launch: the first shot flies out and plays back to where it started; then Enter is held and light fires at the arrow shot after shot, each in a different gesture" width="100%"></p>
+
+Lucent is also a place you want to stay. Turn on the endless simulated-launch loop, and the search field launches light and keeps the search at home — the base closes the loop on itself:
+
+- **The first shot flies back.** It is a rehearsal: out along its path, then played in reverse, every character landing exactly where it was — the dividend of renderers being pure functions. Every shot after it takes the words away with the light.
+- **Hold for bursts.** Hold Enter for more than 280 ms and light fires shot after shot, 160 ms each, drawing the path alone — one canvas, one frame loop, one measurement for the whole burst.
+- **Demand is one bit.** Pressing again mid-flight records only "one more", so the queue always holds a single slot. Some keyboards send pairs of key-down and key-up while auto-repeating, so a key-up waits 80 ms before counting as a release.
+- **Platinum rings, blue-white lasers.** Turn Random on and the gaps between the cards become champagne-platinum conduits with blue-white lasers racing through them. Each beam's speed is drawn from a truncated normal N(0.70, 0.10²); lanes are drawn by weight without replacement, so the beams in one channel always run the same way; the opening sends three at once.
+
+<p align="center"><img src="demo/media/random-current.webp" alt="With Random on, champagne-platinum conduits light up in the gaps between the six cards and blue-white lasers race along them; the opening sends three beams at once" width="100%"></p>
+
+**Silk light and gold motes.** Turn the loop on and the search field takes on a rim of gold. Two ribbons of gold silk travel its outline at an even pace by arc length, one lap in ten seconds, the top edge and the bottom alike; gold motes rise slowly from the top edge and sink gently from the bottom, 12–22 at a time, redrawn every 4–7.65 s, most of them lifting from where the silk is passing. Each launch swells them to 1.25–1.6× their number, and they settle back slowly. It reads only signals the search field already carries; not one line of the launch logic changed.
+
+<p align="center"><img src="demo/media/search-aura.webp" alt="Recorded on the device: first the search field as it is; a tap on ✧ 理, and the endless simulated-launch loop is switched on at the top right of the 念起，光行 panel; back on the main screen, two gold silk ribbons flow round the search field's outline while gold motes rise and sink" width="100%"></p>
+<p align="center"><sub>Recorded on the HUAWEI MatePad Edge: tap ✧ 理, switch the loop on at the top right of 念起，光行, and back to the search field.</sub></p>
+
+On days you would rather do nothing, the light plays for you, in place. Recharge, then set off again.
+
+→ Deep dives: [simulated launch](docs/en/motion.md#7-simulated-launch) · [how Random schedules its lasers](docs/en/motion.md#6-random-platinum-rings-and-blue-white-lasers)
+
+## 04 · Console: every dial is yours
+
+<p align="center"><img src="demo/media/glass-compare.jpg" alt="The same main card: Warm Clear on the left half, Classic Frost on the right" width="100%"></p>
+<p align="center"><sub>The same main card: Warm Clear on the left, Classic Frost on the right.</sub></p>
+
+The surface stays quiet, and all of the depth is yours:
+
+- **Glass, down to the parameter.** Lucent Glass has a setting for the main card and another for the sheets: Classic Frost or Warm Clear, then six dials from 0 to 100 — clarity, softness, warmth, edge, colour and touch. They feed six optical layers: backdrop, bed, ambient light, rim, touch sheen and an independent foreground. Filters touch only the decorative layers, so text stays sharp; at rest, nothing animates.
+- **Wallpaper.** Light, Dark, or a random draw weighted by the odds the Lueurs set; soft focus 0–20%, brightness 50–100%, and a separate frame for each wallpaper.
+- **Lueurs.** Count 0–49, collision strength 1–24× (or redrawn at every launch), natural pace 0.25–16×, the Light/Dark odds, and cruise on arrival.
+- **Motion.** Any of the six, Random alongside, or motion off, so the search departs at once.
+- **Profile and shortcuts.** Name, one-liner, signature, tags, level and grip label are all yours to rewrite; every shortcut can take any of three forms and 28 colours.
+- **Three layers of defaults.** Try anything now, keep the combinations you like as defaults, and return to the factory baseline in one tap.
+
+## 05 · Residents: a back garden that gathers stories
 
 The Lueurs are what bring the base to life. They began as a red circle drawn on a screenshot: two tiny panes of glass in the open space, quiet, and worth reaching out to flick. They grew into an ecosystem: forty-nine residents with fixed numbers, every one of their histories kept.
 
@@ -173,55 +221,7 @@ The Lueurs are what bring the base to life. They began as a red circle drawn on 
 
 → Deep dives: [the Lueurs engine](docs/en/lueurs.md) · [the chronicle](docs/en/chronicle.md)
 
-## 03 · Launch pad: a thought, in flight
-
-<p align="center"><img src="demo/media/motion-six.webp" alt="The search-motion preview plays the six motions at 0.35× — Lightline, Microprism, Shutter, Platinum filament, Through the eye, Near orbit" width="100%"></p>
-
-Every search lifts off from here. The words you wrote become a beam of light first; when it reaches the blue arrow, the search departs — out of the base, into the world's interfaces: Google, Bing, Baidu, or an engine template of your own.
-
-- **Six from sixteen.** First came a standalone [atelier](https://hydeclanspi.github.io/Lucent-Next/atelier/): the speed of light, the order of letters, the breath of materials, the spirit of the Lueurs — sixteen studies you can scrub frame by frame or watch at 0.35×. Six made it into the product and kept their atelier numbers: 01 Lightline · 03 Microprism · 04 Shutter · 09 Platinum filament · 10 Through the eye · 14 Near orbit.
-- **Every frame is a pure function of progress.** The same t always draws the same frame, so a motion can be slowed, reversed, and tested frame by frame: across 21,618 progress states the six renderers keep finite coordinates, balanced drawing state and identical output on a second pass.
-- **Respect for the words.** Chinese and emoji are split by grapheme, so combined characters stay whole; Enter during IME composition belongs to the IME; navigation waits for the light, and the field is clean when you come back. Even if the host pauses frame callbacks, the search is sent exactly once.
-
-→ Deep dive: [A thought, in flight](docs/en/motion.md)
-
-## 04 · Stage: stay, and the light performs for you
-
-<p align="center"><img src="demo/media/simulation.webp" alt="Endless simulated launch: the first shot flies out and plays back to where it started; then Enter is held and light fires at the arrow shot after shot, each in a different gesture" width="100%"></p>
-
-Lucent is also a place you want to stay. Turn on the endless simulated-launch loop, and the search field launches light and keeps the search at home — the base closes the loop on itself:
-
-- **The first shot flies back.** It is a rehearsal: out along its path, then played in reverse, every character landing exactly where it was — the dividend of renderers being pure functions. Every shot after it takes the words away with the light.
-- **Hold for bursts.** Hold Enter for more than 280 ms and light fires shot after shot, 160 ms each, drawing the path alone — one canvas, one frame loop, one measurement for the whole burst.
-- **Demand is one bit.** Pressing again mid-flight records only "one more", so the queue always holds a single slot. Some keyboards send pairs of key-down and key-up while auto-repeating, so a key-up waits 80 ms before counting as a release.
-- **Platinum rings, blue-white lasers.** Turn Random on and the gaps between the cards become champagne-platinum conduits with blue-white lasers racing through them. Each beam's speed is drawn from a truncated normal N(0.70, 0.10²); lanes are drawn by weight without replacement, so the beams in one channel always run the same way; the opening sends three at once.
-
-<p align="center"><img src="demo/media/random-current.webp" alt="With Random on, champagne-platinum conduits light up in the gaps between the six cards and blue-white lasers race along them; the opening sends three beams at once" width="100%"></p>
-
-**Silk light and gold motes.** Turn the loop on and the search field takes on a rim of gold. Two ribbons of gold silk travel its outline at an even pace by arc length, one lap in ten seconds, the top edge and the bottom alike; gold motes rise slowly from the top edge and sink gently from the bottom, 12–22 at a time, redrawn every 4–7.65 s, most of them lifting from where the silk is passing. Each launch swells them to 1.25–1.6× their number, and they settle back slowly. It reads only signals the search field already carries; not one line of the launch logic changed.
-
-<p align="center"><img src="demo/media/search-aura.webp" alt="Recorded on the device: first the search field as it is; a tap on ✧ 理, and the endless simulated-launch loop is switched on at the top right of the 念起，光行 panel; back on the main screen, two gold silk ribbons flow round the search field's outline while gold motes rise and sink" width="100%"></p>
-<p align="center"><sub>Recorded on the HUAWEI MatePad Edge: tap ✧ 理, switch the loop on at the top right of 念起，光行, and back to the search field.</sub></p>
-
-On days you would rather do nothing, the light plays for you, in place. Recharge, then set off again.
-
-→ Deep dives: [simulated launch](docs/en/motion.md#7-simulated-launch) · [how Random schedules its lasers](docs/en/motion.md#6-random-platinum-rings-and-blue-white-lasers)
-
-## 05 · Console: every dial is yours
-
-<p align="center"><img src="demo/media/glass-compare.jpg" alt="The same main card: Warm Clear on the left half, Classic Frost on the right" width="100%"></p>
-<p align="center"><sub>The same main card: Warm Clear on the left, Classic Frost on the right.</sub></p>
-
-The surface stays quiet, and all of the depth is yours:
-
-- **Glass, down to the parameter.** Lucent Glass has a setting for the main card and another for the sheets: Classic Frost or Warm Clear, then six dials from 0 to 100 — clarity, softness, warmth, edge, colour and touch. They feed six optical layers: backdrop, bed, ambient light, rim, touch sheen and an independent foreground. Filters touch only the decorative layers, so text stays sharp; at rest, nothing animates.
-- **Wallpaper.** Light, Dark, or a random draw weighted by the odds the Lueurs set; soft focus 0–20%, brightness 50–100%, and a separate frame for each wallpaper.
-- **Lueurs.** Count 0–49, collision strength 1–24× (or redrawn at every launch), natural pace 0.25–16×, the Light/Dark odds, and cruise on arrival.
-- **Motion.** Any of the six, Random alongside, or motion off, so the search departs at once.
-- **Profile and shortcuts.** Name, one-liner, signature, tags, level and grip label are all yours to rewrite; every shortcut can take any of three forms and 28 colours.
-- **Three layers of defaults.** Try anything now, keep the combinations you like as defaults, and return to the factory baseline in one tap.
-
-### The second layer: press and hold
+## The second layer: press and hold
 
 <p align="center"><img src="docs/figures/gestures.en.png" alt="Figure 8: a long-press map over the real interface, marking every second-layer entry — Switch, planet, scan, sun, FSD, shortcuts, the note, the search field, the folds, the motion panel and the Lueurs" width="100%"></p>
 
