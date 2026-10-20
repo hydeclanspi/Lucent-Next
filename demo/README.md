@@ -31,8 +31,8 @@ One minute forty-eight seconds; turn the sound on. Every frame and every sound i
 
 **[在浏览器中观看 · Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/device/)** &nbsp;·&nbsp; [MP4（2K，2560×1440，60 帧，有声 · 1440p, 60 fps, with sound）](device/lucent-on-device.mp4)
 
-四十六秒的实机录屏，安静的段落加速播放，右上角标着倍速；配乐取自概念影片的后半段。剪辑由 `scripts/device-edit.py` 完成。
-Forty-six seconds recorded on the device; the quiet stretches run faster, each marked with its speed; the music is the second half of the film's score.
+五十四秒的实机录屏，收尾是绢光与浮金和两栏收起后的专注态；安静的段落加速播放，右上角标着倍速；配乐取自概念影片的后半段。剪辑由 `scripts/device-edit.py` 完成。
+Fifty-four seconds recorded on the device, ending on the gold silk and the folded card; the quiet stretches run faster, each marked with its speed; the music is the second half of the film's score.
 
 ## 一键直达 · Deep links
 
