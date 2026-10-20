@@ -212,6 +212,7 @@
 
 <p align="center"><img src="showcase/media/lueurs-poster.jpg" alt="两帧画面：一圈玻璃浮光围成轨道，被拨动的一枚亮起——你拨动它们，它们改写你的下一张壁纸，每一次相遇，场志都一一记下；夜色里，浮光散落成一座自己生长的后花园，推开门，放下一天的疲惫" width="90%"></p>
 
+<p align="center"> - 梯度势场 Black Box 示意图<br>(Lucent-Next 图 02)</p>
 <p align="center"><img src="docs/figures/potential.zh.png" alt="图 02：势场 Φ 在手绘区域内的取值，左下偏冰蓝（偏 Dark），右上偏暖金（偏 Light），细线为等值线" width="87%"></p>
 
 ### 场志：每一位的故事，都被记下
@@ -224,6 +225,7 @@
 <p align="center"><img src="showcase/media/roster.jpg" alt="场志：浮光地形图、驾驶志与 49 位居民的名册；选中 #14 号浮光，显示它的档案、密友榜、关系网与三角" width="86.5%"></p>
 
 → 深入：[小浮光引擎](docs/lueurs.md) · [场志数据层](docs/chronicle.md)
+
 
 ## 第二层：长按
 
