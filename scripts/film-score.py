@@ -1,12 +1,12 @@
 """Compose the concept film's score from its timeline.
 
-    python3 scripts/film-score.py                                  # demo/film/score.webm and score.m4a
+    python3 scripts/film-score.py                                  # showcase/film/score.webm and score.m4a
     python3 scripts/film-score.py --style piano                    # another version, in the same place
     python3 scripts/film-score.py --all --out scores/              # every version: scores/<style>.webm and .m4a
     python3 scripts/film-score.py --wav score.wav --report score.png
     python3 scripts/film-score.py --list
 
-The score is the package in scripts/score/. It reads the scene marks in demo/film/film.js (clock.py), so
+The score is the package in scripts/score/. It reads the scene marks in showcase/film/film.js (clock.py), so
 picture and sound keep one clock on a grid of 120 beats a minute; the film is cut into sections, each with
 an energy from 0 to 5 (form.py), which sets how many instruments play and where the desk's faders sit, so
 loud and quiet are always clearly apart. The instruments (tonal.py: piano, mallets, plucked strings, a

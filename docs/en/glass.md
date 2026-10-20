@@ -40,7 +40,7 @@ The six layers, bottom to top ([`glass-material.css`](../../src/assets/glass-mat
 5. **Pointer highlight**: a 360 px radial highlight that follows the pointer and fades in over 230 ms.
 6. **Content**: text, icons and data live in their own foreground (`z-index: 1`); filters only touch the decorative layers, so text is always sharp.
 
-<p align="center"><img src="../../demo/media/glass-compare.jpg" alt="The same main card: Warm Clear on the left, Classic Frost on the right" width="100%"></p>
+<p align="center"><img src="../../showcase/media/glass-compare.jpg" alt="The same main card: Warm Clear on the left, Classic Frost on the right" width="100%"></p>
 <p align="center"><sub>Left: Warm Clear · Right: Classic Frost</sub></p>
 
 ## 3. Event-driven, zero at rest

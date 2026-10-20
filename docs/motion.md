@@ -12,7 +12,7 @@
 
 ## 1. 品鉴：十六选六
 
-<p align="center"><img src="../demo/media/atelier.jpg" alt="动效品鉴页：念起，光行。四组十六款搜索动效，可逐帧拖动与慢看" width="100%"></p>
+<p align="center"><img src="../showcase/media/atelier.jpg" alt="动效品鉴页：念起，光行。四组十六款搜索动效，可逐帧拖动与慢看" width="100%"></p>
 
 在进入产品之前，先做了一个独立的[品鉴页](https://hydeclanspi.github.io/Lucent-Next/atelier/)，四组十六款：
 
@@ -29,7 +29,7 @@
 
 ## 2. 六款
 
-<p align="center"><img src="../demo/media/motion-six.webp" alt="六款动效以 0.35 倍慢放依次播放" width="100%"></p>
+<p align="center"><img src="../showcase/media/motion-six.webp" alt="六款动效以 0.35 倍慢放依次播放" width="100%"></p>
 
 | 编号 | 名字 | 时长 | 一句话 | 发生了什么 |
 |:-:|---|:-:|---|---|
@@ -72,7 +72,7 @@
 
 ## 6. Random：白金环与蓝白激光
 
-<p align="center"><img src="../demo/media/random-current.webp" alt="Random 开启后的六张卡片：缝隙中香槟铂金的导流环与奔跑的蓝白激光" width="100%"></p>
+<p align="center"><img src="../showcase/media/random-current.webp" alt="Random 开启后的六张卡片：缝隙中香槟铂金的导流环与奔跑的蓝白激光" width="100%"></p>
 
 打开 Random，选择卡片的那一块区域会变成一块电路板：
 
@@ -96,7 +96,7 @@
 
 ## 7. 模拟发射
 
-<p align="center"><img src="../demo/media/simulation.webp" alt="无限模拟发射：第一发沿原路飞出又倒放回到原处，随后按住回车，光一发接一发地射向箭头，每一发换一种姿态" width="100%"></p>
+<p align="center"><img src="../showcase/media/simulation.webp" alt="无限模拟发射：第一发沿原路飞出又倒放回到原处，随后按住回车，光一发接一发地射向箭头，每一发换一种姿态" width="100%"></p>
 <p align="center"><sub>开启 Random 与模拟发射：第一发是彩排，回到原处；按住回车之后，每一发换一种姿态，字随光离开。</sub></p>
 
 一个只会把人送走的启动台，是一扇门。面板右上角有一枚「无限模拟发射循环」开关——一个只在这一次访问里有效的彩蛋（[`search-simulation.js`](../src/assets/search-simulation.js)）。打开之后，主页的搜索框只发射光，不发出任何搜索，基地在自己内部闭环：
@@ -110,7 +110,7 @@
 
 **绢光与浮金。** 循环开着的时候，搜索框还会镶上一圈金（[`search-aura.js`](../src/assets/search-aura.js)）。一张画布贴在搜索框身后，画在玻璃之上、文字之下：
 
-<p align="center"><img src="../demo/media/search-aura.webp" alt="实机录屏：先是原本的搜索框；轻点「✧ 理」，在「念起，光行」右上角打开「无限模拟发射循环」；回到主界面，两段金色丝绢沿搜索框描边流淌，金尘升起又沉落" width="100%"></p>
+<p align="center"><img src="../showcase/media/search-aura.webp" alt="实机录屏：先是原本的搜索框；轻点「✧ 理」，在「念起，光行」右上角打开「无限模拟发射循环」；回到主界面，两段金色丝绢沿搜索框描边流淌，金尘升起又沉落" width="100%"></p>
 
 - **绢光。** 两段丝绢各占周长的 42%，相隔半圈，沿圆角矩形按弧长匀速绕行，十秒一圈，圆角与直边一样快。连发时绕行加快到三倍；每一道光抵达箭头，丝绢都被轻推一下。
 - **浮金。** 金尘从上沿缓缓升起、从下沿轻轻沉落，同时在场 12–22 粒，每 4–7.65 秒重抽一次数量与上下的比例（上沿占 55–68%）；六成新的金尘在三个候选位置里取丝绢最亮的一处，所以多半从丝绢正经过的地方扬起。每一发开始时，金尘涨到当时的 1.25–1.6 倍（至多 40 粒），1.6 秒后再慢慢回落。

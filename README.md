@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="demo/media/film-teaser.webp" alt="Lucent · 灵感台 概念影片片段：近到只剩一道光弧的 Home 键；四层分开；一道光波扫过芯片，核心化作窗口，冲进千窗的隧道；舞台灯亮起；极光之上，玻璃的参数逐一调动；四根光柱；黎明里的「灵感台」" width="100%"></a>
+  <a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="showcase/media/film-teaser.webp" alt="Lucent · 灵感台 概念影片片段：近到只剩一道光弧的 Home 键；四层分开；一道光波扫过芯片，核心化作窗口，冲进千窗的隧道；舞台灯亮起；极光之上，玻璃的参数逐一调动；四根光柱；黎明里的「灵感台」" width="100%"></a>
 </p>
 
 <h1 align="center">Lucent · 灵感台</h1>
@@ -15,7 +15,7 @@
   <a href="https://hydeclanspi.github.io/Lucent-Next/film/">真的很推荐点击左边 ⭐</a> &nbsp;
 
 <p align="center">
-  <a href="demo/">全部演示</a> &nbsp;·&nbsp;
+  <a href="showcase/">全部演示</a> &nbsp;·&nbsp;
   <a href="docs/architecture.md">产品架构</a> &nbsp;·&nbsp;
   <a href="README.en.md">English</a>
 </p>
@@ -37,7 +37,7 @@
 
 <p align="center">今天，我们把这个承诺，做成了一个地方。</p>
 
-<p align="center"><img src="demo/media/hero.jpg" alt="灵感台：伦敦夜景之上的个人基地；名片、展开的搜索面板与快捷方式各就各位，六枚玻璃浮光散落在上方的留白里" width="100%"></p>
+<p align="center"><img src="showcase/media/hero.jpg" alt="灵感台：伦敦夜景之上的个人基地；名片、展开的搜索面板与快捷方式各就各位，六枚玻璃浮光散落在上方的留白里" width="100%"></p>
 
 <h3 align="center">今天，我们带来四样东西。</h3>
 
@@ -81,27 +81,27 @@
   像后花园里的猫和狗，它们过着自己的日子。每次回来，它们都在，又多了一点故事。
 </p>
 
-<p align="center"><img src="demo/media/lueurs.webp" alt="九枚玻璃浮光在留白里各自漂游，相遇时一方撞上、一方回避；两倍速延时" width="100%"></p>
+<p align="center"><img src="showcase/media/lueurs.webp" alt="九枚玻璃浮光在留白里各自漂游，相遇时一方撞上、一方回避；两倍速延时" width="100%"></p>
 
 ---
 
 ## 影片
 
-<p align="center"><a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="demo/media/film-poster-play.jpg" alt="概念影片的封面：壁纸、玻璃、界面、居民四层在淡蓝的光里分开，标着各自的名字；下方一行字：壁纸、玻璃、界面、居民：四层，叠成一块屏幕。中央是播放键，点开播放" width="100%"></a></p>
+<p align="center"><a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="showcase/media/film-poster-play.jpg" alt="概念影片的封面：壁纸、玻璃、界面、居民四层在淡蓝的光里分开，标着各自的名字；下方一行字：壁纸、玻璃、界面、居民：四层，叠成一块屏幕。中央是播放键，点开播放" width="100%"></a></p>
 
 **概念影片**，一分四十八秒，有声。暗场里，一束光画出那颗按键；按下去，镜头扑向它的边缘，近到只剩一道光弧，弧里是那颗熟悉的 Home 键，和它的名字「Home 键」。它许下的承诺，在一道白光之后成了一个地方。四层叠成一块屏幕；写下的字化作光，冲进箭头；一扇彩虹色的门打开，门外是一块芯片，一道光波扫过，每一颗被击中的核心都升起，化作一扇通往世界的窗，镜头一跃，冲进千窗的隧道；舞台灯亮起，白金导流环里激光奔跑；极光之上，玻璃的六项参数逐一调动；四个台并肩成四根光柱，收成一线、一点，生出「灵感台」；四十九位居民住进留白，连成星座，又在后花园里安顿下来；然后，落在那块为它而生的屏幕上：三张壁纸化作玻璃，一拍一张，悬在空中，再落进它的屏幕，选中的那一张入夜。
 
 每一帧画面、每一个声音，都由代码生成：一条时间轴，WebGL 画天色与光，Canvas 画光束、光弧和门外的世界，CSS 与 SVG 画界面和字；配乐与音效由 numpy 合成，读同一张时间表：钢琴与马林巴唱旋律，拍手、口哨与尤克里里同行，弦乐、太鼓与人声托住每一次揭晓，每分钟 120 拍，每一次按下、每一道闪光、每一扇门都落在重拍上；该响的地方响，该静的地方静。任意时刻都可以暂停、拖动，也可以逐帧渲染成视频。
 
-→ [在浏览器中观看](https://hydeclanspi.github.io/Lucent-Next/film/) · [下载 MP4（2K，2560×1440，60 帧，有声）](demo/media/lucent-film.mp4)
+→ [在浏览器中观看](https://hydeclanspi.github.io/Lucent-Next/film/) · [下载 MP4（2K，2560×1440，60 帧，有声）](Lucent-Film.mp4)
 
 ### 实机
 
-<p align="center"><a href="https://hydeclanspi.github.io/Lucent-Next/device/"><img src="demo/media/on-device.jpg" alt="实机演示：在 HUAWEI MatePad Edge 上拍摄，现已放映，点开播放" width="100%"></a></p>
+<p align="center"><a href="https://hydeclanspi.github.io/Lucent-Next/device/"><img src="showcase/media/on-device.jpg" alt="实机演示：在 HUAWEI MatePad Edge 上拍摄，现已放映，点开播放" width="100%"></a></p>
 
 在 HUAWEI MatePad Edge 上录下的实机演示，五十四秒，有声：一次搜索和它的一线入光，念起光行，浮光的设置与历史统计，壁纸，名片与备份；最后是绕着搜索框流淌的绢光与浮金，和两栏收起后的专注态。安静的段落加速播放，右上角标着倍速；配乐取自概念影片的后半段。
 
-→ [在浏览器中观看](https://hydeclanspi.github.io/Lucent-Next/device/) · [下载 MP4（2K，2560×1440，60 帧，有声）](demo/device/lucent-on-device.mp4)
+→ [在浏览器中观看](https://hydeclanspi.github.io/Lucent-Next/device/) · [下载 MP4（2K，2560×1440，60 帧，有声）](showcase/device/lucent-on-device.mp4)
 
 ## 为一块屏幕而生
 
@@ -134,7 +134,7 @@
 
 ## 01 · 工作台：一切就位
 
-<p align="center"><img src="demo/media/focus.jpg" alt="专注态：快捷方式与直达都折叠之后，主卡片下沉到视觉中心，搜索成为唯一的焦点" width="100%"></p>
+<p align="center"><img src="showcase/media/focus.jpg" alt="专注态：快捷方式与直达都折叠之后，主卡片下沉到视觉中心，搜索成为唯一的焦点" width="100%"></p>
 <p align="center"><sub>专注态：把快捷方式与直达都折起来，卡片沉到视觉中心，只剩搜索。</sub></p>
 
 一天从一个安静的台面开始。表面只放每天真正用得到的东西，各自待在固定的位置上：
@@ -146,7 +146,7 @@
 
 ## 02 · 发射台：念起，光行
 
-<p align="center"><img src="demo/media/motion-six.webp" alt="搜索动效预览以 0.35 倍慢放依次演示六款动效：一线入光、微棱、快门、铂丝、穿针、近轨" width="100%"></p>
+<p align="center"><img src="showcase/media/motion-six.webp" alt="搜索动效预览以 0.35 倍慢放依次演示六款动效：一线入光、微棱、快门、铂丝、穿针、近轨" width="100%"></p>
 
 每一次搜索，都从这里起飞。写下的字先化作一道光，抵达那枚蓝色箭头，搜索才真正出发：从基地，去往外部世界的接口，Google、Bing、百度，或者你自己写的引擎模板。
 
@@ -158,11 +158,11 @@
 
 ## 03 · 舞台：留下来，光为你演一遍
 
-<p align="center"><img src="demo/media/simulation.webp" alt="无限模拟发射：第一发沿原路飞出又倒放回到原处，随后按住回车，光一发接一发地射向箭头，每一发换一种姿态" width="100%"></p>
+<p align="center"><img src="showcase/media/simulation.webp" alt="无限模拟发射：第一发沿原路飞出又倒放回到原处，随后按住回车，光一发接一发地射向箭头，每一发换一种姿态" width="100%"></p>
 
 **浮金与绢光。** 循环一打开，搜索框便镶上一圈金：两段金色丝绢沿描边按弧长匀速绕行，十秒一圈，上下两沿一样走到；金尘从上沿缓缓升起，从下沿轻轻沉落，同时在场 12–22 粒，每 4–7.65 秒重抽一次疏密，多半从丝绢正经过的地方扬起。每发射一次，金尘涨到当时的 1.25–1.6 倍，再慢慢回落。它只读搜索框上已有的信号，发射逻辑一行未动。
 
-<p align="center"><img src="demo/media/search-aura.webp" alt="实机录屏：先是原本的搜索框；轻点「✧ 理」，在「念起，光行」右上角打开「无限模拟发射循环」；回到主界面，两段金色丝绢沿搜索框描边流淌，金尘升起又沉落" width="100%"></p>
+<p align="center"><img src="showcase/media/search-aura.webp" alt="实机录屏：先是原本的搜索框；轻点「✧ 理」，在「念起，光行」右上角打开「无限模拟发射循环」；回到主界面，两段金色丝绢沿搜索框描边流淌，金尘升起又沉落" width="100%"></p>
 <p align="center"><sub>实机录屏，HUAWEI MatePad Edge：轻点「✧ 理」，打开「念起，光行」右上角的循环，回到搜索框。</sub></p>
 
 什么都不想做的时候，这些光会在原地为你演一遍。充能，然后再出发。
@@ -175,14 +175,14 @@
 - **需求只记一个比特。** 动画进行中再按，只记下「还要一发」，队列始终只有一格。有的键盘在自动重复时成对发出按下与抬起，所以抬起之后先等 80 ms，再判断是否真的松手。
 - **白金环与蓝白激光。** 打开 Random，卡片之间的缝隙亮起香槟铂金的导流环，蓝白激光沿通道奔跑：每一束的速度从截断正态分布 N(0.70, 0.10²) 中抽取；车道按权重不放回抽取，同一通道里的光永远同向而行；开场三束同时出发。
 
-<p align="center"><img src="demo/media/random-current.webp" alt="开启 Random 后，六张卡片之间的缝隙亮起香槟铂金导流环，蓝白激光沿通道奔跑；开场三束同时出发" width="100%"></p>
+<p align="center"><img src="showcase/media/random-current.webp" alt="开启 Random 后，六张卡片之间的缝隙亮起香槟铂金导流环，蓝白激光沿通道奔跑；开场三束同时出发" width="100%"></p>
 
 
 → 深入：[模拟发射](docs/motion.md#7-模拟发射) · [Random 的排班算法](docs/motion.md#6-random白金环与蓝白激光)
 
 ## 04 · 控制台：每个旋钮，都交给你
 
-<p align="center"><img src="demo/media/glass-compare.jpg" alt="同一张主卡片：左半为暖光液态清璃，右半为经典磨砂玻璃" width="100%"></p>
+<p align="center"><img src="showcase/media/glass-compare.jpg" alt="同一张主卡片：左半为暖光液态清璃，右半为经典磨砂玻璃" width="100%"></p>
 <p align="center"><sub>同一张主卡片：左为暖光液态清璃，右为经典磨砂玻璃。</sub></p>
 
 表面安静，深度全部交给你：
@@ -206,13 +206,13 @@
 - **落子与星座。** 每次回到主页，浮光逐枚加权抽签落位：惩罚「沙漠」与拥挤，让每一次抬眼都是一盘新的星座。
 - **概率。** 拖动浮光，就是在一张看不见的势场上行走：走过的高度差（62%）、与参照浮光的距离（20%）、绕行角（13%）、对方被推动的位移（5%），共同改写下一张壁纸的明暗权重，单次手势最多 35 个百分点。概率只听人的手：驾驶与邂逅既不改写它，也不计入交互。
 
-<p align="center"><img src="demo/media/lueurs-poster.jpg" alt="两帧画面：一圈玻璃浮光围成轨道，被拨动的一枚亮起——你拨动它们，它们改写你的下一张壁纸，每一次相遇，场志都一一记下；夜色里，浮光散落成一座自己生长的后花园，推开门，放下一天的疲惫" width="100%"></p>
+<p align="center"><img src="showcase/media/lueurs-poster.jpg" alt="两帧画面：一圈玻璃浮光围成轨道，被拨动的一枚亮起——你拨动它们，它们改写你的下一张壁纸，每一次相遇，场志都一一记下；夜色里，浮光散落成一座自己生长的后花园，推开门，放下一天的疲惫" width="100%"></p>
 
 <p align="center"><img src="docs/figures/potential.zh.png" alt="图 02：势场 Φ 在手绘区域内的取值，左下偏冰蓝（偏 Dark），右上偏暖金（偏 Light），细线为等值线" width="100%"></p>
 
 ### 场志：每一位的故事，都被记下
 
-<p align="center"><img src="demo/media/roster.jpg" alt="场志：浮光地形图、驾驶志与 49 位居民的名册；选中 #14 号浮光，显示它的档案、密友榜、关系网与三角" width="100%"></p>
+<p align="center"><img src="showcase/media/roster.jpg" alt="场志：浮光地形图、驾驶志与 49 位居民的名册；选中 #14 号浮光，显示它的档案、密友榜、关系网与三角" width="100%"></p>
 
 - **身份。** #01–#49 是固定编制，每次回来抽签决定谁在场。抓住一枚，它的编号才轻轻浮现。
 - **档案。** 每一位都有自己的出场、在场时长、撞击、被撞、回避、得舵与接力；关系谱记下每一对的接触、互撞、回避与亲近分钟；地形图记下它们自己走出来的路。
@@ -306,10 +306,10 @@
 | | |
 |---|---|
 | **在线体验** | [hydeclanspi.github.io/Lucent-Next](https://hydeclanspi.github.io/Lucent-Next/)：在 MatePad Edge 上直接使用；在电脑上，第一次轻点即进入全屏 |
-| **概念影片** | [在浏览器中观看](https://hydeclanspi.github.io/Lucent-Next/film/) · [MP4](demo/media/lucent-film.mp4) |
-| **实机演示** | [在浏览器中观看](https://hydeclanspi.github.io/Lucent-Next/device/) · [MP4](demo/device/lucent-on-device.mp4) |
+| **概念影片** | [在浏览器中观看](https://hydeclanspi.github.io/Lucent-Next/film/) · [MP4](Lucent-Film.mp4) |
+| **实机演示** | [在浏览器中观看](https://hydeclanspi.github.io/Lucent-Next/device/) · [MP4](showcase/device/lucent-on-device.mp4) |
 | **十六款动效品鉴** | [hydeclanspi.github.io/Lucent-Next/atelier](https://hydeclanspi.github.io/Lucent-Next/atelier/) |
-| **一键直达** | 直接打开某个状态的七个链接——增强驾驶、Random 白金环、场志、壁纸与玻璃……都在[演示入口](demo/) |
+| **一键直达** | 直接打开某个状态的七个链接——增强驾驶、Random 白金环、场志、壁纸与玻璃……都在[演示入口](showcase/) |
 
 ## 本地运行
 
@@ -331,12 +331,12 @@ src/                        源码：灵感台本体
   index.html                基地
   assets/                   小浮光引擎、场志、通透玻璃、念起光行、模拟发射、名片与面板
   web/                      网页版：浏览器演示层、一键直达、沉浸全屏、应用清单与图标
-demo/                       演示
+showcase/                       演示
   film/                     概念影片（网页，打开即播）
   device/                   实机演示（录屏剪辑与播放页）
   atelier/                  十六款搜索动效品鉴
   media/                    演示图、动图与影片
-native/                     鸿蒙 Aira 原生安装包（5.0，原样保存）
+product-finale/                     鸿蒙 Aira 原生安装包（5.0，原样保存）
 docs/                       深度文档与图表（英文版在 docs/en/）
 scripts/                    构建、检查、图表、录制、影片渲染、图标与分享卡片
 tests/                      引擎、渲染器、存储与浏览器测试

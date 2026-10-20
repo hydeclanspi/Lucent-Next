@@ -1,13 +1,13 @@
-"""Edit the on-device recordings into demo/device/lucent-on-device.mp4.
+"""Edit the on-device recordings into showcase/device/lucent-on-device.mp4.
 
     node scripts/film-media.mjs device                                  # the cover at 2x, with and without its words
     python3 scripts/device-edit.py SVID_20261019_173443_1.mp4 SVID_20261020_131207_1.mp4    # the edit, its music, the poster
-    python3 scripts/device-edit.py A.mp4 B.mp4 --head demo/device/lucent-on-device.mp4    # re-cut the end only (below)
+    python3 scripts/device-edit.py A.mp4 B.mp4 --head showcase/device/lucent-on-device.mp4    # re-cut the end only (below)
     python3 scripts/device-edit.py A.mp4 B.mp4 --stills 3.3 7.3 40.2     # a few frames into verification/device/, to check
 
 The recordings (3120 x 2080 screen recordings from the HUAWEI MatePad Edge, silent) are not kept in the repository:
 the first (1:47) runs from the search to the backup, the second (0:26) from the search box as it was to the
-gold silk of 5.1.3 and the folded card. The edit opens on its own cover (scripts/film-media/slot.html): its words
+gold silk of 5.1.3 and the folded card. The edit opens on its own cover (design/covers/on-device-frame.html): its words
 leave and the first recording comes up in the device's screen. The device keeps its size, with only a
 slight lean in, so its name stays under it throughout; the search plays at its own pace, the line of light and the
 page it opens included. The quiet stretches run faster, each marked with its speed above the device's top right
@@ -66,7 +66,7 @@ JOIN = 0.06                                # each join is an equal-power crossfa
 # --head: the earlier render's frames (at 60 fps) that make everything before the second recording
 HEAD = [(0, 1740), (1860, 2335)]
 
-# The recording's opening frame (scripts/film-media/slot.html) is laid out at 1920 x 1080; the device's screen sits inside it.
+# The recording's opening frame (design/covers/on-device-frame.html) is laid out at 1920 x 1080; the device's screen sits inside it.
 DEVICE = (402, 152, 1518, 904)
 SCREEN = (414, 164, 1506, 892)            # 3:2, like the recording
 RADIUS = 34
@@ -308,7 +308,7 @@ def head_frames(path):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("sources", type=pathlib.Path, nargs=2, help="the two screen recordings, in order")
-    ap.add_argument("--out", type=pathlib.Path, default=ROOT / "demo/device/lucent-on-device.mp4")
+    ap.add_argument("--out", type=pathlib.Path, default=ROOT / "showcase/device/lucent-on-device.mp4")
     ap.add_argument("--covers", type=pathlib.Path, default=ROOT / "verification/device")
     ap.add_argument("--head", type=pathlib.Path, help="an earlier render: take its frames in HEAD for the first recording's part")
     ap.add_argument("--stills", type=float, nargs="+", help="write these moments as JPEGs instead")

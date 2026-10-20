@@ -12,17 +12,17 @@ Everything uses relative URLs, so the product works under the `/Lucent-Next/` su
 
 ## What the build contains
 
-The repository layout and the published URLs are independent: the source lives in `src/` and the demos in `demo/`, but the site keeps the same addresses.
+The repository layout and the published URLs are independent: the source lives in `src/` and the demos in `showcase/`, but the site keeps the same addresses.
 
 | Published at | From | Content |
 |---|---|---|
 | `/` | `src/` | The base (`index.html`, `assets/`, `web/`): its browser demonstration layer, immersive full screen, and the app manifest and icons (installable; opens full screen) |
-| `/film/` | `demo/film/` | The concept film, drawn and scored in code, played in the browser |
-| `/atelier/` | `demo/atelier/` | The sixteen-study search-motion atelier |
+| `/film/` | `showcase/film/` | The concept film, drawn and scored in code, played in the browser |
+| `/atelier/` | `design/atelier/` | The sixteen-study search-motion atelier |
 | `/llms.txt` | `docs/llms.txt` | A plain-text summary for language-model crawlers |
 | `/robots.txt`, `/sitemap.xml`, `/.nojekyll` | generated | Written by `scripts/build.mjs` |
 
-The native package (`native/`), the demo media (`demo/media/`), the documentation, tests and scripts are not part of the web build.
+The native package (`product-finale/`), the demo media (`showcase/media/`), the documentation, tests and scripts are not part of the web build.
 
 ## Checks
 

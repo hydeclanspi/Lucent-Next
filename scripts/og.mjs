@@ -1,4 +1,4 @@
-// Render the social preview (src/web/og.jpg) from scripts/og/og.html over demo/media/hero.jpg.
+// Render the social preview (src/web/og.jpg) from design/brand/og.html over showcase/media/hero.jpg.
 //   AIRA_BROWSER_PATH=/path/to/chromium node scripts/og.mjs
 // The card is laid out at 1280×640, rendered at 2× and downsampled in the browser, so the type stays crisp.
 import { createRequire } from 'node:module';
@@ -13,7 +13,7 @@ const [width, height] = [1280, 640];
 
 const browser = await chromium.launch({ headless: true, ...(process.env.AIRA_BROWSER_PATH ? { executablePath: process.env.AIRA_BROWSER_PATH } : {}) });
 const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 2 });
-await page.goto('file://' + path.join(root, 'scripts/og/og.html'));
+await page.goto('file://' + path.join(root, 'design/brand/og.html'));
 await page.evaluate(() => document.fonts.ready);
 await page.waitForFunction(() => [...document.images].every((img) => img.complete && img.naturalWidth > 0));
 const sharp = await page.screenshot();

@@ -1,12 +1,12 @@
-// Render the concept film (demo/film/) to video, one exact frame at a time.
+// Render the concept film (showcase/film/) to video, one exact frame at a time.
 //
 //   npm run build
-//   AIRA_BROWSER_PATH=/path/to/chromium node scripts/film.mjs                       # demo/media/lucent-film.mp4, 1440p60
+//   AIRA_BROWSER_PATH=/path/to/chromium node scripts/film.mjs                       # Lucent-Film.mp4, 1440p60
 //   node scripts/film.mjs --preview                                                # half size, 24 fps, quick
 //   node scripts/film.mjs --from 20 --to 32 --out verification/film/launch.mp4    # a part
 //
 // The page is never played: every frame is window.__film.seek(t) followed by a screenshot, piped
-// straight into ffmpeg (libx264), with the score (demo/film/score.m4a, scripts/film-score.py) laid
+// straight into ffmpeg (libx264), with the score (showcase/film/score.m4a, scripts/film-score.py) laid
 // under it from the same moment; --mute leaves it out. A slow machine renders the same film as a fast
 // one. --workers sets how many pages render in parallel (default 2); --scale the size, as a multiple of
 // the page's 1920 × 1080 (default 4/3: 2560 × 1440); --recycle-at the share of memory in use at which
@@ -30,7 +30,7 @@ const preview = args.includes('--preview');
 const fps = Number(option('fps', preview ? 24 : 60));
 const scale = preview ? 0.5 : Number(option('scale', 4 / 3));
 const crf = option('crf', preview ? '26' : '23');
-const out = path.resolve(root, option('out', preview ? 'verification/film/preview.mp4' : 'demo/media/lucent-film.mp4'));
+const out = path.resolve(root, option('out', preview ? 'verification/film/preview.mp4' : 'Lucent-Film.mp4'));
 
 if (!fs.existsSync(path.join(dist, 'film', 'index.html'))) throw new Error('Run `npm run build` first.');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.m4a': 'audio/mp4', '.webm': 'audio/webm' };

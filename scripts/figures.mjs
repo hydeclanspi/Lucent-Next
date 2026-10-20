@@ -1,4 +1,4 @@
-// Renders the documentation figures in scripts/figures/figures.html to PNG.
+// Renders the documentation figures in design/figures/figures.html to PNG.
 // The maps are computed in the page by the engine's own functions (src/assets/interaction.js).
 //
 //   npm install && AIRA_BROWSER_PATH=/path/to/chrome node scripts/figures.mjs
@@ -22,7 +22,7 @@ const server = http.createServer(async (req, res) => {
   } catch { res.writeHead(404).end(); }
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-const base = `http://127.0.0.1:${server.address().port}/scripts/figures/figures.html`;
+const base = `http://127.0.0.1:${server.address().port}/design/figures/figures.html`;
 const browser = await chromium.launch({ headless: true, ...(process.env.AIRA_BROWSER_PATH ? { executablePath: process.env.AIRA_BROWSER_PATH } : {}) });
 const page = await browser.newPage({ viewport: { width: 1200, height: 900 }, deviceScaleFactor: 2 });
 await mkdir(out, { recursive: true });

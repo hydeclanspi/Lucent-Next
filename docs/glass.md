@@ -40,7 +40,7 @@
 5. **跟手高光**：直径 360 px 的径向高光跟随指针，淡入 230 ms。
 6. **内容**：文字、图标、数据留在独立前景（`z-index: 1`），滤镜只作用在装饰层——文字永远清晰。
 
-<p align="center"><img src="../demo/media/glass-compare.jpg" alt="同一张主卡片：左为暖光液态清璃，右为经典磨砂玻璃" width="100%"></p>
+<p align="center"><img src="../showcase/media/glass-compare.jpg" alt="同一张主卡片：左为暖光液态清璃，右为经典磨砂玻璃" width="100%"></p>
 <p align="center"><sub>左：暖光液态清璃 · 右：经典磨砂玻璃</sub></p>
 
 ## 3. 事件驱动，静止时为零
