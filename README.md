@@ -10,8 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="https://hydeclanspi.github.io/Lucent-Next/"><b>在线体验试用</b></a> &nbsp;·&nbsp;
-  <a href="https://hydeclanspi.github.io/Lucent-Next/film/"><b>观看旗舰影片 (推荐)</b></a> &nbsp;·&nbsp;
+  <a href="https://hydeclanspi.github.io/Lucent-Next/"><b>在线体验试用 💎</b></a> &nbsp;·&nbsp;
+  <a href="https://hydeclanspi.github.io/Lucent-Next/film/"><b>观看旗舰影片 🎞️   (推荐)</b></a> &nbsp;·&nbsp;
   <a href="https://hydeclanspi.github.io/Lucent-Next/film/">真的很推荐点击左边 ⭐</a> &nbsp;
 
 <p align="center">
