@@ -279,7 +279,7 @@ Lucent keeps one standard: **inspired, and incisive** — 灵感与犀利并存.
 
 ## Evolution
 
-22 days, 109 versions, from 2.0.0 to 5.0.0.
+25 days, 111 versions, from 2.0.0 to 5.1.3.
 
 | Phase | Dates | Versions | What happened |
 |---|---|---|---|
@@ -288,6 +288,7 @@ Lucent keeps one standard: **inspired, and incisive** — 灵感与犀利并存.
 | Chronicle and roster | Oct&nbsp;9–10 | 4.0.6 → 4.5.3 | Number badges, the About window, the chart family, the relationship web, backup and export, a handwritten signature, histogram migration |
 | Material and motion | Oct&nbsp;10–16 | 4.7 → 5.0 | Warm Clear glass; six motions chosen from sixteen studies; simulated launch and sustained beams; Random's platinum rings and blue-white lasers |
 | Web edition | Oct&nbsp;17–18 | 5.0 | Browser demonstration layer, deep links, immersive full screen and installation, the concept film, engine and renderer tests, live deployment |
+| Silk light and gold motes | Oct&nbsp;20 | 5.0 → 5.1.3 | Silk light and gold motes around the search box while the launch loop is on, swelling with each launch; Manual strikes in the roster; new About copy; the folded layout re-centred; the package renamed Lucent Next |
 
 I defined the product, designed it, and signed off every version; the implementation was written with AI coding agents.
 

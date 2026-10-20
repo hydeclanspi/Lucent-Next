@@ -24,11 +24,11 @@
 - **35 个顶点的多边形**，记录在 1560×1040 的参考视口上，运行时按实际视口缩放（[`REGION`](../src/assets/interaction.js#L10)、[`makeGeometry`](../src/assets/interaction.js#L178-L191)）。
 - **避让真实 DOM**：时钟与按钮、头像与名片、主卡片、历史标签，各外扩 30 px——44 px 触控目标的一半，再留 8 px 呼吸（[`CLEARANCE`](../src/assets/interaction.js#L28)）。到多边形边界的距离同样不小于 30 px。
 - **安全落点**：以 24 px（两枚浮光的直径再加 2 px）为网格采样，四邻接泛洪，**只保留最大的连通腔室**（[`safeSites`](../src/assets/interaction.js#L244-L272)）。缩放窗口、字体加载完成或名片变长之后，浮光不会被隔断在两个互不相通的区域里。在 1560×1040 下，这块留白有 325 个安全落点。
-- **入场时机**：名片和主卡片有入场动画；引擎等这些动画结束、矩形稳定之后才第一次落位（[`refresh`](../src/assets/interaction.js#L883-L920)），否则避让会量到错误的位置。
+- **入场时机**：名片和主卡片有入场动画；引擎等这些动画结束、矩形稳定之后才第一次落位（[`refresh`](../src/assets/interaction.js#L888-L925)），否则避让会量到错误的位置。
 
 ## 2. 运动：有记忆的航向
 
-自然状态下，浮光不是每帧重新掷一个随机方向。它是一条五层管道（[`tick`](../src/assets/interaction.js#L749-L819)）：
+自然状态下，浮光不是每帧重新掷一个随机方向。它是一条五层管道（[`tick`](../src/assets/interaction.js#L754-L824)）：
 
 **① 航向：Ornstein–Uhlenbeck 均值回归。** 转向率带有指数遗忘，噪声按 √Δt 注入：
 
@@ -36,9 +36,9 @@
 \omega \leftarrow \omega\, e^{-1.8\,\Delta t} + 1.6\,\xi\sqrt{\Delta t},\qquad \theta \leftarrow \theta + \omega\,\Delta t,\qquad \xi \sim U(-\tfrac12, \tfrac12)
 ```
 
-方向因此有记忆、有惯性，转弯从容（[L787-L788](../src/assets/interaction.js#L787-L788)）。
+方向因此有记忆、有惯性，转弯从容（[L787-L788](../src/assets/interaction.js#L792-L793)）。
 
-**② 速度弛豫。** 速度以指数方式靠近航向上的巡航速度，时间常数约 0.77 s；刚刚散射之后放慢到约 1.4 s，让转向更柔（[L789-L792](../src/assets/interaction.js#L789-L792)）：
+**② 速度弛豫。** 速度以指数方式靠近航向上的巡航速度，时间常数约 0.77 s；刚刚散射之后放慢到约 1.4 s，让转向更柔（[L789-L792](../src/assets/interaction.js#L794-L797)）：
 
 ```math
 \mathbf v \leftarrow \mathbf v + \big(\mathbf c(\theta)\cdot p - \mathbf v\big)\big(1 - e^{-k\,\Delta t}\big),\qquad k = 1.3\ \text{或}\ 0.7
@@ -50,7 +50,7 @@
 
 **④ 接触响应**，见下一节。
 
-**⑤ 软边界。** 某一步越界时先尝试沿 x 或 y 单轴滑行（切向滑动比弹跳更不打扰）；若被挡住，对应速度分量反向并衰减为 0.65 倍，航向随之重置（[L796-L801](../src/assets/interaction.js#L796-L801)）。
+**⑤ 软边界。** 某一步越界时先尝试沿 x 或 y 单轴滑行（切向滑动比弹跳更不打扰）；若被挡住，对应速度分量反向并衰减为 0.65 倍，航向随之重置（[L796-L801](../src/assets/interaction.js#L801-L806)）。
 
 合起来，这是一个**有惯性、有记忆、有邻里意识的带阻尼相关随机游走**。
 
@@ -66,8 +66,8 @@ J = \tfrac12 (1+e)\, v_{\text{rel}}\cdot\mathbf n,\qquad \mathbf v_a \mathrel{-}
 
 动量严格守恒，法向相对速度反向为原来的 −0.64 倍——测试对 2,000 组随机碰撞逐一核对。
 
-- **手中的浮光是运动学体。** 被抓住的那一枚只推不退，它把冲量乘上碰撞力度 k（1–24×）交给对方；漂来的浮光撞上它会被弹开，但永远不会推动你的手指（[L670-L681](../src/assets/interaction.js#L670-L681)）。
-- **用这一刻的速度结算。** 拖动时，碰撞使用当前这次 `pointermove` 的速度，而不是上一次的（[L960-L962](../src/assets/interaction.js#L960-L962)）；停手超过 80 ms 的残余速度会被清零，松手不会突然弹飞。
+- **手中的浮光是运动学体。** 被抓住的那一枚只推不退，它把冲量乘上碰撞力度 k（1–24×）交给对方；漂来的浮光撞上它会被弹开，但永远不会推动你的手指（[L670-L681](../src/assets/interaction.js#L675-L686)）。
+- **用这一刻的速度结算。** 拖动时，碰撞使用当前这次 `pointermove` 的速度，而不是上一次的（[L960-L962](../src/assets/interaction.js#L965-L967)）；停手超过 80 ms 的残余速度会被清零，松手不会突然弹飞。
 - **能量只注入一次。** 只有主动的推（手或冲刺中的驾驶员）提供能量；自由浮光之间只以原有的恢复系数传递一次，**链式碰撞永远不会被逐级放大**。速度上限 640 px/s，非有限值直接归零（[`limitVelocity`](../src/assets/interaction.js#L67-L71)）。
 - **自然相遇要能散开。** 力度调到 24，自然碰撞仍然只有折光、浮光簇拥着堵在一起——这说明「手拨撞得狠」不等于「自然相遇会散开」。于是新接触时给慢速的一对补足分离速度：
 
@@ -78,7 +78,7 @@ v_{\text{sep}} = 14 + 7\cdot\max\big(1,\ k\cdot s\big),\qquad s = 0.30,\ 0.36,\ 
 越拥挤越倾向散开；已经分离得够快的不再加能量；0.28 s 冷却防止抖动（[`naturalResponse`](../src/assets/interaction.js#L47-L61)）。
 
 - **散射：加权偏转角成本。** 碰撞后，浮光在远离邻居的基准方向周围试探 8 个偏转角 {0, ±0.6, ±1.2, ±2.1, π}，每个候选的得分是「前方 24 px 处的净空（封顶 100）− 7 × |偏转角|」，取最高者（[`scatterHeading`](../src/assets/interaction.js#L530-L556)）。三枚以上时，再沿开阔一侧加一点侧向速度。
-- **选中最近的那一枚。** 两枚相接时 44 px 的隐形触控区会重叠；按下时选择离指尖最近的可见浮光，而不是 DOM 层叠顺序里的那个（[L933-L937](../src/assets/interaction.js#L933-L937)）。
+- **选中最近的那一枚。** 两枚相接时 44 px 的隐形触控区会重叠；按下时选择离指尖最近的可见浮光，而不是 DOM 层叠顺序里的那个（[L933-L937](../src/assets/interaction.js#L938-L942)）。
 
 ## 4. 概率：一张看不见的地形
 
@@ -150,7 +150,7 @@ J = \tfrac12(1+e)\,v_{\text{close}} + \min\big(320,\ v_{\text{close}}\,(k-1)\cdo
 
 <p align="center"><img src="figures/placement.zh.png" alt="图 03：已有三枚浮光时，下一枚的落点权重" width="100%"></p>
 
-每次回到主页，浮光逐枚加权抽签落位（[`placeBody`](../src/assets/interaction.js#L842-L881)、[`placementWeights`](../src/assets/interaction.js#L95-L143)）。目标不是均匀，也不是聚团，而是「撑得起来」：
+每次回到主页，浮光逐枚加权抽签落位（[`placeBody`](../src/assets/interaction.js#L847-L886)、[`placementWeights`](../src/assets/interaction.js#L95-L143)）。目标不是均匀，也不是聚团，而是「撑得起来」：
 
 ```math
 w(s) = \exp\!\big(-0.8\,\text{close} - 0.9\,\text{crowd} - 1.8\,\text{void}^{+}\big)\cdot \exp\!\big(-1.6\,\text{far}\cdot\gamma\big)\cdot \text{top}(s)\cdot \text{vertical}(s)
@@ -165,14 +165,14 @@ w(s) = \exp\!\big(-0.8\,\text{close} - 0.9\,\text{crowd} - 1.8\,\text{void}^{+}\
 
 ## 8. 身份：四十九位固定居民
 
-`#01–#49` 是固定编制。每次回到主页，从 49 位里不放回地抽 n 位在场（[`drawIdentity`](../src/assets/interaction.js#L1006-L1011)）——不是前 n 位。抓住一枚，它的编号才会浮现：8.5 px 圆体数字，透明度 0.45，倾斜 −7°，右上角一顶一笔画成的小帽（`M2.2 1.2 Q8.2 2.8 8.8 8.6`）。这枚徽章前后改了五个版本，目标是「不仔细看就几乎看不见」。
+`#01–#49` 是固定编制。每次回到主页，从 49 位里不放回地抽 n 位在场（[`drawIdentity`](../src/assets/interaction.js#L1011-L1016)）——不是前 n 位。抓住一枚，它的编号才会浮现：8.5 px 圆体数字，透明度 0.45，倾斜 −7°，右上角一顶一笔画成的小帽（`M2.2 1.2 Q8.2 2.8 8.8 8.6`）。这枚徽章前后改了五个版本，目标是「不仔细看就几乎看不见」。
 
 每一位居民的出场、在场时长、撞击、被撞、回避、驾驶、接力都写进[场志](chronicle.md)。
 
 ## 9. 生命周期与性能纪律
 
-- **一个帧循环。** 拖动或驾驶时逐帧（≥ 15 ms 一帧），空闲时降到约 30 Hz（32 ms 一帧）；单帧 Δt 封顶 50 ms（[L754-L755](../src/assets/interaction.js#L754-L755)）。
-- **该停就停。** 页面隐藏、离开、弹窗打开、宿主未就绪时整体暂停并结束手势；从后台回来重新测量布局；从往返缓存返回时重新落位（[`syncState`](../src/assets/interaction.js#L821-L831)）。
+- **一个帧循环。** 拖动或驾驶时逐帧（≥ 15 ms 一帧），空闲时降到约 30 Hz（32 ms 一帧）；单帧 Δt 封顶 50 ms（[L754-L755](../src/assets/interaction.js#L759-L760)）。
+- **该停就停。** 页面隐藏、离开、弹窗打开、宿主未就绪时整体暂停并结束手势；从后台回来重新测量布局；从往返缓存返回时重新落位（[`syncState`](../src/assets/interaction.js#L826-L836)）。
 - **跟随布局。** 窗口缩放、滚动、字体加载、名片尺寸变化（`ResizeObserver`）都会触发重新测量与必要的重新落位。
 - **无障碍。** 每枚浮光是一个按钮：方向键移动 16 px、Shift 加方向键 48 px，走同一个概率模型；「减少动态效果」开启时停止帧循环、关闭自动驾驶。
 
