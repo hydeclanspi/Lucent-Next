@@ -134,7 +134,7 @@ The surface is what you feel; underneath is what makes it hold.
 
 ## Architecture: from one screen to one pixel
 
-<p align="center"><img src="docs/figures/architecture.en.png" alt="Figure 0: the architecture in five layers, top to bottom — context, surface, systems, mechanisms, pixels — with control and trust running across all of them" width="100%"></p>
+<p align="center"><img src="docs/figures/architecture.en.png" alt="Figure 0: the architecture in five layers, top to bottom — context, surface, systems, mechanisms, pixels — with control and trust running across all of them" width="92.5%"></p>
 
 Five layers, macro to micro: **context** (where it runs) → **surface** (what you see and touch) → **systems** (the four underneath) → **mechanisms** (why they work) → **pixels** (the numbers it all lands on). **Control** and **trust** run across every layer.
 
