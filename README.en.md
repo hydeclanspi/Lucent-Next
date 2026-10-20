@@ -158,6 +158,8 @@ The Lueurs are what bring the base to life. They began as a red circle drawn on 
 - **Stones and constellations.** Each time the base opens, the Lueurs are placed one by one by weighted lottery, penalising deserts and crowding, so that every glance is a new constellation.
 - **Probability.** Dragging a Lueur is walking an invisible potential field: the height you travel (62%), the change in distance to a reference lens (20%), the angle wound around it (13%) and how far the lens you hit was pushed (5%) rewrite the Light/Dark odds of the next wallpaper, by at most 35 points per gesture. The odds listen only to a human hand: driving and encounters neither write them nor count as interaction.
 
+<p align="center"><img src="demo/media/lueurs-poster.jpg" alt="Two frames: a ring of glass Lueurs in orbit with the one you touch lit up — you move them, and they rewrite your next wallpaper, with every meeting kept in the chronicle; at night the Lueurs scatter into a back garden that grows on its own — open the door and set the day down" width="100%"></p>
+
 <p align="center"><img src="docs/figures/potential.en.png" alt="Figure 2: the potential field Φ over the hand-drawn region — ice blue (toward Dark) at lower left, warm gold (toward Light) at upper right, with contour lines" width="100%"></p>
 
 ### The chronicle: every story, kept
