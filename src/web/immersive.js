@@ -5,8 +5,8 @@
  * first real click or tap anywhere. (No browser lets a page do that before a gesture.)
  *
  *   - The click still does its own job first; full screen follows it.
- *   - Esc leaves. Once you leave, it does not come back by itself until the page is opened again:
- *     every visit (every load of the page) arms the first click afresh.
+ *   - Esc leaves; the next click (anywhere but the prompt) goes full screen again. A page cannot know
+ *     whether it was just opened or reopened, so every click out of full screen asks for it.
  *   - F toggles full screen at any time (not while typing).
  *   - Installed as an app, Lucent already opens full screen, so nothing is armed.
  *   - Out of full screen, a pill says full screen is best and offers a button for it (× hides it for the visit).
@@ -33,13 +33,13 @@
   var OFF = "lucent:immersive:off";
   var HIDDEN = "lucent:immersive:prompt-hidden";
   var LARGE = 900;
-  var leaving = false, seen = false, hint = null, note = null; // seen: in full screen at some point, not yet seen leaving
+  var leaving = false, seen = false, hint = null, note = null, fading = null, fadeTimer = 0; // seen: in full screen at some point, not yet seen leaving
   var declinedNow = (function () { try { return sessionStorage.getItem(OFF) === "1"; } catch (_) { return false; } })();
 
   function active() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
-  function declined() { return declinedNow; }
+  function declined() { return declinedNow; } // only the automation opt-out
   function hidden() { try { return sessionStorage.getItem(HIDDEN) === "1"; } catch (_) { return false; } }
-  function decline() { declinedNow = true; }
+  function decline() {} // leaving is never remembered: the next click asks again
   function armed() { return window.innerWidth >= LARGE && !installed() && !declined() && !active(); }
   function typing(target) {
     return !!target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
@@ -91,13 +91,14 @@
     if (full) root.dataset.immersive = "full"; else delete root.dataset.immersive;
     var showHint = wide && !full && !hidden();
     if (showHint && !hint) {
-      hint = buildHint();
-      document.body.appendChild(hint);
+      // A prompt still fading out comes back as it is: there is never more than one.
+      if (fading) { clearTimeout(fadeTimer); hint = fading; fading = null; }
+      else { hint = buildHint(); document.body.appendChild(hint); }
       requestAnimationFrame(function () { if (hint) hint.classList.add("is-visible"); });
     } else if (!showHint && hint) {
-      var gone = hint; hint = null;
-      gone.classList.remove("is-visible");
-      setTimeout(function () { gone.remove(); }, 420);
+      fading = hint; hint = null;
+      fading.classList.remove("is-visible");
+      fadeTimer = setTimeout(function () { if (fading) { fading.remove(); fading = null; } }, 420);
     }
     if (!note) {
       note = document.createElement("p");
