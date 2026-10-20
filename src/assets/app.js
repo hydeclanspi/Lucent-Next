@@ -1316,7 +1316,7 @@
 
     var infoHint = document.createElement("p");
     infoHint.className = "panel-hint";
-    infoHint.textContent = "下面三项由 Aira 决定，主页只跟随";
+    infoHint.textContent = "下面三项由 Aira 决定，灵感台只跟随";
     right.appendChild(infoHint);
 
     var infoRow = document.createElement("div");
@@ -1641,7 +1641,7 @@
   /* ---------- 关于（长按右上角太阳图标） ---------- */
 
   var ABOUT_COPY = [
-    "灵感台是一张属于你的主页：时钟与问候开场，个签替你自我介绍，日志记录每刻所念所想，搜索、快捷方式与直达各就各位，壁纸在明暗之间呼吸。",
+    "灵感台是一张属于你的工作台：时钟与问候开场，个签替你自我介绍，日志记录每刻所念所想，搜索、快捷方式与直达各就各位，壁纸在明暗之间呼吸。",
     "四十九枚浮光在留白里安身，各自有名；它们相遇、碰撞、结伴巡游，故事都记进场志。不上传、不追踪，一切只留在悄然之间。"
   ];
 
@@ -1673,7 +1673,7 @@
     });
     var news = document.createElement("p");
     news.className = "about-news";
-    news.appendChild(document.createTextNode("现已上线 GitHub，附 2K产品宣传片 product film"));
+    news.appendChild(document.createTextNode("现已上线 GitHub，附 2K 产品宣传片 product film"));
     var newsUrl = document.createElement("span");
     newsUrl.className = "about-news-url";
     newsUrl.textContent = "github.com/hydeclanspi/Lucent-Next";
@@ -1683,7 +1683,7 @@
     meta.className = "about-meta";
     var version = document.createElement("p");
     version.className = "about-version";
-    version.textContent = "Lucent v5.0 · 2026-10 构建";
+    version.textContent = "Lucent v5.1.3 · 2026-10 构建";
     var build = document.createElement("p");
     build.className = "about-build";
     build.textContent = "鸿蒙 Aira 灵感工作台 · Lueurs 引擎 beta v0.7 · © 2026";
@@ -1695,7 +1695,7 @@
     var shot = document.createElement("img");
     shot.className = "about-shot";
     shot.src = "./assets/about-preview.jpg";
-    shot.alt = "灵感台主页预览";
+    shot.alt = "灵感台预览";
     shot.decoding = "async";
     frame.appendChild(shot);
     frame.appendChild(news);
@@ -1727,9 +1727,9 @@
 
   /* ---------- 备份与导出（长按右上角扫一扫） ---------- */
 
-  // 备份文本：AIRAPC1:<D|R>:<载荷字符数>:<base64url>:<校验>；D = deflate-raw 压缩，R = 原样。
-  // 分段再包一层：AIRAPC1:P:<i>/<N>:<整串校验>:<切片>；切片按序拼回，就是原始备份文本。
-  var EXPORT_PREFIX = "AIRAPC1";
+  // 备份文本：LUCENT1:<D|R>:<载荷字符数>:<base64url>:<校验>；D = deflate-raw 压缩，R = 原样。
+  // 分段再包一层：LUCENT1:P:<i>/<N>:<整串校验>:<切片>；切片按序拼回，就是原始备份文本。
+  var EXPORT_PREFIX = "LUCENT1";
   var EXPORT_SEGMENT_CHARS = 4000;    // 每段字符数，对着聊天通道的单条上限取整
   var EXPORT_CHAT_CHARS = 4000;       // 聊天通道单条文本的经验上限
   var EXPORT_BIG_CHARS = 64 * 1024;   // 单次复制开始提示静默截断风险的体量
@@ -1909,12 +1909,12 @@
         else storeData[name] = settled.data;
       });
       var payload = {
-        format: "aira-profile-card",
-        formatVersion: 1,
+        format: "lucent-next",
+        formatVersion: 2,
         kind: "backup",
         exportedAt: new Date().toISOString(),
         timezoneOffsetMinutes: -new Date().getTimezoneOffset(),
-        homepage: { id: "com.example.aira-profile-card", version: "5.1.3" },
+        homepage: { id: "com.example.aira-profile-card", name: "Lucent Next", version: "5.1.3" },
         legend: { fieldProfile: ["appearances", "seconds", "hit", "miss", "bump", "taken", "dodge", "pilot", "relayIn", "relayOut", "manual"] },
         summary: {
           keys: Object.keys(keys).length,
@@ -2022,7 +2022,7 @@
         : "已写入系统剪贴板" + tail + "。去粘贴吧。", "ok");
     }).catch(function (error) {
       toast("复制没有成功");
-      setExportStatus("剪贴板写入被拒绝了。这是这台机器的环境限制（例如把主页复制限制在应用内），和你的数据无关。可以：① 再点一次复制；② 改用下面的分段复制；③ 若一直失败，说明这台机器关闭了主页复制，请把这一行反馈给主页作者（" + (error && error.detail ? error.detail : error && error.code) + "）。", "error");
+      setExportStatus("剪贴板写入被拒绝了。这是这台机器的环境限制（例如把网页复制限制在应用内），和你的数据无关。可以：① 再点一次复制；② 改用下面的分段复制；③ 若一直失败，说明这台机器关闭了网页复制，请把这一行反馈给作者（" + (error && error.detail ? error.detail : error && error.code) + "）。", "error");
     });
   }
 
@@ -2118,7 +2118,7 @@
     nodes.retry.hidden = false;
     setExportStatus(error && error.code === "SELF_CHECK"
       ? "打包自检没有通过（" + (error.detail || "回读不一致") + "）。为避免给你一份坏数据，这次没有写入剪贴板。请点「重新整理」再试一次。"
-      : "打包没有完成（" + ((error && (error.message || error.detail)) || "未知原因") + "）。这次没有写入剪贴板。请点「重新整理」；若反复出现，请把这句反馈给主页作者。", "error");
+      : "打包没有完成（" + ((error && (error.message || error.detail)) || "未知原因") + "）。这次没有写入剪贴板。请点「重新整理」；若反复出现，请把这句反馈给作者。", "error");
   }
 
   function prepareExport() {
@@ -2672,7 +2672,7 @@
     input.type = "text";
     input.maxLength = 120;
     input.value = currentLogText();
-    input.placeholder = "写一句今天想留在主页上的话";
+    input.placeholder = "写一句今天想留在灵感台上的话";
     field.appendChild(label);
     field.appendChild(input);
 
@@ -3249,7 +3249,7 @@
   // the existing storage keys, so opening the manager never migrates or writes data.
   function defaultGroups() {
     return [
-      { key: "count", name: "浮光数量", description: "进入主页时出现的浮光数量，0 枚可收起浮光。",
+      { key: "count", name: "浮光数量", description: "打开灵感台时出现的浮光数量，0 枚可收起浮光。",
         current: state.interactionCount + " 枚", saved: state.interactionDefaultCount + " 枚",
         ready: state.interactionSettingsReady, error: state.interactionReadError, status: state.interactionSaveStatus,
         saveId: "interactionSaveDefault", save: saveInteractionDefault, retry: retryCountDefault },
@@ -3313,7 +3313,7 @@
     });
     var autoCard = document.createElement("section"); autoCard.className = "defaults-card defaults-autodrive";
     autoCard.setAttribute("aria-labelledby", "default-autodrive-name");
-    autoCard.innerHTML = '<div class="defaults-autodrive-head"><div class="defaults-autodrive-copy"><h4 id="default-autodrive-name">自动驾驶 (FSD)</h4><p class="defaults-description">进入主页时自动以淡蓝档开启，阵容仍会定时重抽；运行后再点一次 FSD 进入橙光增强。</p></div><button id="autoDriveLaunch" type="button" class="wp-random collision-random" aria-pressed="false"><span>默认开启</span><i class="wp-track" aria-hidden="true"><i class="wp-knob"></i></i></button></div><div class="defaults-feedback" id="default-autodrive-feedback" hidden><span role="status" id="autoDriveSaveNote"></span><button id="autoDriveRetry" type="button" class="collision-retry" hidden>重新读取</button></div>';
+    autoCard.innerHTML = '<div class="defaults-autodrive-head"><div class="defaults-autodrive-copy"><h4 id="default-autodrive-name">自动驾驶 (FSD)</h4><p class="defaults-description">打开灵感台时自动以淡蓝档开启，阵容仍会定时重抽；运行后再点一次 FSD 进入橙光增强。</p></div><button id="autoDriveLaunch" type="button" class="wp-random collision-random" aria-pressed="false"><span>默认开启</span><i class="wp-track" aria-hidden="true"><i class="wp-knob"></i></i></button></div><div class="defaults-feedback" id="default-autodrive-feedback" hidden><span role="status" id="autoDriveSaveNote"></span><button id="autoDriveRetry" type="button" class="collision-retry" hidden>重新读取</button></div>';
     autoCard.querySelector("#autoDriveLaunch").addEventListener("click", function () {
       if (!state.autoDriveReady || state.autoDriveReadError || state.factoryBusy) return;
       state.autoDriveLaunchOn = !state.autoDriveLaunchOn; saveAutoDriveSettings(); syncAutoDriveLaunch();
@@ -4022,7 +4022,7 @@
     section.appendChild(title);
     var capsule = document.createElement("div");
     capsule.className = "interaction-toolbar glass-material-settings";
-    [["home", "主页主面板", "进阶调节", "高级调节"], ["sheets", "进阶弹出窗口", "更多调节", "进阶调节"]].forEach(function (target) {
+    [["home", "主卡片", "进阶调节", "高级调节"], ["sheets", "进阶弹出窗口", "更多调节", "进阶调节"]].forEach(function (target) {
       var block = document.createElement("div");
       block.className = "glass-target-block";
       var row = document.createElement("div");
@@ -4226,7 +4226,7 @@
         state.wallpaperRolled = state.wallpaper;
       } else {
         // 在面板里开启随机时，保持当前这张不动（避免背景在眼前反复换）；
-        // 下次进入主页才重新掷。
+        // 下次打开灵感台才重新掷。
         var keep = wpSide();
         state.wallpaper = "random";
         state.wallpaperRolled = keep;

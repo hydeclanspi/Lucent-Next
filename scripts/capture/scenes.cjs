@@ -288,7 +288,7 @@ const scenes = {
     return r;
   },
 
-  // Simulated launch from the base itself: the first shot flies out and back, then Enter is held for bursts.
+  // Simulated launch from the search field itself: the first shot flies out and back, then Enter is held for bursts.
   async simulation() {
     const r = await open({ dpr: 2, time: new Date('2026-10-17T21:12:00+01:00') });
     const { page } = r;

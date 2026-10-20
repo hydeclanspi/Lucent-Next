@@ -197,7 +197,7 @@
     form.addEventListener('focusout', function (event) { if (!form.contains(event.relatedTarget)) stopIntent(); });
     window.addEventListener('blur', function () { if (enabled) cancel(); });
     document.addEventListener('visibilitychange', function () { if (document.hidden && enabled) cancel(); });
-    // Returning through BFCache is a new homepage visit, so the mode expires too.
+    // Returning through BFCache is a new visit, so the mode expires too.
     window.addEventListener('pagehide', function () { setEnabled(false); });
     window.addEventListener('pageshow', function (event) { if (event.persisted) setEnabled(false); });
     notify();
