@@ -10,8 +10,11 @@
 </p>
 
 <p align="center">
-  <a href="https://hydeclanspi.github.io/Lucent-Next/"><b>在线体验</b></a> &nbsp;·&nbsp;
-  <a href="https://hydeclanspi.github.io/Lucent-Next/film/">观看影片</a> &nbsp;·&nbsp;
+  <a href="https://hydeclanspi.github.io/Lucent-Next/"><b>在线体验试用</b></a> &nbsp;·&nbsp;
+  <a href="https://hydeclanspi.github.io/Lucent-Next/film/"><b>观看旗舰影片 (推荐)</b></a> &nbsp;·&nbsp;
+  <a href="https://hydeclanspi.github.io/Lucent-Next/film/">真的很推荐点击左边 ⭐</a> &nbsp;
+
+<p align="center">
   <a href="demo/">全部演示</a> &nbsp;·&nbsp;
   <a href="docs/architecture.md">产品架构</a> &nbsp;·&nbsp;
   <a href="README.en.md">English</a>
@@ -19,9 +22,6 @@
 
 <p align="center">
   <a href="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/check.yml"><img alt="Check" src="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/check.yml/badge.svg"></a>
-  <img alt="为 HUAWEI MatePad Edge 设计" src="https://img.shields.io/badge/%E4%B8%BA-HUAWEI%20MatePad%20Edge%20%E8%AE%BE%E8%AE%A1-1b2433?style=flat-square">
-  <img alt="零运行时依赖" src="https://img.shields.io/badge/%E8%BF%90%E8%A1%8C%E6%97%B6%E4%BE%9D%E8%B5%96-0-1b2433?style=flat-square">
-  <img alt="测试" src="https://img.shields.io/badge/%E6%B5%8B%E8%AF%95-41%20%E9%A1%B9%E5%8D%95%E5%85%83%20%2B%2018%20%E7%BB%84%E6%B5%8F%E8%A7%88%E5%99%A8-1b2433?style=flat-square">
 </p>
 
 <br>
