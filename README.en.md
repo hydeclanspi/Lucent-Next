@@ -24,8 +24,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/check.yml"><img alt="Check" src="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/check.yml/badge.svg"></a>
-  <a href="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/pages.yml"><img alt="Pages" src="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/pages.yml/badge.svg"></a>
+  <a href="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/check.yml"><img alt="Check" src="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/check.yml/badge.svg?branch=main"></a>
+  <a href="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/pages.yml"><img alt="Pages" src="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/pages.yml/badge.svg?branch=main"></a>
   <img alt="Made for HUAWEI MatePad Edge" src="https://img.shields.io/badge/made%20for-HUAWEI%20MatePad%20Edge-1b2433?style=flat-square">
   <img alt="Zero runtime dependencies" src="https://img.shields.io/badge/runtime%20dependencies-0-1b2433?style=flat-square">
 </p>

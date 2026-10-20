@@ -24,9 +24,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/check.yml"><img alt="Check" src="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/check.yml/badge.svg"></a>
-  <a href="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/pages.yml"><img alt="Pages" 
-                                                                                     src="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/pages.yml/badge.svg"></a>
+  <a href="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/check.yml"><img alt="Check" src="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/check.yml/badge.svg?branch=main"></a>
+  <a href="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/pages.yml"><img alt="Pages" src="https://github.com/hydeclanspi/Lucent-Next/actions/workflows/pages.yml/badge.svg?branch=main"></a>
 
 </p>
 
