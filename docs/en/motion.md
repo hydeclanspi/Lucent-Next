@@ -12,7 +12,7 @@ Every motion completes within 320–480 ms.
 
 ## 1. The atelier: six from sixteen
 
-<p align="center"><img src="../../demo/media/atelier.jpg" alt="The motion atelier, 念起，光行: sixteen search motions in four families, which can be scrubbed frame by frame and watched slowly" width="100%"></p>
+<p align="center"><img src="../../showcase/media/atelier.jpg" alt="The motion atelier, 念起，光行: sixteen search motions in four families, which can be scrubbed frame by frame and watched slowly" width="100%"></p>
 
 Before anything entered the product, there was a standalone [atelier](https://hydeclanspi.github.io/Lucent-Next/atelier/) of sixteen studies in four families:
 
@@ -29,7 +29,7 @@ Six were chosen for the product and **kept their atelier numbers**: 01 · 03 · 
 
 ## 2. The six
 
-<p align="center"><img src="../../demo/media/motion-six.webp" alt="The six motions played in turn at 0.35×" width="100%"></p>
+<p align="center"><img src="../../showcase/media/motion-six.webp" alt="The six motions played in turn at 0.35×" width="100%"></p>
 
 | No. | Name | Duration | In a line | What happens |
 |:-:|---|:-:|---|---|
@@ -72,7 +72,7 @@ Enter and the arrow go through the same form submission ([`bindMainSearch`](../.
 
 ## 6. Random: platinum rings and blue-white lasers
 
-<p align="center"><img src="../../demo/media/random-current.webp" alt="With Random on, champagne-platinum conduits run through the gaps between the six cards and blue-white lasers race along them" width="100%"></p>
+<p align="center"><img src="../../showcase/media/random-current.webp" alt="With Random on, champagne-platinum conduits run through the gaps between the six cards and blue-white lasers race along them" width="100%"></p>
 
 Turn on Random and the area where you choose a card becomes a circuit board:
 
@@ -96,7 +96,7 @@ Scheduling pauses while the page is hidden; with reduced motion neither conduits
 
 ## 7. Simulated launch
 
-<p align="center"><img src="../../demo/media/simulation.webp" alt="Endless simulated launch: the first shot flies out and plays back to where it started; then Enter is held and light fires at the arrow shot after shot, each in a different gesture" width="100%"></p>
+<p align="center"><img src="../../showcase/media/simulation.webp" alt="Endless simulated launch: the first shot flies out and plays back to where it started; then Enter is held and light fires at the arrow shot after shot, each in a different gesture" width="100%"></p>
 <p align="center"><sub>Random and the simulated launch together: the first shot is a rehearsal and comes back; with Enter held, each shot takes a different gesture and the words leave with the light.</sub></p>
 
 A launcher that only sends you away is a door. At the top right of the panel sits a switch for an endless simulated-launch loop — an easter egg that lasts only for this visit ([`search-simulation.js`](../../src/assets/search-simulation.js)). With it on, the homepage's search field launches light and never sends a search, and the base closes the loop on itself:
@@ -110,7 +110,7 @@ This controller touches no storage and calls no host interface.
 
 **Silk light and gold motes.** While the loop is on, the search field also takes on a rim of gold ([`search-aura.js`](../../src/assets/search-aura.js)). A canvas sits right behind the field, drawn above the glass and below the text:
 
-<p align="center"><img src="../../demo/media/search-aura.webp" alt="Recorded on the device: first the search field as it is; a tap on ✧ 理, and the endless simulated-launch loop is switched on at the top right of the 念起，光行 panel; back on the main screen, two gold silk ribbons flow round the search field's outline while gold motes rise and sink" width="100%"></p>
+<p align="center"><img src="../../showcase/media/search-aura.webp" alt="Recorded on the device: first the search field as it is; a tap on ✧ 理, and the endless simulated-launch loop is switched on at the top right of the 念起，光行 panel; back on the main screen, two gold silk ribbons flow round the search field's outline while gold motes rise and sink" width="100%"></p>
 
 - **Silk.** Two ribbons, each 42% of the perimeter and half a lap apart, travel the rounded rectangle at an even pace by arc length, one lap in ten seconds, as fast through the corners as along the edges. In a burst they run three times as fast, and each beam that reaches the arrow gives them a nudge.
 - **Motes.** Gold motes rise slowly from the top edge and sink gently from the bottom, 12–22 at a time; every 4–7.65 s their number and their split between the edges are drawn again (55–68% on top). Six in ten new motes take the brightest of three candidate places along the silk, so most lift from where the silk is passing. Each launch swells them to 1.25–1.6× their number (40 at most), and after 1.6 s they settle back slowly.

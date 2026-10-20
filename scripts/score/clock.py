@@ -1,4 +1,4 @@
-"""The film's clock: the scene marks in demo/film/film.js, and the moments its seeded generators choose.
+"""The film's clock: the scene marks in showcase/film/film.js, and the moments its seeded generators choose.
 
 Picture and sound keep one clock. The marks sit on a grid of 120 beats a minute; the lasers on the stage
 and the cores the wave strikes beyond the slit come from the same generators as in the film, so every
@@ -10,7 +10,7 @@ import re
 import numpy as np
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-FILM = ROOT / "demo" / "film"
+FILM = ROOT / "showcase" / "film"
 SR = 48000
 BEAT = 0.5
 BAR = 4 * BEAT

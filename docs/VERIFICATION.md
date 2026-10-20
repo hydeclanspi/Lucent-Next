@@ -35,8 +35,8 @@ Outgoing provider pages are intercepted: the tests verify the real destination U
 ## What this does not cover
 
 - **Feel on a touchscreen.** The tests prove the rules; the feel of the Lueurs under a finger was tuned on a device across 109 versions, and is not re-measured here.
-- **The native package.** `native/lucent-5.0.0-aira.zip` is kept byte for byte and its digest is checked, but no new HarmonyOS import or on-device acceptance was performed for the web edition.
-- **The film in real time.** The suite seeks the film to fixed moments. Smooth real-time playback in a browser depends on the viewer's graphics hardware; the MP4 in `demo/media/` is the reference render.
+- **The native package.** `product-finale/lucent-5.0.0-aira.zip` is kept byte for byte and its digest is checked, but no new HarmonyOS import or on-device acceptance was performed for the web edition.
+- **The film in real time.** The suite seeks the film to fixed moments. Smooth real-time playback in a browser depends on the viewer's graphics hardware; the MP4 in `showcase/media/` is the reference render.
 - **Other browsers.** This run used Chromium; the CI workflow runs the same suites on Linux for every push and pull request. See the repository's Actions page for its current status.
 
 The browser suite writes review screenshots and a JSON result file to the ignored `verification/` folder.

@@ -12,7 +12,7 @@ await mkdir(output, { recursive: true });
 // The site: the product (src/) at the root, and the demos beside it — the concept film, the on-device
 // recording and the motion atelier. Published URLs do not depend on the repository layout: /, /film/,
 // /device/, /atelier/.
-const SITE_MAP = [['src', ''], ['demo/film', 'film'], ['demo/device', 'device'], ['demo/atelier', 'atelier']];
+const SITE_MAP = [['src', ''], ['showcase/film', 'film'], ['showcase/device', 'device'], ['design/atelier', 'atelier']];
 for (const [from, to] of SITE_MAP) {
   if (await exists(path.join(root, from))) await cp(path.join(root, from), path.join(output, to), { recursive: true });
 }

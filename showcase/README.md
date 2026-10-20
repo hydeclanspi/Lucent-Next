@@ -19,7 +19,7 @@ Made for the HUAWEI MatePad Edge; use it there as it is. On a computer, full scr
 
 <p align="center"><a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="media/film-poster-play.jpg" alt="概念影片的封面：四层分开，叠成一块屏幕，中央是播放键 · The cover of the concept film: four layers apart, one screen, with a play button" width="100%"></a></p>
 
-**[在浏览器中观看 · Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/film/)** &nbsp;·&nbsp; [MP4（2K，2560×1440，60 帧，有声 · 1440p, 60 fps, with sound）](media/lucent-film.mp4)
+**[在浏览器中观看 · Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/film/)** &nbsp;·&nbsp; [MP4（2K，2560×1440，60 帧，有声 · 1440p, 60 fps, with sound）](../Lucent-Film.mp4)
 
 一分四十八秒，请开启声音；每一帧画面、每一个声音都由代码生成。网页版点「播放影片」开始：空格暂停，← / → 跳五秒，M 静音，R 从头播放，F 全屏；地址后加 `?t=42`，从第 42 秒开始。源码在 [film/](film/)；配乐由 `python3 scripts/film-score.py` 合成，渲染成视频用 `node scripts/film.mjs`。
 
@@ -53,9 +53,9 @@ Best on a large screen (≥ 900 px). The links only press the product's own butt
 
 <p align="center"><a href="https://hydeclanspi.github.io/Lucent-Next/atelier/"><img src="media/atelier.jpg" alt="十六款搜索动效品鉴 · The sixteen search-motion studies" width="100%"></a></p>
 
-**[hydeclanspi.github.io/Lucent-Next/atelier](https://hydeclanspi.github.io/Lucent-Next/atelier/)**：光的速度、字的秩序、材料的呼吸、浮光的灵性，四组十六款，可逐帧拖动、0.35× 慢看。源码在 [atelier/](atelier/)。
+**[hydeclanspi.github.io/Lucent-Next/atelier](https://hydeclanspi.github.io/Lucent-Next/atelier/)**：光的速度、字的秩序、材料的呼吸、浮光的灵性，四组十六款，可逐帧拖动、0.35× 慢看。源码在 [design/atelier/](../design/atelier/)。
 
-The speed of light, the order of letters, the breath of materials, the spirit of the Lueurs: sixteen studies in four sets, to scrub frame by frame or watch at 0.35×. The source is in [atelier/](atelier/).
+The speed of light, the order of letters, the breath of materials, the spirit of the Lueurs: sixteen studies in four sets, to scrub frame by frame or watch at 0.35×. The source is in [design/atelier/](../design/atelier/).
 
 ## 演示素材 · Media
 

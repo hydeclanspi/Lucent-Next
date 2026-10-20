@@ -10,7 +10,7 @@ Their standard comes from one sentence of mine: **"HarmonyOS's texture, as I def
 
 The whole engine is [`src/assets/interaction.js`](../../src/assets/interaction.js): about 1,100 lines, no dependencies. Every section below is anchored to source lines, and every invariant is checked by [`tests/lueurs-engine.test.cjs`](../../tests/lueurs-engine.test.cjs), which calls the engine's functions directly.
 
-<p align="center"><img src="../../demo/media/lueurs.webp" alt="Nine small glass Lueurs drift through the open space; when two meet, one rams and the other turns away; a time-lapse at double speed" width="100%"></p>
+<p align="center"><img src="../../showcase/media/lueurs.webp" alt="Nine small glass Lueurs drift through the open space; when two meet, one rams and the other turns away; a time-lapse at double speed" width="100%"></p>
 <p align="center"><sub>Nine Lueurs drifting freely, at double speed. Recorded under a fake clock, frame by frame: every frame is the engine's real state at an exact virtual time.</sub></p>
 
 ---

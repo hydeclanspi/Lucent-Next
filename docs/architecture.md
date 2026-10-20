@@ -26,7 +26,7 @@
 | | |
 |---|---|
 | **设备** | 华为 MatePad Edge：14.2 英寸 OLED，3:2，3120×2080，120 Hz，触屏。整套版面以 1560×1040 CSS 像素（2× 设备像素比）为参照。 |
-| **宿主** | 鸿蒙上的 Aira 浏览器，以「自定义主页」安装包运行。宿主提供系统搜索、标签后台、隐私模式、历史记录、书签、下载、设置、扫码等入口，以及主题色与本地存储。原生安装包按交付原样保存在 [`native/`](../native/README.md)。 |
+| **宿主** | 鸿蒙上的 Aira 浏览器，以「自定义主页」安装包运行。宿主提供系统搜索、标签后台、隐私模式、历史记录、书签、下载、设置、扫码等入口，以及主题色与本地存储。原生安装包按交付原样保存在 [`product-finale/`](../product-finale/README.md)。 |
 | **网页版** | 就是这个仓库。[`src/web/browser-bridge.js`](../src/web/browser-bridge.js) 在浏览器里实现宿主接口，每个宿主入口都有一块可用的演示面板；[`src/web/showcase.js`](../src/web/showcase.js) 提供一键直达链接；[`src/web/immersive.js`](../src/web/immersive.js) 让大屏首次轻点即进入全屏；[`src/web/manifest.webmanifest`](../src/web/manifest.webmanifest) 让它可以安装为全屏启动的应用。 |
 
 ## L1 · 基地：表面
@@ -228,6 +228,6 @@
 | [`src/assets/search-motion-renderers.js`](../src/assets/search-motion-renderers.js) · [`search-motion.js`](../src/assets/search-motion.js) · [`search-motion-panel.js`](../src/assets/search-motion-panel.js) | 六式渲染器、播放器、面板与 Random 激光 |
 | [`src/assets/search-simulation.js`](../src/assets/search-simulation.js) | 模拟发射与连发 |
 | [`src/web/`](../src/web/) | 浏览器演示层、一键直达、沉浸全屏、应用清单与图标 |
-| [`demo/atelier/`](../demo/atelier/index.html) | 十六款品鉴页 |
+| [`design/atelier/`](../design/atelier/index.html) | 十六款品鉴页 |
 | [`scripts/`](../scripts/) | 构建、预览、检查、图表（`figures.mjs`）、媒体录制（`capture/`）、图标（`icon.mjs`） |
 | [`tests/`](../tests/) | 引擎、渲染器、存储与浏览器测试 |

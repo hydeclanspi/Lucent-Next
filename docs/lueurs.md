@@ -10,7 +10,7 @@
 
 整个引擎在 [`src/assets/interaction.js`](../src/assets/interaction.js)，约 1,100 行，无依赖。下文每一节都锚定到源码行；所有不变量都由 [`tests/lueurs-engine.test.cjs`](../tests/lueurs-engine.test.cjs) 直接调用引擎函数验证。
 
-<p align="center"><img src="../demo/media/lueurs.webp" alt="九枚玻璃小浮光在留白里各自漂游，相遇时一方撞上、一方回避；两倍速延时" width="100%"></p>
+<p align="center"><img src="../showcase/media/lueurs.webp" alt="九枚玻璃小浮光在留白里各自漂游，相遇时一方撞上、一方回避；两倍速延时" width="100%"></p>
 <p align="center"><sub>九枚浮光，自然漂游，两倍速延时。录制时用伪时钟逐帧推进：每一帧都是引擎在一个精确虚拟时刻的真实状态。</sub></p>
 
 ---

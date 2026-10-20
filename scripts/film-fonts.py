@@ -2,8 +2,8 @@
 
     pip install fonttools brotli && python3 scripts/film-fonts.py
 
-Reads every character in demo/film/index.html and film.js and writes WOFF2 subsets to
-demo/film/fonts/. Sources are Noto Serif CJK SC and Noto Sans CJK SC (Adobe, SIL Open Font
+Reads every character in showcase/film/index.html and film.js and writes WOFF2 subsets to
+showcase/film/fonts/. Sources are Noto Serif CJK SC and Noto Sans CJK SC (Adobe, SIL Open Font
 License 1.1) and Inter (The Inter Project Authors, SIL Open Font License 1.1); neither carries a
 Reserved Font Name. Override a source path with an environment variable named after the output,
 for example FILM_FONT_SERIF_LIGHT=/path/to/NotoSerifCJK-Light.ttc.
@@ -18,7 +18,7 @@ import pathlib
 from fontTools import subset
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-FILM = ROOT / "demo" / "film"
+FILM = ROOT / "showcase" / "film"
 OUT = FILM / "fonts"
 NOTO = "/usr/share/fonts/opentype/noto"
 INTER = "/usr/share/fonts/opentype/inter"

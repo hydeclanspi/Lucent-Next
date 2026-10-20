@@ -6,7 +6,7 @@
 
 ---
 
-<p align="center"><img src="../../demo/media/roster.jpg" alt="The field chronicle: the residency terrain, the drive log and the roster of 49 residents; #14 is selected, showing its file, closest companions, relationship web and strongest triangle" width="100%"></p>
+<p align="center"><img src="../../showcase/media/roster.jpg" alt="The field chronicle: the residency terrain, the drive log and the roster of 49 residents; #14 is selected, showing its file, closest companions, relationship web and strongest triangle" width="100%"></p>
 <p align="center"><sub>The data in these screenshots was produced by the real engine: the product ran for a simulated week under a fake clock, with Lueurs summoned session by session, cruise and boosted Drive switched on, and a few lenses dragged by hand.</sub></p>
 
 All of Lucent's data stays on the device. The chronicle answers three questions about long use: can the numbers still be trusted, do they still mean what they always meant, and can they recover by themselves when half of them break?
@@ -86,7 +86,7 @@ A pulse every 4 seconds records time present, minutes close, residency position 
 
 ## 6. A family of charts
 
-<p align="center"><img src="../../demo/media/chronicle.jpg" alt="History statistics: Light tendency, interaction counts, probability distribution and relative collision speed, over the last 7 days" width="100%"></p>
+<p align="center"><img src="../../showcase/media/chronicle.jpg" alt="History statistics: Light tendency, interaction counts, probability distribution and relative collision speed, over the last 7 days" width="100%"></p>
 
 Every chart is hand-written SVG ([`stats-panel.js`](../../src/assets/stats-panel.js)); there is no chart library:
 

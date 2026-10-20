@@ -6,7 +6,7 @@
 
 ---
 
-<p align="center"><img src="../demo/media/roster.jpg" alt="场志：浮光地形图、驾驶志与 49 位居民的名册；选中 #14 号浮光，显示它的档案、密友榜、关系网与三角" width="100%"></p>
+<p align="center"><img src="../showcase/media/roster.jpg" alt="场志：浮光地形图、驾驶志与 49 位居民的名册；选中 #14 号浮光，显示它的档案、密友榜、关系网与三角" width="100%"></p>
 <p align="center"><sub>本页截图中的数据由真实引擎生成：用伪时钟驱动产品运行一周，期间按会话召唤浮光、开启巡航与增强驾驶、手动拖动若干次。</sub></p>
 
 灵感台的一切数据只留在本机。场志要回答的，是长期使用之后的三个问题：这些数字是否依然可信，口径是否始终一致，坏掉一半时能否自己恢复。
@@ -86,7 +86,7 @@
 
 ## 6. 图表家族
 
-<p align="center"><img src="../demo/media/chronicle.jpg" alt="历史统计：Light 倾向、交互次数、概率分布与碰撞相对速度四张图，时间范围为最近 7 天" width="100%"></p>
+<p align="center"><img src="../showcase/media/chronicle.jpg" alt="历史统计：Light 倾向、交互次数、概率分布与碰撞相对速度四张图，时间范围为最近 7 天" width="100%"></p>
 
 所有图表都是手写 SVG（[`stats-panel.js`](../src/assets/stats-panel.js)），没有图表库：
 

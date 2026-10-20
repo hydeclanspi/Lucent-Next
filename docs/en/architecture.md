@@ -26,7 +26,7 @@ This page is Lucent's complete inventory, from the screen it runs on to every nu
 | | |
 |---|---|
 | **Device** | Huawei MatePad Edge: 14.2-inch OLED, 3:2, 3120×2080, 120 Hz, touch. The layout is set on 1560×1040 CSS pixels (device pixel ratio 2). |
-| **Host** | The Aira browser on HarmonyOS, which runs Lucent as a custom-homepage package. The host provides system search, tabs, private mode, history, bookmarks, downloads, settings and the scanner, plus theme colours and local storage. The native package is kept as shipped in [`native/`](../../native/README.md). |
+| **Host** | The Aira browser on HarmonyOS, which runs Lucent as a custom-homepage package. The host provides system search, tabs, private mode, history, bookmarks, downloads, settings and the scanner, plus theme colours and local storage. The native package is kept as shipped in [`product-finale/`](../../product-finale/README.md). |
 | **Web edition** | This repository. [`src/web/browser-bridge.js`](../../src/web/browser-bridge.js) implements the host interface in the browser, with a working demonstration panel behind every host entry; [`src/web/showcase.js`](../../src/web/showcase.js) provides deep links; [`src/web/immersive.js`](../../src/web/immersive.js) takes large screens full screen on the first click; [`src/web/manifest.webmanifest`](../../src/web/manifest.webmanifest) makes it installable as an app that opens full screen. |
 
 ## L1 · Base: the surface
@@ -228,6 +228,6 @@ Four systems. Each lists what a person sees first, then why it works; formulas a
 | [`src/assets/search-motion-renderers.js`](../../src/assets/search-motion-renderers.js) · [`search-motion.js`](../../src/assets/search-motion.js) · [`search-motion-panel.js`](../../src/assets/search-motion-panel.js) | The six renderers, the player, the panel and the Random lasers |
 | [`src/assets/search-simulation.js`](../../src/assets/search-simulation.js) | Simulated launch and bursts |
 | [`src/web/`](../../src/web/) | Browser layer, deep links, immersive full screen, app manifest and icons |
-| [`demo/atelier/`](../../demo/atelier/index.html) | The sixteen-study atelier |
+| [`design/atelier/`](../../design/atelier/index.html) | The sixteen-study atelier |
 | [`scripts/`](../../scripts/) | Build, preview, checks, figures (`figures.mjs`), media capture (`capture/`), the icon (`icon.mjs`) |
 | [`tests/`](../../tests/) | Engine, renderer, storage and browser tests |

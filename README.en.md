@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="demo/media/film-teaser.webp" alt="From the Lucent concept film: the Home button seen so close it is only an arc of light; four layers come apart; a wave of light sweeps a chip and its cores lift off as windows, into a tunnel of a thousand windows; stage lights rise; over an aurora, the glass's settings turn one by one; four pillars of light; 灵感台 at dawn" width="100%"></a>
+  <a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="showcase/media/film-teaser.webp" alt="From the Lucent concept film: the Home button seen so close it is only an arc of light; four layers come apart; a wave of light sweeps a chip and its cores lift off as windows, into a tunnel of a thousand windows; stage lights rise; over an aurora, the glass's settings turn one by one; four pillars of light; 灵感台 at dawn" width="100%"></a>
 </p>
 
 <h1 align="center">Lucent · 灵感台</h1>
@@ -12,7 +12,7 @@
 <p align="center">
   <a href="https://hydeclanspi.github.io/Lucent-Next/"><b>Live</b></a> &nbsp;·&nbsp;
   <a href="https://hydeclanspi.github.io/Lucent-Next/film/">Watch the film</a> &nbsp;·&nbsp;
-  <a href="demo/">All demos</a> &nbsp;·&nbsp;
+  <a href="showcase/">All demos</a> &nbsp;·&nbsp;
   <a href="docs/en/architecture.md">Architecture</a> &nbsp;·&nbsp;
   <a href="README.md">中文</a>
 </p>
@@ -37,7 +37,7 @@
 
 <p align="center">Today, we have made that promise into a place.</p>
 
-<p align="center"><img src="demo/media/hero.jpg" alt="Lucent: a personal base over a London night wallpaper; profile, the open search panel and shortcuts each in place, six small glass Lueurs scattered across the open space above" width="100%"></p>
+<p align="center"><img src="showcase/media/hero.jpg" alt="Lucent: a personal base over a London night wallpaper; profile, the open search panel and shortcuts each in place, six small glass Lueurs scattered across the open space above" width="100%"></p>
 
 <h3 align="center">Today, we're introducing four things.</h3>
 
@@ -83,27 +83,27 @@
   Like the cat and the dog in a back garden, they live their own lives. Each time you come back, they are there, with a little more of a story.
 </p>
 
-<p align="center"><img src="demo/media/lueurs.webp" alt="Nine glass Lueurs drift through the open space; when two meet, one rams and the other turns away; a time-lapse at double speed" width="100%"></p>
+<p align="center"><img src="showcase/media/lueurs.webp" alt="Nine glass Lueurs drift through the open space; when two meet, one rams and the other turns away; a time-lapse at double speed" width="100%"></p>
 
 ---
 
 ## The film
 
-<p align="center"><a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="demo/media/film-poster-play.jpg" alt="The cover of the concept film: wallpaper, glass, interface and residents drawn apart in pale blue light, each labelled; below, “Wallpaper, glass, interface, residents: four layers, one screen.” A play button in the middle opens the film" width="100%"></a></p>
+<p align="center"><a href="https://hydeclanspi.github.io/Lucent-Next/film/"><img src="showcase/media/film-poster-play.jpg" alt="The cover of the concept film: wallpaper, glass, interface and residents drawn apart in pale blue light, each labelled; below, “Wallpaper, glass, interface, residents: four layers, one screen.” A play button in the middle opens the film" width="100%"></a></p>
 
 **A concept film**, one minute forty-eight seconds, with sound. In the dark, a beam of light draws the button; pressed, the camera dives to its rim until it is a great arc of light, with the Home button as everyone knew it inside and its name, Home 键. In a flash of white, the promise it made becomes a place. Four layers stack into one screen; the words you write become light and rush into the arrow; a door edged in every colour opens on the surface of a chip, a wave of light sweeps it, every core it strikes lifts off as a window onto the world, and the camera jumps into a tunnel of a thousand windows; stage lights rise, and lasers run through rings of platinum; over an aurora, the glass's six settings turn one by one; the four places stand as four pillars of light, close into a line, then a point, and 灵感台 rises from it; forty-nine residents move into the open space, form constellations and settle into a back garden; then it comes to rest on the screen it was made for, where three wallpapers turn to glass, one on each beat, hang in the air, and settle into its screen, and night falls on the one that is chosen.
 
 Every frame and every sound is made in code: one timeline, with WebGL for the sky and the light, Canvas for the beams, the arc and the world beyond the door, CSS and SVG for the interface and the type; the score and the sound effects are synthesized with numpy from the same timetable — a piano and a marimba with the tune, hands, a whistle and a ukulele beside them, strings, taiko and voices under every reveal, at 120 beats a minute — so every press, flash and door lands on a downbeat, and the music is loud where the film is and quiet where it is. Pause or scrub any moment, or render it frame by frame to video.
 
-→ [Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/film/) · [Download the MP4 (1440p, 60 fps, with sound)](demo/media/lucent-film.mp4)
+→ [Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/film/) · [Download the MP4 (1440p, 60 fps, with sound)](Lucent-Film.mp4)
 
 ### On the device
 
-<p align="center"><a href="https://hydeclanspi.github.io/Lucent-Next/device/"><img src="demo/media/on-device.jpg" alt="On the device: filmed on a HUAWEI MatePad Edge, now showing; open it to play" width="100%"></a></p>
+<p align="center"><a href="https://hydeclanspi.github.io/Lucent-Next/device/"><img src="showcase/media/on-device.jpg" alt="On the device: filmed on a HUAWEI MatePad Edge, now showing; open it to play" width="100%"></a></p>
 
 Recorded on a HUAWEI MatePad Edge, fifty-four seconds, with sound: a search and its Lightline, the six ways to arrive, the Lueurs' settings and their history, the wallpapers, the card and the backup; and last, the gold silk and motes round the search field, and focus with both sections folded. The quiet stretches run faster, each marked with its speed in the top right corner; the music is the second half of the concept film's score.
 
-→ [Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/device/) · [Download the MP4 (1440p, 60 fps, with sound)](demo/device/lucent-on-device.mp4)
+→ [Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/device/) · [Download the MP4 (1440p, 60 fps, with sound)](showcase/device/lucent-on-device.mp4)
 
 ## Made for one screen
 
@@ -136,7 +136,7 @@ Five layers, macro to micro: **context** (where it runs) → **base** (what sits
 
 ## 01 · Workbench: everything in place
 
-<p align="center"><img src="demo/media/focus.jpg" alt="Focus mode: with shortcuts and direct entries both folded, the main card sinks to the visual centre and search is the only focus" width="100%"></p>
+<p align="center"><img src="showcase/media/focus.jpg" alt="Focus mode: with shortcuts and direct entries both folded, the main card sinks to the visual centre and search is the only focus" width="100%"></p>
 <p align="center"><sub>Focus mode: fold shortcuts and direct entries, and the card sinks to the centre with only search left.</sub></p>
 
 A day begins on a quiet surface. It holds only what you use every day, each thing in a fixed place:
@@ -148,7 +148,7 @@ A day begins on a quiet surface. It holds only what you use every day, each thin
 
 ## 02 · Launch pad: a thought, in flight
 
-<p align="center"><img src="demo/media/motion-six.webp" alt="The search-motion preview plays the six motions at 0.35× — Lightline, Microprism, Shutter, Platinum filament, Through the eye, Near orbit" width="100%"></p>
+<p align="center"><img src="showcase/media/motion-six.webp" alt="The search-motion preview plays the six motions at 0.35× — Lightline, Microprism, Shutter, Platinum filament, Through the eye, Near orbit" width="100%"></p>
 
 Every search lifts off from here. The words you wrote become a beam of light first; when it reaches the blue arrow, the search departs — out of the base, into the world's interfaces: Google, Bing, Baidu, or an engine template of your own.
 
@@ -160,7 +160,7 @@ Every search lifts off from here. The words you wrote become a beam of light fir
 
 ## 03 · Stage: stay, and the light performs for you
 
-<p align="center"><img src="demo/media/simulation.webp" alt="Endless simulated launch: the first shot flies out and plays back to where it started; then Enter is held and light fires at the arrow shot after shot, each in a different gesture" width="100%"></p>
+<p align="center"><img src="showcase/media/simulation.webp" alt="Endless simulated launch: the first shot flies out and plays back to where it started; then Enter is held and light fires at the arrow shot after shot, each in a different gesture" width="100%"></p>
 
 Lucent is also a place you want to stay. Turn on the endless simulated-launch loop, and the search field launches light and keeps the search at home — the base closes the loop on itself:
 
@@ -169,11 +169,11 @@ Lucent is also a place you want to stay. Turn on the endless simulated-launch lo
 - **Demand is one bit.** Pressing again mid-flight records only "one more", so the queue always holds a single slot. Some keyboards send pairs of key-down and key-up while auto-repeating, so a key-up waits 80 ms before counting as a release.
 - **Platinum rings, blue-white lasers.** Turn Random on and the gaps between the cards become champagne-platinum conduits with blue-white lasers racing through them. Each beam's speed is drawn from a truncated normal N(0.70, 0.10²); lanes are drawn by weight without replacement, so the beams in one channel always run the same way; the opening sends three at once.
 
-<p align="center"><img src="demo/media/random-current.webp" alt="With Random on, champagne-platinum conduits light up in the gaps between the six cards and blue-white lasers race along them; the opening sends three beams at once" width="100%"></p>
+<p align="center"><img src="showcase/media/random-current.webp" alt="With Random on, champagne-platinum conduits light up in the gaps between the six cards and blue-white lasers race along them; the opening sends three beams at once" width="100%"></p>
 
 **Silk light and gold motes.** Turn the loop on and the search field takes on a rim of gold. Two ribbons of gold silk travel its outline at an even pace by arc length, one lap in ten seconds, the top edge and the bottom alike; gold motes rise slowly from the top edge and sink gently from the bottom, 12–22 at a time, redrawn every 4–7.65 s, most of them lifting from where the silk is passing. Each launch swells them to 1.25–1.6× their number, and they settle back slowly. It reads only signals the search field already carries; not one line of the launch logic changed.
 
-<p align="center"><img src="demo/media/search-aura.webp" alt="Recorded on the device: first the search field as it is; a tap on ✧ 理, and the endless simulated-launch loop is switched on at the top right of the 念起，光行 panel; back on the main screen, two gold silk ribbons flow round the search field's outline while gold motes rise and sink" width="100%"></p>
+<p align="center"><img src="showcase/media/search-aura.webp" alt="Recorded on the device: first the search field as it is; a tap on ✧ 理, and the endless simulated-launch loop is switched on at the top right of the 念起，光行 panel; back on the main screen, two gold silk ribbons flow round the search field's outline while gold motes rise and sink" width="100%"></p>
 <p align="center"><sub>Recorded on the HUAWEI MatePad Edge: tap ✧ 理, switch the loop on at the top right of 念起，光行, and back to the search field.</sub></p>
 
 On days you would rather do nothing, the light plays for you, in place. Recharge, then set off again.
@@ -182,7 +182,7 @@ On days you would rather do nothing, the light plays for you, in place. Recharge
 
 ## 04 · Console: every dial is yours
 
-<p align="center"><img src="demo/media/glass-compare.jpg" alt="The same main card: Warm Clear on the left half, Classic Frost on the right" width="100%"></p>
+<p align="center"><img src="showcase/media/glass-compare.jpg" alt="The same main card: Warm Clear on the left half, Classic Frost on the right" width="100%"></p>
 <p align="center"><sub>The same main card: Warm Clear on the left, Classic Frost on the right.</sub></p>
 
 The surface stays quiet, and all of the depth is yours:
@@ -206,13 +206,13 @@ The Lueurs are what bring the base to life. They began as a red circle drawn on 
 - **Stones and constellations.** Each time the base opens, the Lueurs are placed one by one by weighted lottery, penalising deserts and crowding, so that every glance is a new constellation.
 - **Probability.** Dragging a Lueur is walking an invisible potential field: the height you travel (62%), the change in distance to a reference lens (20%), the angle wound around it (13%) and how far the lens you hit was pushed (5%) rewrite the Light/Dark odds of the next wallpaper, by at most 35 points per gesture. The odds listen only to a human hand: driving and encounters neither write them nor count as interaction.
 
-<p align="center"><img src="demo/media/lueurs-poster.jpg" alt="Two frames: a ring of glass Lueurs in orbit with the one you touch lit up — you move them, and they rewrite your next wallpaper, with every meeting kept in the chronicle; at night the Lueurs scatter into a back garden that grows on its own — open the door and set the day down" width="100%"></p>
+<p align="center"><img src="showcase/media/lueurs-poster.jpg" alt="Two frames: a ring of glass Lueurs in orbit with the one you touch lit up — you move them, and they rewrite your next wallpaper, with every meeting kept in the chronicle; at night the Lueurs scatter into a back garden that grows on its own — open the door and set the day down" width="100%"></p>
 
 <p align="center"><img src="docs/figures/potential.en.png" alt="Figure 2: the potential field Φ over the hand-drawn region — ice blue (toward Dark) at lower left, warm gold (toward Light) at upper right, with contour lines" width="100%"></p>
 
 ### The chronicle: every story, kept
 
-<p align="center"><img src="demo/media/roster.jpg" alt="The field chronicle: residency terrain, drive log and the roster of 49 residents; #14 is selected, showing its file, closest companions, relationship web and strongest triangle" width="100%"></p>
+<p align="center"><img src="showcase/media/roster.jpg" alt="The field chronicle: residency terrain, drive log and the roster of 49 residents; #14 is selected, showing its file, closest companions, relationship web and strongest triangle" width="100%"></p>
 
 - **Identity.** #01–#49 are a fixed cast; each visit draws who is present. Pick one up and its number surfaces, faintly.
 - **Files.** Each resident keeps its appearances, time present, hits, times hit, dodges, turns at the wheel and relays; the relationship table keeps each pair's contacts, bumps, dodges and minutes spent close; the terrain map keeps the paths they wore themselves.
@@ -306,10 +306,10 @@ I defined the product, designed it, and signed off every version; the implementa
 | | |
 |---|---|
 | **Live** | [hydeclanspi.github.io/Lucent-Next](https://hydeclanspi.github.io/Lucent-Next/): use it on the MatePad Edge; on a computer, the first tap goes full screen |
-| **The concept film** | [Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/film/) · [MP4](demo/media/lucent-film.mp4) |
-| **On the device** | [Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/device/) · [MP4](demo/device/lucent-on-device.mp4) |
+| **The concept film** | [Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/film/) · [MP4](Lucent-Film.mp4) |
+| **On the device** | [Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/device/) · [MP4](showcase/device/lucent-on-device.mp4) |
 | **Sixteen motion studies** | [hydeclanspi.github.io/Lucent-Next/atelier](https://hydeclanspi.github.io/Lucent-Next/atelier/) |
-| **Deep links** | Seven links that open a state directly — boosted Drive, Random's platinum rings, the chronicle, wallpaper and glass… all on the [demo page](demo/) |
+| **Deep links** | Seven links that open a state directly — boosted Drive, Random's platinum rings, the chronicle, wallpaper and glass… all on the [demo page](showcase/) |
 
 ## Run it locally
 
@@ -331,12 +331,12 @@ src/                        the source: Lucent itself
   index.html                the base
   assets/                   the Lueurs engine, the chronicle, Lucent Glass, 念起光行, simulated launch, profile and panels
   web/                      the web edition: demonstration layer, deep links, immersive full screen, manifest and icons
-demo/                       demonstrations
+showcase/                       demonstrations
   film/                     the concept film (a web page that plays on open)
   device/                   the on-device recording, edited, and its player page
   atelier/                  the sixteen search-motion studies
   media/                    screenshots, animations and the film
-native/                     the HarmonyOS Aira package (5.0, preserved as shipped)
+product-finale/                     the HarmonyOS Aira package (5.0, preserved as shipped)
 docs/                       deep documentation and figures (English in docs/en/)
 scripts/                    build, checks, figures, capture, film rendering, icons and the share card
 tests/                      engine, renderer, storage and browser tests

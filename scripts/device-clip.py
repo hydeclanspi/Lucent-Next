@@ -1,4 +1,4 @@
-"""Cut the README's on-device animation, demo/media/search-aura.webp, from a MatePad recording.
+"""Cut the README's on-device animation, showcase/media/search-aura.webp, from a MatePad recording.
 
     python3 scripts/device-clip.py SVID_20261020_131207_1.mp4
     python3 scripts/device-clip.py REC.mp4 --stills 0.5 2.4 3.4 6.0   # a few frames into verification/device/, to check
@@ -124,7 +124,7 @@ def frames(path, times):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("source", type=pathlib.Path, help="the screen recording")
-    ap.add_argument("--out", type=pathlib.Path, default=ROOT / "demo/media/search-aura.webp")
+    ap.add_argument("--out", type=pathlib.Path, default=ROOT / "showcase/media/search-aura.webp")
     ap.add_argument("--stills", type=float, nargs="+", help="write these moments as JPEGs into verification/device/ instead")
     args = ap.parse_args()
     if args.stills:
