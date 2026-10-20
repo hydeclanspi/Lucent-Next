@@ -6,14 +6,14 @@
 
 ---
 
-<p align="center"><img src="../figures/architecture.en.png" alt="Figure 0: the architecture in five layers, top to bottom — context, base, systems, mechanisms, pixels — with control and trust running across all of them" width="100%"></p>
+<p align="center"><img src="../figures/architecture.en.png" alt="Figure 0: the architecture in five layers, top to bottom — context, surface, systems, mechanisms, pixels — with control and trust running across all of them" width="100%"></p>
 
 This page is Lucent's complete inventory, from the screen it runs on to every number that lands on a pixel. Each layer answers one question:
 
 | Layer | Question |
 |---|---|
 | **L0 Context** | Where does it run, and who hosts it? |
-| **L1 Base** | What is on the surface, and where? |
+| **L1 Surface** | What is on the surface, and where? |
 | **L2 Systems** | Which four systems run underneath, and what does a person see of them? |
 | **L3 Mechanisms** | Why do those systems work? |
 | **L4 Pixels** | Which numbers does it all land on? |
@@ -26,10 +26,10 @@ This page is Lucent's complete inventory, from the screen it runs on to every nu
 | | |
 |---|---|
 | **Device** | Huawei MatePad Edge: 14.2-inch OLED, 3:2, 3120×2080, 120 Hz, touch. The layout is set on 1560×1040 CSS pixels (device pixel ratio 2). |
-| **Host** | The Aira browser on HarmonyOS, which runs Lucent as a custom-homepage package. The host provides system search, tabs, private mode, history, bookmarks, downloads, settings and the scanner, plus theme colours and local storage. The native package is kept as shipped in [`product-finale/`](../../product-finale/README.md). |
+| **Host** | The Aira browser on HarmonyOS, which runs Lucent as a package of its 自定义主页 feature. The host provides system search, tabs, private mode, history, bookmarks, downloads, settings and the scanner, plus theme colours and local storage. The device packages are kept as shipped in [`product-finale/`](../../product-finale/README.md). |
 | **Web edition** | This repository. [`src/web/browser-bridge.js`](../../src/web/browser-bridge.js) implements the host interface in the browser, with a working demonstration panel behind every host entry; [`src/web/showcase.js`](../../src/web/showcase.js) provides deep links; [`src/web/immersive.js`](../../src/web/immersive.js) takes large screens full screen on the first click; [`src/web/manifest.webmanifest`](../../src/web/manifest.webmanifest) makes it installable as an app that opens full screen. |
 
-## L1 · Base: the surface
+## L1 · Surface: what is on it
 
 ### Top bar
 
@@ -86,7 +86,7 @@ Four systems. Each lists what a person sees first, then why it works; formulas a
 - **The Interaction panel** (hold the planet): count; collision strength (1–24×, optionally redrawn at every launch); natural pace (0.25–16×); the Light : Dark odds; Drive (FSD); history statistics; defaults; and an explainer card, 黑箱里，灵感怎样发生 (*inside the black box, how inspiration happens*), in seven parts: an invisible terrain · distance, winding and collision · a heading with memory · a flick, then a quiet settle · letting the Lueurs set off · stones and constellations · a box you can partly see into.
 - **History statistics.** Today / 7 days / 30 days / 1 year / all; Light tendency, interaction counts (drags, arrow keys, the manual slider and added Lueurs each viewable), the probability distribution and collision strength; tap a period for details, step through periods one by one.
 - **The chronicle.** Residency terrain (26×12 with A–Z, A2… coordinates), drive log, the 49-cell roster, personal files, closest companions, the relationship web, triangles and recent events; a switch to show each Lueur's number on touch.
-- **Defaults.** Count, strength, pace and odds each "set as default / restore default", or all at once; look up the factory values; FSD "on by default" — cruise starts when the base opens.
+- **Defaults.** Count, strength, pace and odds each "set as default / restore default", or all at once; look up the factory values; FSD "on by default" — cruise starts when Lucent opens.
 - **Backup and export** (hold the scan icon): all data in one text, written only to the clipboard.
 
 **Why it works**
@@ -101,7 +101,7 @@ Four systems. Each lists what a person sees first, then why it works; formulas a
 | Encounters | A 150 px circle, 70% become events, bump or dodge at 50 / 50; cooldowns of 9 s / 3 s; at most 3 at once | [§6](lueurs.md#6-encounters-making-natural-meetings-into-events) |
 | Placement | Punish only deserts and crowding; the far penalty yields to deserts (γ = 0.15); the upper 38% is a plateau; a fresh "mood" for each lens | [§7](lueurs.md#7-stones-and-constellations) |
 | Identity | 49 fixed residents, drawn without replacement | [§8](lueurs.md#8-identity-forty-nine-fixed-residents) |
-| Storage | Two checksummed slots (FNV-1a over canonical JSON); hour → day → month → year compaction; largest-remainder migration; a grid guard; the AIRAPC1 backup text | [chronicle](chronicle.md) |
+| Storage | Two checksummed slots (FNV-1a over canonical JSON); hour → day → month → year compaction; largest-remainder migration; a grid guard; the LUCENT1 backup text | [chronicle](chronicle.md) |
 
 ### Launch · A thought, in flight
 
@@ -119,7 +119,7 @@ Four systems. Each lists what a person sees first, then why it works; formulas a
 | Player | Measures the real font, spacing, padding and scroll; `Intl.Segmenter` graphemes; one canvas, one loop; a "duration + 100 ms" timer so the search is sent exactly once | [§4](motion.md#4-the-player) |
 | Submission | IME guard; blank input never departs; no double submission; the field is cleared before navigation and restored if navigation fails | [§5](motion.md#5-the-submit-flow) |
 
-### Loop · Simulated launch and Random
+### Loop · Simulated launch, Random and the silk light
 
 **What you see**
 
@@ -127,6 +127,7 @@ Four systems. Each lists what a person sees first, then why it works; formulas a
 - **The first shot flies back**: a rehearsal — out along its path and played back in reverse, every character landing where it was. After that, the words leave with the light.
 - **Hold Enter**: bursts, a different gesture for each shot when Random is on.
 - **Random**: platinum lettering and a metal switch; champagne-platinum conduits in the gaps between cards; blue-white lasers; a three-beam opening.
+- **Silk light and gold motes**: with the loop on, two ribbons of gold silk flow round the search field's outline while gold motes rise from the top edge and sink from the bottom; each launch swells them.
 
 **Why it works**
 
@@ -135,6 +136,7 @@ Four systems. Each lists what a person sees first, then why it works; formulas a
 | Bursts | Hold > 280 ms, or press twice < 300 ms apart; 160 ms per shot from the moment its light appears, path only; one canvas and frame loop | [motion §7](motion.md#7-simulated-launch) |
 | Demand | Pressing mid-flight records one bit; a key-up waits 80 ms before counting as release; typing, composing, blur or hiding cancels | [§7](motion.md#7-simulated-launch) |
 | Laser scheduling | Lanes from the real layout, horizontal 0.7 / vertical 0.3; waves of one, two or three beams at 73% / 20% / 7%; lanes without replacement; vertical beams reversed 4/30 of the time; speed ~ truncated N(0.70, 0.10²) via Box–Muller, redrawn when \|z\| > 3; waves 1.53–3.17 s apart and ≥ 90 ms after the slowest beam; an opening at 275 ms | [§6](motion.md#6-random-platinum-rings-and-blue-white-lasers) |
+| Silk light and gold motes | Two ribbons of 42% of the perimeter each, even by arc length, one lap in 10 s, three times as fast in a burst; 12–22 motes at a time, density redrawn every 4–7.65 s, six in ten lifting from the brightest point of the silk; each launch swells them to 1.25–1.6× (40 at most) before they settle; reads only signals the field already carries | [§7](motion.md#7-simulated-launch) |
 
 ### Material · Lucent Glass
 
@@ -174,7 +176,7 @@ Four systems. Each lists what a person sees first, then why it works; formulas a
 
 ## Across · Control
 
-**Quiet is the default, not the ceiling.** What you can tune, and where it lives:
+**Quiet is where it starts; all of the depth is yours.** What you can tune, and where it lives:
 
 | Scope | Yours to tune |
 |---|---|
@@ -194,7 +196,7 @@ Four systems. Each lists what a person sees first, then why it works; formulas a
 - **Storage discipline.** Two slots with canonical checksums; a failed read never overwrites history; migrations keep totals; writes guard their shape; copies verify themselves first.
 - **Accessibility.** Arrow keys move Lueurs; every long press has a keyboard equivalent; reduced motion and reduced transparency are honoured; sheets trap focus and return it on close.
 - **Performance discipline.** One frame loop; about 30 Hz when idle; fully paused in the background, under a sheet or when hidden; zero glass animation at rest.
-- **Verification.** 41 unit tests and 18 browser flows run in CI on every push; the documentation figures are drawn by the engine's own functions, and the screenshots, animations and concept film are rendered frame by frame under a fake clock. → [Verification](../VERIFICATION.md)
+- **Verification.** 42 unit tests and 22 browser flows run in CI on every push; the documentation figures are drawn by the engine's own functions, and the screenshots, animations and concept film are rendered frame by frame under a fake clock. → [Verification](../VERIFICATION.md)
 
 ## The full interaction table
 
@@ -220,14 +222,16 @@ Four systems. Each lists what a person sees first, then why it works; formulas a
 
 | File | Owns |
 |---|---|
-| [`src/index.html`](../../src/index.html) | The base's structure, metadata and app manifest link |
+| [`src/index.html`](../../src/index.html) | The surface's structure, metadata and app manifest link |
 | [`src/assets/app.js`](../../src/assets/app.js) · [`app.css`](../../src/assets/app.css) | Profile, search lifecycle, shortcuts, wallpaper, the panels, backup and export, About, the short-screen guard |
 | [`src/assets/interaction.js`](../../src/assets/interaction.js) · [`interaction.css`](../../src/assets/interaction.css) | The Lueurs engine |
 | [`src/assets/stats-store.js`](../../src/assets/stats-store.js) · [`field-store.js`](../../src/assets/field-store.js) · [`stats-panel.js`](../../src/assets/stats-panel.js) | Statistics, the chronicle and the hand-written SVG charts |
 | [`src/assets/glass-material.js`](../../src/assets/glass-material.js) · [`glass-material.css`](../../src/assets/glass-material.css) | Lucent Glass |
 | [`src/assets/search-motion-renderers.js`](../../src/assets/search-motion-renderers.js) · [`search-motion.js`](../../src/assets/search-motion.js) · [`search-motion-panel.js`](../../src/assets/search-motion-panel.js) | The six renderers, the player, the panel and the Random lasers |
 | [`src/assets/search-simulation.js`](../../src/assets/search-simulation.js) | Simulated launch and bursts |
+| [`src/assets/search-aura.js`](../../src/assets/search-aura.js) · [`search-aura.css`](../../src/assets/search-aura.css) | Silk light and gold motes |
 | [`src/web/`](../../src/web/) | Browser layer, deep links, immersive full screen, app manifest and icons |
-| [`design/atelier/`](../../design/atelier/index.html) | The sixteen-study atelier |
-| [`scripts/`](../../scripts/) | Build, preview, checks, figures (`figures.mjs`), media capture (`capture/`), the icon (`icon.mjs`) |
+| [`src/fonts/`](../../src/fonts/) | The device's typefaces: web slices of HarmonyOS Sans and Noto Sans Mono |
+| [`design/`](../../design/) | Design sources: the sixteen-study atelier, the app icon, the share card, covers and the documentation figures |
+| [`scripts/`](../../scripts/) | Build, preview, checks, figures (`figures.mjs`), media capture (`capture/`), the film and its score, device edits, fonts |
 | [`tests/`](../../tests/) | Engine, renderer, storage and browser tests |

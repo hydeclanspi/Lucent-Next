@@ -1,6 +1,6 @@
 # The field chronicle · 场志
 
-**The Lueurs are not nameless. Here is the roster; this is where the stories start.**
+**Forty-nine residents, each with a name. Here is the roster; this is where the stories start.**
 
 [中文](../chronicle.md) · [Back to README](../../README.en.md)
 
@@ -21,7 +21,7 @@ All of Lucent's data stays on the device. The chronicle answers three questions 
 | Budget | 160 KiB | 96 KiB |
 | Source | [`stats-store.js`](../../src/assets/stats-store.js) | [`field-store.js`](../../src/assets/field-store.js) |
 
-**The statistics must mean exactly what they say.** Light tendency is a statistic of the probability values produced by interaction, not the share of wallpapers that actually came up Light. One complete drag counts as one operation — not every `pointermove`, not every collision effect. The manual slider, the arrow keys and adding a Lueur each keep their own count. Periods without data stay empty. Merged means are weighted by sample count; two days' averages are never simply averaged again.
+**The statistics must mean exactly what they say.** Light tendency is a statistic of the probability values produced by interaction; the share of wallpapers that actually came up Light is a separate number. One complete drag counts as one operation, however many `pointermove` events and collision effects it holds. The manual slider, the arrow keys and adding a Lueur each keep their own count. Periods without data stay empty. Merged means are weighted by sample count.
 
 ## 2. Two slots, written in turn
 
@@ -30,12 +30,12 @@ All of Lucent's data stays on the device. The chronicle answers three questions 
 Both stores share one storage discipline ([`stats-store.js` L119-L181](../../src/assets/stats-store.js#L119-L181), [`field-store.js` L151-L191](../../src/assets/field-store.js#L151-L191)):
 
 - **Snapshot**: `{ version, checksum, data }`. The checksum is FNV-1a over **canonical JSON with sorted keys** — the same data gives the same checksum whatever order its keys arrive in.
-- **Write**: the next write always goes to the other slot, with an incremented `rev`. Writes are serialized; the byte budget is checked before writing, and an oversize write is refused and reported, never half-written.
+- **Write**: the next write always goes to the other slot, with an incremented `rev`. Writes are serialized; the byte budget is checked before writing, and an oversize write is refused whole, and reported.
 - **Read**: both slots are decoded and verified; the valid snapshot with the highest `rev` wins. If one slot is damaged, the other restores it, with a note that the latest changes in the damaged snapshot may be missing.
 - **A failed read**: the existing data is kept — **history is never overwritten with an empty table**.
 - **New data during a write**: the statistics store compares versions after a write completes; if more records arrived meanwhile, it writes again, until what is on disk is the latest ([L157-L181](../../src/assets/stats-store.js#L157-L181)).
 
-Decoding also checks the data's own invariants ([L45-L61](../../src/assets/stats-store.js#L45-L61)): in every time bucket, "sum of the 20-bin distribution = sum of the four sources = sample count" and "minimum ≤ mean ≤ maximum"; buckets never overlap and are aligned to the boundaries of their own unit. A bucket that fails is treated as damaged, rather than carried into a chart.
+Decoding also checks the data's own invariants ([L45-L61](../../src/assets/stats-store.js#L45-L61)): in every time bucket, "sum of the 20-bin distribution = sum of the four sources = sample count" and "minimum ≤ mean ≤ maximum"; buckets never overlap and are aligned to the boundaries of their own unit. A bucket that fails is treated as damaged, so only sound data reaches a chart.
 
 ## 3. Coarser with age, never lighter
 
@@ -72,7 +72,7 @@ A **grid guard** handles the same class of problem ([`currentGrid`](../../src/as
 
 ## 5. Forty-nine files
 
-Each personal file is 10 counters: appearances, time present, hits, misses, impacts, times hit, dodges, times at the wheel, relays received, relays handed over. The relationship table is keyed "smaller id, larger id" (the upper triangle), with 6 counters per pair: contacts, bumps in each direction, dodges in each direction, and minutes close (time the two spent within 92 px of each other).
+Each personal file is 11 counters: appearances, time present, hits, misses, impacts, times hit, dodges, times at the wheel, relays received, relays handed over, and, since 5.1.3, Manual strikes — the times you drag it into another, throw it, or nudge it with the arrow keys until it strikes; older files read 0. The relationship table is keyed "smaller id, larger id" (the upper triangle), with 6 counters per pair: contacts, bumps in each direction, dodges in each direction, and minutes close (time the two spent within 92 px of each other).
 
 | Event | Written to |
 |---|---|
@@ -80,7 +80,7 @@ Each personal file is 10 counters: appearances, time present, hits, misses, impa
 | Bump / dodge `bump` / `dodge` | The initiator's and the other's files, the directed pair counters |
 | Charge / miss / hit `charge` / `miss` / `autoHit` | The driver's file; hits also go to the strength histogram |
 | Relay / taking the wheel `relay` / `pilot` | Both files |
-| A hand's shove `push` | Only the strength histogram and the event ring — that is the strength of a hand, not a Lueur's character |
+| A hand's shove `push` · a throw that strikes `manual` | The steered Lueur's Manual strikes, the strength histogram and the event ring; impacts, times hit and the pair counters keep to the Lueurs' own meetings |
 
 A pulse every 4 seconds records time present, minutes close, residency position and driving time (blue and orange modes).
 
@@ -93,8 +93,8 @@ Every chart is hand-written SVG ([`stats-panel.js`](../../src/assets/stats-panel
 - **Light tendency**: the mean probability after active adjustment in each period; a thin line that fades toward the axis beneath it.
 - **Interaction counts**: dragging, arrow keys, the manual slider and adding Lueurs, each viewable on its own.
 - **Probability distribution**: each period's share in each of 20 bins of 5%; the deeper the colour, the more concentrated.
-- **Collision strength**: the **relative speed** of the two Lueurs at the moment of impact (not the strength setting), in 14 bins, labelled with who hit whom in the hardest impact.
-- **The residency terrain**: residency heat on a 26×12 grid, wrapped in the outward-offset outline of the hand-drawn region; each cell has a letter coordinate (A–Z on the first row, A2–Z2 on the second…) and, when tapped, its share of all residency. Shading follows **quantiles**, not absolute values — with time every cell darkens, and only relative depth stays readable.
+- **Collision strength**: the real **relative speed** of the two Lueurs at the moment of impact, in 14 bins, labelled with who hit whom in the hardest impact.
+- **The residency terrain**: residency heat on a 26×12 grid, wrapped in the outward-offset outline of the hand-drawn region; each cell has a letter coordinate (A–Z on the first row, A2–Z2 on the second…) and, when tapped, its share of all residency. Shading follows **quantiles**: with time every cell darkens, and relative depth stays readable throughout.
 - **The drive log**: daily blue and orange driving time; charges, hits, miss rate, relays and times at the wheel.
 - **The roster**: 49 cells, framed when present; shade is a resident's relative rank in how active it is among all 49, in quartiles — ties are broken by "share of active events → total activity → id" into a strict order, so a large tie never collapses into one shade.
 - **The relationship web**: select a resident and its 6 closest companions ring around it; the thicker the line and the farther out, the closer the bond. Each curve's ends are found by bisection so it stops at "radius + 3" from a centre, and the sub-curve's control point is recomputed with the blossom formula — the same curve, but it never pierces a circle. Every opening starts at a random angle: the reading rules are fixed, while the picture is new at every glance.
@@ -107,8 +107,8 @@ Every chart can be tapped for details; tapping empty space dismisses the overlay
 Long-press the scan icon at the top right to open backup and export. All data is packed offline into a single text and written only to the clipboard; where it goes after that is up to you.
 
 ```text
-AIRAPC1:<D|R>:<payload length>:<base64url>:<crc32>
-AIRAPC1:P:<i>/<N>:<crc32 of the whole>:<segment>
+LUCENT1:<D|R>:<payload length>:<base64url>:<crc32>
+LUCENT1:P:<i>/<N>:<crc32 of the whole>:<segment>
 ```
 
 - `D` is UTF-8 JSON compressed with `deflate-raw`; `R` is the uncompressed fallback when no compression interface exists.
@@ -120,5 +120,5 @@ AIRAPC1:P:<i>/<N>:<crc32 of the whole>:<segment>
 ## 8. Verification
 
 - [`tests/stats-store.test.cjs`](../../tests/stats-store.test.cjs) (14 tests): only aggregates are stored; merging keeps weighted means, minima, maxima and distributions; a change of key order does not fail the checksum; a failed read never overwrites history; a failed save keeps the last good snapshot and a retry does not double-count; recovery from either slot; two damaged slots never become a writable empty history; operations during a write are not lost; half-hour time zones and clocks turned back produce no overlap; drill-down never invents precision; decades of daily use stay within budget with totals intact.
-- [`tests/field-store-impact.test.cjs`](../../tests/field-store-impact.test.cjs) (6 tests): strength bins and peak; only physical collisions count; a hand's shove never writes a personal file; save and load round-trip; old snapshots without a histogram load normally.
+- [`tests/field-store-impact.test.cjs`](../../tests/field-store-impact.test.cjs) (7 tests): strength bins and peak; only physical collisions count; a hand's shove counts one Manual strike and nothing else; a throw or a nudge that strikes another counts as Manual too; save and load round-trip; old snapshots without a histogram load normally; bin edges are half-open and the last bin is open-ended.
 - [`tests/field-store-integrity.test.cjs`](../../tests/field-store-integrity.test.cjs) (4 tests): a legacy 8-bin distribution migrates to 14 bins with the total exactly preserved; a residency grid of an old shape is resampled before writing; a damaged slot falls back and says so; a failed read never writes an empty table.

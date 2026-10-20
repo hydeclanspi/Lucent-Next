@@ -4,9 +4,9 @@
 
 [中文](../lueurs.md) · [Back to README](../../README.en.md)
 
-Lueurs are glass lenses in the empty space of the homepage: 22 px to the eye, 44 px to the finger, up to 49 of them. You can drag them, flick them, shove them; on their own they drift, meet and chase one another; and the way you drag them changes the Light/Dark weight of the next wallpaper.
+Lueurs are glass lenses in Lucent's open space: 22 px to the eye, 44 px to the finger, up to 49 of them. You can drag them, flick them, shove them; on their own they drift, meet and chase one another; and the way you drag them changes the Light/Dark weight of the next wallpaper.
 
-Their standard comes from one sentence of mine: **"HarmonyOS's texture, as I define it, is inspiration and sharpness at once."** The objects should be small, light, liquid-clear and never loud; but edges, movement and the timing of feedback must be exact — a collision should be felt on the frame of contact, not arrive late after you let go.
+Their standard comes from one sentence of mine: **"HarmonyOS's texture, as I define it, is inspiration and sharpness at once."** The objects should be small, light, liquid-clear and never loud; but edges, movement and the timing of feedback must be exact — a collision should be felt on the very frame of contact.
 
 The whole engine is [`src/assets/interaction.js`](../../src/assets/interaction.js): about 1,100 lines, no dependencies. Every section below is anchored to source lines, and every invariant is checked by [`tests/lueurs-engine.test.cjs`](../../tests/lueurs-engine.test.cjs), which calls the engine's functions directly.
 
@@ -28,7 +28,7 @@ The original request was a red circle on a screenshot. Instead of being replaced
 
 ## 2. Motion: a heading with memory
 
-Left alone, a Lueur does not re-roll its direction every frame. It runs a five-stage pipeline ([`tick`](../../src/assets/interaction.js#L754-L824)):
+Left alone, a Lueur keeps a memory of its direction: every frame runs a five-stage pipeline ([`tick`](../../src/assets/interaction.js#L754-L824)):
 
 **① Heading: an Ornstein–Uhlenbeck mean-reverting process.** The turn rate decays exponentially and noise enters with √Δt:
 
@@ -67,7 +67,7 @@ J = \tfrac12 (1+e)\, v_{\text{rel}}\cdot\mathbf n,\qquad \mathbf v_a \mathrel{-}
 Momentum is conserved exactly and the normal relative velocity reverses to −0.64 of itself — the test checks 2,000 random collisions one by one.
 
 - **A held lens is kinematic.** The one under your finger pushes but never yields: it hands the other the impulse multiplied by the collision strength k (1–24×). A lens drifting into it bounces off, but never moves your finger ([L670-L681](../../src/assets/interaction.js#L675-L686)).
-- **Settle with this moment's velocity.** While dragging, a collision uses the velocity of the current `pointermove`, not the previous one ([L960-L962](../../src/assets/interaction.js#L965-L967)); leftover velocity after an 80 ms pause is cleared, so a release never flings.
+- **Settle with this moment's velocity.** While dragging, a collision uses the velocity of the current `pointermove` ([L960-L962](../../src/assets/interaction.js#L965-L967)); leftover velocity after an 80 ms pause is cleared, so a release never flings.
 - **Energy enters once.** Only an active push — a hand, or a charging driver — adds energy; between free lenses the impulse passes on once at the original restitution, so **a chain of collisions is never amplified step by step**. Speed is capped at 640 px/s and non-finite values are zeroed ([`limitVelocity`](../../src/assets/interaction.js#L67-L71)).
 - **Natural meetings must separate.** With strength at 24, natural collisions still only flashed and the Lueurs stayed jammed together — proof that "a hard flick" and "a meeting that breaks up" are different things. So a new slow contact gets its separation speed topped up:
 
@@ -78,7 +78,7 @@ v_{\text{sep}} = 14 + 7\cdot\max\big(1,\ k\cdot s\big),\qquad s = 0.30,\ 0.36,\ 
 The more crowded, the stronger the urge to disperse; pairs already separating fast get no extra energy; a 0.28 s cooldown prevents jitter ([`naturalResponse`](../../src/assets/interaction.js#L47-L61)).
 
 - **Scattering by a weighted deflection cost.** After a collision, a lens tries eight deflections {0, ±0.6, ±1.2, ±2.1, π} around the direction away from its neighbours. Each candidate scores "clearance 24 px ahead (capped at 100) − 7 × |deflection|", and the best wins ([`scatterHeading`](../../src/assets/interaction.js#L530-L556)). With three or more lenses around, a little sideways velocity is added toward the open side.
-- **Pick the nearest one.** When two lenses touch, their invisible 44 px touch areas overlap; a press selects the visible lens closest to the fingertip, not whichever sits on top in the DOM ([L933-L937](../../src/assets/interaction.js#L938-L942)).
+- **Pick the nearest one.** When two lenses touch, their invisible 44 px touch areas overlap; a press selects the visible lens closest to the fingertip, whatever the stacking order in the DOM ([L933-L937](../../src/assets/interaction.js#L938-L942)).
 
 ## 4. Probability: an invisible terrain
 
@@ -103,9 +103,9 @@ P = \mathrm{clamp}\Big(P_0 + \mathrm{clamp}(\Delta, \pm 0.35),\ \min(0.05, P_0),
 - **ΔΦ**: the height travelled on the terrain; **Δd**: the change in distance to a reference lens; **ϑ**: the angle wound around that reference — unwrapped with `atan2(sin, cos)`, so one full circle accumulates exactly 2π (tested to 1e−9, [`sampleModel`](../../src/assets/interaction.js#L225-L231)); **ΔΦ_partner**: how far the lens you hit moved on the terrain.
 - **The reference is chosen when the gesture starts**, so it does not jump if another lens becomes nearest mid-drag.
 - **Continuous from where you are**: after setting the odds to 0% or 100% by hand, a drag does not first snap back to 5% or 95%. One gesture changes the odds by at most ±0.35; the steepest point of the terrain is about 0.0026 per pixel — no cliffs.
-- **Only a person writes probability** — by dragging, or by moving a lens with the arrow keys. Drifting, Drive and encounters never do. The change commits on release; `68 : 32` is a drawing weight, not a promise of 68 Light wallpapers in the next hundred.
+- **Only a person writes probability** — by dragging, or by moving a lens with the arrow keys. Drifting, Drive and encounters never do. The change commits on release; `68 : 32` is a drawing weight: every draw follows it, so over a hundred draws the count of Light wallpapers moves around 68.
 
-This is not machine learning: the weights are a hand-designed mapping. Gradient descent lent the imagery — terrain, inertia, convergence — not a trained model. My words at the time: "I don't need a model I fully understand; a black box is fine." So the panel carries a card, 黑箱里，灵感怎样发生 (*inside the black box, how inspiration happens*), that explains each layer in a few restrained paragraphs.
+The weights are a hand-designed mapping; gradient descent lent the imagery: terrain, inertia, convergence. My words at the time: "I don't need a model I fully understand; a black box is fine." So the panel carries a card, 黑箱里，灵感怎样发生 (*inside the black box, how inspiration happens*), that explains each layer in a few restrained paragraphs.
 
 ## 5. Autonomy: Drive (FSD)
 
@@ -150,7 +150,7 @@ Encounters only happen between Lueurs in their natural state; they never write o
 
 <p align="center"><img src="../figures/placement.en.png" alt="Figure 3: placement weights for the next lens when three are already placed" width="100%"></p>
 
-Each time the homepage opens, the Lueurs are placed one by one by weighted lottery ([`placeBody`](../../src/assets/interaction.js#L847-L886), [`placementWeights`](../../src/assets/interaction.js#L95-L143)). The aim is neither uniform nor clustered, but a field that holds itself up:
+Each time you come back, the Lueurs are placed one by one by weighted lottery ([`placeBody`](../../src/assets/interaction.js#L847-L886), [`placementWeights`](../../src/assets/interaction.js#L95-L143)). The aim is a field that holds itself up, spread with a rhythm, with someone everywhere:
 
 ```math
 w(s) = \exp\!\big(-0.8\,\text{close} - 0.9\,\text{crowd} - 1.8\,\text{void}^{+}\big)\cdot \exp\!\big(-1.6\,\text{far}\cdot\gamma\big)\cdot \text{top}(s)\cdot \text{vertical}(s)
@@ -158,16 +158,16 @@ w(s) = \exp\!\big(-0.8\,\text{close} - 0.9\,\text{crowd} - 1.8\,\text{void}^{+}\
 
 - **close**: how far the nearest neighbour falls below 120 px — closeness can be tolerated now and then, so its penalty is the mildest; **far**: how far the nearest neighbour lies beyond 220 px; **crowd**: neighbours within 76 px, minus one; **void⁺**: after this placement, how far the largest remaining desert (the point farthest from any lens) exceeds 220 px — the heaviest penalty.
 - **The far penalty makes way for deserts**: if a candidate clearly shrinks the largest desert, the far penalty counts only 15% (γ = 0.15). This came from a "case conference": a candidate that fills a desert is necessarily far from the group, so the two penalties multiplied each other away on the very same candidate, and the gap-filling rule had never actually worked.
-- **The top edge is a plateau, not a slope**: the upper 38% of the region is weighted ×2 with a 48 px cosine feather; in the upper half, every bit of added vertical spread earns up to 35% more. My words at the time: "I never said the higher the better — just don't let too many sink down; it looks collapsed."
+- **The top edge is a plateau**: the upper 38% of the region is weighted ×2 with a 48 px cosine feather; in the upper half, every bit of added vertical spread earns up to 35% more. My words at the time: "I never said the higher the better — just don't let too many sink down; it looks collapsed."
 - **Mood**: before each placement a fresh set of jitters is drawn — close 0.85–1.15, far 0.85–1.30, desert 0.90–1.15, top 0.85–1.15; with probability 35%–80% (lower when the desert is large) the placement enters a "settlement draw" and lands in a 120–220 px ring around an anchor, with anchors weighted by isolation so a lone lens tends to attract company. This randomness keeps placement from settling into a few fixed forms.
 
 In one line: **punish deserts, never reward tidiness.** Over 12 rounds of 8 lenses, the median empty radius fell from about 345 px to 250 px, and the worst case from 651 px to 387 px. The target distribution was summed up as: stretched wide, denser above, grained vertically, clusters and singles together, friends now and then, every round different, drama where it is dense.
 
 ## 8. Identity: forty-nine fixed residents
 
-`#01–#49` are a fixed cast. Each visit draws n of the 49 without replacement ([`drawIdentity`](../../src/assets/interaction.js#L1011-L1016)) — not the first n. Only when you grab a lens does its number surface: 8.5 px rounded numerals at 0.45 opacity, tilted −7°, with a one-stroke cap at its upper right (`M2.2 1.2 Q8.2 2.8 8.8 8.6`). The badge went through five versions; the goal was "nearly invisible unless you look."
+`#01–#49` are a fixed cast. Each visit draws n of the 49 at random, without replacement ([`drawIdentity`](../../src/assets/interaction.js#L1011-L1016)). Only when you grab a lens does its number surface: 8.5 px rounded numerals at 0.45 opacity, tilted −7°, with a one-stroke cap at its upper right (`M2.2 1.2 Q8.2 2.8 8.8 8.6`). The badge went through five versions; the goal was "nearly invisible unless you look."
 
-Every resident's appearances, time present, hits, times hit, dodges, driving and relays are written to [the field chronicle](chronicle.md).
+Every resident's appearances, time present, charges and hits, impacts and times hit, dodges, turns at the wheel and relays, and the Manual strikes you steer by hand, are written to [the field chronicle](chronicle.md).
 
 ## 9. Lifecycle and performance discipline
 
@@ -200,4 +200,4 @@ Current values, custom defaults and the factory baseline are three separate laye
 - The potential has the right main slope and is smooth; placement weights punish the cluster's side and favour the largest desert
 - Driver line-up bounds, and slider curves that round-trip
 
-These tests prove the rules themselves; they do not replace the feel under a finger. That came from on-device feedback, version after version, across 109 versions.
+These tests prove the rules themselves; the feel under a finger came from on-device feedback, version after version, across 111 versions.

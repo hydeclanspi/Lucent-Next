@@ -47,7 +47,7 @@ The six layers, bottom to top ([`glass-material.css`](../../src/assets/glass-mat
 
 - On pointer enter, move and press, only the coordinates are recorded and the layer is marked dirty; `transform` is written at most once per frame ([`flush` / `track`](../../src/assets/glass-material.js#L116-L150)). A mouse lights the glass only with a precise, hover-capable pointer; on touch, the highlight follows only the finger that is down.
 - Leaving, cancelling, scrolling, blurring, resizing or hiding the page puts it out at once; at rest there is **no permanent animation loop at all**.
-- In sheets the highlight is painted on the sheet's own background (`--beta-touch-x/y`) rather than a child element: a background has no layout box, so scrolling never carries the highlight into the edge or enlarges the scrollable area.
+- In sheets the highlight is painted straight onto the sheet's own background (`--beta-touch-x/y`): a background has no layout box, so the highlight stays put while scrolling and the scrollable area keeps its size.
 - Sheets replace their children when they change pages; a `MutationObserver` cleans up stale highlight layers and keeps exactly one; unloading the page disconnects every observer and listener ([L199-L240](../../src/assets/glass-material.js#L199-L240)).
 
 **Fallbacks**: without backdrop filters the glass falls back to a 96% opaque solid; with reduced transparency it uses the solid as well; with reduced motion there is no pointer highlight.
@@ -66,7 +66,7 @@ The design reference is a 1560×1040 tablet in landscape; narrow screens have th
 Every icon is a vector line drawing; system emoji are never used.
 
 - **The planet entry**: a glass sphere with a ring tilted 23.5° — the same as Earth's axial tilt. The half of the ring behind the sphere is dimmed and the half in front is brightened, so the entry has a front and a back.
-- **The FSD lettermark**: not three typed letters. A tall F on the left, S at the upper right and D at the lower right, and a single spark of an "active Lueur" at the end of the F's crossbar; 23×23 px, inheriting the blue or orange state colour at runtime.
+- **The FSD lettermark**, drawn as a mark: a tall F on the left, S at the upper right and D at the lower right, and a single spark of an "active Lueur" at the end of the F's crossbar; 23×23 px, inheriting the blue or orange state colour at runtime.
 - **Six motion glyphs**: each search motion has a line glyph at the right of its card — a line, a prism, a shutter, interwoven filaments, the eye of a needle, two close arcs — drawn in gold, with the arriving stroke in blue.
 - **The number cap**: the one-stroke arc over a resident's number when it is held (`M2.2 1.2 Q8.2 2.8 8.8 8.6`).
 - **Three shortcut forms**: automatic (the site icon), framed (the icon set on a pale plate), and an initial tile. Initial tiles come in 28 colours in two families — 16 "fresh" and 12 "calm" — with the letter colour chosen by luminance: Rec.601 weighted luminance above 0.62 gets dark text, anything else white.
@@ -90,15 +90,15 @@ Changing the search accent does not recolour the whole product; the warm name gr
 
 ## 7. Type and copy
 
-- **A division of type**: Song serif for titles and poetic names (念起，光行, 落子与星座), monospace for numbers, readouts and English eyebrows (*A THOUGHT, IN FLIGHT*, *SIX GESTURES*), Georgia italic for Latin names (*Lightline*, *Near orbit*), HarmonyOS Sans for the interface.
+- **Type that matches the device**: the interface, titles and poetic names (念起，光行, 落子与星座) are set in HarmonyOS Sans, Latin names (*Lightline*, *Near orbit*) in its italic, and numbers, readouts and English eyebrows (*A THOUGHT, IN FLIGHT*, *SIX GESTURES*) in the monospaced Noto Sans Mono — as they appear on the MatePad Edge.
 - **Numbers are typeset**: the ratio `68 : 32` is set at 18 px, weight 520, in italic. HarmonyOS Sans has no true italic, and the slight slant the browser synthesizes became this line's character.
-- **Copy is reviewed like a feature**: 备份文本 (*backup text*) rather than 存档串 (*save string*); whether "look up the factory values" changes the current state must be predictable. The panel's explainer, 黑箱里，灵感怎样发生 (*inside the black box, how inspiration happens*), covers probability, collisions, Drive and placement in seven restrained paragraphs. The About window describes the product in just two:
+- **Copy is reviewed like a feature**: a name must read at once, like 备份文本 (*backup text*); whether "look up the factory values" changes the current state must be predictable. The panel's explainer, 黑箱里，灵感怎样发生 (*inside the black box, how inspiration happens*), covers probability, collisions, Drive and placement in seven restrained paragraphs. The About window describes the product in just two:
 
-> 灵感台是一张属于你的主页：时钟与问候开场，个签替你自我介绍，日志记录每刻所念所想，搜索、快捷方式与直达各就各位，壁纸在明暗之间呼吸。
+> 灵感台是一张属于你的工作台：时钟与问候开场，个签替你自我介绍，日志记录每刻所念所想，搜索、快捷方式与直达各就各位，壁纸在明暗之间呼吸。
 >
 > 四十九枚浮光在留白里安身，各自有名；它们相遇、碰撞、结伴巡游，故事都记进场志。不上传、不追踪，一切只留在悄然之间。
 
-*Lucent is a homepage that is yours: a clock and a greeting to open, a signature that introduces you, a daily note for every passing thought; search, shortcuts and direct entries each in their place; a wallpaper breathing between light and dark. Forty-nine Lueurs live in the open space, each with a name; they meet, collide and roam together, and every story goes into the chronicle. Nothing uploaded, nothing tracked — everything stays quietly here.*
+*Lucent is a workbench that is yours: a clock and a greeting to open, a signature that introduces you, a daily note for every passing thought; search, shortcuts and direct entries each in their place; a wallpaper breathing between light and dark. Forty-nine Lueurs live in the open space, each with a name; they meet, collide and roam together, and every story goes into the chronicle. Nothing uploaded, nothing tracked — everything stays quietly here.*
 
 ## 8. Wallpaper
 
