@@ -12,6 +12,7 @@
 <p align="center">
   <a href="https://hydeclanspi.github.io/Lucent-Next/"><b>在线体验</b></a> &nbsp;·&nbsp;
   <a href="https://hydeclanspi.github.io/Lucent-Next/film/">观看旗舰影片 (推荐)</a> &nbsp;·&nbsp;
+  <a href="https://hydeclanspi.github.io/Lucent-Next/film/">很建议看影片啊</a> &nbsp;·&nbsp;
 
 <p align="center">
   <a href="demo/">全部演示</a> &nbsp;·&nbsp;
