@@ -52,6 +52,7 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
     await check('History opens a labeled modal, traps focus, and restores the trigger', async () => {
       await page.locator('#btnHistory').click(); await panel('历史记录');
       assert.match(await page.locator('.ab-dialog').innerText(), /样例不代表/);
+      assert.equal(await page.locator('.ab-header .ab-demo-note').textContent(), '仅为 demo 模拟，实际效果调用的是浏览器系统接口');
       assert.equal(await page.locator('.page').evaluate(n => n.inert), true);
       await page.keyboard.press('Tab');
       assert.equal(await page.evaluate(() => !!document.activeElement.closest('.ab-dialog')), true);
@@ -272,12 +273,26 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       tab.on('pageerror', e => errors.push(e.message));
       await tab.goto(base); await tab.waitForFunction(() => document.querySelectorAll('#engineChips .chip').length === 4);
       await tab.waitForSelector('.lx-immersive-hint.is-visible');
+      assert.match(await tab.locator('.lx-immersive-hint').innerText(), /全屏效果最佳[\s\S]*进入全屏/);
       await tab.mouse.click(300, 900);
       await tab.waitForFunction(() => !!document.fullscreenElement);
+      // In full screen: the prompt goes, and the lower left says this is the web demo.
+      await tab.waitForFunction(() => !document.querySelector('.lx-immersive-hint') && document.querySelector('.lx-demo-note.is-visible'));
+      assert.equal(await tab.locator('.lx-demo-note').textContent(), '仅为 Web 端 demo 模拟，旗舰最佳效果为 Pad 端的触屏体验');
       await tab.evaluate(() => document.exitFullscreen());
       await tab.waitForFunction(() => !document.fullscreenElement);
+      await tab.waitForSelector('.lx-immersive-hint.is-visible');
+      assert.equal(await tab.locator('.lx-demo-note').evaluate(n => n.classList.contains('is-visible')), false);
       await tab.mouse.click(300, 900); await tab.waitForTimeout(300);
       assert.equal(await tab.evaluate(() => !!document.fullscreenElement), false, 'after leaving, a click must not force full screen again');
+      // The prompt's own button still goes full screen; its × hides it for the visit.
+      await tab.locator('.lx-immersive-go').click();
+      await tab.waitForFunction(() => !!document.fullscreenElement);
+      await tab.evaluate(() => document.exitFullscreen()); await tab.waitForFunction(() => !document.fullscreenElement);
+      await tab.waitForSelector('.lx-immersive-hint.is-visible');
+      await tab.locator('.lx-immersive-close').click();
+      await tab.waitForFunction(() => !document.querySelector('.lx-immersive-hint'));
+      assert.equal(await tab.evaluate(() => !!document.fullscreenElement), false, 'hiding the prompt does not go full screen');
       await tab.keyboard.press('f');
       await tab.waitForFunction(() => !!document.fullscreenElement);
       await tab.locator('#searchInput').click(); await tab.keyboard.press('f');
