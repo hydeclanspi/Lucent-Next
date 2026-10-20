@@ -99,7 +99,7 @@
 
 <p align="center"><a href="https://hydeclanspi.github.io/Lucent-Next/device/"><img src="demo/media/on-device.jpg" alt="实机演示：在 HUAWEI MatePad Edge 上拍摄，现已放映，点开播放" width="100%"></a></p>
 
-在 HUAWEI MatePad Edge 上录下的实机演示，四十六秒，有声：一次搜索和它的一线入光，念起光行，浮光的设置与历史统计，壁纸，名片与备份。安静的段落加速播放，右上角标着倍速；配乐取自概念影片的后半段。
+在 HUAWEI MatePad Edge 上录下的实机演示，五十四秒，有声：一次搜索和它的一线入光，念起光行，浮光的设置与历史统计，壁纸，名片与备份；最后是绕着搜索框流淌的绢光与浮金，和两栏收起后的专注态。安静的段落加速播放，右上角标着倍速；配乐取自概念影片的后半段。
 
 → [在浏览器中观看](https://hydeclanspi.github.io/Lucent-Next/device/) · [下载 MP4（2K，2560×1440，60 帧，有声）](demo/device/lucent-on-device.mp4)
 

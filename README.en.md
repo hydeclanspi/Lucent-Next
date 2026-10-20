@@ -101,7 +101,7 @@ Every frame and every sound is made in code: one timeline, with WebGL for the sk
 
 <p align="center"><a href="https://hydeclanspi.github.io/Lucent-Next/device/"><img src="demo/media/on-device.jpg" alt="On the device: filmed on a HUAWEI MatePad Edge, now showing; open it to play" width="100%"></a></p>
 
-Recorded on a HUAWEI MatePad Edge, forty-six seconds, with sound: a search and its Lightline, the six ways to arrive, the Lueurs' settings and their history, the wallpapers, the card and the backup. The quiet stretches run faster, each marked with its speed in the top right corner; the music is the second half of the concept film's score.
+Recorded on a HUAWEI MatePad Edge, fifty-four seconds, with sound: a search and its Lightline, the six ways to arrive, the Lueurs' settings and their history, the wallpapers, the card and the backup; and last, the gold silk and motes round the search field, and focus with both sections folded. The quiet stretches run faster, each marked with its speed in the top right corner; the music is the second half of the concept film's score.
 
 → [Watch in the browser](https://hydeclanspi.github.io/Lucent-Next/device/) · [Download the MP4 (1440p, 60 fps, with sound)](demo/device/lucent-on-device.mp4)
 
