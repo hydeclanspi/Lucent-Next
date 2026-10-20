@@ -54,7 +54,7 @@ async function open(options = {}) {
   });
   await context.route('**/*', route => route.request().url().startsWith(base) ? route.continue() : route.abort());
   // A visitor who has already left full screen once: no first-click full screen, no hint in the frame.
-  await context.addInitScript(() => { try { sessionStorage.setItem('lucent:immersive:declined', '1'); } catch (_) {} });
+  await context.addInitScript(() => { try { sessionStorage.setItem('lucent:immersive:off', '1'); } catch (_) {} });
   if (options.seed != null) {
     // A seeded Math.random: with the fake clock, the same seed replays the same placement and drift.
     await context.addInitScript(seed => {

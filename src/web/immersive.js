@@ -5,36 +5,41 @@
  * first real click or tap anywhere. (No browser lets a page do that before a gesture.)
  *
  *   - The click still does its own job first; full screen follows it.
- *   - Esc leaves. Once you leave, it does not come back by itself during this visit.
+ *   - Esc leaves. Once you leave, it does not come back by itself until the page is opened again:
+ *     every visit (every load of the page) arms the first click afresh.
  *   - F toggles full screen at any time (not while typing).
  *   - Installed as an app, Lucent already opens full screen, so nothing is armed.
  *   - Out of full screen, a pill says full screen is best and offers a button for it (× hides it for the visit).
  *   - In full screen, a line in the lower left says this is the web demo; the flagship is the tablet's touch.
+ *   - <html data-immersive="full"> while in full screen (or installed): Aira's toolbar is drawn only then.
  *
  * Web-only. The native Aira package never loads this file.
  */
 (function () {
   "use strict";
   var root = document.documentElement;
-  var request = root.requestFullscreen || root.webkitRequestFullscreen;
-  var exit = document.exitFullscreen || document.webkitExitFullscreen;
-  var enabled = document.fullscreenEnabled || document.webkitFullscreenEnabled;
-  if (!request || !exit || !enabled || window.self !== window.top) return;
-
-  var DECLINED = "lucent:immersive:declined";
-  var HIDDEN = "lucent:immersive:prompt-hidden";
-  var LARGE = 900;
-  var leaving = false, seen = false, hint = null, note = null; // seen: in full screen at some point, not yet seen leaving
-
-  function active() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
   function installed() {
     return !!window.matchMedia && ["fullscreen", "standalone", "minimal-ui"].some(function (mode) {
       return window.matchMedia("(display-mode: " + mode + ")").matches;
     });
   }
-  function declined() { try { return sessionStorage.getItem(DECLINED) === "1"; } catch (_) { return false; } }
+  if (installed()) root.dataset.immersive = "full";
+  var request = root.requestFullscreen || root.webkitRequestFullscreen;
+  var exit = document.exitFullscreen || document.webkitExitFullscreen;
+  var enabled = document.fullscreenEnabled || document.webkitFullscreenEnabled;
+  if (!request || !exit || !enabled || window.self !== window.top) return;
+
+  // OFF is for automated captures and tests only; a person's decline lasts for this load of the page.
+  var OFF = "lucent:immersive:off";
+  var HIDDEN = "lucent:immersive:prompt-hidden";
+  var LARGE = 900;
+  var leaving = false, seen = false, hint = null, note = null; // seen: in full screen at some point, not yet seen leaving
+  var declinedNow = (function () { try { return sessionStorage.getItem(OFF) === "1"; } catch (_) { return false; } })();
+
+  function active() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
+  function declined() { return declinedNow; }
   function hidden() { try { return sessionStorage.getItem(HIDDEN) === "1"; } catch (_) { return false; } }
-  function decline() { try { sessionStorage.setItem(DECLINED, "1"); } catch (_) {} }
+  function decline() { declinedNow = true; }
   function armed() { return window.innerWidth >= LARGE && !installed() && !declined() && !active(); }
   function typing(target) {
     return !!target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
@@ -83,6 +88,7 @@
   }
   function sync() {
     var wide = window.innerWidth >= LARGE, full = !!active() || installed();
+    if (full) root.dataset.immersive = "full"; else delete root.dataset.immersive;
     var showHint = wide && !full && !hidden();
     if (showHint && !hint) {
       hint = buildHint();
