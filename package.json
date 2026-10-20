@@ -2,7 +2,7 @@
   "name": "lucent",
   "version": "5.1.3",
   "private": true,
-  "description": "Lucent · 灵感台 — an inspiration launcher: a calm personal base, alive underneath with 49 numbered glass Lueurs, a launch sequence of light, and every dial handed to you.",
+  "description": "Lucent · 灵感台 — the inspiration studio. Made for the HUAWEI MatePad Edge: a quiet surface, alive underneath with 49 numbered glass Lueurs, a launch of light for every search, and every dial handed to you.",
   "author": "hydeclanspi",
   "license": "UNLICENSED",
   "homepage": "https://hydeclanspi.github.io/Lucent-Next/",
@@ -11,15 +11,16 @@
     "url": "https://github.com/hydeclanspi/Lucent-Next.git"
   },
   "keywords": [
-    "launcher",
-    "homepage",
-    "physics",
+    "inspiration-studio",
+    "harmonyos",
+    "matepad",
+    "liquid-glass",
+    "physics-engine",
     "stochastic-process",
-    "glassmorphism",
     "canvas",
     "motion-design",
-    "vanilla-javascript",
-    "harmonyos"
+    "generative-film",
+    "vanilla-javascript"
   ],
   "scripts": {
     "build": "node scripts/build.mjs",
