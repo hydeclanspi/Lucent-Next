@@ -161,6 +161,39 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
         await page.reload(); await page.waitForFunction(() => /wallpaper-yang\.jpg/.test(document.body.style.backgroundImage), null, { timeout: 8000 });
       }
     });
+    await check('The web edition is set like the MatePad: its typefaces, and the wallpaper framed as on the device', async () => {
+      const fonts = [];
+      const listen = request => { const m = /\/fonts\/([^/?]+)$/.exec(request.url()); if (m) fonts.push(m[1]); };
+      page.on('request', listen);
+      await page.goto(base); await page.evaluate(() => localStorage.clear()); await home();
+      await page.evaluate(() => document.fonts.ready);
+      page.off('request', listen);
+      // HarmonyOS Sans everywhere (the date and the signature too, as on the device), Noto Sans Mono for figures.
+      for (const selector of ['.clock span', '#profileSign', '.abtn']) {
+        assert.match(await page.locator(selector).first().evaluate(n => getComputedStyle(n).fontFamily), /^"HarmonyOS Sans SC", "HarmonyOS Sans", "Lucent Sans"/);
+      }
+      assert.match(await page.locator('.clock strong').evaluate(n => getComputedStyle(n).fontFamily), /^"Lucent Mono"/);
+      assert.equal(await page.evaluate(() => document.fonts.check('500 13px "Lucent Sans"', '全部标签') && document.fonts.check('600 28px "Lucent Mono"', '22:24')), true);
+      // The page loads its core: the Latin face, the Chinese core at the weights on screen, the mono. No rare slice.
+      assert.ok(['sans-latin.woff2', 'sans-400.woff2', 'sans-500.woff2', 'mono.woff2'].every(file => fonts.includes(file)), fonts.join(' '));
+      assert.ok(!fonts.some(file => /^sans-\d+-\d+\.woff2$/.test(file)), fonts.join(' '));
+      // A rare character fetches its own slice and is drawn in HarmonyOS Sans too.
+      await page.evaluate(() => document.fonts.load('400 16px "Lucent Sans"', '龘'));
+      assert.equal(await page.evaluate(() => document.fonts.check('400 16px "Lucent Sans"', '龘')), true);
+      // The London night fills the layer exactly as on the MatePad: cover, centred, nothing framed for the demo.
+      const layer = () => page.locator('#wpImg').evaluate(n => ({ w: n.offsetWidth, h: n.offsetHeight, size: n.style.backgroundSize, position: n.style.backgroundPosition }));
+      const plain = await layer();
+      assert.equal(plain.size, 'cover'); assert.equal(plain.position, 'center center');
+      // A framing the visitor chose is laid on the same layer, by the same rule: the whole picture framed is the default, to the pixel.
+      await page.evaluate(() => localStorage.setItem('aira-profile-card:wallpaperCrop', JSON.stringify({ light: { x: 0, y: 0, w: 3120, h: 2079 } })));
+      await page.reload(); await home(); await page.waitForFunction(() => /px/.test(document.getElementById('wpImg').style.backgroundSize));
+      const framed = await layer();
+      const scale = Math.max(framed.w / 3120, framed.h / 2079);
+      const [sw, sh] = framed.size.split(' ').map(parseFloat), [px, py] = framed.position.split(' ').map(parseFloat);
+      assert.ok(Math.abs(sw - 3120 * scale) < 0.2 && Math.abs(sh - 2080 * scale) < 0.2, framed.size);
+      assert.ok(Math.abs(px - (framed.w - sw) / 2) < 0.2 && Math.abs(py - (framed.h / 2 - 1039.5 * scale)) < 0.2, framed.position);
+      await page.evaluate(() => localStorage.clear());
+    });
     await check('Web assets work under a repository subpath', async () => {
       await page.goto(base + '/Lucent-Next/'); await page.waitForFunction(() => document.querySelectorAll('#engineChips .chip').length === 4);
       assert.equal(await page.title(), 'Lucent · 灵感台');
@@ -200,7 +233,7 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       for (const size of [{ width: 1429, height: 763 }, { width: 1280, height: 720 }, { width: 1366, height: 768 }]) {
         assert.ok((await gap(size)).gap >= 12, `history tag must clear the top bar at ${size.width}×${size.height}`);
       }
-      assert.equal((await gap({ width: 1560, height: 1040 })).card, 303, 'the tablet layout is untouched');
+      assert.equal((await gap({ width: 1560, height: 1040 })).card, 304, 'the tablet layout is untouched (set in HarmonyOS Sans, as on the device)');
     });
     await check('Large screens go full screen on the first click; leaving is respected; F toggles', async () => {
       const fresh = await browser.newContext({ viewport: { width: 1560, height: 1040 } });

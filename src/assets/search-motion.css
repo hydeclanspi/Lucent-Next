@@ -65,7 +65,7 @@
 .sm-heading-actions { display: flex; flex: none; flex-direction: column; align-items: flex-end; gap: 21px; }
 .sm-eyebrow { margin: 0 0 10px; font: 8px/1.5 var(--mono); letter-spacing: 2.1px; color: var(--sm-gold); }
 .sm-title-row { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
-.sm-title { margin: 0; font: 500 29px/1.35 var(--serif); letter-spacing: 1.8px; }
+.sm-title { margin: 0; font: 500 29px/1.35 var(--sans); letter-spacing: 1.8px; }
 .sm-subtitle { margin: 7px 0 0; font-size: 10.5px; letter-spacing: 1.4px; color: var(--ink-3); }
 .wp-random.sm-toggle { position: static; flex: none; gap: 9px; padding: 5px 0; margin: 0; min-height: 36px; font-size: 11px; letter-spacing: .5px; }
 .wp-random.sm-toggle[aria-pressed="true"] { color: var(--sm-mint); }
@@ -137,7 +137,7 @@
 .sm-current { min-width: 0; display: flex; align-items: baseline; gap: 9px; }
 .sm-current-number { font: 9px var(--mono); color: var(--sm-gold); letter-spacing: .6px; }
 .sm-current-name { font-size: 12px; letter-spacing: .8px; white-space: nowrap; }
-.sm-current-latin { margin-left: 2px; font: italic 11px Georgia, serif; color: var(--ink-3); white-space: nowrap; }
+.sm-current-latin { margin-left: 2px; font: italic 11px var(--sans); color: var(--ink-3); white-space: nowrap; }
 .sm-duration { font: 9px var(--mono); color: var(--sm-gold); white-space: nowrap; }
 .sm-stage { position: relative; padding: 28px 0 23px; }
 .sm-search { margin: 0; height: 52px; background: rgba(255, 255, 255, .16); backdrop-filter: none; -webkit-backdrop-filter: none; }
@@ -229,7 +229,7 @@
 .sm-choice-name { color: var(--ink); font-size: 12.5px; letter-spacing: .7px; }
 .sm-choice-mark { position: absolute; right: 12px; top: 14px; width: 14px; height: 14px; color: var(--sm-gold); opacity: 0; transition: opacity .15s; }
 .sm-choice-mark svg { width: 14px; height: 14px; stroke-width: 1.35; }
-.sm-choice-latin { display: block; margin: 5px 0 0 23px; font: italic 10px/1.4 Georgia, serif; color: var(--ink-3); }
+.sm-choice-latin { display: block; margin: 5px 0 0 23px; font: italic 10px/1.4 var(--sans); color: var(--ink-3); }
 .sm-choice-description { position: relative; display: block; margin-top: 13px; font-size: 10px; color: var(--ink-2); line-height: 1.6; letter-spacing: .15px; }
 .sm-glyph { position: absolute; width: 58px; height: 42px; top: 25px; right: 17px; color: var(--sm-gold); opacity: .42; stroke-width: .8 !important; }
 .sm-glyph-blue { color: var(--sm-blue); }
@@ -425,7 +425,7 @@
 
 /* 4.8.7 pro max — proportional lettering avoids a compressed monospace m. */
 .sm-collection legend .sm-random [lang="en"] {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--sans);
   font-kerning: normal;
 }
 .wp-random.interaction-toolbar.sm-simulation { left: 5.37px; }
