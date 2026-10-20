@@ -154,7 +154,7 @@ A day begins on a quiet surface. It holds only what you use every day, each thin
 
 ## 02 · Launch pad: a thought, in flight
 
-<p align="center"><img src="showcase/media/motion-six.webp" alt="The search-motion preview plays the six motions at 0.35× — Lightline, Microprism, Shutter, Platinum filament, Through the eye, Near orbit" width="100%"></p>
+<p align="center"><img src="showcase/media/motion-six.webp" alt="The search-motion preview plays the six motions at 0.35× — Lightline, Microprism, Shutter, Platinum filament, Through the eye, Near orbit" width="92.5%"></p>
 
 Every search lifts off from here. The words you wrote become a beam of light first; when it reaches the blue arrow, the search departs — out of Lucent, into the world's interfaces: Google, Bing, Baidu, or an engine template of your own.
 
@@ -166,13 +166,13 @@ Every search lifts off from here. The words you wrote become a beam of light fir
 
 ## 03 · Stage: stay, and the light performs for you
 
-<p align="center"><img src="showcase/media/simulation.webp" alt="Endless simulated launch: the first shot flies out and plays back to where it started; then Enter is held and light fires at the arrow shot after shot, each in a different gesture" width="100%"></p>
+<p align="center"><img src="showcase/media/simulation.webp" alt="Endless simulated launch: the first shot flies out and plays back to where it started; then Enter is held and light fires at the arrow shot after shot, each in a different gesture" width="92.5%"></p>
 
 Lucent is also a place you want to stay. Turn on the endless simulated-launch loop, and the search field launches light while the search itself stays home; the light closes its own loop on the stage.
 
 **Silk light and gold motes.** Turn the loop on and the search field takes on a rim of gold. Two ribbons of gold silk travel its outline at an even pace by arc length, one lap in ten seconds, the top edge and the bottom alike; gold motes rise slowly from the top edge and sink gently from the bottom, 12–22 at a time, their density redrawn every 4–7.65 s, most of them lifting from where the silk is passing. Each launch swells them to 1.25–1.6× their number, and they settle back slowly. It reads only signals the search field already carries; not one line of the launch logic changed.
 
-<p align="center"><img src="showcase/media/search-aura.webp" alt="Recorded on the device: first the search field as it is; a tap on ✧ 理, and the endless simulated-launch loop is switched on at the top right of the 念起，光行 panel; back on the main screen, two ribbons of gold silk flow round the search field's outline while gold motes rise and sink" width="100%"></p>
+<p align="center"><img src="showcase/media/search-aura.webp" alt="Recorded on the device: first the search field as it is; a tap on ✧ 理, and the endless simulated-launch loop is switched on at the top right of the 念起，光行 panel; back on the main screen, two ribbons of gold silk flow round the search field's outline while gold motes rise and sink" width="90%"></p>
 <p align="center"><sub>Recorded on the HUAWEI MatePad Edge: tap ✧ 理, switch the loop on at the top right of 念起，光行, and back to the search field.</sub></p>
 
 - **The first shot flies back.** It is a rehearsal: out along its path, then played in reverse, every character landing exactly where it was — the dividend of renderers being pure functions. Every shot after it takes the words away with the light.
@@ -180,7 +180,7 @@ Lucent is also a place you want to stay. Turn on the endless simulated-launch lo
 - **Demand is one bit.** Pressing again mid-flight records only "one more", so the queue always holds a single slot. Some keyboards send pairs of key-down and key-up while auto-repeating, so a key-up waits 80 ms before counting as a release.
 - **Platinum rings, blue-white lasers.** Turn Random on and the gaps between the cards become champagne-platinum conduits with blue-white lasers racing through them. Each beam's speed is drawn from a truncated normal N(0.70, 0.10²); lanes are drawn by weight without replacement, so the beams in one channel always run the same way; the opening sends three at once.
 
-<p align="center"><img src="showcase/media/random-current.webp" alt="With Random on, champagne-platinum conduits light up in the gaps between the six cards and blue-white lasers race along them; the opening sends three beams at once" width="100%"></p>
+<p align="center"><img src="showcase/media/random-current.webp" alt="With Random on, champagne-platinum conduits light up in the gaps between the six cards and blue-white lasers race along them; the opening sends three beams at once" width="87.5%"></p>
 
 On days you would rather do nothing, the light plays for you, in place. Recharge, then set off again.
 
@@ -188,7 +188,7 @@ On days you would rather do nothing, the light plays for you, in place. Recharge
 
 ## 04 · Console: every dial is yours
 
-<p align="center"><img src="showcase/media/glass-compare.jpg" alt="The same main card: Warm Clear on the left half, Classic Frost on the right" width="100%"></p>
+<p align="center"><img src="showcase/media/glass-compare.jpg" alt="The same main card: Warm Clear on the left half, Classic Frost on the right" width="93.5%"></p>
 <p align="center"><sub>The same main card: Warm Clear on the left, Classic Frost on the right.</sub></p>
 
 The surface stays quiet, and all of the depth is yours:
@@ -212,13 +212,13 @@ The Lueurs are what bring Lucent to life. They began as a red circle drawn on a 
 - **Stones and constellations.** Each time you come back, the Lueurs are placed one by one by weighted lottery, penalising deserts and crowding, so that every glance is a new constellation.
 - **Probability.** Dragging a Lueur is walking an invisible potential field: the height you travel (62%), the change in distance to a reference lens (20%), the angle wound around it (13%) and how far the lens you hit was pushed (5%) rewrite the Light/Dark odds of the next wallpaper, by at most 35 points per gesture. The odds listen only to a human hand: driving and encounters neither write them nor count as interaction.
 
-<p align="center"><img src="showcase/media/lueurs-poster.jpg" alt="Two frames: a ring of glass Lueurs in orbit with the one you touch lit up — you move them, and they rewrite your next wallpaper, with every meeting kept in the chronicle; at night the Lueurs scatter into a back garden that grows on its own — open the door and set the day down" width="100%"></p>
+<p align="center"><img src="showcase/media/lueurs-poster.jpg" alt="Two frames: a ring of glass Lueurs in orbit with the one you touch lit up — you move them, and they rewrite your next wallpaper, with every meeting kept in the chronicle; at night the Lueurs scatter into a back garden that grows on its own — open the door and set the day down" width="90%"></p>
 
-<p align="center"><img src="docs/figures/potential.en.png" alt="Figure 2: the potential field Φ over the hand-drawn region — ice blue (toward Dark) at lower left, warm gold (toward Light) at upper right, with contour lines" width="100%"></p>
+<p align="center"><img src="docs/figures/potential.en.png" alt="Figure 2: the potential field Φ over the hand-drawn region — ice blue (toward Dark) at lower left, warm gold (toward Light) at upper right, with contour lines" width="87%"></p>
 
 ### The chronicle: every story, kept
 
-<p align="center"><img src="showcase/media/roster.jpg" alt="The field chronicle: residency terrain, drive log and the roster of 49 residents; #14 is selected, showing its file, closest companions, relationship web and strongest triangle" width="100%"></p>
+<p align="center"><img src="showcase/media/roster.jpg" alt="The field chronicle: residency terrain, drive log and the roster of 49 residents; #14 is selected, showing its file, closest companions, relationship web and strongest triangle" width="86.5%"></p>
 
 - **Identity.** #01–#49 are a fixed cast; each visit draws who is present. Pick one up and its number surfaces, faintly.
 - **Files.** Each resident keeps its appearances, time present, charges, hits, impacts, times hit, dodges, turns at the wheel and relays; the times you drag or fling it into another are kept apart, as Manual. The relationship table keeps each pair's contacts, bumps, dodges and minutes spent close; the terrain map keeps the paths they wore themselves.
