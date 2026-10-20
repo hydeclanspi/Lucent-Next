@@ -1,0 +1,21 @@
+<!doctype html>
+<!-- Lucent · 灵感台 — the film's cover with a play button, for the README (demo/media/film-poster-play.jpg),
+     rendered by scripts/film-media.mjs at 2560 × 1440 over demo/media/film-poster.jpg. The button is the one on
+     the on-device cover (slot.html): a ring of light with its glow and a play mark, here on a disc of smoked
+     glass so it reads over the pale poster. The clean poster stays the MP4's cover art. -->
+<html lang="zh-CN"><head><meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+  body { background: url("../../demo/media/film-poster.jpg") center / 1920px 1080px no-repeat; }
+  .play { position: absolute; left: 50%; top: 50%; width: 132px; height: 132px; margin: -66px 0 0 -66px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(16, 26, 54, .44) 0%, rgba(16, 26, 54, .34) 62%, rgba(16, 26, 54, .22) 100%);
+    -webkit-backdrop-filter: blur(14px) saturate(130%); backdrop-filter: blur(14px) saturate(130%);
+    box-shadow: 0 18px 44px rgba(24, 36, 72, .22), 0 4px 12px rgba(24, 36, 72, .14); }
+  svg { position: absolute; left: 14px; top: 14px; width: 104px; height: 104px; overflow: visible; }
+  svg circle { fill: none; stroke: #f2f7ff; stroke-width: 2.4; }
+  svg .glow { stroke: #bcdcff; stroke-width: 9; opacity: .32; filter: blur(5px); }
+  svg path { fill: #f2f7ff; }
+</style></head>
+<body>
+  <div class="play"><svg viewBox="-52 -52 104 104" aria-hidden="true"><circle class="glow" r="46"/><circle r="46"/><path d="M-11 -17 L19 0 L-11 17 Z"/></svg></div>
+</body></html>
