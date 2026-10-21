@@ -1793,13 +1793,15 @@
 
   var EXPORT_KEYS = ["profile", "icons", "folds", "wallpaper", "wallpaperBlur", "wallpaperBrightness", "wallpaperCrop", "glassMaterial", "wallpaperProbability",
     "probabilityDefaults", "interactionSettings", "collisionSettings", "motionSettings", "autoDriveSettings",
-    "uiPrefs", "searchMotion", "logs", "signs", "logsBundleVersion", "signsBundleVersion"];
+    "uiPrefs", "searchMotion", "logs", "signs", "logsBundleVersion", "signsBundleVersion",
+    "localShelf.favorites.v1", "entryOrder"];
   var EXPORT_LABELS = {
     profile: "名片", icons: "图标偏好", folds: "折叠状态", wallpaper: "壁纸模式", wallpaperBlur: "壁纸模糊",
     wallpaperBrightness: "壁纸亮度", wallpaperCrop: "壁纸取景", glassMaterial: "玻璃材质",
     wallpaperProbability: "明暗比例", probabilityDefaults: "比例默认值", interactionSettings: "浮光数量",
     collisionSettings: "碰撞力度", motionSettings: "自然 pace", autoDriveSettings: "自动驾驶", uiPrefs: "编号徽章",
-    searchMotion: "搜索动效", logs: "日志", signs: "签名历史", logsBundleVersion: "日志版本", signsBundleVersion: "签名版本"
+    searchMotion: "搜索动效", logs: "日志", signs: "签名历史", logsBundleVersion: "日志版本", signsBundleVersion: "签名版本",
+    "localShelf.favorites.v1": "本地收藏夹", entryOrder: "直达排序"
   };
 
   var exportPack = null, exportNodes = null, exportBusy = false;
@@ -2039,6 +2041,8 @@
     rows.push({ label: "日志 / 签名", value: (pack.payload.summary.logs + " + " + pack.payload.summary.signs) + " 条 · " + sizeText(bytesOf(history)) });
     rows.push({ label: "场志", value: data.field ? (pack.payload.summary.fieldProfiles + " 位 · " + pack.payload.summary.fieldPairs + " 对 · " + pack.payload.summary.fieldEvents + " 事件 · Manual " + (pack.payload.summary.fieldManual || 0) + " · " + sizeText(bytesOf(data.field))) : "本次没有" });
     rows.push({ label: "历史统计", value: data.stats ? (pack.payload.summary.statsRows + " 行 · " + sizeText(bytesOf(data.stats))) : "本次没有" });
+    var favorites = keys["localShelf.favorites.v1"];
+    rows.push({ label: "本地收藏夹", value: Array.isArray(favorites) ? (favorites.length + " 条 · " + sizeText(bytesOf(favorites))) : "本次没有" });
     return rows;
   }
 
