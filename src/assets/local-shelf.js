@@ -1588,9 +1588,16 @@
     setStatus('预览媒体 · ' + entry.name);
   }
 
+  var mdImageCounter = 0;
+
   function inlineMarkdown(text) {
     var codes = [];
-    var s = escapeHtml(String(text || '')).replace(/`([^`]+)`/g, function (_, code) {
+    var breaks = [];
+    var s = String(text || '').replace(/<br\s*\/?>/gi, function () {
+      breaks.push('<br>');
+      return '\u0001' + (breaks.length - 1) + '\u0001';
+    });
+    s = escapeHtml(s).replace(/`([^`]+)`/g, function (_, code) {
       codes.push('<code>' + code + '</code>');
       return '\u0000' + (codes.length - 1) + '\u0000';
     });
@@ -1600,13 +1607,29 @@
     s = s.replace(/(^|[^_])_([^_\n]+)_/g, '$1<em>$2</em>');
     s = s.replace(/~~([^~]+)~~/g, '<del>$1</del>');
     s = s.replace(/&lt;((?:https?:|mailto:)[^&\s]+)&gt;/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
-    s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, function (_, alt, url) {
-      if (!/^https?:/i.test(url)) return alt;
-      return '<img src="' + url.replace(/"/g, '&quot;') + '" alt="' + alt + '" loading="lazy">';
+    s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function (_, alt, url) {
+      var clean = url.trim().replace(/^&lt;|&gt;$/g, '').trim();
+      var title = '';
+      var titleMatch = /^(\S+)\s+(?:&quot;|&#39;|["'])(.*?)(?:&quot;|&#39;|["'])$/.exec(clean);
+      if (titleMatch) {
+        clean = titleMatch[1];
+        title = titleMatch[2];
+      }
+      mdImageCounter += 1;
+      var label = mdImageCounter < 10 ? '0' + mdImageCounter : String(mdImageCounter);
+      if (/^https?:\/\//i.test(clean)) {
+        return '<img src="' + clean.replace(/"/g, '&quot;') + '" alt="' + alt + '"' +
+          (title ? ' title="' + title.replace(/"/g, '&quot;') + '"' : '') +
+          ' data-fallback="&lt;image ' + label + '&gt;" loading="lazy">';
+      }
+      return '<span class="md-image">&lt;image ' + label + '&gt;</span>';
     });
     s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, function (_, label, url) {
       if (!/^(https?:|mailto:|#)/i.test(url)) return label;
       return '<a href="' + url.replace(/"/g, '&quot;') + '" target="_blank" rel="noopener">' + label + '</a>';
+    });
+    s = s.replace(/\u0001(\d+)\u0001/g, function (_, index) {
+      return breaks[Number(index)] || '';
     });
     return s.replace(/\u0000(\d+)\u0000/g, function (_, index) {
       return codes[Number(index)] || '';
@@ -1620,7 +1643,38 @@
   }
 
   function renderMarkdown(source) {
-    var lines = String(source || '').replace(/\r\n?/g, '\n').split('\n');
+    mdImageCounter = 0;
+    source = String(source || '');
+    var fences = [];
+    source = source.replace(/```[\s\S]*?```/g, function (block) {
+      fences.push(block);
+      return '\u0004' + (fences.length - 1) + '\u0004';
+    });
+    var references = {};
+    source = source.replace(/^\[([^\]]+)\]:\s*(\S+)(?:\s+["'(].*)?$/gm, function (_, id, url) {
+      references[id.trim().toLowerCase()] = url.trim();
+      return '';
+    });
+    source = source.replace(/!\[([^\]]*)\]\[([^\]]*)\]/g, function (_, alt, id) {
+      var key = (id || alt).trim().toLowerCase();
+      return references[key] ? '![' + alt + '](' + references[key] + ')' : '';
+    });
+    source = source.replace(/<img\b[^>]*>/gi, function (tag) {
+      var srcMatch = /src\s*=\s*["']([^"']+)["']/i.exec(tag);
+      if (!srcMatch) return '';
+      var altMatch = /alt\s*=\s*["']([^"']*)["']/i.exec(tag);
+      return '![' + (altMatch ? altMatch[1] : '') + '](' + srcMatch[1] + ')';
+    });
+    source = source.replace(/imageUrl=([^\s<]+)/g, function (_, encoded) {
+      var url = encoded;
+      try { url = decodeURIComponent(encoded); } catch (error) {}
+      return '![image](' + url + ')';
+    });
+    source = source.replace(/^(\s*)(https?:\/\/[^\s]+\.(?:png|jpe?g|gif|webp|svg|bmp|avif)(?:\?\S*)?)\s*$/gim, '$1![]($2)');
+    source = source.replace(/\u0004(\d+)\u0004/g, function (_, index) {
+      return fences[Number(index)] || '';
+    });
+    var lines = source.replace(/\r\n?/g, '\n').split('\n');
     var out = [];
     var paragraph = [];
     var quote = [];
@@ -1772,8 +1826,20 @@
       if (token !== state.previewToken) return;
       previewFrame(
         '<div class="frame"><div class="paper md">' + renderMarkdown(text) + '</div></div>',
-        '.md{font-size:14px;line-height:1.8}.md h1{font-size:24px;margin:0 0 .7em}.md h2{font-size:19px;margin:1.5em 0 .6em}.md h3{font-size:16px;margin:1.2em 0 .5em}.md p{margin:.75em 0}.md ul,.md ol{margin:.7em 0;padding-left:1.5em}.md li{margin:.3em 0}.md code{background:#f1eee6;padding:.12em .35em;border-radius:4px;font:12.5px/1.5 var(--mono)}.md pre{background:#f6f3ea;padding:14px 16px;border-radius:10px;overflow:auto}.md pre code{background:none;padding:0}.md table{width:100%;margin:1.2em 0;border-collapse:collapse}.md th,.md td{border:1px solid #e5e0d4;padding:6px 10px;text-align:left}.md th{background:#f6f2e7}.md hr{border:0;border-top:1px solid #e5e0d4;margin:1.6em 0}.md blockquote{margin:1.2em 0;padding:.3em 0 .3em 1em;border-left:3px solid #d9b66d;color:#555}.md a{color:#1d6d99;text-decoration:none}.md a:hover{text-decoration:underline}.md li.md-task{list-style:none;margin-left:-1.1em}.md .md-check{color:#8a6118;font-weight:700;margin-right:4px}'
+        '.md{font-size:14px;line-height:1.8}.md h1{font-size:24px;margin:0 0 .7em}.md h2{font-size:19px;margin:1.5em 0 .6em}.md h3{font-size:16px;margin:1.2em 0 .5em}.md p{margin:.75em 0}.md ul,.md ol{margin:.7em 0;padding-left:1.5em}.md li{margin:.3em 0}.md code{background:#f1eee6;padding:.12em .35em;border-radius:4px;font:12.5px/1.5 var(--mono)}.md pre{background:#f6f3ea;padding:14px 16px;border-radius:10px;overflow:auto}.md pre code{background:none;padding:0}.md table{width:100%;margin:1.2em 0;border-collapse:collapse}.md th,.md td{border:1px solid #e5e0d4;padding:6px 10px;text-align:left}.md th{background:#f6f2e7}.md hr{border:0;border-top:1px solid #e5e0d4;margin:1.6em 0}.md blockquote{margin:1.2em 0;padding:.3em 0 .3em 1em;border-left:3px solid #d9b66d;color:#555}.md a{color:#1d6d99;text-decoration:none}.md a:hover{text-decoration:underline}.md .md-image{display:inline-block;padding:1px 7px;border:1px dashed rgba(91,155,213,.45);border-radius:6px;color:#4d8fc7;background:rgba(91,155,213,.08);font:10.5px/1.5 var(--mono)}.md li.md-task{list-style:none;margin-left:-1.1em}.md .md-check{color:#8a6118;font-weight:700;margin-right:4px}'
       );
+      if (previewShadow) {
+        Array.prototype.forEach.call(previewShadow.querySelectorAll('.md img'), function (img, index) {
+          img.addEventListener('error', function () {
+            if (img.getAttribute('data-failed')) return;
+            img.setAttribute('data-failed', '1');
+            var span = document.createElement('span');
+            span.className = 'md-image';
+            span.textContent = img.getAttribute('data-fallback') || '<image ' + (index < 9 ? '0' : '') + (index + 1) + '>';
+            img.replaceWith(span);
+          });
+        });
+      }
       setStatus('预览 Markdown · ' + entry.name);
     }).catch(function (error) {
       if (token !== state.previewToken) return;
@@ -1831,54 +1897,64 @@
     setStatus('文件 · ' + entry.name);
   }
 
+  function openBlobUrl(blob, name) {
+    var url = URL.createObjectURL(blob);
+    var anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.target = '_blank';
+    anchor.rel = 'noopener';
+    anchor.style.display = 'none';
+    document.body.appendChild(anchor);
+    try {
+      anchor.click();
+      setStatus('已请求在新标签页打开 · ' + name, 'good');
+    } catch (error) {
+      URL.revokeObjectURL(url);
+      setStatus('打开失败：' + errorText(error) + '；请用“下载”保存', 'warn');
+      return false;
+    }
+    window.setTimeout(function () { anchor.remove(); }, 1000);
+    window.setTimeout(function () { URL.revokeObjectURL(url); }, 120000);
+    return true;
+  }
+
   function openDataEntry(entry, mime) {
     if (!entry.file) return;
     setStatus('正在准备 ' + entry.name + '…');
-    readDataUrl(entry.file).then(function (url) {
-      if (mime) {
-        var comma = url.indexOf(',');
-        if (comma >= 0) url = 'data:' + mime + ';base64,' + url.slice(comma + 1);
-      }
-      if (url.length > 12 * 1024 * 1024) {
-        setStatus('文件较大，建议直接下载', 'warn');
-        return;
-      }
-      if (!window.AiraHome || typeof window.AiraHome.openUrl !== 'function') {
-        setStatus('请在 Aira 中打开', 'warn');
-        return;
-      }
-      window.AiraHome.openUrl(url);
-      setStatus('已交给 Aira 打开 · ' + entry.name, 'good');
-    }).catch(function (error) {
-      setStatus('打开失败：' + errorText(error), 'warn');
-    });
+    var blob;
+    try {
+      blob = (!mime || entry.file.type === mime) ? entry.file : entry.file.slice(0, entry.file.size, mime);
+    } catch (error) {
+      blob = entry.file;
+    }
+    openBlobUrl(blob, entry.name);
   }
 
   function openHtmlEntry(entry) {
     if (!entry || !entry.file) return;
     setStatus('正在打包 ' + entry.name + '…');
+    var settled = false;
+    var timer = window.setTimeout(function () {
+      if (settled) return;
+      settled = true;
+      setStatus('打包超过 10 秒，已取消；请用“下载打包页”保存 ' + entry.name, 'warn');
+    }, 10000);
     packHtmlEntry(entry).then(function (result) {
-      var url = 'data:text/' + 'html;charset=utf-8,' + encodeURIComponent(result.html);
-      var size = url.length;
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      var blob = new Blob([result.html], { type: 'text/html;charset=utf-8' });
       var external = result.external || [];
       var externalNote = external.length ? ' · 在线资源 ' + external.length + ' 个' : '';
       var missing = result.missing.length ? ' · 缺失 ' + shortPath(result.missing[0], 60) : '';
-      if (size > URL_WARN) {
-        setStatus('打包后 ' + formatBytes(size) + '，超过打开上限；请用“下载打包页”' + missing + externalNote, 'warn');
+      if (blob.size > 12 * 1024 * 1024) {
+        setStatus('打包后 ' + formatBytes(blob.size) + '，超过打开上限；请用“下载打包页”' + missing + externalNote, 'warn');
         return;
       }
-      if (!window.AiraHome || typeof window.AiraHome.openUrl !== 'function') {
-        setStatus('请在 Aira 中打开；桌面预览无法新建标签页', 'warn');
-        return;
-      }
-      try {
-        window.AiraHome.openUrl(url);
-        setStatus('已交给 Aira 打开 · 打包后 ' + formatBytes(size) + ' · 内联 ' + result.inlined +
-          (result.missing.length ? ' · 缺失 ' + shortPath(result.missing[0], 60) : externalNote),
-          result.missing.length ? 'warn' : 'good');
-      } catch (error) {
-        setStatus('打开失败：' + errorText(error), 'warn');
-      }
+      if (!openBlobUrl(blob, entry.name + ' · 打包页')) return;
+      setStatus('已交给 Aira 打开 · 打包后 ' + formatBytes(blob.size) + ' · 内联 ' + result.inlined +
+        (result.missing.length ? ' · 缺失 ' + shortPath(result.missing[0], 60) : externalNote),
+        result.missing.length ? 'warn' : 'good');
     }).catch(function (error) {
       setStatus('打包失败：' + errorText(error), 'warn');
     });
@@ -3076,6 +3152,7 @@
     refs.restore.addEventListener('click', restoreDefaultFromGesture);
     var lastSummaryPick = 0;
     var openSummaryPicker = function (event) {
+      if (event && event.target && event.target.closest && event.target.closest('button')) return;
       if (event) event.stopPropagation();
       var now = Date.now();
       if (now - lastSummaryPick < 350) return;
@@ -3085,8 +3162,8 @@
     refs.summaryIcon.setAttribute('role', 'button');
     refs.summaryIcon.setAttribute('tabindex', '0');
     refs.summaryIcon.setAttribute('aria-label', '重新选择文件夹');
-    refs.summaryIcon.addEventListener('click', openSummaryPicker);
-    refs.summaryIcon.addEventListener('dblclick', openSummaryPicker);
+    refs.summary.addEventListener('click', openSummaryPicker);
+    refs.summary.addEventListener('dblclick', openSummaryPicker);
     refs.summaryIcon.addEventListener('keydown', function (event) {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
