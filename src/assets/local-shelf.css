@@ -3160,3 +3160,164 @@ body.shelf-open {
   opacity: 0.6;
   box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.03), inset 0 0 0 3.6px var(--fav-ink);
 }
+
+/* ============================================================
+   5.9.4 plus · 星标
+   一枚更利落的五角星 + 一粒灵感闪光，描金渐变；卡内去掉底色，入口用液态青花玻璃装裱。
+   ============================================================ */
+
+.ln-star-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ln-star { overflow: visible; }
+
+.ln-star-body {
+  fill: #dcb35e;
+  fill: url(#lnStarGold) #dcb35e;
+  stroke: rgba(140, 100, 32, 0.42);
+  stroke-width: 0.55;
+  stroke-linejoin: miter;
+  stroke-miterlimit: 10;
+}
+
+.ln-star-glint {
+  fill: #e9c879;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.42s cubic-bezier(0.2, 0.9, 0.24, 1), opacity 0.3s ease;
+}
+
+:root[data-theme="dark"] .ln-star-body {
+  fill: #ecc979;
+  fill: url(#lnStarGoldNight) #ecc979;
+  stroke: rgba(255, 236, 190, 0.32);
+}
+
+:root[data-theme="dark"] .ln-star-glint { fill: #fff0c8; }
+
+/* ---------- 卡内星标：无底色，略放大 ---------- */
+
+.shelf-fav-remove,
+:root[data-theme="dark"] .shelf-fav-remove {
+  top: 5px;
+  right: 5px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: none;
+  box-shadow: none;
+  transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.24, 1);
+}
+
+.shelf-fav-remove .ln-star {
+  width: 17px;
+  height: 17px;
+  filter: drop-shadow(0 1px 1.2px rgba(120, 86, 24, 0.28)) drop-shadow(0 0 5px rgba(232, 196, 120, 0.32));
+}
+
+:root[data-theme="dark"] .shelf-fav-remove .ln-star {
+  filter: drop-shadow(0 0 6px rgba(236, 201, 121, 0.42));
+}
+
+.shelf-fav-remove:hover,
+:root[data-theme="dark"] .shelf-fav-remove:hover {
+  background: none;
+  transform: scale(1.14);
+}
+
+.shelf-fav-remove:hover .ln-star-glint { transform: rotate(90deg) scale(1.25); }
+.shelf-fav-remove:active { transform: scale(0.9); }
+
+.shelf-fav-remove:focus-visible {
+  outline: 2px solid rgba(42, 92, 179, 0.5);
+  outline-offset: 0;
+}
+
+/* ---------- 书架头部入口：液态青花玻璃装裱 ---------- */
+
+.shelf-icon-btn.shelf-fav-entry {
+  position: relative;
+  margin-right: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  border-radius: 11px;
+  background:
+    radial-gradient(90% 60% at 28% 0%, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0) 64%),
+    radial-gradient(100% 90% at 72% 110%, rgba(100, 150, 235, 0.26), rgba(100, 150, 235, 0) 72%),
+    rgba(160, 195, 245, 0.12);
+  box-shadow:
+    0 0 0 1px rgba(42, 92, 179, 0.07),
+    0 4px 14px rgba(42, 92, 179, 0.08),
+    0 0 18px rgba(110, 160, 245, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -1px 0 rgba(120, 160, 230, 0.18);
+  backdrop-filter: blur(6px) saturate(160%) brightness(1.06);
+  -webkit-backdrop-filter: blur(6px) saturate(160%) brightness(1.06);
+  transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.24, 1), box-shadow 0.24s ease, background 0.24s ease;
+}
+
+/* 内圈一道青花细线，像瓷器的口沿 */
+.shelf-icon-btn.shelf-fav-entry::before {
+  content: "";
+  position: absolute;
+  inset: 4.5px;
+  border: 1px solid rgba(226, 196, 128, 0.36);
+  border-radius: 7px;
+  box-shadow: 0 0 4px rgba(244, 216, 150, 0.22), inset 0 0 3px rgba(244, 216, 150, 0.14);
+  pointer-events: none;
+}
+
+.shelf-icon-btn.shelf-fav-entry svg { position: relative; }
+
+.shelf-icon-btn.shelf-fav-entry:hover {
+  background:
+    radial-gradient(90% 60% at 28% 0%, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0) 64%),
+    radial-gradient(100% 90% at 72% 110%, rgba(100, 150, 235, 0.32), rgba(100, 150, 235, 0) 72%),
+    rgba(160, 195, 245, 0.18);
+  box-shadow:
+    0 0 0 1px rgba(42, 92, 179, 0.1),
+    0 6px 18px rgba(42, 92, 179, 0.12),
+    0 0 22px rgba(120, 170, 245, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(120, 160, 230, 0.24);
+}
+
+.shelf-icon-btn.shelf-fav-entry:focus-visible { outline-color: rgba(42, 92, 179, 0.6); }
+
+:root[data-theme="dark"] .shelf-icon-btn.shelf-fav-entry {
+  border-color: rgba(190, 215, 255, 0.24);
+  background:
+    radial-gradient(80% 70% at 30% 18%, rgba(190, 215, 255, 0.24), rgba(190, 215, 255, 0) 62%),
+    radial-gradient(90% 80% at 70% 100%, rgba(80, 130, 240, 0.3), rgba(80, 130, 240, 0) 70%),
+    linear-gradient(160deg, rgba(40, 56, 96, 0.72), rgba(16, 24, 48, 0.66));
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.2),
+    0 8px 22px rgba(0, 0, 0, 0.34),
+    0 0 20px rgba(90, 140, 255, 0.24),
+    inset 0 1px 0 rgba(220, 235, 255, 0.24);
+}
+
+:root[data-theme="dark"] .shelf-icon-btn.shelf-fav-entry::before {
+  border-color: rgba(238, 210, 146, 0.26);
+  box-shadow: 0 0 5px rgba(240, 212, 150, 0.16), inset 0 0 3px rgba(240, 212, 150, 0.1);
+}
+
+:root[data-theme="dark"] .shelf-icon-btn.shelf-fav-entry:hover {
+  border-color: rgba(190, 215, 255, 0.36);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4), 0 0 28px rgba(90, 140, 255, 0.34), inset 0 1px 0 rgba(220, 235, 255, 0.3);
+}
+
+@media (pointer: coarse) {
+  .shelf-fav-remove,
+  :root[data-theme="dark"] .shelf-fav-remove { width: 34px; height: 34px; top: 3px; right: 3px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ln-star-glint,
+  .shelf-fav-remove,
+  .shelf-icon-btn.shelf-fav-entry { transition: none; }
+}

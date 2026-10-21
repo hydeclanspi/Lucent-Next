@@ -909,7 +909,7 @@
       remove.setAttribute('role', 'button');
       remove.setAttribute('tabindex', '0');
       remove.setAttribute('aria-label', '取消收藏');
-      remove.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.8l2.5 5.1 5.6.8-4.1 4 1 5.6-5-2.7-5 2.7 1-5.6-4.1-4 5.6-.8z"/></svg>';
+      remove.innerHTML = '<svg class="ln-star" viewBox="0 0 24 24" aria-hidden="true"><path class="ln-star-body" d="M11.20 3.80 L13.23 10.21 L19.95 10.16 L14.48 14.07 L16.61 20.44 L11.20 16.45 L5.79 20.44 L7.92 14.07 L2.45 10.16 L9.17 10.21Z"/><path class="ln-star-glint" d="M19.6 1.3Q20.05 3.55 22.3 4Q20.05 4.45 19.6 6.7Q19.15 4.45 16.9 4Q19.15 3.55 19.6 1.3Z"/></svg>';
       remove.addEventListener('click', function (event) {
         event.preventDefault();
         event.stopPropagation();
