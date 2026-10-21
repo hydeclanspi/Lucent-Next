@@ -139,11 +139,11 @@ async function check(name, task) { await task(); results.push({ name, passed: tr
       }
     });
     await check('Profile edits and search-motion selection persist', async () => {
-      await page.locator('#btnEditProfile').click(); await page.waitForSelector('.edit-root:not([hidden])');
+      await page.locator('#tags .tag.ghost').click(); await page.waitForSelector('.edit-root:not([hidden])');
       await page.locator('.edit-panel').first().getByPlaceholder('显示在名片上的名字').fill('hydeclanspi test');
       await page.locator('.edit-panel').first().getByRole('button', { name: '保存', exact: true }).click();
       await page.reload(); await page.waitForFunction(() => document.querySelector('#profileName').textContent === 'hydeclanspi test');
-      await page.locator('#btnEditProfile').click(); await page.waitForSelector('.edit-root:not([hidden])');
+      await page.locator('#tags .tag.ghost').click(); await page.waitForSelector('.edit-root:not([hidden])');
       await page.locator('.edit-panel').first().getByRole('button', { name: '恢复默认', exact: true }).click();
       await page.keyboard.press('Escape');
       await page.locator('#btnSearchMotion').click(); await page.waitForSelector('.search-motion-sheet');

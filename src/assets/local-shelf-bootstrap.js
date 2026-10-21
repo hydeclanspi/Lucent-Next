@@ -1,9 +1,6 @@
 (function () {
   'use strict';
 
-  var button = document.getElementById('btnShelf');
-  if (!button) return;
-
   var loaded = false;
   var loading = false;
   var attempts = 0;
@@ -19,7 +16,15 @@
     }
   }
 
-  function load() {
+  function enterImmersive() {
+    if (document.fullscreenElement || typeof document.documentElement.requestFullscreen !== "function") return;
+    try {
+      var task = document.documentElement.requestFullscreen({ navigationUI: "hide" });
+      if (task && typeof task.catch === "function") task.catch(function () {});
+    } catch (error) {}
+  }
+
+  function load(button) {
     if (loading || loaded) return;
     loading = true;
     button.setAttribute('aria-busy', 'true');
@@ -35,17 +40,20 @@
     script.onerror = function () {
       loading = false;
       button.setAttribute('aria-busy', 'false');
-      button.title = '本地书架加载失败';
+      button.title = '本地文件架加载失败';
     };
     document.body.appendChild(script);
   }
 
-  button.addEventListener('click', function (event) {
+  document.addEventListener('click', function (event) {
+    var button = event.target && event.target.closest ? event.target.closest('#btnShelf') : null;
+    if (!button) return;
+    enterImmersive();
     if (loaded) {
       openLoaded();
       return;
     }
     event.preventDefault();
-    load();
-  });
+    load(button);
+  }, true);
 })();

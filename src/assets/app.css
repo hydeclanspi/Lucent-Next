@@ -214,6 +214,10 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 }
 :root[data-theme="dark"] #btnHistory::before { background: rgba(20, 23, 34, 0.44); }
 #btnHistory:active::before { transform: skewX(-14deg) scale(0.97); }
+@media (hover: hover) {
+  #btnHistory:hover::before { background: rgba(255, 255, 255, 0.55); }
+  :root[data-theme="dark"] #btnHistory:hover::before { background: rgba(30, 34, 48, 0.62); }
+}
 #btnHistory .arrow {
   width: 18px;
   height: 18px;
@@ -912,6 +916,35 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 .mini:active { transform: scale(0.94); }
 .mini.on { background: var(--accent); color: var(--on-accent); border-color: transparent; }
 
+#btnEditOrder {
+  font-size: 10px;
+  padding: 0 8px;
+}
+
+.shelf-mini {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 8px;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.shelf-mini > svg {
+  display: block;
+  width: 11px;
+  height: 11px;
+  color: #4f86a8;
+}
+
+.shelf-mini > span {
+  display: block;
+  line-height: 1;
+}
+
+:root[data-theme="dark"] .shelf-mini > svg { color: #9cc8e2; }
+
 .fold {
   flex: none;
   width: 28px;
@@ -1145,6 +1178,27 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 .row .rhint { font-size: 11px; letter-spacing: 0.6px; color: var(--ink-3); }
 
 .row .rchev { flex: none; width: 15px; height: 15px; color: var(--ink-4); }
+
+.r-order { display: none; flex: none; align-items: center; gap: 2px; }
+.rows.editing .r-order { display: flex; }
+.rows.editing .rchev { display: none; }
+
+.r-move {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  color: var(--ink-2);
+  border: 1px solid var(--glass-line);
+  border-radius: 8px;
+  background: var(--glass);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.r-move:active { transform: scale(0.94); }
 
 /* ---------- 名片编辑：左右双面板 ---------- */
 

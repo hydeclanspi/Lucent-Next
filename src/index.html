@@ -146,12 +146,6 @@
           <path d="M12 2.8v2.4M12 18.8v2.4M4.6 7.2l2 1.2M17.4 15.6l2 1.2M4.6 16.8l2-1.2M17.4 8.4l2-1.2"/>
         </svg>
       </button>
-      <button class="icon-btn shelf-launcher" id="btnShelf" type="button" aria-label="本地书架" title="本地书架" aria-haspopup="dialog" aria-controls="shelfCard" aria-expanded="false">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-          <path d="M3.4 7.1a2.1 2.1 0 0 1 2.1-2.1h3.2l1.8 2h8a2.1 2.1 0 0 1 2.1 2.1v8.2a2.1 2.1 0 0 1-2.1 2.1H5.5a2.1 2.1 0 0 1-2.1-2.1z"/>
-          <path d="M12 10.2v5.1M9.5 12.75h5"/>
-        </svg>
-      </button>
     </div>
   </header>
 
@@ -223,7 +217,10 @@
       <div class="block" id="blockShortcuts">
         <div class="block-head">
           <h2 class="block-title">快捷方式</h2>
-          <button class="mini" id="btnEditMode" type="button">排序</button>
+          <button class="mini shelf-mini" id="btnShelf" type="button" aria-haspopup="dialog" aria-controls="shelfCard" aria-expanded="false" title="本地文件架">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3.5C12.4 9 10.6 11 4.5 12C10 12.5 11.5 14.3 12 20.5C13 14.9 14.8 13 20 12C14.6 11.3 13.5 9.4 13 3.5Z"/></svg>
+            <span>本地文件架</span>
+          </button>
           <button class="fold" id="btnFoldShortcuts" type="button" aria-label="折叠快捷方式" aria-expanded="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9.5 12 15 17.5 9.5"/></svg>
           </button>
@@ -236,7 +233,7 @@
       <div class="block" id="blockEntries">
         <div class="block-head">
           <h2 class="block-title">直达</h2>
-          <button class="mini" id="btnEditProfile" type="button">编辑名片</button>
+          <button class="mini" id="btnEditOrder" type="button">编辑排序</button>
           <button class="fold" id="btnFoldEntries" type="button" aria-label="折叠直达" aria-expanded="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9.5 12 15 17.5 9.5"/></svg>
           </button>

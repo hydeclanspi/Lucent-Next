@@ -116,6 +116,8 @@
     theme: { mode: "system", effectiveMode: "light" },
     privacy: { isPrivate: false },
     editing: false,
+    orderEditing: false,
+    entryOrder: [],
     motion: null,
     gripLabel: "",
     demo: false
@@ -590,8 +592,7 @@
     grid.appendChild(addTile);
 
     grid.classList.toggle("editing", state.editing);
-    el.btnEditMode.classList.toggle("on", state.editing);
-    el.btnEditMode.textContent = state.editing ? "完成" : "排序";
+    updateOrderButton();
     renderBadges();
   }
 
@@ -914,16 +915,28 @@
     });
   }
 
+  function updateOrderButton() {
+    var button = $("btnEditOrder");
+    if (!button) return;
+    button.classList.toggle("on", !!state.orderEditing);
+    button.textContent = state.orderEditing ? "完成" : "编辑排序";
+  }
+
   function setEditing(next) {
     state.editing = !!next;
+    state.orderEditing = state.editing;
     el.shortcutGrid.classList.toggle("editing", state.editing);
     Array.prototype.forEach.call(el.shortcutGrid.children, function (tile) {
       if (tile.dataset.role === "add") return;
       tile.style.touchAction = state.editing ? "none" : "";
     });
-    el.btnEditMode.classList.toggle("on", state.editing);
-    el.btnEditMode.textContent = state.editing ? "完成" : "排序";
-    if (state.editing) toast("拖动图标排序，完成后点“完成”保存");
+    updateOrderButton();
+    renderEntries();
+    if (state.editing) toast("拖动快捷方式，或点直达右侧箭头排序，完成后点“完成”");
+  }
+
+  function toggleOrderEditing() {
+    setEditing(!state.editing);
   }
 
   function loadShortcuts() {
@@ -1017,10 +1030,29 @@
 
   /* ---------- 直达列表 ---------- */
 
+  function orderedEntries() {
+    var keys = Array.isArray(state.entryOrder) ? state.entryOrder.slice() : [];
+    ENTRIES.forEach(function (entry) { if (keys.indexOf(entry.key) < 0) keys.push(entry.key); });
+    return keys.map(entryByKey).filter(Boolean);
+  }
+
+  function moveEntry(key, direction) {
+    var keys = orderedEntries().map(function (entry) { return entry.key; });
+    var index = keys.indexOf(key);
+    var next = index + direction;
+    if (index < 0 || next < 0 || next >= keys.length) return;
+    keys.splice(index, 1);
+    keys.splice(next, 0, key);
+    state.entryOrder = keys;
+    storageSet("entryOrder", state.entryOrder).catch(function () {});
+    renderEntries();
+  }
+
   function renderEntries() {
     var rows = el.entryRows;
     rows.textContent = "";
-    ENTRIES.forEach(function (entry) {
+    rows.classList.toggle("editing", !!state.orderEditing);
+    orderedEntries().forEach(function (entry) {
       var row = document.createElement("button");
       row.type = "button";
       row.className = "row";
@@ -1042,9 +1074,33 @@
 
       var chev = icon("M9.5 6 15.5 12 9.5 18", { width: "2" });
       chev.setAttribute("class", "rchev");
+      var order = document.createElement("span");
+      order.className = "r-order";
+      ["-1", "1"].forEach(function (direction) {
+        var move = document.createElement("span");
+        move.className = "r-move";
+        move.setAttribute("role", "button");
+        move.setAttribute("tabindex", "0");
+        move.setAttribute("aria-label", direction === "-1" ? "上移" : "下移");
+        move.textContent = direction === "-1" ? "↑" : "↓";
+        move.addEventListener("click", function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          moveEntry(entry.key, Number(direction));
+        });
+        move.addEventListener("keydown", function (event) {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            event.stopPropagation();
+            moveEntry(entry.key, Number(direction));
+          }
+        });
+        order.appendChild(move);
+      });
 
       row.appendChild(box);
       row.appendChild(text);
+      row.appendChild(order);
       row.appendChild(chev);
       row.addEventListener("click", function () { openEntry(entry); });
       rows.appendChild(row);
@@ -4949,9 +5005,7 @@
       else toast("预览模式：进入或退出隐私模式会由 Aira 确认");
     });
 
-    $("btnEditProfile").addEventListener("click", openProfileEditor);
-
-    $("btnEditMode").addEventListener("click", function () { setEditing(!state.editing); });
+    $("btnEditOrder").addEventListener("click", toggleOrderEditing);
 
     el.sheetMask.addEventListener("click", closeSheet);
     document.addEventListener("keydown", function (event) {
@@ -5028,7 +5082,12 @@
 
     loadProfile();
     bindInteractions();
-    renderEntries();
+    storageGet("entryOrder", null).then(function (saved) {
+      if (Array.isArray(saved)) {
+        state.entryOrder = saved.filter(function (key) { return ENTRIES.some(function (entry) { return entry.key === key; }); });
+      }
+      renderEntries();
+    }).catch(renderEntries);
     bindMotion();
     applySystemThemeGuess();
 
@@ -5089,7 +5148,7 @@
       shortcutGrid: $("shortcutGrid"),
       engineChips: $("engineChips"),
       entryRows: $("entryRows"),
-      btnEditMode: $("btnEditMode"),
+      btnEditOrder: $("btnEditOrder"),
       sheetRoot: $("sheetRoot"),
       sheet: $("sheet"),
       sheetMask: $("sheetMask"),
