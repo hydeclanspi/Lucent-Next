@@ -15,9 +15,12 @@
     more: $('shelfMore'),
     menu: $('shelfMenu'),
     menuHidden: $('shelfMenuHidden'),
+    menuFiles: $('shelfMenuFiles'),
     menuClear: $('shelfMenuClear'),
     pick: $('shelfPick'),
     emptyPick: $('shelfEmptyPick'),
+    emptyFiles: $('shelfEmptyFiles'),
+    openFiles: $('shelfOpenFiles'),
     defaultBtn: $('shelfDefault'),
     defaultLabel: $('shelfDefaultLabel'),
     refresh: $('shelfRefresh'),
@@ -62,7 +65,8 @@
     renameReset: $('shelfRenameReset'),
     renameCancel: $('shelfRenameCancel'),
     renameSave: $('shelfRenameSave'),
-    folderInput: $('shelfFolderInput')
+    folderInput: $('shelfFolderInput'),
+    fileInput: $('shelfFileInput')
   };
 
   var previewShadow = null;
@@ -72,6 +76,7 @@
   var state = {
     open: false,
     source: 'none',
+    flatFiles: false,
     rootHandle: null,
     rootNode: null,
     rootName: '',
@@ -86,7 +91,8 @@
     sortDir: 'asc',
     view: 'list',
     showHidden: false,
-    filter: 'all',
+    filter: 'mdhtml',
+    foldersCollapsed: false,
     keepFolders: true,
     recent: [],
     recentHandles: new Map(),
@@ -127,6 +133,7 @@
   var URL_WARN = 1800000;
   var FILTER_LABELS = {
     all: '全部类型',
+    mdhtml: 'MD + HTML',
     html: 'HTML',
     pdf: 'PDF',
     md: 'Markdown',
@@ -135,7 +142,7 @@
     archive: '压缩包',
     media: '音视频'
   };
-  var FILTER_ORDER = ['all', 'html', 'pdf', 'md', 'image', 'text', 'archive', 'media'];
+  var FILTER_ORDER = ['all', 'mdhtml', 'html', 'pdf', 'md', 'image', 'text', 'archive', 'media'];
   var WELL_KNOWN_DIRS = {
     documents: 'documents',
     downloads: 'downloads',
@@ -184,23 +191,26 @@
     'padding:24px;background:radial-gradient(circle at 50% 30%,rgba(255,255,255,.08),transparent 60%),#0b1018;color:#fff}',
     '.audio-stage .glyph{display:grid;place-items:center;width:76px;height:76px;border:1px solid rgba(255,255,255,.16);',
     'border-radius:24px;background:rgba(255,255,255,.06);color:#e7c987}',
+    '.audio-stage .glyph svg{width:24px;height:24px}',
     '.audio-stage audio{width:min(100%,420px)}',
     '.audio-stage .name{max-width:100%;color:rgba(255,255,255,.7);font-size:12px;overflow-wrap:anywhere;text-align:center}',
     '.image-meta{padding:0 14px 12px;color:#7a7d84;font:10px/1.5 var(--mono);text-align:center}',
     '.code{margin:0;padding:16px 18px;white-space:pre-wrap;word-break:break-word;',
     'font:11.5px/1.65 var(--mono);color:#1b1c20;background:#fbfaf6}',
-    '.meta-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:100%;',
-    'padding:26px;text-align:center}',
-    '.meta-card .glyph{display:grid;place-items:center;width:70px;height:70px;border:1px solid rgba(0,0,0,.08);',
-    'border-radius:22px;background:rgba(231,201,135,.18);color:#8a6118}',
+    '.meta-card{box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;min-height:100%;',
+    'padding:24px;text-align:center;transform:translateY(-16px)}',
+    '.meta-card .glyph{display:grid;place-items:center;width:48px;height:48px;border:1px solid rgba(0,0,0,.08);',
+    'border-radius:15px;background:rgba(231,201,135,.18);color:#8a6118}',
+    '.meta-card .glyph svg{width:22px;height:22px}',
     '.meta-card strong{font-size:13px;font-weight:650;overflow-wrap:anywhere}',
     '.meta-card p{margin:0;color:#7a7d84;font-size:11px;line-height:1.7}',
     '.meta-card .meta-grid{display:grid;grid-template-columns:auto auto;gap:4px 14px;margin-top:2px;',
     'color:#666;font:10px/1.6 var(--mono);text-align:left}',
-    '.folder-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-height:100%;',
-    'padding:28px;text-align:center}',
-    '.folder-card .glyph{display:grid;place-items:center;width:82px;height:82px;border:1px solid rgba(0,0,0,.08);',
-    'border-radius:26px;background:linear-gradient(145deg,rgba(231,201,135,.28),rgba(155,215,255,.14));color:#8a6118}',
+    '.folder-card{box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:100%;',
+    'padding:24px;text-align:center;transform:translateY(-16px)}',
+    '.folder-card .glyph{display:grid;place-items:center;width:54px;height:54px;border:1px solid rgba(0,0,0,.08);',
+    'border-radius:17px;background:linear-gradient(145deg,rgba(231,201,135,.28),rgba(155,215,255,.14));color:#8a6118}',
+    '.folder-card .glyph svg{width:26px;height:26px}',
     '.folder-card strong{font-size:14px;font-weight:650;overflow-wrap:anywhere}',
     '.folder-card p{margin:0;color:#7a7d84;font-size:11px;line-height:1.7}',
     '.folder-card button{min-height:38px;padding:0 16px;border:1px solid rgba(165,123,37,.3);border-radius:999px;',
@@ -556,6 +566,7 @@
       if (saved.view === 'grid' || saved.view === 'list') state.view = saved.view;
       if (saved.showHidden === true) state.showHidden = true;
       if (FILTER_ORDER.indexOf(saved.filter) >= 0) state.filter = saved.filter;
+      if (!saved.mdhtmlDefault) state.filter = 'mdhtml';
       if (saved.keepFolders === false) state.keepFolders = false;
       applyView();
       updateSortHeaders();
@@ -571,7 +582,8 @@
       view: state.view,
       showHidden: state.showHidden,
       filter: state.filter,
-      keepFolders: state.keepFolders
+      keepFolders: state.keepFolders,
+      mdhtmlDefault: true
     }).catch(function () {});
   }
 
@@ -889,6 +901,10 @@
       if (query && entry.name.toLowerCase().indexOf(query) < 0) return false;
       if (state.filter === 'all') return true;
       if (entry.kind === 'directory') return state.keepFolders;
+      if (state.filter === 'mdhtml') {
+        var kind = filterKind(entry);
+        return kind === 'html' || kind === 'md';
+      }
       return filterKind(entry) === state.filter;
     });
   }
@@ -929,6 +945,14 @@
     var hasFolder = state.path.length > 0;
     if (!hasFolder) {
       var fallback = state.defaultMeta;
+      var emptyTitle = refs.empty.querySelector('strong');
+      var emptyText = refs.empty.querySelector('p');
+      if (emptyTitle) emptyTitle.textContent = fallback ? '默认路径已记录' : '还没有挂载文件夹';
+      if (emptyText) {
+        emptyText.textContent = fallback ?
+          '「' + fallback.name + '」会在打开时自动恢复；也可以选择其他文件夹或直接选文件。' :
+          '选择一个本地文件夹，里面可以包含 HTML、图片、文本和子文件夹。';
+      }
       refs.folderName.textContent = fallback ? fallback.name : '尚未选择文件夹';
       refs.folderPath.textContent = fallback ?
         '默认路径 · 打开书架时自动恢复' :
@@ -972,9 +996,10 @@
   function updateToolbar() {
     var hasFolder = state.path.length > 0;
     var hasDefault = !hasFolder && !!state.defaultMeta;
-    refs.defaultBtn.disabled = !hasFolder || state.isDefault;
-    refs.defaultLabel.textContent = state.isDefault ? '已设为默认' : (hasDefault ? '默认路径已记录' : '设为默认路径');
-    refs.defaultBtn.classList.toggle('is-default', state.isDefault || hasDefault);
+    refs.defaultBtn.disabled = !hasFolder || state.isDefault || state.flatFiles;
+    refs.defaultLabel.textContent = state.flatFiles ? '文件模式' :
+      (state.isDefault ? '已设为默认' : (hasDefault ? '默认路径已记录' : '设为默认路径'));
+    refs.defaultBtn.classList.toggle('is-default', !state.flatFiles && (state.isDefault || hasDefault));
     refs.refresh.disabled = !hasFolder;
     refs.menuClear.disabled = !state.defaultMeta;
   }
@@ -1155,6 +1180,22 @@
     refs.rows.appendChild(wrap);
   }
 
+  function renderFolderGroup(count) {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'shelf-folder-group' + (state.foldersCollapsed ? ' is-collapsed' : '');
+    button.setAttribute('aria-expanded', state.foldersCollapsed ? 'false' : 'true');
+    button.setAttribute('aria-label', state.foldersCollapsed ? '展开文件夹' : '折叠文件夹');
+    button.title = state.foldersCollapsed ? '展开文件夹' : '折叠文件夹';
+    button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9.5 12 14.5 17 9.5"/></svg>' +
+      '<span>文件夹</span><span class="shelf-folder-group-count">' + count + '</span>';
+    button.addEventListener('click', function () {
+      state.foldersCollapsed = !state.foldersCollapsed;
+      renderRows();
+    });
+    refs.rows.appendChild(button);
+  }
+
   function renderRows() {
     revokeThumbUrls();
     refs.rows.textContent = '';
@@ -1168,16 +1209,24 @@
       return;
     }
     if (!state.path.length) return;
-    var list = sortEntries(visibleEntries());
+    var all = sortEntries(visibleEntries());
+    var folderCount = all.filter(function (entry) { return entry.kind === 'directory'; }).length;
+    var list = state.foldersCollapsed ? all.filter(function (entry) { return entry.kind !== 'directory'; }) : all;
     state.filtered = list;
     if (!state.entries.length) {
       renderRowNote('这个文件夹是空的。');
       updateFooter();
       return;
     }
-    if (!list.length) {
+    if (!all.length) {
       var message = state.filter !== 'all' ? '没有匹配的 ' + FILTER_LABELS[state.filter] + ' 文件。' : '没有匹配的文件。';
       renderRowNote(message);
+      updateFooter();
+      return;
+    }
+    if (folderCount) renderFolderGroup(folderCount);
+    if (!list.length) {
+      renderRowNote('文件夹已折叠，点上方「文件夹」展开。');
       updateFooter();
       return;
     }
@@ -2040,6 +2089,7 @@
     state.entries = [];
     state.selected = null;
     state.isDefault = !!restored;
+    state.flatFiles = false;
     state.needsReauth = false;
     state.reauthHandle = null;
     state.pendingDefaultHandle = null;
@@ -2054,7 +2104,7 @@
     return loadCurrentDirectory();
   }
 
-  function mountInputFiles(files, folderName, restored) {
+  function mountInputFiles(files, folderName, restored, flat, autoOpen) {
     if (!files || !files.length) {
       setStatus('没有收到文件', 'warn');
       return Promise.resolve();
@@ -2101,6 +2151,7 @@
     state.entries = [];
     state.selected = null;
     state.isDefault = !!restored;
+    state.flatFiles = !!flat;
     state.needsReauth = false;
     state.reauthHandle = null;
     state.pendingDefaultHandle = null;
@@ -2111,7 +2162,7 @@
     refs.search.value = '';
     refs.searchClear.hidden = true;
     clearPreview();
-    rememberRecent(null, rootName, 'input');
+    if (!flat) rememberRecent(null, rootName, 'input');
     updateAll();
     if (files.length > 3000) {
       setStatus('已加载 ' + files.length + ' 个文件；建议下次选择更小的项目文件夹', 'warn');
@@ -2119,6 +2170,12 @@
     return loadCurrentDirectory().then(function () {
       if (files.length > 3000) {
         setStatus('已加载 ' + files.length + ' 个文件；当前只显示文件夹内容，建议选择更小的项目文件夹', 'warn');
+      }
+      if (autoOpen) {
+        var first = state.entries.filter(function (entry) {
+          return entry.kind === 'file' && (filterKind(entry) === 'html' || filterKind(entry) === 'md');
+        })[0] || state.entries.filter(function (entry) { return entry.kind === 'file'; })[0];
+        if (first) selectEntry(first);
       }
     });
   }
@@ -2228,6 +2285,7 @@
     state.loadToken += 1;
     var token = state.loadToken;
     state.loading = true;
+    state.foldersCollapsed = false;
     state.selected = null;
     state.packedCache.clear();
     state.handleCache.delete('file:' + state.path.map(function (part) { return part.name; }).join('/'));
@@ -2336,6 +2394,22 @@
     mountInputFiles(files, folderName, restored);
   }
 
+  function pickFiles() {
+    closeMenu();
+    setStatus('正在打开系统文件选择…');
+    refs.fileInput.click();
+  }
+
+  function onFileInputChange() {
+    var files = Array.prototype.slice.call(refs.fileInput.files || []);
+    refs.fileInput.value = '';
+    if (!files.length) {
+      setStatus('没有收到文件', 'warn');
+      return;
+    }
+    mountInputFiles(files, '已选文件', false, true, true);
+  }
+
   function onSearchInput() {
     state.query = String(refs.search.value || '').trim();
     refs.searchClear.hidden = !state.query;
@@ -2395,6 +2469,10 @@
   function saveDefaultPath() {
     if (!state.path.length) {
       setStatus('先选择一个文件夹', 'warn');
+      return;
+    }
+    if (state.flatFiles) {
+      setStatus('多文件模式不能设为默认路径；请用“选择新路径”挂载文件夹', 'warn');
       return;
     }
     var meta = {
@@ -2765,6 +2843,7 @@
       toggleMenu();
     });
     refs.menuHidden.addEventListener('click', toggleHidden);
+    refs.menuFiles.addEventListener('click', pickFiles);
     refs.menuClear.addEventListener('click', clearDefaultPath);
 
     refs.renameSave.addEventListener('click', function () { saveRename(false); });
@@ -2788,6 +2867,8 @@
 
     refs.pick.addEventListener('click', pickFolder);
     refs.emptyPick.addEventListener('click', pickFolder);
+    refs.emptyFiles.addEventListener('click', pickFiles);
+    refs.openFiles.addEventListener('click', pickFiles);
     refs.restore.addEventListener('click', restoreDefaultFromGesture);
     refs.reauth.addEventListener('click', reauthorizeFolder);
     refs.defaultBtn.addEventListener('click', saveDefaultPath);
@@ -2813,6 +2894,7 @@
     });
     refs.keepFolders.addEventListener('click', toggleKeepFolders);
     refs.folderInput.addEventListener('change', onFolderInputChange);
+    refs.fileInput.addEventListener('change', onFileInputChange);
 
     card.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') {

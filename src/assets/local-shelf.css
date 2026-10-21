@@ -1100,6 +1100,42 @@ body.shelf-open {
   scrollbar-width: thin;
 }
 
+.shelf-folder-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  color: var(--ink-3);
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-align: left;
+}
+
+.shelf-folder-group:hover {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.shelf-folder-group svg {
+  width: 11px;
+  height: 11px;
+  transition: transform 0.16s ease;
+}
+
+.shelf-folder-group.is-collapsed svg {
+  transform: rotate(-90deg);
+}
+
+.shelf-folder-group-count {
+  color: var(--ink-3);
+  font-size: 9px;
+  opacity: 0.7;
+}
+
 .shelf-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 82px 124px 82px;
@@ -1331,9 +1367,22 @@ body.shelf-open {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 24px;
+  gap: 10px;
+  padding: 32px 24px;
   text-align: center;
+}
+
+.shelf-empty-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.shelf-empty-actions .shelf-btn {
+  min-height: 40px;
+  padding: 0 18px;
 }
 
 .shelf-empty[hidden] {
@@ -1411,10 +1460,10 @@ body.shelf-open {
 .shelf-preview-head {
   display: flex;
   flex: none;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 11px 13px 9px;
+  padding: 10px 13px;
   border-bottom: 1px solid var(--glass-line);
 }
 
@@ -1423,6 +1472,10 @@ body.shelf-open {
 }
 
 .shelf-preview-heading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
   min-width: 0;
 }
 
@@ -1438,7 +1491,7 @@ body.shelf-open {
 .shelf-preview-name {
   display: block;
   max-width: 100%;
-  margin-top: 3px;
+  margin-top: 0;
   overflow: hidden;
   color: var(--ink);
   font-size: 11.5px;
@@ -1461,13 +1514,13 @@ body.shelf-open {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 30px;
+  min-height: 28px;
   padding: 0 9px;
   color: var(--ink-2);
   border: 1px solid var(--glass-line);
-  border-radius: 999px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.3);
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 600;
   white-space: nowrap;
   transition: background 0.16s ease, color 0.16s ease;
@@ -1511,26 +1564,27 @@ body.shelf-open {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 9px;
   padding: 22px;
   color: var(--ink-3);
+  transform: translateY(-16px);
   text-align: center;
 }
 
 .shelf-preview-glyph {
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 52px;
+  width: 46px;
+  height: 46px;
   color: var(--ink-3);
   border: 1px solid var(--glass-line);
-  border-radius: 16px;
+  border-radius: 14px;
   background: rgba(255, 255, 255, 0.28);
 }
 
 .shelf-preview-glyph svg {
-  width: 24px;
-  height: 24px;
+  width: 21px;
+  height: 21px;
 }
 
 .shelf-preview-empty p {
