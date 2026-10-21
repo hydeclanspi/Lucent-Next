@@ -960,6 +960,8 @@
 
   function openFavoritesPanel() {
     state.favoritesPage = 1;
+    card.classList.add('is-fav-mode');
+    root.classList.add('is-fav-mode');
     refs.favoritesPanel.hidden = false;
     renderFavoritesPanel();
     window.setTimeout(function () { if (refs.favoritesClose) refs.favoritesClose.focus(); }, 30);
@@ -968,6 +970,8 @@
   function closeFavoritesPanel() {
     if (!refs.missing.hidden) closeFavoriteMissing();
     refs.favoritesPanel.hidden = true;
+    card.classList.remove('is-fav-mode');
+    root.classList.remove('is-fav-mode');
     if (refs.favoritesBtn) refs.favoritesBtn.focus({ preventScroll: true });
   }
 
