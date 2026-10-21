@@ -260,7 +260,7 @@
     <section class="shelf-card" id="shelfCard" role="dialog" aria-modal="true" aria-labelledby="shelfTitle" tabindex="-1">
       <header class="shelf-head">
         <div class="shelf-heading">
-          <span class="shelf-eyebrow">LOCAL SHELF · 5.3.2</span>
+          <span class="shelf-eyebrow">LOCAL SHELF · 5.4.6</span>
           <h2 class="shelf-title" id="shelfTitle">本地书架</h2>
           <p class="shelf-sub" id="shelfSub">只读取你主动选择的文件夹；不上传，不联网。</p>
         </div>
@@ -354,25 +354,29 @@
         </div>
       </div>
 
-      <div class="shelf-summary" id="shelfSummary">
-        <div class="shelf-summary-icon" id="shelfSummaryIcon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M3.2 7a2.2 2.2 0 0 1 2.2-2.2h3.3l1.8 2h8.1A2.2 2.2 0 0 1 20.8 9v8.2a2.2 2.2 0 0 1-2.2 2.2H5.4a2.2 2.2 0 0 1-2.2-2.2z"/>
-          </svg>
-        </div>
-        <div class="shelf-summary-main">
-          <div class="shelf-summary-line">
-            <strong class="shelf-summary-name" id="shelfFolderName">尚未选择文件夹</strong>
-            <span class="shelf-badge shelf-badge-default" id="shelfDefaultBadge" hidden>默认路径</span>
-            <span class="shelf-badge shelf-badge-read" id="shelfReadBadge">只读</span>
+      <div class="shelf-recent" id="shelfRecent">
+        <div class="shelf-recent-side is-left" id="shelfRecentLeft"></div>
+        <div class="shelf-summary" id="shelfSummary">
+          <div class="shelf-summary-icon" id="shelfSummaryIcon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3.2 7a2.2 2.2 0 0 1 2.2-2.2h3.3l1.8 2h8.1A2.2 2.2 0 0 1 20.8 9v8.2a2.2 2.2 0 0 1-2.2 2.2H5.4a2.2 2.2 0 0 1-2.2-2.2z"/>
+            </svg>
           </div>
-          <div class="shelf-summary-path" id="shelfFolderPath">选择一个本地文件夹，开始浏览 HTML、图片和文本。</div>
-          <div class="shelf-summary-stats" id="shelfFolderStats">尚未挂载</div>
+          <div class="shelf-summary-main">
+            <div class="shelf-summary-line">
+              <strong class="shelf-summary-name" id="shelfFolderName">尚未选择文件夹</strong>
+              <span class="shelf-badge shelf-badge-default" id="shelfDefaultBadge" hidden>默认路径</span>
+              <span class="shelf-badge shelf-badge-read" id="shelfReadBadge">只读</span>
+            </div>
+            <div class="shelf-summary-path" id="shelfFolderPath">选择一个本地文件夹，开始浏览 HTML、图片和文本。</div>
+            <div class="shelf-summary-stats" id="shelfFolderStats">尚未挂载</div>
+          </div>
+          <div class="shelf-summary-side">
+            <span class="shelf-summary-time" id="shelfScanTime">未扫描</span>
+            <button class="shelf-restore" id="shelfRestore" type="button" hidden>恢复默认路径</button>
+          </div>
         </div>
-        <div class="shelf-summary-side">
-          <span class="shelf-summary-time" id="shelfScanTime">未扫描</span>
-          <button class="shelf-restore" id="shelfRestore" type="button" hidden>恢复默认路径</button>
-        </div>
+        <div class="shelf-recent-side is-right" id="shelfRecentRight"></div>
       </div>
 
       <div class="shelf-breadcrumb" id="shelfBreadcrumb" hidden>
@@ -426,9 +430,8 @@
             <div class="shelf-preview-empty" id="shelfPreviewEmpty">
               <div class="shelf-preview-glyph">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M6.2 3.2h7.6l4 4v13.6H6.2z"/>
-                  <path d="M13.8 3.2v4.2h4.2"/>
-                  <path d="M9 12.2h6M9 15.4h4.6"/>
+                  <path d="M19.2 8.4A7.5 7.5 0 1 0 20 13"/>
+                  <path d="M20 4.8v4.2h-4.2"/>
                 </svg>
               </div>
               <p>选择一个文件查看预览</p>
@@ -447,6 +450,21 @@
       <div class="shelf-menu" id="shelfMenu" hidden role="menu">
         <button class="shelf-menu-item" id="shelfMenuHidden" type="button" role="menuitemradio" aria-checked="false">显示隐藏文件</button>
         <button class="shelf-menu-item" id="shelfMenuClear" type="button" role="menuitem" disabled>清除默认路径</button>
+      </div>
+
+      <div class="shelf-rename" id="shelfRename" hidden>
+        <div class="shelf-rename-card" role="dialog" aria-modal="true" aria-labelledby="shelfRenameTitle">
+          <span class="shelf-rename-kicker">RENAME</span>
+          <strong class="shelf-rename-title" id="shelfRenameTitle">自定义显示名</strong>
+          <p class="shelf-rename-sub" id="shelfRenameSub">只改变这里的显示名，不会改动文件夹本身。</p>
+          <input class="shelf-rename-input" id="shelfRenameInput" type="text" maxlength="40" autocomplete="off" spellcheck="false" aria-label="自定义显示名">
+          <div class="shelf-rename-actions">
+            <button class="shelf-btn ghost" id="shelfRenameReset" type="button">恢复原名</button>
+            <span class="shelf-rename-spacer"></span>
+            <button class="shelf-btn ghost" id="shelfRenameCancel" type="button">取消</button>
+            <button class="shelf-btn primary" id="shelfRenameSave" type="button">保存</button>
+          </div>
+        </div>
       </div>
     </section>
   </div>

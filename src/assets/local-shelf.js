@@ -29,6 +29,9 @@
     filterLabel: $('shelfFilterLabel'),
     filterMenu: $('shelfFilterMenu'),
     keepFolders: $('shelfKeepFolders'),
+    recent: $('shelfRecent'),
+    recentLeft: $('shelfRecentLeft'),
+    recentRight: $('shelfRecentRight'),
     summaryIcon: $('shelfSummaryIcon'),
     folderName: $('shelfFolderName'),
     folderPath: $('shelfFolderPath'),
@@ -52,10 +55,18 @@
     previewHost: $('shelfPreviewHost'),
     status: $('shelfStatus'),
     count: $('shelfCount'),
+    rename: $('shelfRename'),
+    renameSub: $('shelfRenameSub'),
+    renameInput: $('shelfRenameInput'),
+    renameReset: $('shelfRenameReset'),
+    renameCancel: $('shelfRenameCancel'),
+    renameSave: $('shelfRenameSave'),
     folderInput: $('shelfFolderInput')
   };
 
   var previewShadow = null;
+  var renameTarget = null;
+  var renameTimer = 0;
 
   var state = {
     open: false,
@@ -76,6 +87,10 @@
     showHidden: false,
     filter: 'all',
     keepFolders: true,
+    recent: [],
+    recentHandles: new Map(),
+    recentReady: Promise.resolve(),
+    recentLoaded: false,
     isDefault: false,
     defaultMeta: null,
     pendingDefaultHandle: null,
@@ -95,6 +110,9 @@
 
   var DEFAULT_KEY = 'localShelf.default.v1';
   var UI_KEY = 'localShelf.ui.v1';
+  var RECENT_KEY = 'localShelf.recent.v1';
+  var RECENT_LIMIT = 8;
+  var RECENT_IDB_PREFIX = 'recent:';
   var DB_NAME = 'lucent-local-shelf';
   var DB_STORE = 'handles';
   var TEXT_LIMIT = 256 * 1024;
@@ -214,6 +232,12 @@
       return (d.getMonth() + 1) + '月' + d.getDate() + '日';
     }
     return d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
+  }
+
+  function displayName(meta) {
+    if (!meta) return '';
+    var custom = typeof meta.customName === 'string' ? meta.customName.trim() : '';
+    return custom || meta.name || '';
   }
 
   function fullDate(ms) {
@@ -512,7 +536,7 @@
   function loadUi() {
     storeGet(UI_KEY, null).then(function (saved) {
       if (!saved || typeof saved !== 'object') return;
-      if (saved.sortKey === 'name' || saved.sortKey === 'type' || saved.sortKey === 'time' || saved.sortKey === 'size') {
+      if (saved.sortKey === 'name' || saved.sortKey === 'type' || saved.sortKey === 'time' || saved.sortKey === 'size' || saved.sortKey === 'none') {
         state.sortKey = saved.sortKey;
       }
       if (saved.sortDir === 'asc' || saved.sortDir === 'desc') state.sortDir = saved.sortDir;
@@ -536,6 +560,288 @@
       filter: state.filter,
       keepFolders: state.keepFolders
     }).catch(function () {});
+  }
+
+  function getRecentCapacity() {
+    var width = window.innerWidth || document.documentElement.clientWidth || 0;
+    if (width >= 1600) return 7;
+    if (width >= 1200) return 5;
+    if (width >= 700) return 3;
+    return 1;
+  }
+
+  function makeRecentId() {
+    return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
+  function loadRecent() {
+    var task = storeGet(RECENT_KEY, []).then(function (saved) {
+      var list = Array.isArray(saved) ? saved.filter(function (meta) {
+        return meta && typeof meta.id === 'string' && meta.id && typeof meta.name === 'string' && meta.name;
+      }).slice(0, RECENT_LIMIT) : [];
+      return Promise.all(list.map(function (meta) {
+        if (meta.source !== 'handle') return { meta: meta, handle: null };
+        return idbGet(RECENT_IDB_PREFIX + meta.id).then(function (handle) {
+          return { meta: meta, handle: handle };
+        }).catch(function () {
+          return { meta: meta, handle: null };
+        });
+      })).then(function (items) {
+        var valid = items.filter(function (item) {
+          return item.meta.source !== 'handle' || item.handle;
+        });
+        state.recent = valid.map(function (item) { return item.meta; });
+        state.recentHandles = new Map();
+        valid.forEach(function (item) {
+          if (item.handle) state.recentHandles.set(item.meta.id, item.handle);
+        });
+        state.recentLoaded = true;
+        renderRecentStrip();
+      });
+    }).catch(function () {
+      state.recentLoaded = true;
+      renderRecentStrip();
+    });
+    state.recentReady = task;
+    return task;
+  }
+
+  function rememberRecent(handle, name, source) {
+    var run = function () {
+      var now = Date.now();
+      var dedupe = Promise.resolve(null);
+      if (handle && typeof handle.isSameEntry === 'function') {
+        dedupe = state.recent.reduce(function (chain, meta) {
+          return chain.then(function (found) {
+            if (found) return found;
+            var existing = state.recentHandles.get(meta.id);
+            if (!existing) return null;
+            return existing.isSameEntry(handle).then(function (same) {
+              return same ? meta : null;
+            }).catch(function () {
+              return null;
+            });
+          });
+        }, Promise.resolve(null));
+      } else if (source === 'handle') {
+        dedupe = Promise.resolve(state.recent.find(function (meta) {
+          return meta.source === 'handle' && meta.name === name;
+        }) || null);
+      } else {
+        dedupe = Promise.resolve(state.recent.find(function (meta) {
+          return meta.source === 'input' && meta.name === name;
+        }) || null);
+      }
+
+      return dedupe.then(function (existing) {
+        var entry = existing || {
+          id: makeRecentId(),
+          name: name,
+          source: source,
+          openedAt: 0
+        };
+        entry.name = name;
+        entry.source = source;
+        entry.openedAt = now;
+        entry.scannedAt = now;
+
+        var next = [entry].concat(state.recent.filter(function (item) {
+          return item.id !== entry.id;
+        })).slice(0, RECENT_LIMIT);
+        var dropped = state.recent.filter(function (item) {
+          return next.indexOf(item) < 0;
+        });
+        state.recent = next;
+        if (handle) state.recentHandles.set(entry.id, handle);
+        dropped.forEach(function (item) {
+          state.recentHandles.delete(item.id);
+          idbDelete(RECENT_IDB_PREFIX + item.id).catch(function () {});
+        });
+
+        var writes = [storeSet(RECENT_KEY, state.recent)];
+        if (handle) writes.push(idbSet(RECENT_IDB_PREFIX + entry.id, handle).catch(function () {}));
+        return Promise.all(writes).then(function () {
+          renderRecentStrip();
+        }).catch(function () {
+          renderRecentStrip();
+        });
+      });
+    };
+
+    if (state.recentReady && typeof state.recentReady.then === 'function') {
+      return state.recentReady.then(run);
+    }
+    return run();
+  }
+
+  function currentRecentMeta() {
+    if (!state.path.length || !state.rootName) return null;
+    for (var i = 0; i < state.recent.length; i += 1) {
+      var meta = state.recent[i];
+      if (meta.name === state.rootName && meta.source === state.source) return meta;
+    }
+    return null;
+  }
+
+  function bindRenamePress(node, getMeta) {
+    if (!node) return;
+    var startX = 0;
+    var startY = 0;
+    var fired = false;
+
+    var clear = function () {
+      if (renameTimer) {
+        window.clearTimeout(renameTimer);
+        renameTimer = 0;
+      }
+    };
+
+    node.addEventListener('pointerdown', function (event) {
+      if (event.button && event.button !== 0) return;
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      var meta = getMeta();
+      if (!meta) return;
+      startX = event.clientX;
+      startY = event.clientY;
+      fired = false;
+      clear();
+      renameTimer = window.setTimeout(function () {
+        renameTimer = 0;
+        fired = true;
+        openRename(meta);
+      }, 480);
+    });
+
+    node.addEventListener('pointermove', function (event) {
+      if (!renameTimer) return;
+      if (Math.abs(event.clientX - startX) > 10 || Math.abs(event.clientY - startY) > 10) clear();
+    });
+
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (name) {
+      node.addEventListener(name, clear);
+    });
+
+    node.addEventListener('contextmenu', function (event) {
+      event.preventDefault();
+    });
+
+    node.addEventListener('click', function (event) {
+      if (fired) {
+        fired = false;
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    }, true);
+  }
+
+  function buildRecentChip(meta) {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'shelf-recent-chip';
+    button.setAttribute('aria-label', '最近路径：' + displayName(meta));
+    button.title = displayName(meta) + (meta.source === 'input' ? ' · 需要重新选择' : '') + ' · 长按可改名';
+    var icon = document.createElement('span');
+    icon.className = 'shelf-recent-chip-icon';
+    icon.innerHTML = iconSvg('folder');
+    var line = document.createElement('span');
+    line.className = 'shelf-recent-chip-line';
+    var name = document.createElement('span');
+    name.className = 'shelf-recent-chip-name';
+    name.textContent = displayName(meta);
+    var badge = document.createElement('span');
+    badge.className = 'shelf-recent-chip-badge';
+    badge.textContent = '只读';
+    var time = document.createElement('span');
+    time.className = 'shelf-recent-chip-time';
+    time.textContent = formatDate(meta.scannedAt || meta.openedAt);
+    line.appendChild(name);
+    line.appendChild(badge);
+    button.appendChild(icon);
+    button.appendChild(line);
+    button.appendChild(time);
+    button.addEventListener('click', function () {
+      openRecent(meta);
+    });
+    bindRenamePress(button, function () { return meta; });
+    return button;
+  }
+
+  function openRename(meta) {
+    if (!meta) return;
+    renameTarget = meta;
+    refs.renameSub.textContent = '当前文件夹：' + meta.name + '。只改变这里的显示名，不会改动文件夹本身。';
+    refs.renameInput.value = displayName(meta);
+    refs.renameReset.hidden = !meta.customName;
+    refs.rename.hidden = false;
+    window.setTimeout(function () {
+      refs.renameInput.focus();
+      refs.renameInput.select();
+    }, 30);
+  }
+
+  function closeRename() {
+    renameTarget = null;
+    refs.rename.hidden = true;
+  }
+
+  function saveRename(reset) {
+    if (!renameTarget) return;
+    var meta = renameTarget;
+    var original = String(meta.name || '');
+    var value = reset ? '' : String(refs.renameInput.value || '').trim().slice(0, 40);
+    if (!reset && value && value !== original) meta.customName = value;
+    else delete meta.customName;
+    storeSet(RECENT_KEY, state.recent).catch(function () {});
+    closeRename();
+    renderRecentStrip();
+    updateSummary();
+    setStatus(meta.customName ? '已重命名为「' + meta.customName + '」' : '已恢复原名「' + original + '」');
+  }
+
+  function renderRecentStrip() {
+    if (!refs.recentLeft || !refs.recentRight) return;
+    refs.recentLeft.textContent = '';
+    refs.recentRight.textContent = '';
+    if (!state.open) return;
+
+    var capacity = getRecentCapacity();
+    var half = Math.floor((capacity - 1) / 2);
+    var offset = state.path.length ? 1 : 0;
+    for (var left = half; left >= 1; left -= 1) {
+      var leftIndex = offset + (left - 1) * 2;
+      if (state.recent[leftIndex]) {
+        refs.recentLeft.appendChild(buildRecentChip(state.recent[leftIndex]));
+      }
+    }
+    for (var right = 1; right <= half; right += 1) {
+      var rightIndex = offset + (right - 1) * 2 + 1;
+      if (state.recent[rightIndex]) {
+        refs.recentRight.appendChild(buildRecentChip(state.recent[rightIndex]));
+      }
+    }
+  }
+
+  function openRecent(meta) {
+    if (!meta) return;
+    if (meta.source !== 'handle') {
+      setStatus('这个最近路径来自普通文件夹选择，请用“选择新路径”重新打开', 'warn');
+      return;
+    }
+    var handle = state.recentHandles.get(meta.id);
+    if (!handle) {
+      setStatus('这个最近路径的文件夹授权已失效，请用“选择新路径”重新打开', 'warn');
+      return;
+    }
+    setStatus('正在打开 ' + meta.name + '…');
+    ensureHandlePermission(handle, true).then(function (granted) {
+      if (granted) {
+        mountHandle(handle, false);
+      } else {
+        setStatus('没有获得文件夹读取权限', 'warn');
+      }
+    }).catch(function (error) {
+      setStatus('打开最近路径失败：' + errorText(error), 'warn');
+    });
   }
 
   function loadDefaultMeta() {
@@ -569,8 +875,13 @@
     });
   }
 
+  function defaultSortDir(key) {
+    return key === 'name' || key === 'type' ? 'asc' : 'desc';
+  }
+
   function sortEntries(entries) {
-    var direction = state.sortDir === 'asc' ? 1 : -1;
+    var key = state.sortKey;
+    var direction = key === 'none' ? 1 : (state.sortDir === 'asc' ? 1 : -1);
     return entries.slice().sort(function (a, b) {
       var groupA = a.kind === 'directory' ? 0 : 1;
       var groupB = b.kind === 'directory' ? 0 : 1;
@@ -579,13 +890,13 @@
       var nameCompare = function () {
         return a.name.localeCompare(b.name, 'zh-Hans-CN', { numeric: true, sensitivity: 'base' });
       };
-      if (state.sortKey === 'name') {
+      if (key === 'none' || key === 'name') {
         result = nameCompare();
-      } else if (state.sortKey === 'type') {
+      } else if (key === 'type') {
         result = typeLabel(a).localeCompare(typeLabel(b), 'zh-Hans-CN', { numeric: true }) || nameCompare();
-      } else if (state.sortKey === 'time') {
+      } else if (key === 'time') {
         result = (a.modified || 0) - (b.modified || 0) || nameCompare();
-      } else if (state.sortKey === 'size') {
+      } else if (key === 'size') {
         result = (a.size || 0) - (b.size || 0) || nameCompare();
       }
       return result * direction;
@@ -622,7 +933,9 @@
         size += entry.size || 0;
       }
     });
-    refs.folderName.textContent = state.rootName || '本地文件夹';
+    var rootMeta = currentRecentMeta();
+    refs.folderName.textContent = (rootMeta ? displayName(rootMeta) : state.rootName) || '本地文件夹';
+    refs.folderName.title = '长按可改名';
     refs.folderPath.textContent = state.path.map(function (part) { return part.name; }).join(' / ');
     refs.folderStats.textContent = state.entries.length + ' 项 · ' + folders + ' 个文件夹 · ' +
       files + ' 个文件' + (files ? ' · ' + formatBytes(size) : '');
@@ -747,10 +1060,11 @@
     refs.listHead.hidden = !hasFolder;
     refs.rows.hidden = !hasFolder;
     refs.empty.hidden = hasFolder;
-    refs.breadcrumb.hidden = !hasFolder;
+    refs.breadcrumb.hidden = !hasFolder || state.path.length <= 1;
     refs.previewPane.hidden = !hasFolder;
     refs.previewEmpty.hidden = false;
     updateSummary();
+    renderRecentStrip();
     updateToolbar();
     updateBreadcrumb();
     updateSortHeaders();
@@ -1658,6 +1972,7 @@
     refs.search.value = '';
     refs.searchClear.hidden = true;
     clearPreview();
+    rememberRecent(handle, handle.name, 'handle');
     updateAll();
     return loadCurrentDirectory();
   }
@@ -1717,6 +2032,7 @@
     refs.search.value = '';
     refs.searchClear.hidden = true;
     clearPreview();
+    rememberRecent(null, rootName, 'input');
     updateAll();
     if (files.length > 3000) {
       setStatus('已加载 ' + files.length + ' 个文件；建议下次选择更小的项目文件夹', 'warn');
@@ -1845,6 +2161,13 @@
       if (token !== state.loadToken) return;
       state.entries = entries;
       state.lastScan = Date.now();
+      if (state.path.length === 1) {
+        var rootMeta = currentRecentMeta();
+        if (rootMeta) {
+          rootMeta.scannedAt = state.lastScan;
+          storeSet(RECENT_KEY, state.recent).catch(function () {});
+        }
+      }
       state.loading = false;
       updateAll();
       setStatus('已挂载 ' + state.rootName + ' · ' + entries.length + ' 项', 'good');
@@ -1936,15 +2259,22 @@
     if (!column) return;
     var key = column.getAttribute('data-sort');
     if (!key) return;
-    if (state.sortKey === key) {
+    if (state.sortKey !== key) {
+      state.sortKey = key;
+      state.sortDir = defaultSortDir(key);
+    } else if (state.sortDir === defaultSortDir(key)) {
       state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
     } else {
-      state.sortKey = key;
-      state.sortDir = key === 'name' || key === 'type' ? 'asc' : 'desc';
+      state.sortKey = 'none';
+      state.sortDir = 'asc';
     }
     updateSortHeaders();
     renderRows();
     saveUi();
+    if (state.sortKey === 'none') {
+      setStatus('已取消排序 · 默认名称顺序');
+      return;
+    }
     setStatus('已按' + (key === 'name' ? '名称' : key === 'type' ? '类型' : key === 'time' ? '时间' : '大小') +
       (state.sortDir === 'asc' ? '升序' : '降序') + '排列');
   }
@@ -2119,6 +2449,7 @@
 
   function closeShelf() {
     if (!state.open) return;
+    if (!refs.rename.hidden) closeRename();
     state.open = false;
     state.previewToken += 1;
     revokePreviewUrl();
@@ -2137,6 +2468,12 @@
   function onGlobalKeydown(event) {
     if (!state.open) return;
     if (event.key === 'Escape') {
+      if (!refs.rename.hidden) {
+        closeRename();
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
       if (!refs.filterMenu.hidden) {
         closeFilterMenu();
         event.preventDefault();
@@ -2185,6 +2522,25 @@
     refs.menuHidden.addEventListener('click', toggleHidden);
     refs.menuClear.addEventListener('click', clearDefaultPath);
 
+    refs.renameSave.addEventListener('click', function () { saveRename(false); });
+    refs.renameReset.addEventListener('click', function () { saveRename(true); });
+    refs.renameCancel.addEventListener('click', closeRename);
+    refs.rename.addEventListener('click', function (event) {
+      if (event.target === refs.rename) closeRename();
+    });
+    refs.renameInput.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        saveRename(false);
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        closeRename();
+      }
+    });
+    bindRenamePress(refs.folderName, currentRecentMeta);
+    bindRenamePress(refs.summaryIcon, currentRecentMeta);
+
     refs.pick.addEventListener('click', pickFolder);
     refs.emptyPick.addEventListener('click', pickFolder);
     refs.restore.addEventListener('click', restoreDefaultFromGesture);
@@ -2214,6 +2570,12 @@
 
     card.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') {
+        if (!refs.rename.hidden) {
+          closeRename();
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
         if (!refs.filterMenu.hidden) {
           closeFilterMenu();
           event.preventDefault();
@@ -2250,10 +2612,21 @@
       if (!refs.menu.hidden && !refs.menu.contains(event.target) && !refs.more.contains(event.target)) closeMenu();
       if (!refs.filterMenu.hidden && !refs.filterMenu.contains(event.target) && !refs.filter.contains(event.target)) closeFilterMenu();
     }, true);
+
+    var recentResizeTimer = 0;
+    window.addEventListener('resize', function () {
+      if (!state.open) return;
+      if (recentResizeTimer) window.clearTimeout(recentResizeTimer);
+      recentResizeTimer = window.setTimeout(function () {
+        recentResizeTimer = 0;
+        renderRecentStrip();
+      }, 150);
+    });
   }
 
   bindEvents();
   loadUi();
+  loadRecent();
   applyView();
   updateSortHeaders();
   updateAll();
