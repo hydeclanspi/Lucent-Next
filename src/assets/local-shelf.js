@@ -38,6 +38,7 @@
     folderStats: $('shelfFolderStats'),
     defaultBadge: $('shelfDefaultBadge'),
     scanTime: $('shelfScanTime'),
+    reauth: $('shelfReauth'),
     restore: $('shelfRestore'),
     breadcrumb: $('shelfBreadcrumb'),
     up: $('shelfUp'),
@@ -93,9 +94,13 @@
     recentLoaded: false,
     isDefault: false,
     defaultMeta: null,
+    defaultHandle: null,
+    autoRestoreAttempted: false,
     pendingDefaultHandle: null,
     restorePickPending: false,
     forceInputFallback: false,
+    needsReauth: false,
+    reauthHandle: null,
     lastScan: 0,
     loadToken: 0,
     previewToken: 0,
@@ -131,6 +136,14 @@
     media: '音视频'
   };
   var FILTER_ORDER = ['all', 'html', 'pdf', 'md', 'image', 'text', 'archive', 'media'];
+  var WELL_KNOWN_DIRS = {
+    documents: 'documents',
+    downloads: 'downloads',
+    desktop: 'desktop',
+    pictures: 'pictures',
+    music: 'music',
+    videos: 'videos'
+  };
 
   var ICON_PATHS = {
     folder: '<path d="M3.2 7a2.2 2.2 0 0 1 2.2-2.2h3.3l1.8 2h8.1A2.2 2.2 0 0 1 20.8 9v8.2a2.2 2.2 0 0 1-2.2 2.2H5.4a2.2 2.2 0 0 1-2.2-2.2z"/>',
@@ -805,7 +818,7 @@
     if (!state.open) return;
 
     var capacity = getRecentCapacity();
-    var half = Math.floor((capacity - 1) / 2);
+    var half = Math.min(Math.floor((capacity - 1) / 2), 2);
     var offset = state.path.length ? 1 : 0;
     for (var left = half; left >= 1; left -= 1) {
       var leftIndex = offset + (left - 1) * 2;
@@ -833,13 +846,7 @@
       return;
     }
     setStatus('正在打开 ' + meta.name + '…');
-    ensureHandlePermission(handle, true).then(function (granted) {
-      if (granted) {
-        mountHandle(handle, false);
-      } else {
-        setStatus('没有获得文件夹读取权限', 'warn');
-      }
-    }).catch(function (error) {
+    mountHandle(handle, false).catch(function (error) {
       setStatus('打开最近路径失败：' + errorText(error), 'warn');
     });
   }
@@ -848,14 +855,25 @@
     return storeGet(DEFAULT_KEY, null).then(function (meta) {
       if (!meta || typeof meta !== 'object' || !meta.name) {
         state.defaultMeta = null;
+        state.defaultHandle = null;
         return;
       }
       state.defaultMeta = meta;
+      state.defaultHandle = null;
+      if (meta.source === 'handle') {
+        idbGet('default').then(function (handle) {
+          if (handle && handle.kind === 'directory') state.defaultHandle = handle;
+        }).catch(function () {});
+      }
       if (!state.path.length) {
         refs.restore.hidden = false;
         refs.restore.textContent = meta.source === 'handle' ? '恢复默认路径' : '重新选择默认路径';
         updateSummary();
         updateToolbar();
+        if (state.open && !state.autoRestoreAttempted) {
+          state.autoRestoreAttempted = true;
+          autoRestoreDefault();
+        }
       }
     });
   }
@@ -910,15 +928,20 @@
   function updateSummary() {
     var hasFolder = state.path.length > 0;
     if (!hasFolder) {
-      refs.folderName.textContent = state.defaultMeta ? '尚未挂载' : '尚未选择文件夹';
-      refs.folderPath.textContent = state.defaultMeta ?
-        '上次使用：' + state.defaultMeta.name + ' · 点击恢复或选择新路径' :
+      var fallback = state.defaultMeta;
+      refs.folderName.textContent = fallback ? fallback.name : '尚未选择文件夹';
+      refs.folderPath.textContent = fallback ?
+        '默认路径 · 打开书架时自动恢复' :
         '选择一个本地文件夹，开始浏览 HTML、图片和文本。';
-      refs.folderStats.textContent = state.defaultMeta ? '默认路径已记录' : '尚未挂载';
-      refs.defaultBadge.hidden = true;
-      refs.scanTime.textContent = '未扫描';
-      refs.restore.hidden = !state.defaultMeta;
-      refs.summaryIcon.classList.add('is-empty');
+      refs.folderStats.textContent = fallback ?
+        '默认路径已记录' :
+        '尚未挂载';
+      refs.defaultBadge.hidden = !fallback;
+      refs.scanTime.textContent = fallback ? '未打开' : '未扫描';
+      refs.reauth.hidden = true;
+      refs.restore.hidden = !fallback;
+      refs.summaryIcon.classList.toggle('is-empty', !fallback);
+      refs.folderName.title = fallback ? '默认路径：' + fallback.name : '';
       return;
     }
 
@@ -940,16 +963,18 @@
     refs.folderStats.textContent = state.entries.length + ' 项 · ' + folders + ' 个文件夹 · ' +
       files + ' 个文件' + (files ? ' · ' + formatBytes(size) : '');
     refs.defaultBadge.hidden = !state.isDefault;
-    refs.scanTime.textContent = state.lastScan ? '扫描于 ' + formatTime(state.lastScan) : '未扫描';
+    refs.reauth.hidden = !state.needsReauth;
+    refs.scanTime.textContent = state.needsReauth ? '等待授权' : (state.lastScan ? '扫描于 ' + formatTime(state.lastScan) : '未扫描');
     refs.restore.hidden = true;
     refs.summaryIcon.classList.remove('is-empty');
   }
 
   function updateToolbar() {
     var hasFolder = state.path.length > 0;
+    var hasDefault = !hasFolder && !!state.defaultMeta;
     refs.defaultBtn.disabled = !hasFolder || state.isDefault;
-    refs.defaultLabel.textContent = state.isDefault ? '已设为默认' : '设为默认路径';
-    refs.defaultBtn.classList.toggle('is-default', state.isDefault);
+    refs.defaultLabel.textContent = state.isDefault ? '已设为默认' : (hasDefault ? '默认路径已记录' : '设为默认路径');
+    refs.defaultBtn.classList.toggle('is-default', state.isDefault || hasDefault);
     refs.refresh.disabled = !hasFolder;
     refs.menuClear.disabled = !state.defaultMeta;
   }
@@ -1092,11 +1117,54 @@
     refs.rows.appendChild(note);
   }
 
+  function renderAuthNote() {
+    refs.rows.textContent = '';
+    var wrap = document.createElement('div');
+    wrap.className = 'shelf-auth-note';
+    var icon = document.createElement('div');
+    icon.className = 'shelf-auth-icon';
+    icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M8.2 10.4V8a3.8 3.8 0 0 1 7.6 0v2.4"/><rect x="5.4" y="10.4" width="13.2" height="9.2" rx="2.4"/>' +
+      '<path d="M12 13.8v2.6"/></svg>';
+    var title = document.createElement('strong');
+    title.textContent = '需要重新授权「' + state.rootName + '」';
+    var desc = document.createElement('p');
+    desc.textContent = '系统收回了这个文件夹的读取权限。点下面的按钮会直接打开系统文件夹窗口，选中「' + state.rootName + '」即可恢复，不用重新扫描文件。';
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'shelf-btn primary';
+    button.textContent = '重新授权并打开';
+    button.addEventListener('click', reauthorizeFolder);
+    var feedback = document.createElement('span');
+    feedback.className = 'shelf-auth-status';
+    feedback.hidden = true;
+    var alt = document.createElement('button');
+    alt.type = 'button';
+    alt.className = 'shelf-auth-alt';
+    alt.textContent = '改用普通文件夹选择';
+    alt.addEventListener('click', function () {
+      state.forceInputFallback = true;
+      pickFolder();
+    });
+    wrap.appendChild(icon);
+    wrap.appendChild(title);
+    wrap.appendChild(desc);
+    wrap.appendChild(button);
+    wrap.appendChild(feedback);
+    wrap.appendChild(alt);
+    refs.rows.appendChild(wrap);
+  }
+
   function renderRows() {
     revokeThumbUrls();
     refs.rows.textContent = '';
     if (state.loading) {
       renderRowNote('正在读取文件夹…', true);
+      return;
+    }
+    if (state.needsReauth) {
+      renderAuthNote();
+      updateFooter();
       return;
     }
     if (!state.path.length) return;
@@ -1941,9 +2009,16 @@
         });
       }
       if (error && (error.name === 'SecurityError' || error.name === 'NotSupportedError' || error.name === 'NotAllowedError')) {
-        state.forceInputFallback = true;
-        setStatus('目录句柄不可用，已切换为文件夹选择；请再点一次“选择新路径”', 'warn');
-        return;
+        return window.showDirectoryPicker().then(function (handle) {
+          return mountHandle(handle, false);
+        }).catch(function (retryError) {
+          if (retryError && retryError.name === 'AbortError') {
+            setStatus('已取消选择', 'warn');
+            return;
+          }
+          state.forceInputFallback = true;
+          setStatus('目录句柄不可用，已切换为文件夹选择；请再点一次“选择新路径”', 'warn');
+        });
       }
       setStatus('打开目录失败：' + errorText(error), 'warn');
     });
@@ -1965,6 +2040,8 @@
     state.entries = [];
     state.selected = null;
     state.isDefault = !!restored;
+    state.needsReauth = false;
+    state.reauthHandle = null;
     state.pendingDefaultHandle = null;
     state.handleCache.clear();
     state.packedCache.clear();
@@ -2024,6 +2101,8 @@
     state.entries = [];
     state.selected = null;
     state.isDefault = !!restored;
+    state.needsReauth = false;
+    state.reauthHandle = null;
     state.pendingDefaultHandle = null;
     state.fileMap = fileMap;
     state.handleCache.clear();
@@ -2140,7 +2219,8 @@
     return step();
   }
 
-  function loadCurrentDirectory() {
+  function loadCurrentDirectory(attempt) {
+    attempt = attempt || 0;
     if (!state.path.length) {
       updateAll();
       return Promise.resolve();
@@ -2169,18 +2249,30 @@
         }
       }
       state.loading = false;
+      state.needsReauth = false;
+      state.reauthHandle = null;
       updateAll();
       setStatus('已挂载 ' + state.rootName + ' · ' + entries.length + ' 项', 'good');
     }).catch(function (error) {
       if (token !== state.loadToken) return;
+      if (state.source === 'handle' && !attempt) {
+        state.loading = true;
+        renderRowNote('正在重新连接文件夹…', true);
+        window.setTimeout(function () {
+          if (token === state.loadToken) loadCurrentDirectory(1);
+        }, 350);
+        return;
+      }
       state.loading = false;
       state.entries = [];
-      updateAll();
       if (state.source === 'handle') {
-        state.forceInputFallback = true;
-        setStatus('目录句柄读取失败，已切换为文件夹选择；请再点一次“选择新路径”', 'warn');
-        renderRowNote('目录句柄读取失败。请再点一次“选择新路径”，这次会改用普通文件夹选择。');
+        var permissionIssue = error && (error.name === 'NotAllowedError' || error.name === 'SecurityError');
+        state.needsReauth = true;
+        state.reauthHandle = state.path[0] ? state.path[0].handle : state.rootHandle;
+        updateAll();
+        setStatus((permissionIssue ? '需要重新授权 ' : '文件夹连接已失效，点「重新授权并打开」恢复 ') + state.rootName, 'warn');
       } else {
+        updateAll();
         setStatus('读取失败：' + errorText(error), 'warn');
         renderRowNote('读取失败。请重新选择文件夹，或再点一次“刷新”。');
       }
@@ -2222,6 +2314,10 @@
 
   function refreshFolder() {
     if (!state.path.length) return;
+    if (state.needsReauth) {
+      reauthorizeFolder();
+      return;
+    }
     state.handleCache.clear();
     state.packedCache.clear();
     loadCurrentDirectory();
@@ -2358,6 +2454,126 @@
     });
   }
 
+  function adoptHandle(next, previous, restored) {
+    if (!next) return Promise.resolve();
+    var meta = currentRecentMeta();
+    if (!meta) {
+      var targetName = previous && previous.name ? previous.name : next.name;
+      for (var i = 0; i < state.recent.length; i += 1) {
+        if (state.recent[i].source === 'handle' && state.recent[i].name === targetName) {
+          meta = state.recent[i];
+          break;
+        }
+      }
+    }
+    if (meta && (!previous || next.name === meta.name)) {
+      state.recentHandles.set(meta.id, next);
+      idbSet(RECENT_IDB_PREFIX + meta.id, next).catch(function () {});
+      storeSet(RECENT_KEY, state.recent).catch(function () {});
+    }
+    var keepsDefault = restored || state.isDefault ||
+      !!(state.defaultMeta && state.defaultMeta.source === 'handle' && state.defaultMeta.name === next.name);
+    if (keepsDefault) {
+      idbSet('default', next).catch(function () {});
+      state.defaultHandle = next;
+      state.defaultMeta = state.defaultMeta || { name: next.name, itemCount: 0 };
+      state.defaultMeta.name = next.name;
+      state.defaultMeta.source = 'handle';
+      state.defaultMeta.savedAt = Date.now();
+      storeSet(DEFAULT_KEY, state.defaultMeta).catch(function () {});
+    }
+    return mountHandle(next, keepsDefault);
+  }
+
+  function setAuthFeedback(text, tone) {
+    var note = refs.rows.querySelector('.shelf-auth-status');
+    if (note) {
+      note.textContent = text;
+      note.hidden = !text;
+      note.classList.toggle('is-warn', tone === 'warn');
+    }
+    if (text) setStatus(text, tone);
+  }
+
+  function setReauthBusy(busy) {
+    refs.reauth.disabled = busy;
+    refs.reauth.textContent = busy ? '正在打开系统窗口…' : '重新授权';
+    var button = refs.rows.querySelector('.shelf-auth-note .shelf-btn.primary');
+    if (button) {
+      button.disabled = busy;
+      button.textContent = busy ? '正在打开系统窗口…' : '重新授权并打开';
+    }
+  }
+
+  function pickReplacementHandle(previous, restored, fallbackInput) {
+    var name = previous && previous.name ? previous.name :
+      (state.defaultMeta && state.defaultMeta.name ? state.defaultMeta.name : '这个文件夹');
+    if (typeof window.showDirectoryPicker !== 'function') {
+      state.forceInputFallback = true;
+      refs.folderInput.click();
+      return Promise.resolve();
+    }
+    setReauthBusy(true);
+    setAuthFeedback('正在打开系统文件夹窗口，请选择「' + name + '」…');
+    var attempts = [];
+    var startIn = previous || null;
+    if (!startIn && state.defaultMeta && state.defaultMeta.name) {
+      startIn = WELL_KNOWN_DIRS[String(state.defaultMeta.name).toLowerCase()] || null;
+    }
+    if (startIn) attempts.push({ id: 'lucent-local-shelf', mode: 'read', startIn: startIn });
+    attempts.push({ mode: 'read' });
+    attempts.push(null);
+    var picker = null;
+    var lastError = null;
+    for (var i = 0; i < attempts.length; i += 1) {
+      try {
+        picker = attempts[i] ? window.showDirectoryPicker(attempts[i]) : window.showDirectoryPicker();
+        break;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    if (!picker) {
+      setReauthBusy(false);
+      if (fallbackInput) {
+        state.forceInputFallback = true;
+        state.restorePickPending = true;
+        setAuthFeedback('无法打开系统目录窗口，改用网页文件选择…', 'warn');
+        refs.folderInput.click();
+        return Promise.resolve();
+      }
+      setAuthFeedback('无法打开系统文件夹窗口：' + errorText(lastError), 'warn');
+      return Promise.resolve();
+    }
+    return Promise.resolve(picker).then(function (next) {
+      setReauthBusy(false);
+      return adoptHandle(next, previous, restored);
+    }).catch(function (error) {
+      setReauthBusy(false);
+      if (error && error.name === 'AbortError') {
+        setAuthFeedback('已取消选择', 'warn');
+        return;
+      }
+      if (fallbackInput) {
+        state.forceInputFallback = true;
+        state.restorePickPending = true;
+        setAuthFeedback('目录接口不可用，改用网页文件选择…', 'warn');
+        refs.folderInput.click();
+        return;
+      }
+      setAuthFeedback('重新授权失败：' + errorText(error) + '；可点“改用普通文件夹选择”', 'warn');
+    });
+  }
+
+  function reauthorizeFolder() {
+    var handle = state.reauthHandle || (state.path[0] && state.path[0].handle);
+    if (!handle) {
+      pickFolder();
+      return;
+    }
+    pickReplacementHandle(handle, state.isDefault);
+  }
+
   function restoreDefault() {
     if (state.path.length || !state.defaultMeta) return Promise.resolve();
     if (state.defaultMeta.source === 'input') {
@@ -2398,10 +2614,11 @@
       ensureHandlePermission(handle, true).then(function (granted) {
         if (granted) {
           state.pendingDefaultHandle = null;
-          mountHandle(handle, true);
-        } else {
-          setStatus('没有获得文件夹读取权限', 'warn');
+          return mountHandle(handle, true);
         }
+        return pickReplacementHandle(handle, true);
+      }).catch(function () {
+        return pickReplacementHandle(handle, true);
       });
       return;
     }
@@ -2427,9 +2644,34 @@
     refs.more.setAttribute('aria-expanded', 'false');
   }
 
+  function autoRestoreDefault() {
+    var meta = state.defaultMeta;
+    if (!meta) {
+      restoreDefault();
+      return;
+    }
+    var activated = !navigator.userActivation || navigator.userActivation.isActive;
+    if (!activated) {
+      restoreDefault();
+      return;
+    }
+    if (typeof window.showDirectoryPicker === 'function') {
+      setStatus('正在恢复默认路径「' + meta.name + '」…');
+      window.setTimeout(function () {
+        if (!state.open) return;
+        pickReplacementHandle(state.defaultHandle || null, true, true);
+      }, 60);
+      return;
+    }
+    state.restorePickPending = true;
+    setStatus('请选择默认文件夹「' + meta.name + '」…');
+    refs.folderInput.click();
+  }
+
   function openShelf() {
     if (state.open) return;
     state.open = true;
+    state.forceInputFallback = false;
     root.hidden = false;
     document.documentElement.classList.add('shelf-open');
     document.body.classList.add('shelf-open');
@@ -2438,12 +2680,15 @@
     closeMenu();
     closeFilterMenu();
     updateAll();
+    setStatus('只读模式 · 文件不会离开这台设备');
     if (state.path.length) {
       if (state.selected) renderPreview(state.selected);
+    } else if (state.defaultMeta && !state.autoRestoreAttempted) {
+      state.autoRestoreAttempted = true;
+      autoRestoreDefault();
     } else {
       restoreDefault();
     }
-    setStatus('只读模式 · 文件不会离开这台设备');
     card.focus({ preventScroll: true });
   }
 
@@ -2544,6 +2789,7 @@
     refs.pick.addEventListener('click', pickFolder);
     refs.emptyPick.addEventListener('click', pickFolder);
     refs.restore.addEventListener('click', restoreDefaultFromGesture);
+    refs.reauth.addEventListener('click', reauthorizeFolder);
     refs.defaultBtn.addEventListener('click', saveDefaultPath);
     refs.refresh.addEventListener('click', refreshFolder);
     refs.search.addEventListener('input', onSearchInput);

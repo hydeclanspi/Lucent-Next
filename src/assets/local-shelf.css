@@ -1794,6 +1794,113 @@ body.shelf-open {
   animation: shelf-pulse 0.9s ease-in-out infinite alternate;
 }
 
+/* ---------- 重新授权 ---------- */
+
+.shelf-auth-note {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 320px;
+  padding: 36px 24px;
+  text-align: center;
+}
+
+.shelf-auth-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  color: #8a6118;
+  border: 1px solid rgba(165, 123, 37, 0.2);
+  border-radius: 14px;
+  background: rgba(231, 201, 135, 0.22);
+}
+
+.shelf-auth-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.shelf-auth-note strong {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.shelf-auth-note p {
+  max-width: 360px;
+  margin: 0;
+  color: var(--ink-3);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.shelf-auth-note .shelf-btn {
+  min-height: 42px;
+  margin-top: 4px;
+  padding: 0 20px;
+  font-size: 12.5px;
+}
+
+.shelf-auth-alt {
+  margin-top: 2px;
+  padding: 2px 4px;
+  color: var(--ink-3);
+  border-radius: 6px;
+  font-size: 10px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.shelf-auth-status {
+  color: var(--ink-3);
+  font-size: 10px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.shelf-auth-status.is-warn {
+  color: #a8452f;
+}
+
+:root[data-theme="dark"] .shelf-auth-status.is-warn {
+  color: #ffb0a8;
+}
+
+.shelf-auth-alt:hover {
+  color: var(--ink);
+}
+
+.shelf-reauth {
+  min-height: 28px;
+  padding: 0 10px;
+  color: #7c5714;
+  border: 1px solid rgba(165, 123, 37, 0.38);
+  border-radius: 999px;
+  background: rgba(231, 201, 135, 0.3);
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.shelf-reauth:hover {
+  background: rgba(231, 201, 135, 0.44);
+}
+
+:root[data-theme="dark"] .shelf-auth-icon {
+  color: #e2c078;
+  border-color: rgba(231, 201, 135, 0.24);
+  background: rgba(231, 201, 135, 0.1);
+}
+
+:root[data-theme="dark"] .shelf-reauth {
+  color: #e2c078;
+  border-color: rgba(231, 201, 135, 0.3);
+  background: rgba(231, 201, 135, 0.12);
+}
+
 /* ---------- 动效 ---------- */
 
 @keyframes shelf-fade {
