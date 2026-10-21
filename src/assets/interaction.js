@@ -34,16 +34,16 @@
   const clamp = (value, lo, hi) => Math.max(lo, Math.min(hi, value));
   const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   const copy = p => ({ x: p.x, y: p.y });
-  const finiteProbability = p => Number.isFinite(p) ? clamp(p, 0, 1) : 0.5;
+  const finiteProbability = p => Number.isFinite(p) ? clamp(p, 0, 1) : 0.74;
 
-  function collisionStrength(value, fallback = 1) {
+  function collisionStrength(value, fallback = 13.7) {
     return Number.isFinite(value) ? Math.round(clamp(value, 1, COLLISION_MAX) * 10) / 10 : fallback;
   }
   function collisionSettings(value) {
     const saved = value && typeof value === 'object' ? value : {};
     return { version: 2, strength: collisionStrength(saved.strength), randomOnLaunch: saved.randomOnLaunch === true };
   }
-  function naturalPace(value) { return Number.isFinite(value) ? Math.round(clamp(value, 0.25, 16) * 100) / 100 : 1; }
+  function naturalPace(value) { return Number.isFinite(value) ? Math.round(clamp(value, 0.25, 16) * 100) / 100 : 2.41; }
   function naturalResponse(strength, neighbors) {
     const share = NATURAL.share + NATURAL.densityStep * clamp(neighbors - 2, 0, 2);
     return { share, separation: 14 + 7 * Math.max(1, collisionStrength(strength) * share) };

@@ -185,7 +185,7 @@ Every resident's appearances, time present, charges and hits, impacts and times 
 | Natural pace | 0.25–16× | Logarithmic slider, 0.25·64^t |
 | Wallpaper odds | 0–100% | Light : Dark drawing weight |
 
-Current values, custom defaults and the factory baseline are three separate layers: try anything now, keep a combination you like, and always be able to return to the factory baseline (2 Lueurs, Light 71%, strength 11.6×, pace 2.41×, randomize on launch off).
+Current values, custom defaults and the factory baseline are three separate layers: try anything now, keep a combination you like, and always be able to return to the factory baseline (6 Lueurs, Light 74%, strength 13.7×, pace 2.41×, randomize on launch off).
 
 ## 11. Verification
 

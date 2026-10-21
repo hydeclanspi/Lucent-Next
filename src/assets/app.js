@@ -86,28 +86,28 @@
     glassMaterial: { version: 1, home: "warm", sheets: "warm" },
     glassMaterialReady: false,
     wallpaperRolled: "",
-    wallpaperProbability: { version: 1, light: 0.5, source: "default", updatedAt: 0 },
+    wallpaperProbability: { version: 1, light: 0.74, source: "default", updatedAt: 0 },
     wallpaperProbabilityReady: false,
-    interactionCount: 2,
-    interactionDefaultCount: 2,
+    interactionCount: 6,
+    interactionDefaultCount: 6,
     interactionSettingsReady: false,
     interactionReadError: false,
     interactionDefaultSaving: false,
     interactionSaveStatus: "",
     defaultsBusy: false,
     defaultsStatus: "",
-    collision: { version: 2, strength: 1, randomOnLaunch: false },
-    collisionCurrent: 1,
+    collision: { version: 2, strength: 13.7, randomOnLaunch: false },
+    collisionCurrent: 13.7,
     collisionReady: false,
     collisionReadError: false,
     collisionSaveStatus: "",
-    naturalPace: 1,
+    naturalPace: 2.41,
     paceReady: false,
     paceReadError: false,
     paceSaveStatus: "",
-    collisionDefault: { strength: 1, randomOnLaunch: false },
-    paceDefault: 1,
-    probabilityDefault: 0.5,
+    collisionDefault: { strength: 13.7, randomOnLaunch: false },
+    paceDefault: 2.41,
+    probabilityDefault: 0.74,
     probabilityDefaultReady: false,
     probabilityDefaultReadError: false,
     probabilityDefaultSaveStatus: "",
@@ -2785,7 +2785,7 @@
 
   function probabilityValue(value) {
     return typeof value === "number" && isFinite(value)
-      ? Math.round(Math.max(0, Math.min(1, value)) * 100) / 100 : 0.5;
+      ? Math.round(Math.max(0, Math.min(1, value)) * 100) / 100 : 0.74;
   }
 
   function syncProbabilityPanel() {
@@ -3243,7 +3243,7 @@
 
   /* ---------- 代号：交互 ---------- */
 
-  var FACTORY_INTERACTION = Object.freeze({ count: 2, light: 0.71, strength: 11.6, randomOnLaunch: false, pace: 2.41 });
+  var FACTORY_INTERACTION = Object.freeze({ count: 6, light: 0.74, strength: 13.7, randomOnLaunch: false, pace: 2.41 });
 
   // Current values and startup defaults stay separate. These four groups share
   // the existing storage keys, so opening the manager never migrates or writes data.
@@ -3744,7 +3744,7 @@
   }
 
   function interactionCountValue(value) {
-    return typeof value === "number" && isFinite(value) ? Math.max(0, Math.min(49, Math.round(value))) : 2;
+    return typeof value === "number" && isFinite(value) ? Math.max(0, Math.min(49, Math.round(value))) : 6;
   }
 
   function paintRangeFill(range) {

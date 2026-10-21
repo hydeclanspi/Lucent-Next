@@ -188,7 +188,7 @@ Four systems. Each lists what a person sees first, then why it works; formulas a
 | Shortcuts | Add, remove, reorder; three forms; 28 colours |
 | Layout | Fold each section; focus mode |
 
-**Three layers of defaults**: try anything now; keep the combinations you like as defaults; the factory baseline (2 Lueurs, Light 71%, strength 11.6×, pace 2.41×, no launch randomization) is always one tap away. Every setting lives on the device and travels in one backup text.
+**Three layers of defaults**: try anything now; keep the combinations you like as defaults; the factory baseline (6 Lueurs, Light 74%, strength 13.7×, pace 2.41×, no launch randomization) is always one tap away. Every setting lives on the device and travels in one backup text.
 
 ## Across · Trust
 
