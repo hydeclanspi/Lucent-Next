@@ -494,11 +494,14 @@
               <span class="shelf-favorites-kicker">FAVORITES</span>
               <strong class="shelf-favorites-title" id="shelfFavoritesTitle">收藏夹</strong>
             </div>
-            <span class="shelf-favorites-count" id="shelfFavoritesCount">0</span>
             <div class="shelf-favorites-tabs" role="tablist" aria-label="收藏类型">
               <button class="is-active" data-fav-filter="all" type="button" role="tab" aria-selected="true">全部</button>
               <button data-fav-filter="file" type="button" role="tab" aria-selected="false">文件</button>
               <button data-fav-filter="directory" type="button" role="tab" aria-selected="false">文件夹</button>
+            </div>
+            <div class="shelf-favorites-sort" role="group" aria-label="排序方式">
+              <button class="is-active" data-fav-sort="time" type="button" aria-pressed="true">时间<span class="shelf-sort-arrow">↓</span></button>
+              <button data-fav-sort="type" type="button" aria-pressed="false">类型<span class="shelf-sort-arrow">↓</span></button>
             </div>
             <button class="shelf-icon-btn" id="shelfFavoritesClose" type="button" aria-label="关闭收藏夹" title="关闭">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6.5 6.5 17.5 17.5M17.5 6.5 6.5 17.5"/></svg>
@@ -507,7 +510,28 @@
           <div class="shelf-favorites-body">
             <div class="shelf-favorites-grid" id="shelfFavoritesList"></div>
           </div>
-          <footer class="shelf-favorites-foot">点击收藏卡打开 · 右上角星标移除</footer>
+          <footer class="shelf-favorites-foot">
+            <span>点击收藏卡打开 · 右上角星标移除</span>
+            <div class="shelf-favorites-pager" id="shelfFavoritesPager" hidden>
+              <button id="shelfFavPrev" type="button" aria-label="上一页">‹</button>
+              <span id="shelfFavPage">1 / 1</span>
+              <button id="shelfFavNext" type="button" aria-label="下一页">›</button>
+            </div>
+          </footer>
+        </div>
+        <div class="shelf-missing" id="shelfFavoriteMissing" hidden>
+          <div class="shelf-missing-card" role="dialog" aria-modal="true" aria-labelledby="shelfMissingTitle">
+            <span class="shelf-missing-kicker">MISSING</span>
+            <strong class="shelf-missing-title" id="shelfMissingTitle">文件已移动或重命名</strong>
+            <p class="shelf-missing-copy">收藏只记录路径，文件被移走后无法直接打开。复制原文件名，去系统里搜索即可。</p>
+            <code class="shelf-missing-name" id="shelfMissingName"></code>
+            <p class="shelf-missing-path" id="shelfMissingPath"></p>
+            <div class="shelf-missing-actions">
+              <button class="shelf-btn primary" id="shelfMissingCopy" type="button">复制原文件名</button>
+              <button class="shelf-btn" id="shelfMissingRemove" type="button">移除收藏</button>
+              <button class="shelf-btn" id="shelfMissingClose" type="button">关闭</button>
+            </div>
+          </div>
         </div>
       </div>
     </section>

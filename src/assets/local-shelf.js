@@ -16,9 +16,18 @@
     favoritesBtn: $('shelfFavorites'),
     favoritesPanel: $('shelfFavoritesPanel'),
     favoritesList: $('shelfFavoritesList'),
-    favoritesCount: $('shelfFavoritesCount'),
     favoritesClose: $('shelfFavoritesClose'),
     favoritesBack: $('shelfFavoritesBack'),
+    favoritesPager: $('shelfFavoritesPager'),
+    favPrev: $('shelfFavPrev'),
+    favPage: $('shelfFavPage'),
+    favNext: $('shelfFavNext'),
+    missing: $('shelfFavoriteMissing'),
+    missingName: $('shelfMissingName'),
+    missingPath: $('shelfMissingPath'),
+    missingCopy: $('shelfMissingCopy'),
+    missingRemove: $('shelfMissingRemove'),
+    missingClose: $('shelfMissingClose'),
     menu: $('shelfMenu'),
     menuHidden: $('shelfMenuHidden'),
     menuFiles: $('shelfMenuFiles'),
@@ -91,6 +100,10 @@
     previewExpanded: false,
     favorites: [],
     favoritesFilter: 'all',
+    favoritesSort: 'time',
+    favoritesSortDir: 'desc',
+    favoritesPage: 1,
+    missingFav: null,
     currentHandle: null,
     currentNode: null,
     path: [],
@@ -300,6 +313,18 @@
     if (['txt', 'log', 'csv'].indexOf(ext) >= 0) return 'text';
     if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz'].indexOf(ext) >= 0) return 'archive';
     return 'file';
+  }
+
+  var SORT_KIND_ORDER = ['folder', 'md', 'html', 'pdf', 'image', 'audio', 'video', 'archive', 'code', 'text', 'file'];
+
+  function sortKindOf(fav) {
+    if (fav.kind === 'directory') return 'folder';
+    return kindOf({ kind: 'file', name: fav.name, ext: extensionOf(fav.name) });
+  }
+
+  function sortKindRank(fav) {
+    var index = SORT_KIND_ORDER.indexOf(sortKindOf(fav));
+    return index < 0 ? SORT_KIND_ORDER.length : index;
   }
 
   function filterKind(entry) {
@@ -812,16 +837,50 @@
   function renderFavoritesPanel() {
     if (!refs.favoritesList) return;
     refs.favoritesList.textContent = '';
-    refs.favoritesCount.textContent = String(state.favorites.length);
     var filter = state.favoritesFilter || 'all';
     Array.prototype.forEach.call(refs.favoritesPanel.querySelectorAll('[data-fav-filter]'), function (button) {
       var active = button.getAttribute('data-fav-filter') === filter;
       button.classList.toggle('is-active', active);
       button.setAttribute('aria-selected', active ? 'true' : 'false');
     });
-    var list = state.favorites.filter(function (fav) {
+    var filtered = state.favorites.filter(function (fav) {
       return filter === 'all' || fav.kind === filter;
     });
+    var sort = state.favoritesSort || 'time';
+    var dir = state.favoritesSortDir === 'asc' ? 'asc' : 'desc';
+    Array.prototype.forEach.call(refs.favoritesPanel.querySelectorAll('[data-fav-sort]'), function (button) {
+      var active = button.getAttribute('data-fav-sort') === sort;
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-pressed', active ? 'true' : 'false');
+      var arrow = button.querySelector('.shelf-sort-arrow');
+      if (arrow) arrow.textContent = active && dir === 'asc' ? '↑' : '↓';
+    });
+    var ordered = filtered.slice().sort(function (a, b) {
+      if (sort === 'type') {
+        var rankA = sortKindRank(a);
+        var rankB = sortKindRank(b);
+        if (rankA !== rankB) return dir === 'asc' ? rankA - rankB : rankB - rankA;
+      }
+      var timeA = a.addedAt || 0;
+      var timeB = b.addedAt || 0;
+      return dir === 'desc' ? timeB - timeA : timeA - timeB;
+    });
+    var width = refs.favoritesList.clientWidth || refs.favoritesPanel.clientWidth || 1000;
+    var gap = 36;
+    var minWidth = 140;
+    var cols = Math.max(2, Math.min(6, Math.floor((width + gap) / (minWidth + gap))));
+    refs.favoritesList.style.setProperty('--fav-cols', String(cols));
+    var pageSize = cols * 2;
+    var totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+    var page = Math.min(Math.max(1, state.favoritesPage || 1), totalPages);
+    state.favoritesPage = page;
+    var list = ordered.slice((page - 1) * pageSize, page * pageSize);
+    if (refs.favoritesPager) {
+      refs.favoritesPager.hidden = false;
+      if (refs.favPage) refs.favPage.textContent = page + ' / ' + totalPages;
+      if (refs.favPrev) refs.favPrev.disabled = page <= 1;
+      if (refs.favNext) refs.favNext.disabled = page >= totalPages;
+    }
     if (!list.length) {
       var empty = document.createElement('div');
       empty.className = 'shelf-favorites-empty';
@@ -831,16 +890,17 @@
       refs.favoritesList.appendChild(empty);
       return;
     }
-    list.forEach(function (fav) {
+    var buildTile = function (fav) {
       var tile = document.createElement('button');
       tile.type = 'button';
       tile.className = 'shelf-fav-book';
       tile.title = fav.root + ' / ' + fav.path;
+      var kind = fav.kind === 'directory' ? 'folder' : kindOf({ kind: 'file', name: fav.name, ext: extensionOf(fav.name) });
       var cover = document.createElement('span');
-      cover.className = 'shelf-fav-cover';
+      cover.className = 'shelf-fav-cover kind-' + kind;
       var icon = document.createElement('span');
       icon.className = 'shelf-fav-icon';
-      icon.innerHTML = iconSvg(fav.kind === 'directory' ? 'folder' : kindOf({ kind: 'file', name: fav.name, ext: extensionOf(fav.name) }));
+      icon.innerHTML = iconSvg(kind);
       var type = document.createElement('span');
       type.className = 'shelf-fav-cover-type';
       type.textContent = fav.kind === 'directory' ? 'FOLDER' : ((extensionOf(fav.name) || 'FILE').toUpperCase());
@@ -865,29 +925,63 @@
       cover.appendChild(icon);
       cover.appendChild(type);
       cover.appendChild(remove);
+      var info = document.createElement('span');
+      info.className = 'shelf-fav-info';
       var title = document.createElement('span');
       title.className = 'shelf-fav-title';
       title.textContent = fav.name;
+      var time = document.createElement('span');
+      time.className = 'shelf-fav-time';
+      time.textContent = fav.addedAt ? '收藏于 ' + formatDate(fav.addedAt) : '收藏时间未知';
       var path = document.createElement('span');
       path.className = 'shelf-fav-path';
       path.textContent = fav.root + ' / ' + fav.path;
+      info.appendChild(title);
+      info.appendChild(time);
+      info.appendChild(path);
       tile.appendChild(cover);
-      tile.appendChild(title);
-      tile.appendChild(path);
+      tile.appendChild(info);
       tile.addEventListener('click', function () { openFavorite(fav); });
-      refs.favoritesList.appendChild(tile);
-    });
+      return tile;
+    };
+    for (var offset = 0; offset < list.length; offset += cols) {
+      var row = document.createElement('div');
+      row.className = 'shelf-favorites-row';
+      var plank = document.createElement('span');
+      plank.className = 'shelf-plank';
+      plank.setAttribute('aria-hidden', 'true');
+      row.appendChild(plank);
+      list.slice(offset, offset + cols).forEach(function (fav) {
+        row.appendChild(buildTile(fav));
+      });
+      refs.favoritesList.appendChild(row);
+    }
   }
 
   function openFavoritesPanel() {
-    renderFavoritesPanel();
+    state.favoritesPage = 1;
     refs.favoritesPanel.hidden = false;
+    renderFavoritesPanel();
     window.setTimeout(function () { if (refs.favoritesClose) refs.favoritesClose.focus(); }, 30);
   }
 
   function closeFavoritesPanel() {
+    if (!refs.missing.hidden) closeFavoriteMissing();
     refs.favoritesPanel.hidden = true;
     if (refs.favoritesBtn) refs.favoritesBtn.focus({ preventScroll: true });
+  }
+
+  function showFavoriteMissing(fav) {
+    state.missingFav = fav;
+    refs.missingName.textContent = fav.name;
+    refs.missingPath.textContent = fav.root + ' / ' + fav.path;
+    refs.missing.hidden = false;
+    window.setTimeout(function () { refs.missingCopy.focus({ preventScroll: true }); }, 30);
+  }
+
+  function closeFavoriteMissing() {
+    state.missingFav = null;
+    refs.missing.hidden = true;
   }
 
   function openFavorite(fav) {
@@ -899,13 +993,14 @@
     var segments = String(fav.path || fav.name).split('/').filter(Boolean);
     if (!segments.length) return;
     var parents = fav.kind === 'directory' ? segments : segments.slice(0, -1);
-    var fail = function () { setStatus('收藏的路径已不存在：' + fav.root + ' / ' + fav.path, 'warn'); };
+    var fail = function () { showFavoriteMissing(fav); };
     var finish = function () {
       if (fav.kind === 'file') {
         var target = state.entries.filter(function (entry) {
           return entry.name === fav.name && entry.kind === 'file';
         })[0];
-        if (target) selectEntry(target);
+        if (!target) { showFavoriteMissing(fav); return; }
+        selectEntry(target);
       }
       closeFavoritesPanel();
     };
@@ -1639,6 +1734,25 @@
     }
   }
 
+  var previewToastTimer = 0;
+
+  function showPreviewToast(text) {
+    var body = refs.previewBody;
+    if (!body) return;
+    var node = body.querySelector('.shelf-preview-toast');
+    if (!node) {
+      node = document.createElement('div');
+      node.className = 'shelf-preview-toast';
+      body.appendChild(node);
+    }
+    node.textContent = text;
+    node.classList.add('is-visible');
+    window.clearTimeout(previewToastTimer);
+    previewToastTimer = window.setTimeout(function () {
+      node.classList.remove('is-visible');
+    }, 1800);
+  }
+
   function toggleMarkdownImageLink(el) {
     var src = el.getAttribute('data-md-src') || '';
     if (!src) return;
@@ -1654,6 +1768,7 @@
     }
     copyTextToClipboard(src);
     setStatus('图片链接已复制到剪贴板', 'good');
+    showPreviewToast('图片链接已复制');
   }
 
   function ensurePreviewShadow() {
@@ -3378,6 +3493,12 @@
   function onGlobalKeydown(event) {
     if (!state.open) return;
     if (event.key === 'Escape') {
+      if (!refs.missing.hidden) {
+        closeFavoriteMissing();
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
       if (!refs.favoritesPanel.hidden) {
         closeFavoritesPanel();
         event.preventDefault();
@@ -3469,8 +3590,48 @@
     Array.prototype.forEach.call(refs.favoritesPanel.querySelectorAll('[data-fav-filter]'), function (button) {
       button.addEventListener('click', function () {
         state.favoritesFilter = button.getAttribute('data-fav-filter') || 'all';
+        state.favoritesPage = 1;
         renderFavoritesPanel();
       });
+    });
+    Array.prototype.forEach.call(refs.favoritesPanel.querySelectorAll('[data-fav-sort]'), function (button) {
+      button.addEventListener('click', function () {
+        var kind = button.getAttribute('data-fav-sort') || 'time';
+        if (state.favoritesSort === kind) {
+          state.favoritesSortDir = state.favoritesSortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          state.favoritesSort = kind;
+          state.favoritesSortDir = kind === 'time' ? 'desc' : 'asc';
+        }
+        state.favoritesPage = 1;
+        renderFavoritesPanel();
+      });
+    });
+    refs.favPrev.addEventListener('click', function () {
+      if (state.favoritesPage <= 1) return;
+      state.favoritesPage -= 1;
+      renderFavoritesPanel();
+    });
+    refs.favNext.addEventListener('click', function () {
+      state.favoritesPage += 1;
+      renderFavoritesPanel();
+    });
+    refs.missingClose.addEventListener('click', closeFavoriteMissing);
+    refs.missing.addEventListener('click', function (event) {
+      if (event.target === refs.missing) closeFavoriteMissing();
+    });
+    refs.missingCopy.addEventListener('click', function () {
+      if (!state.missingFav) return;
+      copyTextToClipboard(state.missingFav.name);
+      setStatus('原文件名已复制 · ' + state.missingFav.name, 'good');
+      refs.missingCopy.textContent = '已复制';
+      window.setTimeout(function () { refs.missingCopy.textContent = '复制原文件名'; }, 1500);
+    });
+    refs.missingRemove.addEventListener('click', function () {
+      var fav = state.missingFav;
+      if (!fav) return;
+      closeFavoriteMissing();
+      removeFavorite(fav);
     });
     refs.favoritesPanel.addEventListener('click', function (event) {
       if (event.target === refs.favoritesPanel) closeFavoritesPanel();
@@ -3538,6 +3699,12 @@
 
     card.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') {
+        if (!refs.missing.hidden) {
+          closeFavoriteMissing();
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
         if (!refs.favoritesPanel.hidden) {
           closeFavoritesPanel();
           event.preventDefault();
@@ -3586,6 +3753,16 @@
       if (!refs.menu.hidden && !refs.menu.contains(event.target) && !refs.more.contains(event.target)) closeMenu();
       if (!refs.filterMenu.hidden && !refs.filterMenu.contains(event.target) && !refs.filter.contains(event.target)) closeFilterMenu();
     }, true);
+
+    var favoritesResizeTimer = 0;
+    window.addEventListener('resize', function () {
+      if (refs.favoritesPanel.hidden) return;
+      if (favoritesResizeTimer) window.clearTimeout(favoritesResizeTimer);
+      favoritesResizeTimer = window.setTimeout(function () {
+        favoritesResizeTimer = 0;
+        renderFavoritesPanel();
+      }, 160);
+    });
 
     var recentResizeTimer = 0;
     window.addEventListener('resize', function () {
