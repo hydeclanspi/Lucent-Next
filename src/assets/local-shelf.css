@@ -1936,12 +1936,8 @@ body.shelf-open {
   z-index: 22;
   display: block;
   padding: 22px 24px 14px;
-  border-radius: 30px;
-  background:
-    radial-gradient(900px 420px at 78% 108%, rgba(70, 120, 160, 0.06), transparent 65%),
-    linear-gradient(156deg, rgba(253, 254, 255, 0.95), rgba(238, 243, 249, 0.92));
-  backdrop-filter: blur(30px) saturate(180%);
-  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border-radius: 0;
+  background: #fbfcfe;
   animation: shelf-fade 0.14s ease;
 }
 
@@ -2349,9 +2345,7 @@ body.shelf-open {
 }
 
 :root[data-theme="dark"] .shelf-favorites {
-  background:
-    radial-gradient(900px 420px at 78% 108%, rgba(70, 130, 180, 0.1), transparent 65%),
-    linear-gradient(156deg, rgba(24, 28, 38, 0.97), rgba(14, 18, 27, 0.95));
+  background: #141821;
 }
 
 :root[data-theme="dark"] .shelf-favorites-head { border-bottom-color: rgba(255, 255, 255, 0.08); }
