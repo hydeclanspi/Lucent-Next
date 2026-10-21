@@ -101,7 +101,6 @@
     isDefault: false,
     defaultMeta: null,
     defaultHandle: null,
-    autoRestoreAttempted: false,
     pendingDefaultHandle: null,
     restorePickPending: false,
     forceInputFallback: false,
@@ -882,10 +881,6 @@
         refs.restore.textContent = meta.source === 'handle' ? '恢复默认路径' : '重新选择默认路径';
         updateSummary();
         updateToolbar();
-        if (state.open && !state.autoRestoreAttempted) {
-          state.autoRestoreAttempted = true;
-          autoRestoreDefault();
-        }
       }
     });
   }
@@ -2025,51 +2020,43 @@
     });
   }
 
+  function defaultStartIn() {
+    if (state.defaultHandle) return state.defaultHandle;
+    var meta = state.defaultMeta;
+    if (!meta || !meta.name) return null;
+    return WELL_KNOWN_DIRS[String(meta.name).toLowerCase()] || null;
+  }
+
   function pickFolder() {
     if (state.forceInputFallback || typeof window.showDirectoryPicker !== 'function') {
-      setStatus('正在打开文件夹选择…');
+      setStatus('正在打开文件管理器…');
       refs.folderInput.click();
       return;
     }
     setStatus('正在打开目录选择…');
+    var options = { mode: 'read' };
+    var startIn = defaultStartIn();
+    if (startIn) {
+      options.id = 'lucent-local-shelf';
+      options.startIn = startIn;
+    }
     var picker;
     try {
-      picker = window.showDirectoryPicker({ mode: 'read' });
+      picker = window.showDirectoryPicker(options);
     } catch (error) {
       picker = Promise.reject(error);
     }
     picker.then(function (handle) {
-      return mountHandle(handle, false);
+      var restored = state.restorePickPending;
+      state.restorePickPending = false;
+      return mountHandle(handle, restored);
     }).catch(function (error) {
+      state.restorePickPending = false;
       if (error && error.name === 'AbortError') {
         setStatus('已取消选择', 'warn');
         return;
       }
-      if (error && error.name === 'TypeError') {
-        return window.showDirectoryPicker().then(function (handle) {
-          return mountHandle(handle, false);
-        }).catch(function (retryError) {
-          if (retryError && retryError.name === 'AbortError') {
-            setStatus('已取消选择', 'warn');
-            return;
-          }
-          state.forceInputFallback = true;
-          setStatus('目录句柄不可用，已切换为文件夹选择；请再点一次“选择新路径”', 'warn');
-        });
-      }
-      if (error && (error.name === 'SecurityError' || error.name === 'NotSupportedError' || error.name === 'NotAllowedError')) {
-        return window.showDirectoryPicker().then(function (handle) {
-          return mountHandle(handle, false);
-        }).catch(function (retryError) {
-          if (retryError && retryError.name === 'AbortError') {
-            setStatus('已取消选择', 'warn');
-            return;
-          }
-          state.forceInputFallback = true;
-          setStatus('目录句柄不可用，已切换为文件夹选择；请再点一次“选择新路径”', 'warn');
-        });
-      }
-      setStatus('打开目录失败：' + errorText(error), 'warn');
+      setStatus('系统目录接口不可用：' + errorText(error) + '；文件可用“打开文件”直接选择', 'warn');
     });
   }
 
@@ -2587,7 +2574,8 @@
     var name = previous && previous.name ? previous.name :
       (state.defaultMeta && state.defaultMeta.name ? state.defaultMeta.name : '这个文件夹');
     if (typeof window.showDirectoryPicker !== 'function') {
-      state.forceInputFallback = true;
+      state.restorePickPending = !!restored;
+      setAuthFeedback('正在打开文件管理器，请选择「' + name + '」…');
       refs.folderInput.click();
       return Promise.resolve();
     }
@@ -2722,30 +2710,6 @@
     refs.more.setAttribute('aria-expanded', 'false');
   }
 
-  function autoRestoreDefault() {
-    var meta = state.defaultMeta;
-    if (!meta) {
-      restoreDefault();
-      return;
-    }
-    var activated = !navigator.userActivation || navigator.userActivation.isActive;
-    if (!activated) {
-      restoreDefault();
-      return;
-    }
-    if (typeof window.showDirectoryPicker === 'function') {
-      setStatus('正在恢复默认路径「' + meta.name + '」…');
-      window.setTimeout(function () {
-        if (!state.open) return;
-        pickReplacementHandle(state.defaultHandle || null, true, true);
-      }, 60);
-      return;
-    }
-    state.restorePickPending = true;
-    setStatus('请选择默认文件夹「' + meta.name + '」…');
-    refs.folderInput.click();
-  }
-
   function openShelf() {
     if (state.open) return;
     state.open = true;
@@ -2759,14 +2723,7 @@
     closeFilterMenu();
     updateAll();
     setStatus('只读模式 · 文件不会离开这台设备');
-    if (state.path.length) {
-      if (state.selected) renderPreview(state.selected);
-    } else if (state.defaultMeta && !state.autoRestoreAttempted) {
-      state.autoRestoreAttempted = true;
-      autoRestoreDefault();
-    } else {
-      restoreDefault();
-    }
+    if (state.path.length && state.selected) renderPreview(state.selected);
     card.focus({ preventScroll: true });
   }
 
