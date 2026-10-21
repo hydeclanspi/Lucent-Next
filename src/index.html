@@ -260,7 +260,7 @@
     <section class="shelf-card" id="shelfCard" role="dialog" aria-modal="true" aria-labelledby="shelfTitle" tabindex="-1">
       <header class="shelf-head">
         <div class="shelf-heading">
-          <span class="shelf-eyebrow">LOCAL SHELF · 5.2</span>
+          <span class="shelf-eyebrow">LOCAL SHELF · 5.3.2</span>
           <h2 class="shelf-title" id="shelfTitle">本地书架</h2>
           <p class="shelf-sub" id="shelfSub">只读取你主动选择的文件夹；不上传，不联网。</p>
         </div>
@@ -304,6 +304,30 @@
           </button>
         </div>
         <div class="shelf-toolbar-group shelf-toolbar-tools">
+          <div class="shelf-filter-wrap">
+            <button class="shelf-filter-btn" id="shelfFilter" type="button" aria-haspopup="menu" aria-expanded="false" title="按文件类型筛选">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4.2 5.2h15.6l-6.1 7.2v5.2l-3.4 1.8v-7z"/>
+              </svg>
+              <span id="shelfFilterLabel">全部类型</span>
+              <svg class="shelf-filter-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M7 9.5 12 14.5 17 9.5"/>
+              </svg>
+            </button>
+            <div class="shelf-filter-menu" id="shelfFilterMenu" hidden role="menu" aria-label="按文件类型筛选">
+              <div class="shelf-filter-title">仅显示</div>
+              <button class="shelf-filter-option" data-filter="all" type="button" role="menuitemradio" aria-checked="true">全部类型</button>
+              <button class="shelf-filter-option" data-filter="html" type="button" role="menuitemradio" aria-checked="false">仅 HTML</button>
+              <button class="shelf-filter-option" data-filter="pdf" type="button" role="menuitemradio" aria-checked="false">仅 PDF</button>
+              <button class="shelf-filter-option" data-filter="md" type="button" role="menuitemradio" aria-checked="false">仅 Markdown</button>
+              <button class="shelf-filter-option" data-filter="image" type="button" role="menuitemradio" aria-checked="false">仅图片</button>
+              <button class="shelf-filter-option" data-filter="text" type="button" role="menuitemradio" aria-checked="false">仅文本/代码</button>
+              <button class="shelf-filter-option" data-filter="archive" type="button" role="menuitemradio" aria-checked="false">仅压缩包</button>
+              <button class="shelf-filter-option" data-filter="media" type="button" role="menuitemradio" aria-checked="false">仅音视频</button>
+              <div class="shelf-filter-sep" aria-hidden="true"></div>
+              <button class="shelf-filter-option shelf-filter-check" id="shelfKeepFolders" type="button" role="menuitemcheckbox" aria-checked="true">保留文件夹</button>
+            </div>
+          </div>
           <label class="shelf-search" for="shelfSearch">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
               <circle cx="11" cy="11" r="5.8"/>

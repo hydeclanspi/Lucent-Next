@@ -57,6 +57,7 @@ body.shelf-open {
   left: 50%;
   top: 50%;
   z-index: 1;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   width: min(94vw, 1120px);
@@ -295,6 +296,136 @@ body.shelf-open {
 
 .shelf-btn.is-default:disabled {
   opacity: 0.82;
+}
+
+.shelf-filter-wrap {
+  position: relative;
+  flex: none;
+}
+
+.shelf-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 11px;
+  color: var(--ink-2);
+  border: 1px solid var(--glass-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.46);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  transition: color 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+}
+
+.shelf-filter-btn > svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+
+.shelf-filter-btn .shelf-filter-chevron {
+  width: 10px;
+  height: 10px;
+  opacity: 0.65;
+}
+
+.shelf-filter-btn:hover {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.44);
+}
+
+.shelf-filter-btn.is-active {
+  color: #7c5714;
+  border-color: rgba(165, 123, 37, 0.3);
+  background: rgba(231, 201, 135, 0.24);
+}
+
+.shelf-filter-menu {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 7;
+  min-width: 184px;
+  padding: 6px;
+  border: 1px solid var(--glass-line);
+  border-radius: 14px;
+  /* 不新增 backdrop blur：筛选菜单只在打开时出现，用高不透明度保持可读。 */
+  background: linear-gradient(156deg, rgba(255, 255, 255, 0.985), rgba(255, 255, 255, 0.95));
+  box-shadow: var(--glass-deep);
+  animation: shelf-pop 0.16s ease;
+}
+
+.shelf-filter-title {
+  padding: 5px 10px 4px;
+  color: var(--ink-3);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.shelf-filter-option {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 33px;
+  padding: 0 10px;
+  color: var(--ink);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.shelf-filter-option:hover {
+  background: rgba(255, 255, 255, 0.44);
+}
+
+.shelf-filter-option[aria-checked="true"]::after {
+  content: "✓";
+  margin-left: auto;
+  color: #8a6118;
+  font-weight: 700;
+}
+
+.shelf-filter-sep {
+  height: 1px;
+  margin: 5px 6px;
+  background: var(--glass-line);
+}
+
+:root[data-theme="dark"] .shelf-filter-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme="dark"] .shelf-filter-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .shelf-filter-btn.is-active {
+  color: #e2c078;
+  border-color: rgba(231, 201, 135, 0.24);
+  background: rgba(231, 201, 135, 0.1);
+}
+
+:root[data-theme="dark"] .shelf-filter-menu {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: linear-gradient(156deg, rgba(22, 25, 38, 0.985), rgba(14, 17, 27, 0.95));
+}
+
+:root[data-theme="dark"] .shelf-filter-option:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+:root[data-theme="dark"] .shelf-filter-option[aria-checked="true"]::after {
+  color: #e2c078;
 }
 
 .shelf-search {
@@ -1064,6 +1195,7 @@ body.shelf-open {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+  isolation: isolate;
   border: 1px solid var(--glass-line);
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.2);
@@ -1168,6 +1300,8 @@ body.shelf-open {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  contain: paint;
+  isolation: isolate;
 }
 
 .shelf-preview-empty {
@@ -1213,9 +1347,15 @@ body.shelf-open {
 }
 
 .shelf-preview-host {
+  position: relative;
+  z-index: 0;
   display: block;
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  contain: paint;
+  transform: translateZ(0);
+  isolation: isolate;
 }
 
 :root[data-theme="dark"] .shelf-preview-glyph {
@@ -1395,6 +1535,11 @@ body.shelf-open {
     border-radius: 24px;
   }
 
+  .shelf-filter-menu {
+    right: auto;
+    left: 0;
+  }
+
   .shelf-main {
     grid-template-columns: 1fr;
     grid-template-rows: minmax(0, 1.2fr) minmax(180px, 0.8fr);
@@ -1501,9 +1646,14 @@ body.shelf-open {
 @media (pointer: coarse) {
   .shelf-btn,
   .shelf-search,
+  .shelf-filter-btn,
   .shelf-mini-btn,
   .shelf-view-btn {
     min-height: 44px;
+  }
+
+  .shelf-filter-option {
+    min-height: 40px;
   }
 
   .shelf-icon-btn,
