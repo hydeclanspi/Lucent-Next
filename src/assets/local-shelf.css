@@ -13,6 +13,10 @@
   -webkit-backdrop-filter: none;
 }
 
+.shelf-launcher[aria-busy="true"] {
+  opacity: 0.55;
+}
+
 .shelf-launcher[aria-expanded="true"] {
   color: #fff;
   border-color: rgba(231, 201, 135, 0.52);

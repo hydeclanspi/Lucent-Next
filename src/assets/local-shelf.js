@@ -51,7 +51,7 @@
     folderInput: $('shelfFolderInput')
   };
 
-  var previewShadow = refs.previewHost.attachShadow({ mode: 'open' });
+  var previewShadow = null;
 
   var state = {
     open: false,
@@ -761,8 +761,29 @@
     refs.previewEmpty.hidden = false;
   }
 
+  function ensurePreviewShadow() {
+    if (previewShadow) return previewShadow;
+    previewShadow = refs.previewHost.attachShadow({ mode: 'open' });
+    previewShadow.addEventListener('click', function (event) {
+      var path = event.composedPath ? event.composedPath() : [];
+      for (var i = 0; i < path.length; i += 1) {
+        var node = path[i];
+        if (node && node.tagName === 'A') {
+          event.preventDefault();
+          setStatus('预览中的链接不会跳转；请用“在新标签页打开”查看完整页面', 'warn');
+          return;
+        }
+      }
+    });
+    previewShadow.addEventListener('submit', function (event) {
+      event.preventDefault();
+      setStatus('预览中的表单不会提交', 'warn');
+    });
+    return previewShadow;
+  }
+
   function previewFrame(inner, extraCss) {
-    previewShadow.innerHTML = '<style>' + PREVIEW_CSS + (extraCss || '') + '</style>' + inner;
+    ensurePreviewShadow().innerHTML = '<style>' + PREVIEW_CSS + (extraCss || '') + '</style>' + inner;
   }
 
   function previewLoading(name) {
@@ -828,7 +849,7 @@
         '<button type="button" data-action="enter">进入文件夹</button>' +
       '</div>'
     );
-    var button = previewShadow.querySelector('[data-action="enter"]');
+    var button = ensurePreviewShadow().querySelector('[data-action="enter"]');
     if (button) button.addEventListener('click', function () { enterEntry(entry); });
     addPreviewAction('进入', true, function () { enterEntry(entry); });
   }
@@ -889,10 +910,10 @@
       '<div class="stage"><img src="' + url + '" alt=""></div>' +
       '<div class="image-meta">' + escapeHtml(entry.name) + ' · ' + formatBytes(entry.size) + '</div>'
     );
-    var image = previewShadow.querySelector('img');
+    var image = ensurePreviewShadow().querySelector('img');
     if (image) {
       image.addEventListener('load', function () {
-        var meta = previewShadow.querySelector('.image-meta');
+        var meta = ensurePreviewShadow().querySelector('.image-meta');
         if (meta) meta.textContent = entry.name + ' · ' + image.naturalWidth + ' × ' + image.naturalHeight + ' · ' + formatBytes(entry.size);
       });
     }
@@ -1914,22 +1935,6 @@
     var launcher = $('btnShelf');
     if (launcher) launcher.addEventListener('click', openShelf);
 
-    previewShadow.addEventListener('click', function (event) {
-      var path = event.composedPath ? event.composedPath() : [];
-      for (var i = 0; i < path.length; i += 1) {
-        var node = path[i];
-        if (node && node.tagName === 'A') {
-          event.preventDefault();
-          setStatus('预览中的链接不会跳转；请用“在新标签页打开”查看完整页面', 'warn');
-          return;
-        }
-      }
-    });
-    previewShadow.addEventListener('submit', function (event) {
-      event.preventDefault();
-      setStatus('预览中的表单不会提交', 'warn');
-    });
-
     refs.close.addEventListener('click', closeShelf);
     refs.mask.addEventListener('click', closeShelf);
     refs.more.addEventListener('click', function (event) {
@@ -1990,7 +1995,15 @@
   updateAll();
   loadDefaultMeta();
 
+  var homeReadyHandled = false;
   window.addEventListener('aira-home-ready', function () {
+    if (homeReadyHandled) return;
+    homeReadyHandled = true;
     loadDefaultMeta();
   });
+
+  window.AiraLocalShelf = {
+    open: openShelf,
+    close: closeShelf
+  };
 })();
