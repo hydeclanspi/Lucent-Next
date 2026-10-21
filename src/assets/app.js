@@ -2211,6 +2211,123 @@
     });
   }
 
+
+  /* ---------- 导入备份：读取、校验、解析 ---------- */
+
+  function importFailure(code, message) {
+    var error = new Error(message);
+    error.code = code;
+    return error;
+  }
+
+  function backupPayloadCheck(payload) {
+    if (!payload || typeof payload !== "object") throw importFailure("PAYLOAD", "备份内容不是有效的 JSON 对象");
+    if (payload.format !== "lucent-next" || payload.kind !== "backup") throw importFailure("PAYLOAD", "这不是灵感台的备份文本");
+    if (!payload.data || !payload.data.keys || typeof payload.data.keys !== "object") throw importFailure("PAYLOAD", "备份里没有可读的数据段");
+    return payload;
+  }
+
+  function parseBackupJson(text) {
+    var payload;
+    try {
+      payload = JSON.parse(text);
+    } catch (error) {
+      throw importFailure("JSON", "JSON 解析失败，可能被编辑器改成了弯引号");
+    }
+    return backupPayloadCheck(payload);
+  }
+
+  function decodeBackupLine(line) {
+    var clean = String(line || "").replace(/\s+/g, "");
+    var parts = clean.split(":");
+    if (parts.length !== 5 || parts[0] !== EXPORT_PREFIX) throw importFailure("FORMAT", "格式头不对，应该以 " + EXPORT_PREFIX + " 开头");
+    var mode = parts[1];
+    if (mode !== "D" && mode !== "R") throw importFailure("FORMAT", "压缩标记不认识：" + mode);
+    if (!/^\d+$/.test(parts[2])) throw importFailure("FORMAT", "长度字段不是数字");
+    if (Number(parts[2]) !== parts[3].length) throw importFailure("LENGTH", "长度对不上，粘贴时可能被截断了");
+    if (crc32(parts[3]) !== parts[4]) throw importFailure("CHECKSUM", "校验对不上，文本可能被改动或截断");
+    var bytes = bytesFromBase64Url(parts[3]);
+    var read = mode === "D"
+      ? inflateRaw(bytes).then(function (output) {
+          if (!output) throw importFailure("INFLATE", "这台设备没有解压接口，读不了压缩过的备份");
+          return utf8Text(output);
+        })
+      : Promise.resolve(utf8Text(bytes));
+    return read.then(function (json) {
+      return { payload: parseBackupJson(json), chars: clean.length, segments: 1 };
+    });
+  }
+
+  function parseBackupText(raw) {
+    try {
+      var text = String(raw || "").replace(/\r/g, "").trim();
+      if (!text) throw importFailure("EMPTY", "还没有粘贴备份文本");
+      if (text.charAt(0) === "{") {
+        return Promise.resolve({ payload: parseBackupJson(text), chars: text.length, segments: 0 });
+      }
+      var marker = EXPORT_PREFIX + ":P:";
+      if (text.indexOf(marker) >= 0) {
+        var regex = /LUCENT1:P:(\d+)\/(\d+):([0-9a-f]{8}):/g;
+        var match, spans = [];
+        while ((match = regex.exec(text))) {
+          spans.push({ index: Number(match[1]), total: Number(match[2]), digest: match[3], head: match.index, start: match.index + match[0].length });
+        }
+        if (!spans.length) throw importFailure("SEGMENT", "分段头没有读出来");
+        spans.forEach(function (span, i) {
+          var end = i + 1 < spans.length ? spans[i + 1].head : text.length;
+          span.slice = text.slice(span.start, end).replace(/\s+/g, "");
+        });
+        var total = spans[0].total, digest = spans[0].digest;
+        if (total !== spans.length) throw importFailure("SEGMENT", "只有 " + spans.length + " 段，备份声明有 " + total + " 段");
+        spans.sort(function (a, b) { return a.index - b.index; });
+        var assembled = "";
+        spans.forEach(function (span, i) {
+          if (span.index !== i + 1 || span.total !== total || span.digest !== digest) {
+            throw importFailure("SEGMENT", "段号或校验不一致，检查是不是混了两次备份");
+          }
+          assembled += span.slice;
+        });
+        if (crc32(assembled) !== digest) throw importFailure("CHECKSUM", "分段拼起来后校验对不上，可能少了一段");
+        return decodeBackupLine(assembled).then(function (result) {
+          result.segments = total;
+          result.chars = text.length;
+          return result;
+        });
+      }
+      return decodeBackupLine(text);
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+
+  function backupSummaryRows(payload) {
+    var keys = payload.data.keys || {};
+    var favorites = keys["localShelf.favorites.v1"];
+    var logs = Array.isArray(keys.logs) ? keys.logs.length : 0;
+    var signs = Array.isArray(keys.signs) ? keys.signs.length : 0;
+    var field = payload.data.field, stats = payload.data.stats;
+    var rows = [];
+    rows.push({ label: "导出时间", value: payload.exportedAt ? new Date(payload.exportedAt).toLocaleString("zh-CN", { hour12: false }) : "未记录" });
+    rows.push({ label: "来源版本", value: (payload.homepage && payload.homepage.version) || "未记录" });
+    rows.push({ label: "偏好与设置", value: Object.keys(keys).length + " 项" });
+    rows.push({ label: "本地收藏夹", value: Array.isArray(favorites) ? favorites.length + " 条" : "没有" });
+    rows.push({ label: "日志 / 签名", value: logs + " + " + signs + " 条" });
+    rows.push({ label: "场志", value: field ? (Object.keys(field.profiles || {}).length + " 位 · " + Object.keys(field.pairs || {}).length + " 对 · " + (Array.isArray(field.events) ? field.events.length : 0) + " 事件") : "没有" });
+    rows.push({ label: "历史统计", value: stats && Array.isArray(stats.rows) ? stats.rows.length + " 行" : "没有" });
+    return rows;
+  }
+
+  function restoreBackup(payload) {
+    var keys = payload.data.keys || {};
+    var names = [], jobs = [];
+    EXPORT_KEYS.forEach(function (key) {
+      if (!Object.prototype.hasOwnProperty.call(keys, key)) return;
+      names.push(EXPORT_LABELS[key] || key);
+      jobs.push(Promise.resolve().then(function () { return storageSet(key, keys[key]); }));
+    });
+    return Promise.all(jobs).then(function () { return names; });
+  }
+
   function openExportSheet() {
     var body = document.createElement("div");
     body.className = "export-panel";
@@ -2306,6 +2423,212 @@
     var diagNote = document.createElement("p");
     diagNote.className = "export-diag-note";
 
+    var importCard = document.createElement("section");
+    importCard.className = "export-card export-import";
+    var importHead = document.createElement("div");
+    importHead.className = "export-card-head";
+    var importTitle = document.createElement("h4");
+    importTitle.textContent = "导入备份";
+    var importSize = document.createElement("span");
+    importSize.className = "export-card-size";
+    importSize.textContent = "等待粘贴";
+    importHead.appendChild(importTitle);
+    importHead.appendChild(importSize);
+    var importNote = document.createElement("p");
+    importNote.className = "export-card-note";
+    importNote.textContent = "把之前复制的备份文本整段粘进来：单行、分段都可以，段序打乱也能读。解析只在本机内存里进行。";
+    var importInput = document.createElement("textarea");
+    importInput.className = "export-import-input";
+    importInput.rows = 4;
+    importInput.spellcheck = false;
+    importInput.setAttribute("aria-label", "粘贴备份文本");
+    importInput.placeholder = "粘贴 " + EXPORT_PREFIX + "… 备份文本，或可读 JSON";
+    var importActions = document.createElement("div");
+    importActions.className = "export-import-actions";
+    var importParse = document.createElement("button");
+    importParse.type = "button";
+    importParse.className = "btn sm export-copy";
+    importParse.textContent = "解析";
+    importParse.disabled = true;
+    var importApply = document.createElement("button");
+    importApply.type = "button";
+    importApply.className = "btn sm export-copy";
+    importApply.textContent = "恢复偏好";
+    importApply.disabled = true;
+    importApply.hidden = true;
+    var importRestart = document.createElement("button");
+    importRestart.type = "button";
+    importRestart.className = "btn sm export-copy";
+    importRestart.textContent = "重启主页";
+    importRestart.hidden = true;
+    var importClear = document.createElement("button");
+    importClear.type = "button";
+    importClear.className = "btn sm";
+    importClear.textContent = "清空";
+    importClear.disabled = true;
+    importActions.appendChild(importParse);
+    importActions.appendChild(importApply);
+    importActions.appendChild(importRestart);
+    importActions.appendChild(importClear);
+    var importHint = document.createElement("p");
+    importHint.className = "export-import-hint";
+    importHint.textContent = "恢复范围：偏好、排序、日志、签名与本地收藏夹。场志与历史统计随备份一起解析，但由主页运行时自己维护，不在这里写回。";
+    var importResult = document.createElement("div");
+    importResult.className = "export-import-result";
+    importResult.hidden = true;
+    importCard.appendChild(importHead);
+    importCard.appendChild(importNote);
+    importCard.appendChild(importInput);
+    importCard.appendChild(importActions);
+    importCard.appendChild(importHint);
+    importCard.appendChild(importResult);
+
+    var importState = { payload: null, meta: null, armed: false, timer: null, serial: 0 };
+
+    function resetImportApply() {
+      importState.armed = false;
+      importApply.classList.remove("is-armed");
+      importApply.textContent = "恢复偏好";
+      importApply.hidden = true;
+      importApply.disabled = true;
+      importRestart.hidden = true;
+    }
+
+    function resetImportResult() {
+      importResult.hidden = true;
+      importResult.textContent = "";
+    }
+
+    function setImportBusy(busy) {
+      importParse.disabled = busy || !importInput.value.trim();
+      importClear.disabled = busy || !importInput.value.trim();
+    }
+
+    function showImportRows(payload, meta) {
+      importResult.textContent = "";
+      backupSummaryRows(payload).forEach(function (row) {
+        var line = document.createElement("div");
+        line.className = "export-row";
+        var label = document.createElement("span");
+        label.className = "export-row-label";
+        label.textContent = row.label;
+        var value = document.createElement("span");
+        value.className = "export-row-value";
+        value.textContent = row.value;
+        line.appendChild(label);
+        line.appendChild(value);
+        importResult.appendChild(line);
+      });
+      if (meta && (meta.segments || 0) > 1) {
+        var merged = document.createElement("p");
+        merged.className = "export-import-hint";
+        merged.textContent = "已把 " + meta.segments + " 段按段号拼回，整串校验通过。";
+        importResult.appendChild(merged);
+      }
+      importResult.hidden = false;
+    }
+
+    function showImportError(message) {
+      importResult.textContent = "";
+      var line = document.createElement("p");
+      line.className = "export-import-error";
+      line.textContent = message;
+      importResult.appendChild(line);
+      importResult.hidden = false;
+    }
+
+    function runImportParse() {
+      var raw = importInput.value;
+      if (!raw.trim()) return;
+      var serial = ++importState.serial;
+      importParse.disabled = true;
+      importSize.textContent = "正在解析…";
+      resetImportApply();
+      resetImportResult();
+      parseBackupText(raw).then(function (result) {
+        if (serial !== importState.serial) return;
+        importState.payload = result.payload;
+        importState.meta = result;
+        importSize.textContent = "已解析 · " + charText(result.chars) + " 字" + ((result.segments || 0) > 1 ? " · " + result.segments + " 段" : "");
+        showImportRows(result.payload, result);
+        importApply.hidden = false;
+        importApply.disabled = false;
+        setExportStatus("备份解析完成，确认内容后再恢复。恢复会覆盖当前的偏好、排序与收藏。", "note");
+      }).catch(function (error) {
+        if (serial !== importState.serial) return;
+        importState.payload = null;
+        importState.meta = null;
+        importSize.textContent = "解析失败";
+        showImportError((error && error.message) || "读取失败");
+        importApply.hidden = true;
+        setExportStatus("这份备份没有读进去：" + ((error && error.message) || "未知原因") + "。", "error");
+      }).then(function () {
+        if (serial === importState.serial) setImportBusy(false);
+      });
+    }
+
+    importInput.addEventListener("input", function () {
+      importState.payload = null;
+      importState.meta = null;
+      importSize.textContent = importInput.value.trim() ? "等待解析" : "等待粘贴";
+      resetImportApply();
+      resetImportResult();
+      setImportBusy(false);
+      if (importState.timer) clearTimeout(importState.timer);
+      var value = importInput.value;
+      if (value.trim() && (value.indexOf(EXPORT_PREFIX) >= 0 || value.trim().charAt(0) === "{")) {
+        importState.timer = setTimeout(function () { importState.timer = null; runImportParse(); }, 420);
+      }
+    });
+    importParse.addEventListener("click", function () {
+      if (importState.timer) { clearTimeout(importState.timer); importState.timer = null; }
+      runImportParse();
+    });
+    importClear.addEventListener("click", function () {
+      importInput.value = "";
+      importState.payload = null;
+      importState.meta = null;
+      importState.serial += 1;
+      importSize.textContent = "等待粘贴";
+      resetImportApply();
+      resetImportResult();
+      setImportBusy(false);
+      importInput.focus();
+    });
+    importApply.addEventListener("click", function () {
+      if (!importState.payload) return;
+      if (!importState.armed) {
+        importState.armed = true;
+        importApply.textContent = "再点一次确认恢复";
+        importApply.classList.add("is-armed");
+        setExportStatus("恢复会覆盖当前的偏好、排序与收藏。确认的话，再点一次。", "note");
+        setTimeout(function () {
+          if (!importState.armed) return;
+          importState.armed = false;
+          importApply.classList.remove("is-armed");
+          importApply.textContent = "恢复偏好";
+        }, 6000);
+        return;
+      }
+      importState.armed = false;
+      importApply.classList.remove("is-armed");
+      importApply.disabled = true;
+      importApply.textContent = "正在恢复…";
+      restoreBackup(importState.payload).then(function (names) {
+        importApply.textContent = "已恢复";
+        importRestart.hidden = false;
+        setExportStatus("已恢复 " + names.length + " 项（" + names.join("、") + "）。重启主页后全部生效。", "ok");
+        toast("已恢复 " + names.length + " 项");
+      }).catch(function (error) {
+        importApply.disabled = false;
+        importApply.textContent = "恢复偏好";
+        setExportStatus("恢复没有完成：" + ((error && (error.message || error)) || "未知原因") + "。", "error");
+      });
+    });
+    importRestart.addEventListener("click", function () {
+      try { location.reload(); } catch (error) { toast("请手动重新打开主页"); }
+    });
+
     body.appendChild(header);
     body.appendChild(intro);
     body.appendChild(statusRow);
@@ -2314,6 +2637,7 @@
     body.appendChild(backupCard.section);
     body.appendChild(jsonCard.section);
     body.appendChild(segments);
+    body.appendChild(importCard);
     body.appendChild(diag);
     body.appendChild(diagNote);
 
