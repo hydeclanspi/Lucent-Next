@@ -1,15 +1,16 @@
 # Verification
 
-Web edition 5.1.3. Last full run: **2026-10-20**, Node.js 22.22, Chromium 141 (Playwright 1.62.1) on Linux.
+Web edition 5.9.4. Last full run: **2026-10-21**, Node.js 22.22, Chromium 141 (Playwright 1.62.1) on Linux.
 
 | Check | Command | Result |
 |---|---|---|
-| Syntax and release identity | `npm run check` | 32 scripts pass `node --check`; release identity and both device packages' SHA-256 digests verified |
+| Syntax and release identity | `npm run check` | 34 scripts pass `node --check`; release identity and all three device packages' SHA-256 digests verified |
 | Unit tests | `npm test` | **42 passed** |
 | Static build | `npm run build` | Passed |
 | Browser flows | `npm run test:browser` | **22 passed**; no uncaught page exception in any tested flow |
 | Viewports | (browser suite) | 1560×1040 (the tablet), 1429×763, 1366×768 and 1280×720 (short laptop screens), 1024×768, 390×844 |
 | Repository subpath | (browser suite) | Assets and initialization under `/Lucent-Next/` |
+| The local shelf | (a scripted look at the built site, 1560 × 1040) | 本地文件架 opens from the shortcuts block; 收藏夹 hides the shelf card and the favourites float over the wallpaper; no page exception |
 | Film score | `python3 scripts/film-score.py --report score.png` | The new fusion (`fusion2`): −16.0 LUFS integrated, true peak −1.2 dBTP (−1.0 in the AAC at 256 kb/s, −1.1 in the Opus), loudness range 10.8 LU; the 90th percentile of each scene's momentary loudness follows the energy written for it, from −11.2 LUFS under the name to −27.3 in the opening; no harmony or bass note falls outside the chord sounding under it; the opening stops dead at 3.55 s and the music is silent until 5 s; the stage's laser schedule and the cores struck beyond the door match the film's generators bit for bit. Checked by measurement; its direction was set by the author, by ear, after six earlier versions |
 | The film's lockup | `node scripts/film.mjs --from 60.4333 --to 64.6 --mute`, spliced | The descriptor under the name reads 灵感工作室 · The inspiration studio: frames 3,626–3,875 (one group of pictures, key frame to key frame) rendered again and joined by stream copy; the other 6,260 frames decode to identical hashes (`framemd5`), the score and the cover art are copied untouched, and the teaser is cut again from the result |
 | On-device recording | `python3 scripts/device-edit.py <first> <second>` | 54.0 s at 2560 × 1440 and 60 fps, 25 MB; its music −16.4 LUFS, true peak −1.4 dBTP, its two joins on bar lines checked in the spectrogram; frames checked at the cover, the search and the page it opens, each speed mark, the wallpaper panel's shortened wait, the cut to the second recording, both taps and the switch turning on, the silk, the fold and the end. The first 36.9 s are the earlier render's frames (`--head`); its pace and framing were set to the author's brief: a light edit that keeps the rhythm, and for the new part the camera of the README's animation |
@@ -36,7 +37,8 @@ Outgoing provider pages are intercepted: the tests verify the real destination U
 ## What this does not cover
 
 - **Feel on a touchscreen.** The tests prove the rules; the feel of the Lueurs under a finger was tuned on the device across 111 versions, and is not re-measured here.
-- **The device packages.** Both ZIPs in `product-finale/` are kept byte for byte and their digests are checked; the web edition itself was accepted in the browser, beside screenshots of the device.
+- **The device packages.** All three ZIPs in `product-finale/` are kept byte for byte and their digests are checked; the web edition itself was accepted in the browser, beside screenshots of the device.
+- **The local shelf's pickers.** Choosing folders and files through ArkWeb's file manager, re-granting access and opening pages from Aira depend on the device and its browser; they were tried on the MatePad Edge build by build, from 5.2.0 to 5.9.4, and are not exercised here.
 - **The film in real time.** The suite seeks the film to fixed moments. Smooth real-time playback in a browser depends on the viewer's graphics hardware; `Lucent-Film.mp4` at the repository root is the reference render.
 - **Other browsers.** This run used Chromium; the CI workflow runs the same suites on Linux for every push and pull request. See the repository's Actions page for its current status.
 
