@@ -152,6 +152,14 @@ A day begins on a quiet surface. It holds only what you use every day, each thin
 - **Main card.** Search with four engines (one of them a custom template); shortcuts in three forms — automatic, framed, or an initial tile; direct entries to bookmarks, downloads, saved pages, tabs, search settings, user scripts and settings. In the lower right, a one-line note: long-press to rewrite it, archived to the second.
 - **Focus mode.** Fold both sections and the card sinks to the visual centre; search becomes the only focus.
 
+<p align="center"><img src="showcase/media/local-shelf-card-2.jpg" alt="On the device: the starred favourites fill the still, a card of glass floating over the wallpaper with one Markdown file on a glass shelf; at its lower right, a rounded inset of the local shelf, the Documents folder mounted and filtered to MD + HTML, the file names blurred" width="81.5%"><br><sub>On the device: the demo favourites, with the local shelf inset at the lower right.</sub></p>
+
+**The local shelf.** New in 5.9.4, the workbench gains a shelf. Mount a local folder, and the browser, the classic way to present a page, becomes the quickest way into your HTML and the rest; HTML, Markdown, PDF, images and text also preview in place, and Markdown is set by a renderer of its own, headings, tables, task lists and code blocks each in their place.
+
+Star the files you come back to, and they go onto a shelf of liquid, clear blue-and-white porcelain: when it opens, the shelf card beneath steps away and the favourites float clear over the wallpaper. It reads only the folders you choose; nothing is uploaded, nothing goes online. It is built on Huawei's latest API 26; update to the latest version to use it.
+
+A real workbench: everything in hand, everything in clear view.
+
 ## 02 · Launch pad: a thought, in flight
 
 <p align="center"><img src="showcase/media/motion-six.webp" alt="The search-motion preview plays the six motions at 0.35× — Lightline, Microprism, Shutter, Platinum filament, Through the eye, Near orbit" width="92.5%"></p>
