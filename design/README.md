@@ -38,6 +38,7 @@ Every image and cover is rendered from the HTML here: change the source, then ru
 | 舞台上的光 · Light on the stage | 模拟发射 · 白金导流环与蓝白激光 · 绢光与浮金 | Simulated launch · platinum rings and blue-white lasers · silk light and gold motes |
 | 玻璃 · Glass | 通透玻璃：暖光液态清璃 · 经典磨砂 | Lucent Glass: Warm Clear · Classic Frost |
 | 记录 · Records | 场志 · 名册 · 日志 | The chronicle · the roster · the note |
+| 文件 · Files | 本地文件架 · 星标收藏夹 | The local shelf · the starred favourites |
 | 自动驾驶 · Autonomy | Drive (FSD)，面板「代号：交互」 | Drive (FSD), in the Interaction panel |
 | 架构 · Architecture | 场景 · 台面 · 系统 · 机制 · 像素；主权与可信 | Context · surface · systems · mechanisms · pixels; control and trust |
 | 两个版本 · Editions | 网页版 · 实机安装包 | The web edition · the device packages |

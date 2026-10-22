@@ -62,11 +62,24 @@ This page is Lucent's complete inventory, from the screen it runs on to every nu
 |---|---|
 | Search | Enter and the arrow share one submission; navigation waits for the motion to reach the arrow; IME composition never fires; the field is clean on return |
 | Engines | Baidu, Google, Bing and a custom template; "✧ 理" on the right opens 念起，光行, where engine settings also live |
-| Shortcuts | Three forms: automatic (the site icon), framed, or an initial tile in 28 colours (16 "fresh", 12 "calm"); hold to edit the icon; after 排序 (sort), hold to drag; add |
-| Direct entries | Bookmarks, downloads, saved pages, tabs, search settings, user scripts and settings, in two columns on wide screens; edit profile |
+| Shortcuts | Three forms: automatic (the site icon), framed, or an initial tile in 28 colours (16 "fresh", 12 "calm"); hold to edit the icon; after 编辑排序 (order), hold to drag; add; "✧ 本地文件架", the local shelf, at the right of the head |
+| Direct entries | Bookmarks, downloads, saved pages, tabs, search settings, user scripts and settings, in two columns on wide screens; while ordering, each row gains ↑ ↓, and the order is kept on the device |
 | Folds | Shortcuts and direct entries fold separately; with both folded, focus mode |
 | Note | One line of white text outside the card's lower right; hold to open the note log, every line archived to the second |
 | History | A diamond tag above the card's right corner: the frame is `skewX(−14°)`, the icon and text stay upright; opens the host's history |
+
+### The local shelf
+
+Since 5.9.4 the shortcuts' head carries "✧ 本地文件架", the local shelf: a card of glass of its own that reads only the folder or files you choose, uploads nothing and goes online for nothing.
+
+| Element | Content |
+|---|---|
+| Mount | 选择新路径 mounts a folder; 打开文件 picks a few files directly. A folder can be set as the default: the next time, the shelf waits on its summary card, and a tap grants access again. On ArkWeb, file picking skips the gallery and camera sheet, and folders open through `showDirectoryPicker` with `startIn` at the right place |
+| Summary and recents | The summary card in the middle gives the folder's name, its items, folders, files and total size; recent folders stand either side, the newest in the middle and the rest alternating outwards (four at most on screen); hold one to rename it |
+| Filter and list | MD + HTML by default, or HTML, PDF, Markdown, images, text and code, archives, audio and video, or everything; folders cluster and fold; name, kind, time and size sort, a third click clears the sort; list or grid |
+| Preview | HTML is shown statically in place, with scripts and embedded frames stripped, and lists the local assets it cannot find apart from the online ones it does not inline; Markdown is set by a built-in renderer (headings, lists and task lists, tables with their alignment, code blocks, quotes, links and images); PDF, images and text preview in place too. Text is read up to 256 KB, images up to 24 MB, audio and video up to 120 MB |
+| Open in a new tab | Relative assets (up to 8 MB each) are packed into the page, which opens from a blob URL through a standard new-tab link; after 10 s without an answer, the shelf says so |
+| Stars and favourites | A star at the end of every row; the favourites, top right, filter by all, files or folders and sort by time or kind (a second tap reverses), two rows to a page and up to six to a row. Opening them hides the shelf card beneath, and the favourites float over the wallpaper. When a file has moved, its original name can be copied, or the favourite removed. Up to 200 favourites, and they travel in the backup text |
 
 ### Layout
 
@@ -87,7 +100,7 @@ Four systems. Each lists what a person sees first, then why it works; formulas a
 - **History statistics.** Today / 7 days / 30 days / 1 year / all; Light tendency, interaction counts (drags, arrow keys, the manual slider and added Lueurs each viewable), the probability distribution and collision strength; tap a period for details, step through periods one by one.
 - **The chronicle.** Residency terrain (26×12 with A–Z, A2… coordinates), drive log, the 49-cell roster, personal files, closest companions, the relationship web, triangles and recent events; a switch to show each Lueur's number on touch.
 - **Defaults.** Count, strength, pace and odds each "set as default / restore default", or all at once; look up the factory values; FSD "on by default" — cruise starts when Lucent opens.
-- **Backup and export** (hold the scan icon): all data in one text, written only to the clipboard.
+- **Backup and export** (hold the scan icon): all data in one text, written only to the clipboard; 导入备份 (import) reads that text back and, once it checks out, restores preferences, order, notes, signatures and the shelf's favourites.
 
 **Why it works**
 
@@ -185,14 +198,15 @@ Four systems. Each lists what a person sees first, then why it works; formulas a
 | Glass | Two surfaces × two finishes × six dials; recommended values and your own design |
 | Search | Engines, a custom template, six motions, Random, or no motion |
 | Profile | Name, one-liner, signature, tags, level, grip label |
-| Shortcuts | Add, remove, reorder; three forms; 28 colours |
+| Shortcuts and direct entries | Add, remove, reorder; three forms; 28 colours; the order of the direct entries |
+| The local shelf | Which folder is mounted, the default path, the filter, list or grid, starred favourites and their order |
 | Layout | Fold each section; focus mode |
 
 **Three layers of defaults**: try anything now; keep the combinations you like as defaults; the factory baseline (6 Lueurs, Light 74%, strength 13.7×, pace 2.41×, no launch randomization) is always one tap away. Every setting lives on the device and travels in one backup text.
 
 ## Across · Trust
 
-- **Privacy.** No request to any other site after load (the one exception: the first time a rare character appears, its small slice of the typeface comes from this site); data stays on the device; the backup leaves only through the clipboard.
+- **Privacy.** No request to any other site after load (the one exception: the first time a rare character appears, its small slice of the typeface comes from this site); data stays on the device; the backup leaves only through the clipboard. The local shelf reads only the folder or files you choose and uploads nothing; its HTML preview strips scripts and is static.
 - **Storage discipline.** Two slots with canonical checksums; a failed read never overwrites history; migrations keep totals; writes guard their shape; copies verify themselves first.
 - **Accessibility.** Arrow keys move Lueurs; every long press has a keyboard equivalent; reduced motion and reduced transparency are honoured; sheets trap focus and return it on close.
 - **Performance discipline.** One frame loop; about 30 Hz when idle; fully paused in the background, under a sheet or when hidden; zero glass animation at rest.
@@ -210,10 +224,12 @@ Four systems. Each lists what a person sees first, then why it works; formulas a
 | History | History | — | Enter |
 | Search field | Enter / arrow: depart after the motion | With simulation on, hold Enter: bursts | — |
 | ✧ 理 | 念起，光行 | — | Enter |
-| Shortcut | Open | Icon editor; after sort, hold to drag | — |
-| 排序 Sort | Enter or leave sort mode | — | — |
+| Shortcut | Open | Icon editor; after 编辑排序, hold to drag | — |
+| ✧ 本地文件架 Local shelf | Open the local shelf | — | Enter |
+| Favourites (the shelf's top right) | Open the starred favourites | — | Enter; Esc returns to the shelf |
+| 编辑排序 Order | Enter or leave ordering: shortcuts drag, direct entries gain ↑ ↓ | — | Enter |
 | Folds | Fold or unfold a section | — | — |
-| Edit profile · ＋ 标签 | The profile editor | — | — |
+| ＋ 标签 | The profile editor | — | — |
 | Note | — | The note log | Enter opens it |
 | Lueurs | Flick, drag, shove | Its number surfaces | Arrow keys 16 px, Shift 48 px |
 | Anywhere (large screens, web) | The first click goes full screen | — | F toggles full screen, Esc leaves |
@@ -223,13 +239,14 @@ Four systems. Each lists what a person sees first, then why it works; formulas a
 | File | Owns |
 |---|---|
 | [`src/index.html`](../../src/index.html) | The surface's structure, metadata and app manifest link |
-| [`src/assets/app.js`](../../src/assets/app.js) · [`app.css`](../../src/assets/app.css) | Profile, search lifecycle, shortcuts, wallpaper, the panels, backup and export, About, the short-screen guard |
+| [`src/assets/app.js`](../../src/assets/app.js) · [`app.css`](../../src/assets/app.css) | Profile, search lifecycle, shortcuts and the entries' order, wallpaper, the panels, backup, export and import, About, the short-screen guard |
 | [`src/assets/interaction.js`](../../src/assets/interaction.js) · [`interaction.css`](../../src/assets/interaction.css) | The Lueurs engine |
 | [`src/assets/stats-store.js`](../../src/assets/stats-store.js) · [`field-store.js`](../../src/assets/field-store.js) · [`stats-panel.js`](../../src/assets/stats-panel.js) | Statistics, the chronicle and the hand-written SVG charts |
 | [`src/assets/glass-material.js`](../../src/assets/glass-material.js) · [`glass-material.css`](../../src/assets/glass-material.css) | Lucent Glass |
 | [`src/assets/search-motion-renderers.js`](../../src/assets/search-motion-renderers.js) · [`search-motion.js`](../../src/assets/search-motion.js) · [`search-motion-panel.js`](../../src/assets/search-motion-panel.js) | The six renderers, the player, the panel and the Random lasers |
 | [`src/assets/search-simulation.js`](../../src/assets/search-simulation.js) | Simulated launch and bursts |
 | [`src/assets/search-aura.js`](../../src/assets/search-aura.js) · [`search-aura.css`](../../src/assets/search-aura.css) | Silk light and gold motes |
+| [`src/assets/local-shelf.js`](../../src/assets/local-shelf.js) · [`local-shelf.css`](../../src/assets/local-shelf.css) · [`local-shelf-bootstrap.js`](../../src/assets/local-shelf-bootstrap.js) | The local shelf and its starred favourites; the loader is 1.2 KB, and the shelf arrives on its first tap |
 | [`src/web/`](../../src/web/) | Browser layer, deep links, immersive full screen, app manifest and icons |
 | [`src/fonts/`](../../src/fonts/) | The device's typefaces: web slices of HarmonyOS Sans and Noto Sans Mono |
 | [`design/`](../../design/) | Design sources: the sixteen-study atelier, the app icon, the share card, covers and the documentation figures |
