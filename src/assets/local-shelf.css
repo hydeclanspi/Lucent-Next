@@ -298,6 +298,93 @@ body.shelf-open {
   opacity: 0.82;
 }
 
+#shelfPick,
+#shelfEmptyPick {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: #164b67;
+  border-color: rgba(68, 139, 167, 0.32);
+  outline-color: rgba(68, 139, 167, 0.72);
+  background:
+    radial-gradient(90% 130% at 90% 120%, rgba(103, 183, 207, 0.22), transparent 65%),
+    linear-gradient(135deg, rgba(229, 249, 247, 0.88), rgba(174, 220, 229, 0.64) 58%, rgba(153, 202, 222, 0.56));
+  box-shadow: 0 6px 18px rgba(46, 112, 142, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.76), inset 0 -1px 0 rgba(47, 119, 152, 0.08);
+  backdrop-filter: blur(16px) saturate(155%);
+  -webkit-backdrop-filter: blur(16px) saturate(155%);
+}
+
+#shelfPick::before,
+#shelfEmptyPick::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(100% 180% at 18% -70%, rgba(255, 255, 255, 0.84), transparent 54%),
+    linear-gradient(105deg, transparent 25%, rgba(255, 255, 255, 0.2) 45%, transparent 63%);
+  pointer-events: none;
+}
+
+#shelfPick::after,
+#shelfEmptyPick::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid rgba(58, 127, 162, 0.22);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+#shelfPick > svg,
+#shelfPick > span,
+#shelfEmptyPick > svg,
+#shelfEmptyPick > span {
+  position: relative;
+  z-index: 1;
+}
+
+#shelfPick > svg,
+#shelfEmptyPick > svg {
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.36));
+}
+
+#shelfPick:hover,
+#shelfEmptyPick:hover {
+  filter: brightness(1.035);
+  box-shadow: 0 8px 22px rgba(46, 112, 142, 0.21), inset 0 1px 0 #fff, inset 0 -1px 0 rgba(47, 119, 152, 0.1);
+}
+
+:root[data-theme="dark"] #shelfPick,
+:root[data-theme="dark"] #shelfEmptyPick {
+  color: #e0f1ff;
+  border-color: rgba(87, 157, 183, 0.42);
+  outline-color: #a7ceff;
+  background:
+    radial-gradient(100% 170% at 12% -40%, rgba(220, 240, 255, 0.19), transparent 58%),
+    linear-gradient(135deg, rgba(87, 157, 183, 0.32), rgba(28, 55, 88, 0.55) 68%, rgba(20, 43, 73, 0.55));
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(220, 239, 255, 0.12);
+}
+
+:root[data-theme="dark"] #shelfPick::before,
+:root[data-theme="dark"] #shelfEmptyPick::before {
+  background:
+    radial-gradient(100% 180% at 18% -70%, rgba(228, 243, 255, 0.2), transparent 54%),
+    linear-gradient(105deg, transparent 25%, rgba(215, 237, 255, 0.07) 45%, transparent 63%);
+}
+
+:root[data-theme="dark"] #shelfPick::after,
+:root[data-theme="dark"] #shelfEmptyPick::after {
+  border-top-color: rgba(220, 239, 255, 0.4);
+  border-bottom-color: rgba(87, 157, 183, 0.25);
+}
+
+:root[data-theme="dark"] #shelfPick:hover,
+:root[data-theme="dark"] #shelfEmptyPick:hover {
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28), 0 0 18px rgba(87, 157, 183, 0.09), inset 0 1px 0 rgba(220, 239, 255, 0.18);
+}
+
 .shelf-filter-wrap {
   position: relative;
   flex: none;
