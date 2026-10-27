@@ -127,6 +127,9 @@
     defaultHandle: null,
     pendingDefaultHandle: null,
     restorePickPending: false,
+    favoriteRestoring: false,
+    defaultReady: null,
+    defaultMetaReady: null,
     forceInputFallback: false,
     needsReauth: false,
     reauthHandle: null,
@@ -706,6 +709,7 @@
         entry.source = source;
         entry.openedAt = now;
         entry.scannedAt = now;
+        if (source === 'handle') entry.airaPersist = !!airaFolders();
 
         var next = [entry].concat(state.recent.filter(function (item) {
           return item.id !== entry.id;
@@ -988,9 +992,43 @@
     refs.missing.hidden = true;
   }
 
+  function favoriteRootHandle(rootName) {
+    if (state.defaultHandle && state.defaultHandle.name === rootName && state.defaultMeta && state.defaultMeta.airaPersist) {
+      return { handle: state.defaultHandle, isDefault: true };
+    }
+    for (var i = 0; i < state.recent.length; i += 1) {
+      var meta = state.recent[i];
+      var handle = meta.source === 'handle' && meta.airaPersist ? state.recentHandles.get(meta.id) : null;
+      if (handle && handle.name === rootName) return { handle: handle, isDefault: false, meta: meta };
+    }
+    return null;
+  }
+
   function openFavorite(fav) {
     if (!fav) return;
     if (!state.path.length || state.rootName !== fav.root) {
+      var root = airaFolders() && typeof window.showDirectoryPicker === 'function' ? favoriteRootHandle(fav.root) : null;
+      if (root && !state.favoriteRestoring) {
+        state.favoriteRestoring = true;
+        setStatus('正在恢复「' + fav.root + '」…');
+        armAiraRestore(root.handle);
+        var picker;
+        try {
+          picker = window.showDirectoryPicker({ id: 'lucent-local-shelf', mode: 'read', startIn: root.handle });
+        } catch (error) {
+          picker = Promise.reject(error);
+        }
+        picker.then(function (next) {
+          return adoptHandle(next, root.handle, root.isDefault);
+        }).then(function () {
+          state.favoriteRestoring = false;
+          if (state.path.length && state.rootName === fav.root) openFavorite(fav);
+        }).catch(function () {
+          state.favoriteRestoring = false;
+          setStatus('请先打开根文件夹「' + fav.root + '」再使用这个收藏', 'warn');
+        });
+        return;
+      }
       setStatus('请先打开根文件夹「' + fav.root + '」再使用这个收藏', 'warn');
       return;
     }
@@ -1203,7 +1241,7 @@
   }
 
   function loadDefaultMeta() {
-    return storeGet(DEFAULT_KEY, null).then(function (meta) {
+    state.defaultMetaReady = storeGet(DEFAULT_KEY, null).then(function (meta) {
       if (!meta || typeof meta !== 'object' || !meta.name) {
         state.defaultMeta = null;
         state.defaultHandle = null;
@@ -1212,9 +1250,12 @@
       state.defaultMeta = meta;
       state.defaultHandle = null;
       if (meta.source === 'handle') {
-        idbGet('default').then(function (handle) {
+        state.defaultReady = idbGet('default').then(function (handle) {
           if (handle && handle.kind === 'directory') state.defaultHandle = handle;
-        }).catch(function () {});
+          return state.defaultHandle;
+        }).catch(function () {
+          return null;
+        });
       }
       if (!state.path.length) {
         refs.restore.hidden = false;
@@ -1223,6 +1264,7 @@
         updateToolbar();
       }
     });
+    return state.defaultMetaReady;
   }
 
   function currentPathName(name) {
@@ -2778,6 +2820,7 @@
       options.id = 'lucent-local-shelf';
       options.startIn = startIn;
     }
+    if (state.restorePickPending && startIn && typeof startIn === 'object') armAiraRestore(startIn);
     var picker;
     try {
       picker = window.showDirectoryPicker(options);
@@ -3211,7 +3254,8 @@
       name: state.rootName,
       source: state.source,
       savedAt: Date.now(),
-      itemCount: state.entries.length
+      itemCount: state.entries.length,
+      airaPersist: state.source === 'handle' && !!airaFolders()
     };
     var chain = storeSet(DEFAULT_KEY, meta);
     if (state.source === 'handle' && state.rootHandle) {
@@ -3246,6 +3290,32 @@
     updateSummary();
     updateToolbar();
     setStatus('已清除默认路径');
+  }
+
+  // Aira that keeps folder grants (AiraHome.localFolders): a folder picked once
+  // comes back on the next showDirectoryPicker() without the system window,
+  // as long as armRestore() is called first in the same tap. Without it every
+  // path below behaves exactly as before.
+  function airaFolders() {
+    try {
+      var api = window.AiraHome;
+      var folders = api && api.localFolders;
+      return folders && typeof folders.armRestore === 'function' ? folders : null;
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function armAiraRestore(handle) {
+    var folders = airaFolders();
+    if (!folders || !handle || handle.kind !== 'directory') return false;
+    try {
+      var armed = folders.armRestore({ name: String(handle.name || '') });
+      if (armed && typeof armed.then === 'function') armed.catch(function () {});
+      return true;
+    } catch (_error) {
+      return false;
+    }
   }
 
   function ensureHandlePermission(handle, request) {
@@ -3290,6 +3360,7 @@
       state.defaultMeta.name = next.name;
       state.defaultMeta.source = 'handle';
       state.defaultMeta.savedAt = Date.now();
+      state.defaultMeta.airaPersist = !!airaFolders();
       storeSet(DEFAULT_KEY, state.defaultMeta).catch(function () {});
     }
     return mountHandle(next, keepsDefault);
@@ -3334,6 +3405,7 @@
     if (startIn) attempts.push({ id: 'lucent-local-shelf', mode: 'read', startIn: startIn });
     attempts.push({ mode: 'read' });
     attempts.push(null);
+    if (previous) armAiraRestore(previous);
     var picker = null;
     var lastError = null;
     for (var i = 0; i < attempts.length; i += 1) {
@@ -3425,6 +3497,40 @@
     pickFolder();
   }
 
+  // Opening the shelf is a tap, so when Aira keeps the default folder's grant
+  // the folder is mounted right away; the system window never shows. A tap
+  // keeps its user activation for a few seconds, enough to wait for IndexedDB.
+  function autoRestoreDefault() {
+    if (state.path.length || state.pendingRecentMeta) return;
+    if (!airaFolders() || typeof window.showDirectoryPicker !== 'function') return;
+    var tappedAt = Date.now();
+    Promise.resolve(state.defaultMetaReady).then(function () {
+      var meta = state.defaultMeta;
+      if (!meta || meta.source !== 'handle' || !meta.airaPersist) return null;
+      return Promise.resolve(state.defaultHandle || state.defaultReady).then(function (handle) {
+        return handle ? { meta: meta, handle: handle } : null;
+      });
+    }).then(function (found) {
+      if (!found || state.path.length || state.pendingRecentMeta || !state.open || Date.now() - tappedAt > 3500) return undefined;
+      setStatus('正在恢复「' + displayName(found.meta) + '」…');
+      armAiraRestore(found.handle);
+      var picker;
+      try {
+        picker = window.showDirectoryPicker({ id: 'lucent-local-shelf', mode: 'read', startIn: found.handle });
+      } catch (error) {
+        picker = Promise.reject(error);
+      }
+      return picker.then(function (next) {
+        return adoptHandle(next, found.handle, true);
+      }).catch(function (error) {
+        refs.restore.hidden = false;
+        refs.restore.textContent = '恢复默认路径';
+        updateSummary();
+        setStatus(error && error.name === 'AbortError' ? '已取消恢复，轻点「恢复默认路径」再试' : '轻点「恢复默认路径」继续', 'warn');
+      });
+    }).catch(function () {});
+  }
+
   function toggleMenu() {
     var willOpen = refs.menu.hidden;
     if (willOpen) closeFilterMenu();
@@ -3471,6 +3577,7 @@
     setStatus('只读模式 · 文件不会离开这台设备');
     if (state.path.length && state.selected) renderPreview(state.selected);
     card.focus({ preventScroll: true });
+    autoRestoreDefault();
   }
 
   function closeShelf() {
