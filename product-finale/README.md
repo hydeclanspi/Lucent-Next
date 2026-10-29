@@ -11,6 +11,7 @@
 
 | 版本 · Version | 文件 · File | 这一版 · In this release |
 |---|---|---|
+| **6.0.3** | [`lucent-6.0.3-aira.zip`](lucent-6.0.3-aira.zip) | 本地文件架的卡片换成暖光液态清璃，壁纸的天光透进来；列表与预览各自采样壁纸，压平明暗、提亮，颜色留着；次要文字的墨色随之加深一档；授权小窗的「授权并打开」换上与「选择新路径」相同的影青液态釉，「关闭」换为收藏夹的白釉钴蓝玻璃<br>The local shelf's card takes Warm Clear glass and lets the wallpaper's sky through; the list and the preview sample the wallpaper for themselves, evening out its light, lifting it and keeping its colour; secondary text takes one step deeper ink; on the grant card, 授权并打开 takes the same celadon glaze as 选择新路径, and 关闭 the favourites' white glass with a cobalt label |
 | **6.0.2** | [`lucent-6.0.2-aira.zip`](lucent-6.0.2-aira.zip) | 收藏所在的文件夹这次没有授权时，直接弹出它的路径，授权一次就打开收藏；搜索框改为「搜索当前文件夹 / 粘贴路径」，粘贴一个路径就在列表里打开那个位置；面包屑当前层级与斜杠之间留出呼吸空间<br>When a favourite's folder has not been granted this time, its path comes up and one grant opens the favourite; the search field becomes 搜索当前文件夹 / 粘贴路径, and a pasted path opens that place in the list; the current crumb stands clear of its slash |
 | **6.0.1** | [`lucent-6.0.1-aira.zip`](lucent-6.0.1-aira.zip) | 本地文件架在 Aira 里改用 `data:` 地址打开页面、图片与 PDF，不再被「暂不支持从主页打开此链接」拦下；打包后约 1.43 MB 以内直接打开，更大的页面 gzip 后自行展开，仍放不下时提示「下载打包页」<br>Inside Aira the local shelf now opens pages, images and PDFs as `data:` addresses instead of being stopped by 暂不支持从主页打开此链接; up to about 1.43 MB once packed a page opens directly, a larger one is gzipped and unpacks itself, and one that still does not fit points to 下载打包页 |
 | **5.9.7** | [`lucent-5.9.7-aira.zip`](lucent-5.9.7-aira.zip) | 文件夹授权持久化：重开后自动恢复已挂载的默认文件夹，收藏可回到原根目录；「选择新路径」与「选择文件夹」换为影青液态釉，保留主操作层级<br>Persistent folder grants: the default folder returns after reopening, favourites can restore their original root, and the folder pickers use a translucent celadon glaze while remaining the primary actions |
@@ -24,18 +25,19 @@
 2. 在 Aira 中打开「自定义主页」，选择这个 ZIP。<br>In Aira, open 自定义主页 and choose the ZIP.
 3. 导入之后，灵感台就是 Aira 的起始页。<br>From then on, Lucent is Aira's start page.
 
-六个版本的包 `id` 相同：导入 6.0.2 会在原处更新已安装的 6.0.1、5.9.7、5.9.4、5.1.3 或 5.0，本机的设置、日志与场志全部保留。仓库根目录是网页版（`src/`），请导入这里的 ZIP。
+七个版本的包 `id` 相同：导入 6.0.3 会在原处更新已安装的 6.0.2、6.0.1、5.9.7、5.9.4、5.1.3 或 5.0，本机的设置、日志与场志全部保留。仓库根目录是网页版（`src/`），请导入这里的 ZIP。
 
-All six packages share one `id`, so importing 6.0.2 updates 6.0.1, 5.9.7, 5.9.4, 5.1.3 or 5.0 in place and keeps its settings, notes and chronicle. The repository itself is the web edition (`src/`); import a ZIP from here.
+All seven packages share one `id`, so importing 6.0.3 updates 6.0.2, 6.0.1, 5.9.7, 5.9.4, 5.1.3 or 5.0 in place and keeps its settings, notes and chronicle. The repository itself is the web edition (`src/`); import a ZIP from here.
 
 ## 按交付原样保存 · Kept as shipped
 
-六个 ZIP 都按交付时的字节原样保存，只改了外部文件名。包内的清单保留当时的写法：5.0 的内部名称是「名片 · Profile Card」，那是灵感台最初的名字；5.1.3、5.9.4、5.9.7、6.0.1 与 6.0.2 名为 Lucent Next。`npm run check` 会重新计算并核对下面六个摘要。
+七个 ZIP 都按交付时的字节原样保存，只改了外部文件名。包内的清单保留当时的写法：5.0 的内部名称是「名片 · Profile Card」，那是灵感台最初的名字；5.1.3、5.9.4、5.9.7、6.0.1、6.0.2 与 6.0.3 名为 Lucent Next。`npm run check` 会重新计算并核对下面七个摘要。
 
-All six ZIPs are kept byte for byte as shipped; only their outer filenames changed. The manifests inside keep the words of their day: 5.0 calls itself 名片 · Profile Card, Lucent's first name, and 5.1.3, 5.9.4, 5.9.7, 6.0.1 and 6.0.2 are Lucent Next. `npm run check` recomputes and verifies all six digests below.
+All seven ZIPs are kept byte for byte as shipped; only their outer filenames changed. The manifests inside keep the words of their day: 5.0 calls itself 名片 · Profile Card, Lucent's first name, and 5.1.3, 5.9.4, 5.9.7, 6.0.1, 6.0.2 and 6.0.3 are Lucent Next. `npm run check` recomputes and verifies all seven digests below.
 
 | 文件 · File | SHA-256 |
 |---|---|
+| `lucent-6.0.3-aira.zip` | `492620125a3287640257f1d461e87fef7ccc3a81d0d735389f49c2275371da00` |
 | `lucent-6.0.2-aira.zip` | `46d6f21fd60b33646f4c5dfb2f220dd2577f28cafc99bbd34499ab97c3ebf871` |
 | `lucent-6.0.1-aira.zip` | `50ecbf01b29a0bddc68c710f2a52ee1eee4925d0efbde04eb29c3a020f7c79cc` |
 | `lucent-5.9.7-aira.zip` | `cb8df1636127810884d61f9974c40415c0319ab5852028188aaabf9184e754d4` |

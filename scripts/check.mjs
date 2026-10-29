@@ -17,11 +17,11 @@ for (const dir of ['src/assets', 'src/web', 'showcase/film', 'scripts', 'scripts
 }
 
 const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
-if (pkg.name !== 'lucent' || pkg.version !== '6.0.2' || pkg.author !== 'hydeclanspi') throw new Error('Unexpected release identity');
+if (pkg.name !== 'lucent' || pkg.version !== '6.0.3' || pkg.author !== 'hydeclanspi') throw new Error('Unexpected release identity');
 
 // The device packages are kept byte for byte; their digests are documented in product-finale/README.md.
 const documented = await readFile(path.join(root, 'product-finale/README.md'), 'utf8');
-for (const PACKAGE of ['product-finale/lucent-5.0.0-aira.zip', 'product-finale/lucent-5.1.3-aira.zip', 'product-finale/lucent-5.9.4-aira.zip', 'product-finale/lucent-5.9.7-aira.zip', 'product-finale/lucent-6.0.1-aira.zip', 'product-finale/lucent-6.0.2-aira.zip']) {
+for (const PACKAGE of ['product-finale/lucent-5.0.0-aira.zip', 'product-finale/lucent-5.1.3-aira.zip', 'product-finale/lucent-5.9.4-aira.zip', 'product-finale/lucent-5.9.7-aira.zip', 'product-finale/lucent-6.0.1-aira.zip', 'product-finale/lucent-6.0.2-aira.zip', 'product-finale/lucent-6.0.3-aira.zip']) {
   const digest = createHash('sha256').update(await readFile(path.join(root, PACKAGE))).digest('hex');
   if (!documented.includes(digest)) throw new Error(`${PACKAGE} does not match the documented SHA-256`);
 }
