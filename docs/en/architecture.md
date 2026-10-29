@@ -70,7 +70,7 @@ This page is Lucent's complete inventory, from the screen it runs on to every nu
 
 ### The local shelf
 
-Since 5.9.4 the shortcuts' head carries "✧ 本地文件架", the local shelf: a card of glass of its own that reads only the folder or files you choose, uploads nothing and goes online for nothing.
+Since 5.9.4 the shortcuts' head carries "✧ 本地文件架", the local shelf: a card of glass of its own that reads only the folder or files you choose, uploads nothing and goes online for nothing. From 6.0.3 the card is Warm Clear glass, and the list and the preview are reading panes that sample the wallpaper for themselves ([Reading panes inside the glass](glass.md#9-the-local-shelf-reading-panes-inside-the-glass)).
 
 | Element | Content |
 |---|---|
