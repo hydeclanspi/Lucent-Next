@@ -156,7 +156,7 @@
 
 真正的工作台体验：运筹帷幄，一览通透。
 
-→ 深入：[本地文件架 · 打开一页](docs/local-shelf.md)
+→ 深入：[本地文件架 · 找到一页，打开一页](docs/local-shelf.md)
 
 ## 02 · 发射台：念起，光行
 
@@ -369,7 +369,7 @@ tests/                      引擎、渲染器、存储与浏览器测试
 - [通透玻璃与设计语言](docs/glass.md)
 - [念起，光行：搜索动效、模拟发射、Random 与绢光](docs/motion.md)
 - [场志：本地数据层](docs/chronicle.md)
-- [本地文件架 · 打开一页](docs/local-shelf.md)
+- [本地文件架 · 找到一页，打开一页](docs/local-shelf.md)
 - [演进：25 天，111 个版本](docs/evolution.md)
 - [验证](docs/VERIFICATION.md) · [部署](docs/DEPLOYMENT.md) · [维护](docs/MAINTAINING.md) · [资源与署名](docs/ASSETS.md)
 
