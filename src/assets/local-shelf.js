@@ -157,7 +157,7 @@
   var IMAGE_LIMIT = 24 * 1024 * 1024;
   var MEDIA_LIMIT = 120 * 1024 * 1024;
   var ASSET_LIMIT = 8 * 1024 * 1024;
-  var URL_WARN = 1800000;
+  var DATA_URL_LIMIT = 2000000;
   var FILTER_LABELS = {
     all: '全部类型',
     mdhtml: 'MD + HTML',
@@ -1957,7 +1957,7 @@
           return shortPath(path, 42);
         }).join(' · ') + '（未内联）' : '';
       var note = '静态预览 · 脚本未执行' + (result.inlined ? ' · 内联 ' + result.inlined + ' 个资源' : '') +
-        missingText + externalText + (result.missing.length || result.html.length > 1200000 ?
+        missingText + externalText + (result.missing.length || result.html.length > 1500000 ?
           ' · 打开被拦截时用“下载打包页”' : '');
       previewFrame(
         '<div class="frame">' +
@@ -2367,9 +2367,101 @@
     return true;
   }
 
+  // Aira only lets a homepage open http, https, file, data and about links; a blob: link
+  // ends in "暂不支持从主页打开此链接". Inside Aira the shelf therefore hands over a data: URL.
+  // Chromium refuses URLs past 2 MiB, so a page that will not fit travels gzip-compressed
+  // inside a small page that inflates it and writes it back in place.
+  function inAiraHome() {
+    return !!(window.AiraHome && typeof window.AiraHome === 'object');
+  }
+
+  function base64Length(bytes) {
+    return 4 * Math.ceil(bytes / 3);
+  }
+
+  function readBase64(blob) {
+    return readDataUrl(blob).then(function (url) {
+      var comma = url.indexOf(',');
+      return comma >= 0 ? url.slice(comma + 1) : '';
+    });
+  }
+
+  function clickNewTab(url) {
+    var anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.target = '_blank';
+    anchor.rel = 'noopener';
+    anchor.style.display = 'none';
+    document.body.appendChild(anchor);
+    try {
+      anchor.click();
+    } finally {
+      window.setTimeout(function () { anchor.remove(); }, 1000);
+    }
+  }
+
+  function canInflate() {
+    return typeof window.CompressionStream === 'function' && typeof window.Response === 'function' &&
+      typeof Blob.prototype.stream === 'function';
+  }
+
+  function gzipText(text) {
+    var stream = new Blob([text]).stream().pipeThrough(new window.CompressionStream('gzip'));
+    return new Response(stream).blob();
+  }
+
+  function inflatingPageUrl(title, payload) {
+    var head = '<!doctype html><html><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<title>' + escapeHtml(title) + '</title></head><body>' +
+      '<script type="application/octet-stream" id="lucent-packed">';
+    var tail = '</scr' + 'ipt><script>(function(){' +
+      'function fail(e){document.body.textContent="无法展开这个页面（"+(e&&e.message||e)+"），请回到文件架用“下载打包页”。";}' +
+      'try{' +
+        'var b=Uint8Array.from(atob(document.getElementById("lucent-packed").textContent),function(c){return c.charCodeAt(0);});' +
+        'new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream("gzip"))).text()' +
+          '.then(function(t){document.open();document.write(t);document.close();},fail);' +
+      '}catch(e){fail(e);}' +
+      '})();</scr' + 'ipt></body></html>';
+    // Base64 is already URL-safe inside a data: URL; only the wrapper needs encoding.
+    return 'data:text/html;charset=utf-8,' + encodeURIComponent(head) + payload + encodeURIComponent(tail);
+  }
+
+  function airaHtmlUrl(html, blob, title) {
+    var header = 'data:text/html;charset=utf-8;base64,';
+    if (header.length + base64Length(blob.size) <= DATA_URL_LIMIT) {
+      return readBase64(blob).then(function (payload) {
+        return { url: header + payload, compressed: false };
+      });
+    }
+    if (!canInflate()) return Promise.resolve(null);
+    return gzipText(html).then(function (packed) {
+      if (base64Length(packed.size) + 2048 > DATA_URL_LIMIT) return null;
+      return readBase64(packed).then(function (payload) {
+        var url = inflatingPageUrl(title, payload);
+        return url.length <= DATA_URL_LIMIT ? { url: url, compressed: true } : null;
+      });
+    });
+  }
+
   function openDataEntry(entry, mime) {
     if (!entry.file) return;
     setStatus('正在准备 ' + entry.name + '…');
+    if (inAiraHome()) {
+      var type = mime || entry.file.type || 'application/octet-stream';
+      var header = 'data:' + type + ';base64,';
+      if (header.length + base64Length(entry.file.size) > DATA_URL_LIMIT) {
+        setStatus(entry.name + ' 有 ' + formatBytes(entry.file.size) + '，超过 Aira 从主页打开的上限（约 1.4 MB）；请用“下载”', 'warn');
+        return;
+      }
+      readBase64(entry.file).then(function (payload) {
+        clickNewTab(header + payload);
+        setStatus('已交给 Aira 打开 · ' + entry.name, 'good');
+      }).catch(function (error) {
+        setStatus('打开失败：' + errorText(error) + '；请用“下载”保存', 'warn');
+      });
+      return;
+    }
     var blob;
     try {
       blob = (!mime || entry.file.type === mime) ? entry.file : entry.file.slice(0, entry.file.size, mime);
@@ -2388,23 +2480,41 @@
       settled = true;
       setStatus('打包超过 10 秒，已取消；请用“下载打包页”保存 ' + entry.name, 'warn');
     }, 10000);
-    packHtmlEntry(entry).then(function (result) {
-      if (settled) return;
+    function finish() {
+      if (settled) return false;
       settled = true;
       window.clearTimeout(timer);
+      return true;
+    }
+    packHtmlEntry(entry).then(function (result) {
+      if (settled) return null;
       var blob = new Blob([result.html], { type: 'text/html;charset=utf-8' });
       var external = result.external || [];
       var externalNote = external.length ? ' · 在线资源 ' + external.length + ' 个' : '';
       var missing = result.missing.length ? ' · 缺失 ' + shortPath(result.missing[0], 60) : '';
-      if (blob.size > 12 * 1024 * 1024) {
-        setStatus('打包后 ' + formatBytes(blob.size) + '，超过打开上限；请用“下载打包页”' + missing + externalNote, 'warn');
-        return;
+      var summary = '打包后 ' + formatBytes(blob.size) + ' · 内联 ' + result.inlined + (missing || externalNote);
+      var tone = result.missing.length ? 'warn' : 'good';
+      if (!inAiraHome()) {
+        if (!finish()) return null;
+        if (blob.size > 12 * 1024 * 1024) {
+          setStatus('打包后 ' + formatBytes(blob.size) + '，超过打开上限；请用“下载打包页”' + missing + externalNote, 'warn');
+          return null;
+        }
+        if (!openBlobUrl(blob, entry.name + ' · 打包页')) return null;
+        setStatus('已请求在新标签页打开 · ' + summary, tone);
+        return null;
       }
-      if (!openBlobUrl(blob, entry.name + ' · 打包页')) return;
-      setStatus('已交给 Aira 打开 · 打包后 ' + formatBytes(blob.size) + ' · 内联 ' + result.inlined +
-        (result.missing.length ? ' · 缺失 ' + shortPath(result.missing[0], 60) : externalNote),
-        result.missing.length ? 'warn' : 'good');
+      return airaHtmlUrl(result.html, blob, entry.name).then(function (prepared) {
+        if (!finish()) return;
+        if (!prepared) {
+          setStatus('打包后 ' + formatBytes(blob.size) + '，压缩后仍超过 Aira 从主页打开的上限；请用“下载打包页”' + missing + externalNote, 'warn');
+          return;
+        }
+        clickNewTab(prepared.url);
+        setStatus('已交给 Aira 打开 · ' + summary + (prepared.compressed ? ' · 压缩后 ' + formatBytes(prepared.url.length) : ''), tone);
+      });
     }).catch(function (error) {
+      if (!finish()) return;
       setStatus('打包失败：' + errorText(error), 'warn');
     });
   }
