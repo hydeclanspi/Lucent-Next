@@ -156,6 +156,8 @@
 
 真正的工作台体验：运筹帷幄，一览通透。
 
+→ 深入：[本地文件架 · 打开一页](docs/local-shelf.md)
+
 ## 02 · 发射台：念起，光行
 
 <p align="center"><img src="showcase/media/motion-six.webp" alt="搜索动效预览以 0.35 倍慢放依次演示六款动效：一线入光、微棱、快门、铂丝、穿针、近轨" width="92.5%"></p>
@@ -367,6 +369,7 @@ tests/                      引擎、渲染器、存储与浏览器测试
 - [通透玻璃与设计语言](docs/glass.md)
 - [念起，光行：搜索动效、模拟发射、Random 与绢光](docs/motion.md)
 - [场志：本地数据层](docs/chronicle.md)
+- [本地文件架 · 打开一页](docs/local-shelf.md)
 - [演进：25 天，111 个版本](docs/evolution.md)
 - [验证](docs/VERIFICATION.md) · [部署](docs/DEPLOYMENT.md) · [维护](docs/MAINTAINING.md) · [资源与署名](docs/ASSETS.md)
 

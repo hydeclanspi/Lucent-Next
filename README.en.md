@@ -160,6 +160,8 @@ Star the files you come back to, and they go onto a shelf of liquid, clear blue-
 
 A real workbench: everything in hand, everything in clear view.
 
+→ Deep dive: [the local shelf · opening a page](docs/en/local-shelf.md)
+
 ## 02 · Launch pad: a thought, in flight
 
 <p align="center"><img src="showcase/media/motion-six.webp" alt="The search-motion preview plays the six motions at 0.35× — Lightline, Microprism, Shutter, Platinum filament, Through the eye, Near orbit" width="92.5%"></p>
@@ -370,6 +372,7 @@ tests/                      engine, renderer, storage and browser tests
 - [Lucent Glass and the design language](docs/en/glass.md)
 - [A thought, in flight: search motion, simulated launch, Random and the silk light](docs/en/motion.md)
 - [The chronicle: the local data layer](docs/en/chronicle.md)
+- [The local shelf: opening a page](docs/en/local-shelf.md)
 - [Evolution: 25 days, 111 versions](docs/en/evolution.md)
 - [Verification](docs/VERIFICATION.md) · [Deployment](docs/DEPLOYMENT.md) · [Maintaining](docs/MAINTAINING.md) · [Assets and credits](docs/ASSETS.md)
 
