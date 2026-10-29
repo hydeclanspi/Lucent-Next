@@ -3461,3 +3461,197 @@ body.shelf-open {
   .shelf-fav-remove,
   .shelf-icon-btn.shelf-fav-entry { transition: none; }
 }
+
+/* ============================================================
+   6.0.3 · 文件架卡「暖光清透液态玻璃」
+   配方取自主卡片的暖光液态清璃（glass-material.css）：背景采样、底色、环境冷暖、
+   面反光、边缘厚度与内缘线分开控制。
+   卡片的玻璃画在底层 ::before 上，卡片本身不做背景采样，这样里面的阅读面才能
+   隔着它看到真正的壁纸。阅读面（列表、预览、摘要与最近路径）各自再采一次样，
+   提亮、提饱和：像一块更厚、更亮的玻璃，颜色还在，而不是往彩色上刷一层白。
+   收藏模式（.is-fav-mode）不受影响。
+   ============================================================ */
+
+.shelf-root:not(.is-fav-mode) .shelf-mask {
+  background: rgba(8, 10, 20, 0.3);
+}
+
+:root[data-theme="dark"] .shelf-root:not(.is-fav-mode) .shelf-mask {
+  background: rgba(2, 4, 10, 0.44);
+}
+
+.shelf-root:not([hidden]) .shelf-card:not(.is-fav-mode) {
+  border-color: rgba(252, 249, 244, 0.55);
+  background: transparent;
+  box-shadow: 0 30px 80px -20px rgba(8, 10, 22, 0.45), 0 6px 18px -6px rgba(8, 10, 22, 0.22);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.shelf-root:not([hidden]) .shelf-card:not(.is-fav-mode)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 72% 52% at 0% 0%, rgba(250, 231, 209, 0.26), transparent 80%),
+    radial-gradient(ellipse 70% 62% at 100% 100%, rgba(214, 225, 240, 0.2), transparent 76%),
+    linear-gradient(116deg, rgba(255, 255, 255, 0.16), transparent 29%, transparent 73%, rgba(252, 250, 247, 0.08)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.1) 20%, transparent 36%, transparent 86%, rgba(255, 255, 255, 0.44) 93%, rgba(255, 255, 255, 0.62)),
+    radial-gradient(ellipse at 46% 45%, rgba(252, 250, 247, 0.3), rgba(247, 246, 243, 0.1) 74%, transparent),
+    linear-gradient(123deg, rgba(255, 255, 255, 0.28), rgba(246, 244, 240, 0.14) 42%, rgba(239, 238, 235, 0.2));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 1px 0 0 rgba(255, 255, 255, 0.32),
+    inset 0 -1px 0 rgba(177, 173, 168, 0.32),
+    inset 0 0 0 2px rgba(253, 250, 246, 0.075);
+  backdrop-filter: blur(30px) saturate(150%) brightness(1.14);
+  -webkit-backdrop-filter: blur(30px) saturate(150%) brightness(1.14);
+}
+
+@supports ((mask-composite: exclude) or (-webkit-mask-composite: xor)) {
+  .shelf-root:not([hidden]) .shelf-card:not(.is-fav-mode)::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    padding: 1.5px;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(130deg,
+      rgba(255, 255, 255, 0.88) 0%,
+      rgba(255, 250, 240, 0.58) 13%,
+      rgba(255, 255, 255, 0.09) 32%,
+      rgba(218, 214, 207, 0.19) 51%,
+      rgba(253, 249, 242, 0.58) 74%,
+      rgba(255, 255, 255, 0.12) 89%,
+      rgba(255, 255, 255, 0.62) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+}
+
+/* Reading surfaces: thicker, brighter glass of their own. */
+.shelf-card:not(.is-fav-mode) .shelf-list-pane,
+.shelf-card:not(.is-fav-mode) .shelf-preview-pane {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: linear-gradient(158deg, rgba(255, 250, 243, 0.18), rgba(255, 255, 255, 0.10) 46%, rgba(240, 246, 255, 0.14));
+  box-shadow:
+    0 14px 34px -22px rgba(16, 20, 40, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(28px) contrast(0.85) saturate(115%) brightness(1.28);
+  -webkit-backdrop-filter: blur(28px) contrast(0.85) saturate(115%) brightness(1.28);
+}
+
+.shelf-card:not(.is-fav-mode) .shelf-list-head {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0));
+}
+
+.shelf-card:not(.is-fav-mode) .shelf-summary,
+.shelf-card:not(.is-fav-mode) .shelf-recent-chip {
+  border-color: rgba(255, 255, 255, 0.55);
+  background: linear-gradient(158deg, rgba(255, 250, 243, 0.22), rgba(240, 246, 255, 0.14));
+  box-shadow: 0 10px 26px -20px rgba(16, 20, 40, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px) contrast(0.85) saturate(115%) brightness(1.28);
+  -webkit-backdrop-filter: blur(20px) contrast(0.85) saturate(115%) brightness(1.28);
+}
+
+/* Dark */
+:root[data-theme="dark"] .shelf-root:not([hidden]) .shelf-card:not(.is-fav-mode) {
+  border-color: rgba(220, 230, 255, 0.16);
+  box-shadow: 0 30px 80px -18px rgba(0, 0, 0, 0.6), 0 6px 18px -6px rgba(0, 0, 0, 0.32);
+}
+
+:root[data-theme="dark"] .shelf-root:not([hidden]) .shelf-card:not(.is-fav-mode)::before {
+  background:
+    radial-gradient(ellipse 72% 52% at 0% 0%, rgba(250, 231, 209, 0.07), transparent 80%),
+    radial-gradient(ellipse 70% 62% at 100% 100%, rgba(156, 192, 255, 0.08), transparent 76%),
+    linear-gradient(116deg, rgba(232, 240, 255, 0.05), transparent 32%, transparent 73%, rgba(220, 230, 250, 0.03)),
+    linear-gradient(180deg, rgba(12, 15, 26, 0.36), rgba(12, 15, 26, 0.12) 20%, transparent 36%, transparent 86%, rgba(12, 15, 26, 0.5) 93%, rgba(12, 15, 26, 0.62)),
+    radial-gradient(ellipse at 45% 44%, rgba(20, 24, 38, 0.3), rgba(16, 19, 30, 0.1) 76%, transparent),
+    linear-gradient(123deg, rgba(56, 62, 84, 0.36), rgba(16, 19, 31, 0.32) 45%, rgba(36, 41, 58, 0.38));
+  box-shadow:
+    inset 0 1px 0 rgba(236, 242, 255, 0.3),
+    inset 1px 0 0 rgba(236, 242, 255, 0.11),
+    inset 0 -1px 0 rgba(150, 165, 195, 0.14),
+    inset 0 0 0 2px rgba(236, 242, 255, 0.025);
+  backdrop-filter: blur(30px) saturate(135%) brightness(0.84);
+  -webkit-backdrop-filter: blur(30px) saturate(135%) brightness(0.84);
+}
+
+:root[data-theme="dark"] .shelf-root:not([hidden]) .shelf-card:not(.is-fav-mode)::after {
+  background: linear-gradient(130deg,
+    rgba(236, 242, 255, 0.46) 0%,
+    rgba(214, 226, 250, 0.26) 13%,
+    rgba(255, 255, 255, 0.04) 32%,
+    rgba(150, 165, 195, 0.1) 51%,
+    rgba(214, 226, 250, 0.24) 74%,
+    rgba(255, 255, 255, 0.05) 89%,
+    rgba(236, 242, 255, 0.3) 100%);
+}
+
+:root[data-theme="dark"] .shelf-card:not(.is-fav-mode) .shelf-list-pane,
+:root[data-theme="dark"] .shelf-card:not(.is-fav-mode) .shelf-preview-pane {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(158deg, rgba(24, 28, 44, 0.3), rgba(12, 15, 26, 0.2) 50%, rgba(18, 22, 38, 0.28));
+  box-shadow:
+    0 14px 34px -22px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(14px) saturate(150%) brightness(0.78);
+  -webkit-backdrop-filter: blur(14px) saturate(150%) brightness(0.78);
+}
+
+:root[data-theme="dark"] .shelf-card:not(.is-fav-mode) .shelf-list-head {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0));
+}
+
+:root[data-theme="dark"] .shelf-card:not(.is-fav-mode) .shelf-summary,
+:root[data-theme="dark"] .shelf-card:not(.is-fav-mode) .shelf-recent-chip {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(158deg, rgba(24, 28, 44, 0.28), rgba(12, 15, 26, 0.2));
+  box-shadow: 0 10px 26px -20px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px) saturate(150%) brightness(0.8);
+  -webkit-backdrop-filter: blur(12px) saturate(150%) brightness(0.8);
+}
+
+/* On clear glass the lightest grey is one step too faint: the subtitle and the
+   footer count take the second ink, and the list's quiet columns sit between the two. */
+.shelf-card:not(.is-fav-mode) .shelf-sub,
+.shelf-card:not(.is-fav-mode) .shelf-foot {
+  color: var(--ink-2);
+}
+
+.shelf-card:not(.is-fav-mode) .shelf-col:not(.is-active),
+.shelf-card:not(.is-fav-mode) .shelf-row-type,
+.shelf-card:not(.is-fav-mode) .shelf-row-time,
+.shelf-card:not(.is-fav-mode) .shelf-row-size {
+  color: rgba(22, 24, 31, 0.56);
+}
+
+:root[data-theme="dark"] .shelf-card:not(.is-fav-mode) .shelf-col:not(.is-active),
+:root[data-theme="dark"] .shelf-card:not(.is-fav-mode) .shelf-row-type,
+:root[data-theme="dark"] .shelf-card:not(.is-fav-mode) .shelf-row-time,
+:root[data-theme="dark"] .shelf-card:not(.is-fav-mode) .shelf-row-size {
+  color: rgba(238, 241, 248, 0.58);
+}
+
+.shelf-card:not(.is-fav-mode) .shelf-status.is-good { color: #2f6b42; }
+.shelf-card:not(.is-fav-mode) .shelf-status.is-warn { color: #8f3b2c; }
+:root[data-theme="dark"] .shelf-card:not(.is-fav-mode) .shelf-status.is-good { color: #9fe3b1; }
+:root[data-theme="dark"] .shelf-card:not(.is-fav-mode) .shelf-status.is-warn { color: #ffb0a8; }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .shelf-root:not([hidden]) .shelf-card:not(.is-fav-mode)::before { background: rgba(241, 239, 235, 0.96); }
+  :root[data-theme="dark"] .shelf-root:not([hidden]) .shelf-card:not(.is-fav-mode)::before { background: rgba(18, 21, 32, 0.97); }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .shelf-root:not([hidden]) .shelf-card:not(.is-fav-mode)::before { background: rgba(244, 242, 238, 0.96); }
+  :root[data-theme="dark"] .shelf-root:not([hidden]) .shelf-card:not(.is-fav-mode)::before { background: rgba(18, 21, 32, 0.97); }
+}
