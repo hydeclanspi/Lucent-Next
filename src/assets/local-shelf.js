@@ -1282,7 +1282,7 @@
   }
 
   // A path pasted into the search field opens that place in the list below,
-  // instead of filtering by it: file:// links, absolute and relative paths,
+  // instead of filtering by it: file: links, absolute and relative paths,
   // Windows backslashes. A path in a folder that is not mounted asks for that
   // folder, or any folder above it, in one tap.
   function looksLikePath(text) {
