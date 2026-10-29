@@ -28,6 +28,14 @@
     missingCopy: $('shelfMissingCopy'),
     missingRemove: $('shelfMissingRemove'),
     missingClose: $('shelfMissingClose'),
+    favAuth: $('shelfFavoriteAuth'),
+    favAuthTitle: $('shelfFavAuthTitle'),
+    favAuthCopy: $('shelfFavAuthCopy'),
+    favAuthRoot: $('shelfFavAuthRoot'),
+    favAuthPath: $('shelfFavAuthPath'),
+    favAuthNote: $('shelfFavAuthNote'),
+    favAuthGo: $('shelfFavAuthGo'),
+    favAuthClose: $('shelfFavAuthClose'),
     menu: $('shelfMenu'),
     menuHidden: $('shelfMenuHidden'),
     menuFiles: $('shelfMenuFiles'),
@@ -973,6 +981,7 @@
 
   function closeFavoritesPanel() {
     if (!refs.missing.hidden) closeFavoriteMissing();
+    if (!refs.favAuth.hidden) closeFavoriteAuth();
     refs.favoritesPanel.hidden = true;
     card.classList.remove('is-fav-mode');
     root.classList.remove('is-fav-mode');
@@ -1023,55 +1032,453 @@
         }).then(function () {
           state.favoriteRestoring = false;
           if (state.path.length && state.rootName === fav.root) openFavorite(fav);
+          else showFavoriteAuth(fav);
         }).catch(function () {
           state.favoriteRestoring = false;
-          setStatus('请先打开根文件夹「' + fav.root + '」再使用这个收藏', 'warn');
+          showFavoriteAuth(fav);
         });
         return;
       }
-      setStatus('请先打开根文件夹「' + fav.root + '」再使用这个收藏', 'warn');
+      openFavoriteRoot(fav);
       return;
     }
-    var segments = String(fav.path || fav.name).split('/').filter(Boolean);
-    if (!segments.length) return;
-    var parents = fav.kind === 'directory' ? segments : segments.slice(0, -1);
-    var fail = function () { showFavoriteMissing(fav); };
-    var finish = function () {
-      if (fav.kind === 'file') {
-        var target = state.entries.filter(function (entry) {
-          return entry.name === fav.name && entry.kind === 'file';
-        })[0];
-        if (!target) { showFavoriteMissing(fav); return; }
-        selectEntry(target);
+    var segments = String(fav.path || '').split('/').filter(Boolean);
+    if (!segments.length && fav.kind !== 'directory') segments = [fav.name];
+    revealRelative(segments, fav.kind !== 'directory').then(function (found) {
+      if (!found) {
+        showFavoriteMissing(fav);
+        return;
       }
       closeFavoritesPanel();
-    };
+    });
+  }
+
+  // Walks from the mounted root down a relative path. The path is committed only
+  // once every folder on the way exists; a file is then selected in its folder,
+  // with the filter and the search cleared if they would hide it. Resolves to the
+  // file's entry, to true for a folder, or to null when the path is not there.
+  function revealRelative(parts, isFile) {
+    var parents = isFile ? parts.slice(0, -1) : parts.slice();
+    var fileName = isFile ? parts[parts.length - 1] : '';
+    var walk;
     if (state.source === 'handle') {
-      if (!state.rootHandle) { fail(); return; }
-      state.path = [{ name: state.rootName, handle: state.rootHandle }];
-      state.currentHandle = state.rootHandle;
+      if (!state.rootHandle) return Promise.resolve(null);
+      var trail = [{ name: state.rootName, handle: state.rootHandle }];
       var step = function (base, index) {
-        if (index >= parents.length) return Promise.resolve();
+        if (index >= parents.length) return Promise.resolve(base);
         return base.getDirectoryHandle(parents[index]).then(function (next) {
-          state.path.push({ name: parents[index], handle: next });
-          state.currentHandle = next;
+          trail.push({ name: parents[index], handle: next });
           return step(next, index + 1);
         });
       };
-      step(state.rootHandle, 0).then(function () { return loadCurrentDirectory(); }).then(finish).catch(fail);
+      walk = step(state.rootHandle, 0).then(function (dir) {
+        state.path = trail;
+        state.currentHandle = dir;
+      });
+    } else {
+      var node = state.rootNode;
+      var nodes = [{ name: state.rootName, node: node }];
+      for (var i = 0; i < parents.length; i += 1) {
+        var child = node && node.children ? node.children.get(parents[i]) : null;
+        if (!child || child.kind !== 'directory') return Promise.resolve(null);
+        node = child;
+        nodes.push({ name: parents[i], node: node });
+      }
+      walk = Promise.resolve().then(function () {
+        state.path = nodes;
+        state.currentNode = node;
+      });
+    }
+    return walk.then(function () {
+      return loadCurrentDirectory();
+    }).then(function () {
+      if (!isFile) return true;
+      var target = state.entries.filter(function (entry) {
+        return entry.name === fileName && entry.kind === 'file';
+      })[0];
+      if (!target) return null;
+      if (visibleEntries().indexOf(target) < 0) {
+        if (state.query) {
+          state.query = '';
+          refs.search.value = '';
+          refs.searchClear.hidden = true;
+          renderRows();
+        }
+        if (visibleEntries().indexOf(target) < 0 && state.filter !== 'all') setFilter('all');
+      }
+      selectEntry(target);
+      revealRow(target);
+      return target;
+    }, function () {
+      return null;
+    });
+  }
+
+  function revealRow(entry) {
+    var rows = refs.rows.querySelectorAll('.shelf-row');
+    for (var i = 0; i < rows.length; i += 1) {
+      if (rows[i].getAttribute('data-path') === entry.path) {
+        try {
+          rows[i].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        } catch (_error) {
+          rows[i].scrollIntoView(false);
+        }
+        return;
+      }
+    }
+  }
+
+  // A favourite whose root folder is not mounted: use a handle this session can
+  // still read without asking; otherwise show where it lives and ask for the
+  // folder in one tap, then open the favourite.
+  function knownRootHandle(rootName) {
+    if (state.defaultHandle && state.defaultHandle.name === rootName) {
+      return { handle: state.defaultHandle, isDefault: true };
+    }
+    for (var i = 0; i < state.recent.length; i += 1) {
+      var meta = state.recent[i];
+      var handle = meta.source === 'handle' ? state.recentHandles.get(meta.id) : null;
+      if (handle && handle.name === rootName) return { handle: handle, isDefault: false };
+    }
+    return null;
+  }
+
+  function openFavoriteRoot(fav) {
+    var known = knownRootHandle(fav.root);
+    if (!known) {
+      showFavoriteAuth(fav);
       return;
     }
-    var node = state.rootNode;
-    state.path = [{ name: state.rootName, node: node }];
-    state.currentNode = node;
-    for (var i = 0; i < parents.length; i += 1) {
-      var child = node && node.children ? node.children.get(parents[i]) : null;
-      if (!child || child.kind !== 'directory') { fail(); return; }
-      node = child;
-      state.path.push({ name: parents[i], node: node });
-      state.currentNode = node;
+    ensureHandlePermission(known.handle, false).then(function (granted) {
+      if (!granted) {
+        showFavoriteAuth(fav);
+        return undefined;
+      }
+      setStatus('正在打开「' + fav.root + '」…');
+      return adoptHandle(known.handle, known.handle, known.isDefault).then(function () {
+        if (state.path.length && state.rootName === fav.root) openFavorite(fav);
+        else showFavoriteAuth(fav);
+      });
+    }).catch(function () {
+      showFavoriteAuth(fav);
+    });
+  }
+
+  function showFavoriteAuth(fav) {
+    var known = knownRootHandle(fav.root);
+    state.authFav = { fav: fav, handle: known ? known.handle : null, isDefault: !!(known && known.isDefault) };
+    refs.favAuthTitle.textContent = '授权「' + fav.root + '」后打开';
+    refs.favAuthCopy.textContent = (fav.kind === 'directory' ? '这个文件夹' : '这份文件') +
+      '在「' + fav.root + '」里，这次还没有授权。在系统窗口里选中「' + fav.root + '」，就会直接打开它。';
+    refs.favAuthRoot.textContent = fav.root;
+    refs.favAuthPath.textContent = [fav.root].concat(String(fav.path || '').split('/').filter(Boolean)).join(' / ');
+    setFavAuthNote('');
+    setFavAuthBusy(false);
+    presentFavoriteAuth();
+  }
+
+  // The card sits in the favourites panel when that is open, and on the shelf
+  // card itself otherwise, so it shows over whichever surface is in view.
+  function presentFavoriteAuth() {
+    var host = refs.favoritesPanel.hidden ? card : refs.favoritesPanel;
+    if (refs.favAuth.parentNode !== host) host.appendChild(refs.favAuth);
+    refs.favAuth.hidden = false;
+    window.setTimeout(function () { refs.favAuthGo.focus({ preventScroll: true }); }, 30);
+  }
+
+  function closeFavoriteAuth() {
+    state.authFav = null;
+    refs.favAuth.hidden = true;
+  }
+
+  function setFavAuthNote(text, tone) {
+    refs.favAuthNote.textContent = text;
+    refs.favAuthNote.hidden = !text;
+    refs.favAuthNote.classList.toggle('is-warn', tone === 'warn');
+  }
+
+  function setFavAuthBusy(busy) {
+    refs.favAuthGo.disabled = busy;
+    refs.favAuthGo.textContent = busy ? '正在打开系统窗口…' : '授权并打开';
+  }
+
+  // The folder picked may be the root itself, or a folder that holds it.
+  function pickedRoot(picked, rootName) {
+    if (!picked || picked.kind !== 'directory') return Promise.resolve(null);
+    if (picked.name === rootName) return Promise.resolve(picked);
+    return picked.getDirectoryHandle(rootName).catch(function () { return null; });
+  }
+
+  function authorizeFavorite() {
+    var pending = state.authFav;
+    if (!pending) return;
+    if (pending.parts) {
+      authorizePastedPath(pending);
+      return;
     }
-    loadCurrentDirectory().then(finish).catch(fail);
+    var fav = pending.fav;
+    if (state.forceInputFallback || typeof window.showDirectoryPicker !== 'function') {
+      state.pendingFavorite = fav;
+      closeFavoriteAuth();
+      setStatus('正在打开文件管理器，请选择「' + fav.root + '」…');
+      refs.folderInput.click();
+      return;
+    }
+    setFavAuthBusy(true);
+    setFavAuthNote('');
+    var startIn = pending.handle || WELL_KNOWN_DIRS[String(fav.root).toLowerCase()] || null;
+    var attempts = [];
+    if (startIn) attempts.push({ id: 'lucent-local-shelf', mode: 'read', startIn: startIn });
+    attempts.push({ mode: 'read' });
+    attempts.push(null);
+    if (pending.handle) armAiraRestore(pending.handle);
+    var picker = null;
+    var lastError = null;
+    for (var i = 0; i < attempts.length; i += 1) {
+      try {
+        picker = attempts[i] ? window.showDirectoryPicker(attempts[i]) : window.showDirectoryPicker();
+        break;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    if (!picker) {
+      setFavAuthBusy(false);
+      setFavAuthNote('无法打开系统文件夹窗口：' + errorText(lastError), 'warn');
+      return;
+    }
+    Promise.resolve(picker).then(function (picked) {
+      return pickedRoot(picked, fav.root).then(function (rootHandle) {
+        if (!rootHandle) {
+          setFavAuthBusy(false);
+          setFavAuthNote('选中的是「' + (picked && picked.name ? picked.name : '另一个文件夹') + '」，请选「' + fav.root + '」或包含它的文件夹', 'warn');
+          return undefined;
+        }
+        closeFavoriteAuth();
+        return adoptHandle(rootHandle, pending.handle || rootHandle, pending.isDefault).then(function () {
+          if (state.path.length && state.rootName === fav.root) openFavorite(fav);
+        });
+      });
+    }).catch(function (error) {
+      setFavAuthBusy(false);
+      setFavAuthNote(error && error.name === 'AbortError' ? '已取消选择' : '授权失败：' + errorText(error), 'warn');
+    });
+  }
+
+  function resumePendingFavorite() {
+    var parts = state.pendingPath;
+    state.pendingPath = null;
+    if (parts) {
+      var at = parts.lastIndexOf(state.rootName);
+      if (at < 0) setStatus('选中的「' + state.rootName + '」不在这个路径上', 'warn');
+      else revealPastedRest(parts.slice(at + 1));
+      return;
+    }
+    var fav = state.pendingFavorite;
+    state.pendingFavorite = null;
+    if (!fav) return;
+    if (state.path.length && state.rootName === fav.root) openFavorite(fav);
+    else setStatus('选中的是「' + state.rootName + '」，不是「' + fav.root + '」', 'warn');
+  }
+
+  // A path pasted into the search field opens that place in the list below,
+  // instead of filtering by it: file:// links, absolute and relative paths,
+  // Windows backslashes. A path in a folder that is not mounted asks for that
+  // folder, or any folder above it, in one tap.
+  function looksLikePath(text) {
+    var value = String(text || '').trim();
+    if (!value || value.length > 4096 || /[\r\n]/.test(value)) return false;
+    if (/^file:/i.test(value)) return true;
+    if (!/[\\/]/.test(value)) return false;
+    var parts = value.split(/[\\/]+/).filter(Boolean);
+    return parts.length >= 2 || /^[\\/~]/.test(value);
+  }
+
+  function isAbsolutePath(text) {
+    return /^(?:file:|[\\/~]|[A-Za-z]:[\\/])/i.test(String(text || '').trim());
+  }
+
+  function pathSegments(text) {
+    var value = String(text || '').trim().replace(/^["'“”‘’<]+|["'“”‘’>]+$/g, '');
+    if (/^file:/i.test(value)) {
+      try {
+        var url = new URL(value);
+        value = url.pathname;
+      } catch (_error) {
+        value = value.replace(/^file:\/*/i, '/');
+      }
+      try { value = decodeURIComponent(value); } catch (_error) {}
+    } else if (/%[0-9A-Fa-f]{2}/.test(value)) {
+      try { value = decodeURIComponent(value); } catch (_error) {}
+    }
+    var parts = [];
+    value.replace(/\\/g, '/').split('/').forEach(function (part) {
+      if (!part || part === '.' || part === '~') return;
+      if (part === '..') { parts.pop(); return; }
+      parts.push(part);
+    });
+    return parts;
+  }
+
+  function knownRootNames() {
+    var names = [];
+    var add = function (name) { if (name && names.indexOf(name) < 0) names.push(name); };
+    if (state.defaultMeta) add(state.defaultMeta.name);
+    state.recent.forEach(function (meta) { add(meta.name); });
+    state.favorites.forEach(function (fav) { add(fav.root); });
+    return names;
+  }
+
+  function revealPastedRest(rel) {
+    var looksFile = rel.length > 0 && /\.[A-Za-z0-9]{1,8}$/.test(rel[rel.length - 1]);
+    var attempt = !rel.length ? revealRelative([], false) :
+      revealRelative(rel, looksFile).then(function (found) {
+        return found || revealRelative(rel, !looksFile);
+      });
+    return attempt.then(function (found) {
+      var where = [state.rootName].concat(rel).join(' / ');
+      if (found) setStatus('已定位 · ' + where, 'good');
+      else setStatus('没有找到 ' + where + '，已停在最近的一层', 'warn');
+      return !!found;
+    });
+  }
+
+  function clearSearchQuiet() {
+    refs.search.value = '';
+    state.query = '';
+    refs.searchClear.hidden = true;
+  }
+
+  function locatePastedPath(text) {
+    var parts = pathSegments(text);
+    clearSearchQuiet();
+    if (!parts.length) {
+      renderRows();
+      return Promise.resolve(false);
+    }
+    var mounted = state.path.length && state.rootName && !state.flatFiles;
+    if (mounted) {
+      var at = parts.lastIndexOf(state.rootName);
+      if (at >= 0) {
+        setStatus('正在定位 ' + parts.slice(at).join(' / ') + '…');
+        return revealPastedRest(parts.slice(at + 1));
+      }
+      if (!isAbsolutePath(text)) {
+        var here = state.path.slice(1).map(function (part) { return part.name; });
+        setStatus('正在定位 ' + parts.join(' / ') + '…');
+        return revealRelative(here.concat(parts), true).then(function (found) {
+          if (found) return found;
+          return revealRelative(here.concat(parts), false);
+        }).then(function (found) {
+          if (found) {
+            setStatus('已定位 · ' + [state.rootName].concat(here, parts).join(' / '), 'good');
+            return true;
+          }
+          return revealPastedRest(parts);
+        });
+      }
+    }
+    var known = knownRootNames();
+    var rootAt = -1;
+    for (var i = parts.length - 1; i >= 0; i -= 1) {
+      if (known.indexOf(parts[i]) >= 0) { rootAt = i; break; }
+    }
+    if (rootAt < 0) {
+      renderRows();
+      showPathAuth(parts, null);
+      return Promise.resolve(false);
+    }
+    var rootName = parts[rootAt];
+    var handle = knownRootHandle(rootName);
+    var rest = parts.slice(rootAt + 1);
+    var ask = function () {
+      renderRows();
+      showPathAuth(parts, rootName);
+      return false;
+    };
+    if (!handle) return Promise.resolve(ask());
+    return ensureHandlePermission(handle.handle, false).then(function (granted) {
+      if (!granted) return ask();
+      return adoptHandle(handle.handle, handle.handle, handle.isDefault).then(function () {
+        return revealPastedRest(rest);
+      });
+    }).catch(ask);
+  }
+
+  function showPathAuth(parts, rootName) {
+    var known = rootName ? knownRootHandle(rootName) : null;
+    var folder = rootName || (parts.length > 1 ? parts[parts.length - 2] : parts[0]);
+    state.authFav = { parts: parts, rootName: rootName, handle: known ? known.handle : null, isDefault: !!(known && known.isDefault) };
+    refs.favAuthTitle.textContent = rootName ? '授权「' + rootName + '」后定位' : '授权它所在的文件夹';
+    refs.favAuthCopy.textContent = rootName ?
+      '这个路径在「' + rootName + '」里，这次还没有授权。在系统窗口里选中「' + rootName + '」或它上层的文件夹，下面就会打开这个位置。' :
+      '这个路径不在已挂载的文件夹里。在系统窗口里选中「' + folder + '」或它上层的任一文件夹，下面就会打开这个位置。';
+    refs.favAuthRoot.textContent = folder;
+    refs.favAuthPath.textContent = parts.join(' / ');
+    setFavAuthNote('');
+    setFavAuthBusy(false);
+    presentFavoriteAuth();
+  }
+
+  function authorizePastedPath(pending) {
+    var parts = pending.parts;
+    if (state.forceInputFallback || typeof window.showDirectoryPicker !== 'function') {
+      state.pendingPath = parts;
+      closeFavoriteAuth();
+      setStatus('正在打开文件管理器…');
+      refs.folderInput.click();
+      return;
+    }
+    setFavAuthBusy(true);
+    setFavAuthNote('');
+    var startIn = pending.handle || (pending.rootName && WELL_KNOWN_DIRS[String(pending.rootName).toLowerCase()]) || null;
+    var options = { mode: 'read' };
+    if (startIn) {
+      options.id = 'lucent-local-shelf';
+      options.startIn = startIn;
+    }
+    if (pending.handle) armAiraRestore(pending.handle);
+    var picker;
+    try {
+      picker = window.showDirectoryPicker(options);
+    } catch (error) {
+      try {
+        picker = window.showDirectoryPicker({ mode: 'read' });
+      } catch (second) {
+        picker = Promise.reject(second);
+      }
+    }
+    Promise.resolve(picker).then(function (picked) {
+      var at = picked && picked.kind === 'directory' ? parts.lastIndexOf(picked.name) : -1;
+      if (at < 0) {
+        setFavAuthBusy(false);
+        setFavAuthNote('「' + (picked && picked.name ? picked.name : '这个文件夹') + '」不在这个路径上，请选它所在的文件夹或更上层', 'warn');
+        return undefined;
+      }
+      closeFavoriteAuth();
+      var same = pending.handle && pending.handle.name === picked.name;
+      return adoptHandle(picked, same ? pending.handle : picked, !!(same && pending.isDefault)).then(function () {
+        return revealPastedRest(parts.slice(at + 1));
+      });
+    }).catch(function (error) {
+      setFavAuthBusy(false);
+      setFavAuthNote(error && error.name === 'AbortError' ? '已取消选择' : '授权失败：' + errorText(error), 'warn');
+    });
+  }
+
+  function onSearchPaste(event) {
+    var data = event.clipboardData || window.clipboardData;
+    var text = data && typeof data.getData === 'function' ? data.getData('text') : '';
+    if (!looksLikePath(text)) return;
+    event.preventDefault();
+    locatePastedPath(text);
+  }
+
+  function onSearchKeydown(event) {
+    if (event.key !== 'Enter' || event.isComposing) return;
+    if (!looksLikePath(refs.search.value)) return;
+    event.preventDefault();
+    locatePastedPath(refs.search.value);
   }
 
   function bindRenamePress(node, getMeta) {
@@ -3276,7 +3683,7 @@
     var folderName = files[0].webkitRelativePath ? files[0].webkitRelativePath.split('/')[0] : '本地文件夹';
     var restored = state.restorePickPending;
     state.restorePickPending = false;
-    mountInputFiles(files, folderName, restored);
+    mountInputFiles(files, folderName, restored).then(resumePendingFavorite);
   }
 
   function pickFiles() {
@@ -3295,8 +3702,15 @@
     mountInputFiles(files, '已选文件', false, true, true);
   }
 
-  function onSearchInput() {
-    state.query = String(refs.search.value || '').trim();
+  function onSearchInput(event) {
+    var value = String(refs.search.value || '');
+    var jump = value.trim().length - String(state.query || '').length;
+    var pasted = event && (event.inputType === 'insertFromPaste' || event.inputType === 'insertReplacementText');
+    if ((pasted || jump >= 8) && looksLikePath(value)) {
+      locatePastedPath(value);
+      return;
+    }
+    state.query = value.trim();
     refs.searchClear.hidden = !state.query;
     renderRows();
   }
@@ -3714,6 +4128,12 @@
   function onGlobalKeydown(event) {
     if (!state.open) return;
     if (event.key === 'Escape') {
+      if (!refs.favAuth.hidden) {
+        closeFavoriteAuth();
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
       if (!refs.missing.hidden) {
         closeFavoriteMissing();
         event.preventDefault();
@@ -3838,6 +4258,11 @@
       renderFavoritesPanel();
     });
     refs.missingClose.addEventListener('click', closeFavoriteMissing);
+    refs.favAuthGo.addEventListener('click', authorizeFavorite);
+    refs.favAuthClose.addEventListener('click', closeFavoriteAuth);
+    refs.favAuth.addEventListener('click', function (event) {
+      if (event.target === refs.favAuth) closeFavoriteAuth();
+    });
     refs.missing.addEventListener('click', function (event) {
       if (event.target === refs.missing) closeFavoriteMissing();
     });
@@ -3896,6 +4321,8 @@
     refs.defaultBtn.addEventListener('click', saveDefaultPath);
     refs.refresh.addEventListener('click', refreshFolder);
     refs.search.addEventListener('input', onSearchInput);
+    refs.search.addEventListener('paste', onSearchPaste);
+    refs.search.addEventListener('keydown', onSearchKeydown);
     refs.searchClear.addEventListener('click', clearSearch);
     refs.listHead.addEventListener('click', onHeaderClick);
     refs.up.addEventListener('click', goUp);
@@ -3920,6 +4347,12 @@
 
     card.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') {
+        if (!refs.favAuth.hidden) {
+          closeFavoriteAuth();
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
         if (!refs.missing.hidden) {
           closeFavoriteMissing();
           event.preventDefault();

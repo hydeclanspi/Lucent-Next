@@ -359,7 +359,7 @@
               <circle cx="11" cy="11" r="5.8"/>
               <path d="M15.4 15.4 20 20"/>
             </svg>
-            <input id="shelfSearch" type="search" placeholder="筛选当前文件夹" autocomplete="off" spellcheck="false">
+            <input id="shelfSearch" type="search" placeholder="搜索当前文件夹 / 粘贴路径" aria-label="搜索当前文件夹，或粘贴路径定位" autocomplete="off" spellcheck="false">
             <button class="shelf-search-clear" id="shelfSearchClear" type="button" aria-label="清空筛选" hidden>×</button>
           </label>
           <div class="shelf-view-toggle" role="group" aria-label="视图切换">
@@ -545,6 +545,20 @@
               <button class="shelf-btn primary" id="shelfMissingCopy" type="button">复制原文件名</button>
               <button class="shelf-btn" id="shelfMissingRemove" type="button">移除收藏</button>
               <button class="shelf-btn" id="shelfMissingClose" type="button">关闭</button>
+            </div>
+          </div>
+        </div>
+        <div class="shelf-missing shelf-fav-auth" id="shelfFavoriteAuth" hidden>
+          <div class="shelf-missing-card" role="dialog" aria-modal="true" aria-labelledby="shelfFavAuthTitle">
+            <span class="shelf-missing-kicker">ACCESS</span>
+            <strong class="shelf-missing-title" id="shelfFavAuthTitle">授权后打开</strong>
+            <p class="shelf-missing-copy" id="shelfFavAuthCopy"></p>
+            <code class="shelf-missing-name" id="shelfFavAuthRoot"></code>
+            <p class="shelf-missing-path" id="shelfFavAuthPath"></p>
+            <p class="shelf-fav-auth-note" id="shelfFavAuthNote" role="status" hidden></p>
+            <div class="shelf-missing-actions">
+              <button class="shelf-btn primary" id="shelfFavAuthGo" type="button">授权并打开</button>
+              <button class="shelf-btn" id="shelfFavAuthClose" type="button">关闭</button>
             </div>
           </div>
         </div>

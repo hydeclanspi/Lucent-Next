@@ -550,7 +550,7 @@ body.shelf-open {
   border: 0;
   outline: none;
   background: transparent;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .shelf-search input::placeholder {
@@ -2517,6 +2517,19 @@ body.shelf-open {
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
+
+.shelf-fav-auth-note {
+  margin: -8px 0 14px;
+  color: var(--ink-3);
+  font-size: 10.5px;
+  line-height: 1.6;
+}
+
+.shelf-fav-auth-note[hidden] { display: none; }
+
+.shelf-fav-auth-note.is-warn { color: #b0701c; }
+
+:root[data-theme="dark"] .shelf-fav-auth-note.is-warn { color: #e2b26a; }
 
 .shelf-missing-actions {
   display: flex;
