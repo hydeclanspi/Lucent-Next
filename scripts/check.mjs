@@ -26,4 +26,34 @@ for (const PACKAGE of ['product-finale/lucent-5.0.0-aira.zip', 'product-finale/l
   if (!documented.includes(digest)) throw new Error(`${PACKAGE} does not match the documented SHA-256`);
 }
 
-console.log(`${count} scripts passed syntax checks; release identity and device package digests verified.`);
+// Aira refuses to import a homepage package whose scripts contain any of these, comments
+// included (CustomHomepageHtmlValidationService in mason173/Aira-browser). The scripts in
+// src/assets are the ones the device packages share.
+const AIRA_SCRIPT_RULES = [
+  [/navigator\.serviceworker/i, 'a service worker'],
+  [/serviceworker\s*\.\s*register/i, 'a service worker'],
+  [/register\s*\(\s*["'][^"']*service-worker/i, 'a service worker'],
+  [/\bfile:\/\//i, 'the text file://'],
+  [/\b(?:window\.)?location\s*\.\s*(?:href|assign|replace)\b/i, 'location.href, assign or replace'],
+  [/\bwindow\s*\.\s*open\s*\(/i, 'window.open('],
+  [/\bfetch\s*\(/i, 'fetch('],
+  [/\bXMLHttpRequest\b/i, 'XMLHttpRequest'],
+  [/\bnavigator\s*\.\s*sendBeacon\b/i, 'navigator.sendBeacon'],
+  [/\bWebSocket\s*\(/i, 'WebSocket('],
+  [/\bEventSource\s*\(/i, 'EventSource(']
+];
+let shared = 0;
+for (const file of await readdir(path.join(root, 'src/assets'))) {
+  if (!/\.m?js$/.test(file)) continue;
+  const text = await readFile(path.join(root, 'src/assets', file), 'utf8');
+  for (const [rule, label] of AIRA_SCRIPT_RULES) {
+    const match = text.match(rule);
+    if (match) {
+      const line = text.slice(0, match.index).split('\n').length;
+      throw new Error(`src/assets/${file}:${line} contains ${label}; Aira would refuse to import the package`);
+    }
+  }
+  shared++;
+}
+
+console.log(`${count} scripts passed syntax checks; release identity and device package digests verified; ${shared} shared scripts pass Aira's import rules.`);
