@@ -4,7 +4,7 @@ Web edition 6.0.2. Last full run: **2026-10-27** (5.9.7), Node.js 22.23.1, Chrom
 
 | Check | Command | Result |
 |---|---|---|
-| Syntax and release identity | `npm run check` | 34 scripts pass `node --check`; release identity 6.0.2 and all six device packages' SHA-256 digests verified |
+| Syntax and release identity | `npm run check` | 34 scripts pass `node --check`; release identity 6.0.2 and all six device packages' SHA-256 digests verified; the 13 shared scripts in `src/assets` pass Aira's import rules |
 | Unit tests | `npm test` | **42 passed** |
 | Static build | `npm run build` | Passed |
 | Browser flows | `npm run test:browser` | **22 passed**; no uncaught page exception in any tested flow |
@@ -40,7 +40,7 @@ Outgoing provider pages are intercepted: the tests verify the real destination U
 
 - **Feel on a touchscreen.** The tests prove the rules; the feel of the Lueurs under a finger was tuned on the device across 111 versions, and is not re-measured here.
 - **The device packages.** All six ZIPs in `product-finale/` are kept byte for byte and their digests are checked; the web edition itself was accepted in the browser, beside screenshots of the device.
-- **The local shelf's pickers.** Choosing folders and files through ArkWeb's file manager, re-granting access and opening pages from Aira depend on the device and its browser; they were tried on the MatePad Edge build by build, from 5.2.0 to 5.9.4, and are not exercised here. The 5.9.7 persistent-grant path was checked in the source and built web edition, not with a fresh MatePad import. 6.0.1's `data:` opening was checked in a simulated Aira host, not yet on the MatePad; whether ArkWeb displays a PDF given as a `data:` address is not known. 6.0.2's grant card and pasted paths were checked against a stand-in folder window; where ArkWeb's own window starts, and a grant's real state after reopening, are left to the device.
+- **The local shelf's pickers.** Choosing folders and files through ArkWeb's file manager, re-granting access and opening pages from Aira depend on the device and its browser; they were tried on the MatePad Edge build by build, from 5.2.0 to 5.9.4, and are not exercised here. The 5.9.7 persistent-grant path was checked in the source and built web edition, not with a fresh MatePad import. 6.0.1's `data:` opening was checked in a simulated Aira host, not yet on the MatePad; whether ArkWeb displays a PDF given as a `data:` address is not known. The first 6.0.2 package was refused on import, because a comment in the shelf script contained the text `file://`; the package now in `product-finale/` passes Aira's import rules, checked file by file on the unpacked ZIP. 6.0.2's grant card and pasted paths were checked against a stand-in folder window; where ArkWeb's own window starts, and a grant's real state after reopening, are left to the device.
 - **The film in real time.** The suite seeks the film to fixed moments. Smooth real-time playback in a browser depends on the viewer's graphics hardware; `Lucent-Film.mp4` at the repository root is the reference render.
 - **Other browsers.** This run used Chromium; the CI workflow runs the same suites on Linux for every push and pull request. See the repository's Actions page for its current status.
 

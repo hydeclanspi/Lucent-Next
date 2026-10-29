@@ -36,7 +36,7 @@ All six ZIPs are kept byte for byte as shipped; only their outer filenames chang
 
 | 文件 · File | SHA-256 |
 |---|---|
-| `lucent-6.0.2-aira.zip` | `d725b7fc5119b2918939d5e5254da341704cface9dec41ba26064eb32a9a9ed5` |
+| `lucent-6.0.2-aira.zip` | `46d6f21fd60b33646f4c5dfb2f220dd2577f28cafc99bbd34499ab97c3ebf871` |
 | `lucent-6.0.1-aira.zip` | `50ecbf01b29a0bddc68c710f2a52ee1eee4925d0efbde04eb29c3a020f7c79cc` |
 | `lucent-5.9.7-aira.zip` | `cb8df1636127810884d61f9974c40415c0319ab5852028188aaabf9184e754d4` |
 | `lucent-5.9.4-aira.zip` | `3fcadcce5b5bbfa18d0f11b7c83f2721f45218e3af326be553610f419ba416ee` |
