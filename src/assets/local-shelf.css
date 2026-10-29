@@ -1061,6 +1061,7 @@ body.shelf-open {
 }
 
 .shelf-crumb.is-current {
+  margin-left: 10px;
   color: var(--ink);
   background: rgba(255, 255, 255, 0.28);
   font-weight: 700;
