@@ -1,12 +1,12 @@
 # 本地文件架 · 找到一页，打开一页
 
-**先找到一页，再把它交给浏览器。找到，靠收藏与一条粘贴进来的路径；打开，在 Aira 里要过三道关：打包、宿主、长度。**
+**先找到一页，再把它交给浏览器。找到，靠收藏与一条粘贴进来的路径；打开，在 Aira 里要过三道关：打包、宿主、长度。Markdown 多一步：先排成一页。**
 
 [English](en/local-shelf.md) · [返回 README](../README.md)
 
 ---
 
-文件架在主页里就地预览一页 HTML：静态呈现，脚本与内嵌框架一律剥去（见[产品架构 · 本地文件架](architecture.md#本地文件架)）。要看完整的页面——脚本运行、黄框可以填写、可以打印成 PDF——就点「在新标签页打开」。§1–§8 讲这个动作：一页文件怎样从文件架走进一个新标签页，以及 6.0.1 为什么改了它的走法。§9–§11 讲在那之前的一步，6.0.2 起：从收藏回到一页，和把一个路径粘贴进搜索框直接定位。
+文件架在主页里就地预览一页 HTML：静态呈现，脚本与内嵌框架一律剥去（见[产品架构 · 本地文件架](architecture.md#本地文件架)）。要看完整的页面——脚本运行、黄框可以填写、可以打印成 PDF——就点「在新标签页打开」。§1–§8 讲这个动作：一页文件怎样从文件架走进一个新标签页，以及 6.0.1 为什么改了它的走法。§9–§11 讲在那之前的一步，6.0.2 起：从收藏回到一页，和把一个路径粘贴进搜索框直接定位。§12–§14 讲 6.0.4：Markdown 也能在新标签页里打开，连同其中网上的图片。
 
 ## 1. 三条路径
 
@@ -17,11 +17,11 @@
 | Aira | 压缩后仍放不下 | 不打开；状态栏提示用「下载打包页」 | — |
 | 电脑浏览器（网页版） | 打包后 ≤ 12 MB | 浏览器自己的新标签页 | `blob:` |
 
-图片与 PDF 走同一条路：在 Aira 里交给 `data:` 地址，原文件至多约 1.43 MB，超出则提示用「下载」；在电脑浏览器里仍是 `blob:`。
+图片与 PDF 走同一条路：在 Aira 里交给 `data:` 地址，原文件至多约 1.43 MB，超出则提示用「下载」；在电脑浏览器里仍是 `blob:`。Markdown 先排成一页 HTML（§12），再走上表。
 
 ## 2. 打包
 
-文件架只读你挂载的文件夹，页面里的相对路径要在交出去之前兑现（[`packHtmlEntry`](../src/assets/local-shelf.js#L3143-L3314)）：
+文件架只读你挂载的文件夹，页面里的相对路径要在交出去之前兑现（[`packHtmlSource`](../src/assets/local-shelf.js#L3384-L3548)；Markdown 排成的页面也经过它）：
 
 - 本地样式表换成内联 `<style>`，样式里的 `url()` 资源单个至多 4 MB；本地脚本、图片与媒体换成 `data:` 资源，单个至多 8 MB。
 - `http`、`https` 与 `//` 开头的资源原样保留，计入「在线资源」：在线字体、CDN 上的库，打开后照常联网加载。
@@ -44,7 +44,7 @@
 
 ## 4. 交给 Aira 的是 `data:` 地址
 
-6.0.1 起，文件架在 Aira 里（以 Aira 注入的 `window.AiraHome` 为准）把打包好的页面编成 base64，拼成 `data:` 地址，仍用同一个标准的新标签链接交出去（[`openHtmlEntry`](../src/assets/local-shelf.js#L2881-L2927)、[`airaHtmlUrl`](../src/assets/local-shelf.js#L2837-L2852)）。
+6.0.1 起，文件架在 Aira 里（以 Aira 注入的 `window.AiraHome` 为准）把打包好的页面编成 base64，拼成 `data:` 地址，仍用同一个标准的新标签链接交出去（[`openPackedEntry`](../src/assets/local-shelf.js#L3108-L3154)、[`airaHtmlUrl`](../src/assets/local-shelf.js#L3050-L3065)）。
 
 - **它过得了宿主。** `data` 在表里。Aira 新开标签页后用 `controller.loadUrl` 加载（[`BrowserWebLoadCoordinator`](https://github.com/mason173/Aira-browser/blob/5593ec02aa4fb7c12606f44651948ac1c46a06bb/AiraBrowser/entry/src/main/ets/core/browser/BrowserWebLoadCoordinator.ets#L288)），这是浏览器发起的加载；Chromium 只拦网页自己发起的顶层 `data:` 跳转，不拦这一种。
 - **为什么是 base64。** base64 恒为原文的 4/3。百分号编码对英文页面约 1.5 倍，对中文页面约 3 倍——一个汉字三个字节，每个字节写成三个字符。一份 25.4 KB 的英文提案页，base64 是 33.9 KB，百分号编码是 37.6 KB。
@@ -61,7 +61,7 @@ Chromium 拒绝长于 2 MiB（2,097,152 个字符）的地址，加载直接中�
 
 文件架把上限定在 2,000,000 个字符（`DATA_URL_LIMIT`），留出余量；换算成页面，打包后约 1.43 MB 以内直接打开。
 
-再大的页面先用 `CompressionStream` 压成 gzip，装进一页很小的引导页（[`inflatingPageUrl`](../src/assets/local-shelf.js#L2820-L2835)）：
+再大的页面先用 `CompressionStream` 压成 gzip，装进一页很小的引导页（[`inflatingPageUrl`](../src/assets/local-shelf.js#L3033-L3048)）：
 
 ```html
 <script type="application/octet-stream" id="lucent-packed">H4sIAAAA…</script>
@@ -124,28 +124,28 @@ Chromium 拒绝长于 2 MiB（2,097,152 个字符）的地址，加载直接中�
 | 句柄需要授权（例如 Aira 重开之后） | 同上 | 弹出小窗「授权「根」后打开」，写明根文件夹与完整路径；点「授权并打开」，系统文件夹窗口从这个根打开，选中后自动走到文件并选中，收藏夹收起 |
 | 装着能记住授权的 Aira（`AiraHome.localFolders`） | 静默恢复 | 同左；恢复不成就落到上一行 |
 
-- **选它的上层也行。** 在选中的文件夹里找同名的子文件夹，找到就挂它（[`pickedRoot`](../src/assets/local-shelf.js#L1206-L1210)）。
+- **选它的上层也行。** 在选中的文件夹里找同名的子文件夹，找到就挂它（[`pickedRoot`](../src/assets/local-shelf.js#L1207-L1211)）。
 - **选错了，或取消了。** 小窗不关，写明选中的是哪个文件夹、该选哪个，或「已取消选择」。
 - **没有 `showDirectoryPicker` 的环境**退回网页的文件夹选择，挂载之后同样接着打开收藏。
-- **小窗挂在看得见的那一层。** 收藏夹开着就挂在收藏夹里，关着就挂在书架卡片上（[`presentFavoriteAuth`](../src/assets/local-shelf.js#L1182-L1187)）。
-- **沿路径走**（[`revealRelative`](../src/assets/local-shelf.js#L1060-L1115)）只在每一级都存在时才落定；文件找到后，如果当前的搜索或类型筛选会把它藏起来，先清掉搜索、再切到「全部类型」，然后选中并滚到可见处。路径中途断了，仍是原来的「文件已移动或重命名」小窗。
+- **小窗挂在看得见的那一层。** 收藏夹开着就挂在收藏夹里，关着就挂在书架卡片上（[`presentFavoriteAuth`](../src/assets/local-shelf.js#L1183-L1188)）。
+- **沿路径走**（[`revealRelative`](../src/assets/local-shelf.js#L1061-L1116)）只在每一级都存在时才落定；文件找到后，如果当前的搜索或类型筛选会把它藏起来，先清掉搜索、再切到「全部类型」，然后选中并滚到可见处。路径中途断了，仍是原来的「文件已移动或重命名」小窗。
 
 ## 10. 粘贴一个路径
 
-搜索框写作「搜索当前文件夹 / 粘贴路径」，字号小一号（11 px）。粘贴进来的若是一个路径，它不再当作筛选词，而是在下面的列表里打开那个位置；手打一个路径再按回车也一样。有的输入法用候选栏粘贴，不发出 paste 事件：一次插入 8 个字符以上、又像路径时，按粘贴处理（[`onSearchPaste`](../src/assets/local-shelf.js#L1469-L1475)、[`onSearchKeydown`](../src/assets/local-shelf.js#L1477-L1482)、[`onSearchInput`](../src/assets/local-shelf.js#L3705-L3716)）。
+搜索框写作「搜索当前文件夹 / 粘贴路径」，字号小一号（11 px）。粘贴进来的若是一个路径，它不再当作筛选词，而是在下面的列表里打开那个位置；手打一个路径再按回车也一样。有的输入法用候选栏粘贴，不发出 paste 事件：一次插入 8 个字符以上、又像路径时，按粘贴处理（[`onSearchPaste`](../src/assets/local-shelf.js#L1470-L1476)、[`onSearchKeydown`](../src/assets/local-shelf.js#L1478-L1483)、[`onSearchInput`](../src/assets/local-shelf.js#L3939-L3950)）。
 
-**什么算路径**（[`looksLikePath`](../src/assets/local-shelf.js#L1288-L1295)）：以 `file:` 开头；或含 `/`、`\`，且至少两段，或以 `/`、`\`、`~` 开头。单个词、带空格的文件名照常筛选。
+**什么算路径**（[`looksLikePath`](../src/assets/local-shelf.js#L1289-L1296)）：以 `file:` 开头；或含 `/`、`\`，且至少两段，或以 `/`、`\`、`~` 开头。单个词、带空格的文件名照常筛选。
 
-**怎样拆**（[`pathSegments`](../src/assets/local-shelf.js#L1301-L1321)）：`file://` 链接取路径部分并解码，HarmonyOS 的 `file://docs/storage/Users/currentUser/Documents/…` 也一样；前后的引号与尖括号去掉；`%20` 一类的编码解开；反斜杠当作斜杠；`.` 忽略，`..` 回退一级。
+**怎样拆**（[`pathSegments`](../src/assets/local-shelf.js#L1302-L1322)）：`file://` 链接取路径部分并解码，HarmonyOS 的 `file://docs/storage/Users/currentUser/Documents/…` 也一样；前后的引号与尖括号去掉；`%20` 一类的编码解开；反斜杠当作斜杠；`.` 忽略，`..` 回退一级。
 
-**怎样定位**（[`locatePastedPath`](../src/assets/local-shelf.js#L1352-L1406)）：
+**怎样定位**（[`locatePastedPath`](../src/assets/local-shelf.js#L1353-L1407)）：
 
 | 路径 | 结果 |
 |---|---|
 | 含当前挂载的根文件夹名 | 从最后一次出现的根名往下走 |
 | 相对路径（不以 `/`、`~`、盘符或 `file:` 开头） | 先相对当前文件夹，再相对根 |
 | 含另一个认识的根（默认路径、最近路径、收藏里出现过的根） | 本会话可读就静默换挂；否则弹授权小窗，选这个根或它的任一上层 |
-| 一个都不认识 | 弹「授权它所在的文件夹」，选路径上的任一文件夹，从它往下走（[`authorizePastedPath`](../src/assets/local-shelf.js#L1423-L1467)） |
+| 一个都不认识 | 弹「授权它所在的文件夹」，选路径上的任一文件夹，从它往下走（[`authorizePastedPath`](../src/assets/local-shelf.js#L1424-L1468)） |
 
 - 最后一段像文件名（1–8 位扩展名）就先当文件找，否则先当文件夹；找不到再换另一种。
 - 文件在它的文件夹里选中，必要时清搜索、切到「全部类型」；文件夹直接进入。
@@ -175,28 +175,87 @@ Chromium 拒绝长于 2 MiB（2,097,152 个字符）的地址，加载直接中�
 
 **没有覆盖的。** MatePad 上 ArkWeb 真实的系统文件夹窗口：`startIn` 是否正好停在那个根，重开之后授权的真实状态；输入法候选栏粘贴是否发出 paste 事件。
 
+## 12. Markdown 也在新标签页里打开
+
+浏览器不排版 Markdown。在 Chromium 153 里把一份 Markdown 直接交给新标签页，`text/markdown`、`text/x-markdown` 与 `text/plain` 三种类型都一样：`#`、表格的竖线与 `**粗体**` 原样放进一个 `<pre>`。所以 6.0.4 起，Markdown 的预览区多了「在新标签页打开」（主按钮，和 HTML 一样在最右），文件架先把它排成一页，再交出去（[`openMarkdownEntry`](../src/assets/local-shelf.js#L3098-L3104)）。
+
+- **同一个排版器。** 用的是预览的渲染器（[`renderMarkdown`](../src/assets/local-shelf.js#L2582-L2591)），标题、列表与任务列表、带对齐的表格、代码块、引用、链接与图片和预览一致；页面另配一套阅读样式：正文至多 840 px 宽，跟随系统的浅色与深色，打印时换成白底黑字并去掉页脚；页脚写着文件名；标签页标题取第一个一级标题，没有就用文件名（[`markdownPageHtml`](../src/assets/local-shelf.js#L2833-L2842)）。
+- **本地图片一起带上。** 排成页面时，相对路径的图片保持 `<img>`，交给 §2 的打包器内联；找不到的变成预览里那样的 `<image 02>` 标记（[`markMissingImages`](../src/assets/local-shelf.js#L2845-L2861)）。预览区里的本地图片仍是标记。
+- **文内链接能跳。** 标题带 id：小写、去掉标点、空格换成连字符，重名的依次加 `-1`、`-2`，`[§四](#四可读性)` 这样的链接由此落到标题上。从 `data:` 或 `blob:` 地址打开的页面里，Chromium 会把 `#` 链接当成一次新的跳转而不执行，所以页面带一小段脚本负责滚动（[`MD_PAGE_SCRIPT`](../src/assets/local-shelf.js#L2811-L2825)）。
+- **原样写在文件里的 HTML 以文字显示，不执行。**
+- **路径与 HTML 相同。** `openMarkdownEntry` 与 `openHtmlEntry` 共用 [`openPackedEntry`](../src/assets/local-shelf.js#L3108-L3154)：在 Aira 里是 `data:` 地址，放不下就 gzip 后自行展开（§5），在电脑浏览器里是 `blob:`。状态栏把「打包」换成「排版」，退路是「下载」。
+- **8 MB 以内**（[`MD_OPEN_LIMIT`](../src/assets/local-shelf.js#L169)）。
+
+| 情况 | 状态栏 |
+|---|---|
+| 直接打开 | 已交给 Aira 打开 · 排版后 149.1 KB · 内联 1 · 缺失 img/missing.png |
+| 压缩后打开 | 已交给 Aira 打开 · 排版后 2.72 MB · 内联 0 · 压缩后 247.1 KB |
+| 超过 8 MB | huge.md 有 9.00 MB，超过排版上限（8 MB）；请用“下载” |
+
+## 13. 网上的图片
+
+剪藏来的文章，图片多半是网上的地址。6.0.4 之前，三件事让它们出不来：
+
+1. **下划线。** 公众号的图片地址都带下划线（`mmbiz_jpg/…/640?wx_fmt=jpeg`）。斜体的处理排在图片之前，`_jpg/…?wx_` 被当成一段斜体，`<em>` 插进了地址中间，图片服务器收到的是 `mmbiz%3Cem%3Ejpg/…`。现在链接与图片的地址先整段留出，再处理强调；地址里可以有成对的括号；图片也先于强调排好，替代文字里的下划线照留；和 CommonMark 一样，词中间的下划线不开启强调（[`inlineMarkdown`](../src/assets/local-shelf.js#L2467-L2549)）。
+2. **Cubox 的代理。** Cubox 导出 Markdown 时，把图片写成它自己的代理：`https://cubox.pro/c/filters:no_upscale()?imageUrl=<编码后的原图地址>&valid=false`。旧的 `imageUrl=` 改写把这一张拆成两张坏图，外加一个多出来的 `)`。现在取出原图地址来用，代理留作后备（[`proxiedImageUrl`](../src/assets/local-shelf.js#L2557-L2563)）。
+3. **来源网址。** 公众号的图片服务器见到外站的 Referer，回一张「此图片来自微信公众平台，未经允许不可引用」的占位图。`data:` 页面本来就不发 Referer；预览区（带着主页的地址）与电脑浏览器里的 `blob:` 页面会发。现在网上的图片都带 `referrerpolicy="no-referrer"`，排成的页面另有一条 `no-referrer` 的 meta。
+
+加载失败的图片先换成后备地址（Cubox 的代理），仍不行就变成 `<image 07>` 这样的标记，预览区与新标签页一样。地址里残留的 `&amp;` 还原成 `&`。
+
+**做不到的。** 这些图片仍是网上的地址，阅读时要联网。文件架没法把它们收进页面：主页脚本不许联网（Aira 的导入规则，见 [VERIFICATION](VERIFICATION.md)），浏览器也不许读取别的网站图片的像素。
+
+## 14. 这两处怎样验证的
+
+在 Chromium 153 里加载完整的 6.0.4 主页包，用 OPFS 搭一个文件夹：
+
+- `storyboard.md`：表格、任务列表、代码、引用、一张本地图片、一张不存在的图片、文内链接、重名的标题、一段原样的 `<script>`；
+- `long.md`，2.72 MB；
+- `huge.md`，9 MB；
+- 一份引用本地图片的 HTML。
+
+分别在模拟的 Aira 宿主（§8 的做法）与普通的电脑浏览器里打开。网上的图片由两个替身服务器回答：公众号图床按防盗链的规则，没有 Referer 给原图，外站 Referer 给占位图，带 `FAIL404` 的地址回 404；Cubox 代理一律给原图。
+
+| 场景 | 结果 |
+|---|---|
+| `storyboard.md`，Aira | `data:` 198.8 KB；表格 1 张、任务 3 项、标题 id 齐全且重名的加了 `-1`；本地图片内联为 300 × 200，缺失的显示 `<image 02>`；`<script>` 以文字显示，页面里只有自带的那段脚本；点 `§四` 滚到对应标题 |
+| `long.md`，Aira | 压缩后 247.1 KB，自行展开，10,045 个小节齐全 |
+| `huge.md` | 不排版，状态栏提示用「下载」 |
+| 同样三份，电脑浏览器 | `blob:`，结果相同 |
+| HTML | 打包后 142.6 KB，内联 1，照旧 |
+| 网上的图片与链接：公众号直链、Cubox 导出、带 `&amp;` 的直链、原图失效走代理、带下划线的链接与自动链接、链接里套图片、带标题的图片、没有后备的失效图片 | 6.0.4 第一版：地址里插着 `<em>`，预览区带着主页的 Referer 拿到占位图，Cubox 的图拆成两张加一个 `)`。现在：预览区、`data:` 页面、`blob:` 页面都不发 Referer，全部拿到原图；原图失效的换成 Cubox 代理；没有后备的变成 `<image 07>`；`原文_link` 与 `_斜体_` 各归其位 |
+
+§8 与 §11 的检查在 6.0.4 包上重跑，结果不变。
+
+**没有覆盖的。** 真实的公众号图床与 Cubox 代理（测试机连不到这两处）；MatePad 上的实际打开。
+
 ## 源码
 
 | 位置 | 做什么 |
 |---|---|
 | [`DATA_URL_LIMIT`](../src/assets/local-shelf.js#L168) | 2,000,000 个字符 |
-| [`openBlobUrl`](../src/assets/local-shelf.js#L2756-L2775) | 电脑浏览器：`blob:` 地址经新标签链接打开 |
-| [`inAiraHome`](../src/assets/local-shelf.js#L2781-L2783) | 以 `window.AiraHome` 判断是否在 Aira 里 |
-| [`clickNewTab`](../src/assets/local-shelf.js#L2796-L2808) | 标准的新标签链接：`target="_blank"`、`rel="noopener"` |
-| [`canInflate`](../src/assets/local-shelf.js#L2810-L2813) | 有没有 `CompressionStream` |
-| [`inflatingPageUrl`](../src/assets/local-shelf.js#L2820-L2835) | 引导页：数据块在前，解压与 `document.write` 在后 |
-| [`airaHtmlUrl`](../src/assets/local-shelf.js#L2837-L2852) | 先试直接 base64，放不下再压缩，仍放不下返回空 |
-| [`openDataEntry`](../src/assets/local-shelf.js#L2854-L2879) | 图片与 PDF |
-| [`openHtmlEntry`](../src/assets/local-shelf.js#L2881-L2927) | HTML：打包、10 秒超时、按环境分路、状态栏 |
-| [`packHtmlEntry`](../src/assets/local-shelf.js#L3143-L3314) | 打包 |
-| [`openFavorite`](../src/assets/local-shelf.js#L1016-L1054) | 收藏：根没挂着时分路——可读即换挂，否则弹授权小窗 |
-| [`revealRelative`](../src/assets/local-shelf.js#L1060-L1115) | 从根沿相对路径走下去，全程存在才落定；选中文件，必要时放宽搜索与筛选 |
-| [`knownRootHandle`](../src/assets/local-shelf.js#L1134-L1144) | 默认路径与最近路径里同名的句柄：静默换挂，也是系统窗口的起点 |
-| [`openFavoriteRoot`](../src/assets/local-shelf.js#L1146-L1165) | 本会话可读就静默换挂 |
-| [`showFavoriteAuth`](../src/assets/local-shelf.js#L1167-L1178)、[`presentFavoriteAuth`](../src/assets/local-shelf.js#L1182-L1187) | 授权小窗，挂在当前看得见的那一层 |
-| [`pickedRoot`](../src/assets/local-shelf.js#L1206-L1210) | 选中的是根本身，或包含根的文件夹 |
-| [`authorizeFavorite`](../src/assets/local-shelf.js#L1212-L1266) | 「授权并打开」：系统窗口、挂载、走到收藏 |
-| [`looksLikePath`](../src/assets/local-shelf.js#L1288-L1295)、[`pathSegments`](../src/assets/local-shelf.js#L1301-L1321) | 什么算路径，怎样拆成段 |
-| [`locatePastedPath`](../src/assets/local-shelf.js#L1352-L1406) | 粘贴路径的四种情况 |
-| [`authorizePastedPath`](../src/assets/local-shelf.js#L1423-L1467) | 选路径上的任一文件夹，从它往下走 |
-| [`onSearchPaste`](../src/assets/local-shelf.js#L1469-L1475)、[`onSearchKeydown`](../src/assets/local-shelf.js#L1477-L1482)、[`onSearchInput`](../src/assets/local-shelf.js#L3705-L3716) | 粘贴、回车，与输入法的整段插入 |
+| [`MD_OPEN_LIMIT`](../src/assets/local-shelf.js#L169) | Markdown 排版的上限，8 MB |
+| [`openBlobUrl`](../src/assets/local-shelf.js#L2969-L2988) | 电脑浏览器：`blob:` 地址经新标签链接打开 |
+| [`inAiraHome`](../src/assets/local-shelf.js#L2994-L2996) | 以 `window.AiraHome` 判断是否在 Aira 里 |
+| [`clickNewTab`](../src/assets/local-shelf.js#L3009-L3021) | 标准的新标签链接：`target="_blank"`、`rel="noopener"` |
+| [`canInflate`](../src/assets/local-shelf.js#L3023-L3026) | 有没有 `CompressionStream` |
+| [`inflatingPageUrl`](../src/assets/local-shelf.js#L3033-L3048) | 引导页：数据块在前，解压与 `document.write` 在后 |
+| [`airaHtmlUrl`](../src/assets/local-shelf.js#L3050-L3065) | 先试直接 base64，放不下再压缩，仍放不下返回空 |
+| [`openDataEntry`](../src/assets/local-shelf.js#L3067-L3092) | 图片与 PDF |
+| [`openPackedEntry`](../src/assets/local-shelf.js#L3108-L3154) | HTML 与 Markdown 共用：打包或排版、10 秒超时、按环境分路、状态栏 |
+| [`openHtmlEntry`](../src/assets/local-shelf.js#L3094-L3096)、[`openMarkdownEntry`](../src/assets/local-shelf.js#L3098-L3104) | 各自的动词与退路：打包 / 下载打包页，排版 / 下载 |
+| [`packHtmlSource`](../src/assets/local-shelf.js#L3384-L3548) | 打包：把一页的相对资源兑现进来；[`packHtmlEntry`](../src/assets/local-shelf.js#L3370-L3381) 读文件并缓存 |
+| [`packMarkdownEntry`](../src/assets/local-shelf.js#L2863-L2878) | Markdown：读文件、排成一页、打包、给缺失的图换上标记 |
+| [`markdownPageHtml`](../src/assets/local-shelf.js#L2833-L2842)、[`MD_PAGE_CSS`](../src/assets/local-shelf.js#L2779-L2806)、[`MD_PAGE_SCRIPT`](../src/assets/local-shelf.js#L2811-L2825) | 阅读页的外壳、样式，与文内链接、失效图片的那段脚本 |
+| [`renderMarkdown`](../src/assets/local-shelf.js#L2582-L2591)、[`inlineMarkdown`](../src/assets/local-shelf.js#L2467-L2549) | 预览与阅读页共用的渲染器；页面模式下图片保持 `<img>`、标题带 id |
+| [`proxiedImageUrl`](../src/assets/local-shelf.js#L2557-L2563) | 从 Cubox 的代理地址里取出原图 |
+| [`openFavorite`](../src/assets/local-shelf.js#L1017-L1055) | 收藏：根没挂着时分路——可读即换挂，否则弹授权小窗 |
+| [`revealRelative`](../src/assets/local-shelf.js#L1061-L1116) | 从根沿相对路径走下去，全程存在才落定；选中文件，必要时放宽搜索与筛选 |
+| [`knownRootHandle`](../src/assets/local-shelf.js#L1135-L1145) | 默认路径与最近路径里同名的句柄：静默换挂，也是系统窗口的起点 |
+| [`openFavoriteRoot`](../src/assets/local-shelf.js#L1147-L1166) | 本会话可读就静默换挂 |
+| [`showFavoriteAuth`](../src/assets/local-shelf.js#L1168-L1179)、[`presentFavoriteAuth`](../src/assets/local-shelf.js#L1183-L1188) | 授权小窗，挂在当前看得见的那一层 |
+| [`pickedRoot`](../src/assets/local-shelf.js#L1207-L1211) | 选中的是根本身，或包含根的文件夹 |
+| [`authorizeFavorite`](../src/assets/local-shelf.js#L1213-L1267) | 「授权并打开」：系统窗口、挂载、走到收藏 |
+| [`looksLikePath`](../src/assets/local-shelf.js#L1289-L1296)、[`pathSegments`](../src/assets/local-shelf.js#L1302-L1322) | 什么算路径，怎样拆成段 |
+| [`locatePastedPath`](../src/assets/local-shelf.js#L1353-L1407) | 粘贴路径的四种情况 |
+| [`authorizePastedPath`](../src/assets/local-shelf.js#L1424-L1468) | 选路径上的任一文件夹，从它往下走 |
+| [`onSearchPaste`](../src/assets/local-shelf.js#L1470-L1476)、[`onSearchKeydown`](../src/assets/local-shelf.js#L1478-L1483)、[`onSearchInput`](../src/assets/local-shelf.js#L3939-L3950) | 粘贴、回车，与输入法的整段插入 |

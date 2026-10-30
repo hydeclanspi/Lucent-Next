@@ -1,12 +1,12 @@
 # The local shelf · finding a page, opening a page
 
-**First find the page, then hand it to the browser. Finding takes a favourite or a pasted path; opening, inside Aira, has three gates: packing, the host and length.**
+**First find the page, then hand it to the browser. Finding takes a favourite or a pasted path; opening, inside Aira, has three gates: packing, the host and length. Markdown takes one step more: it is set as a page first.**
 
 [中文](../local-shelf.md) · [Back to README](../../README.en.md)
 
 ---
 
-The shelf previews an HTML page in place: statically, with scripts and embedded frames stripped (see [Architecture · the local shelf](architecture.md#the-local-shelf)). To see the whole page — scripts running, yellow fields to fill in, printing to PDF — you tap 在新标签页打开, open in a new tab. §1–§8 cover that action: how a file travels from the shelf into a new tab, and why 6.0.1 changed the way it travels. §9–§11 cover the step before it, from 6.0.2: getting back to a page from a favourite, and pasting a path into the search field to go straight to it.
+The shelf previews an HTML page in place: statically, with scripts and embedded frames stripped (see [Architecture · the local shelf](architecture.md#the-local-shelf)). To see the whole page — scripts running, yellow fields to fill in, printing to PDF — you tap 在新标签页打开, open in a new tab. §1–§8 cover that action: how a file travels from the shelf into a new tab, and why 6.0.1 changed the way it travels. §9–§11 cover the step before it, from 6.0.2: getting back to a page from a favourite, and pasting a path into the search field to go straight to it. §12–§14 cover 6.0.4: Markdown opening in a new tab too, with the pictures it carries from the web.
 
 ## 1. Three paths
 
@@ -17,11 +17,11 @@ The shelf previews an HTML page in place: statically, with scripts and embedded 
 | Aira | still too large compressed | nothing opens; the status line points to 下载打包页, download the packed page | — |
 | A desktop browser (the web edition) | up to 12 MB once packed | the browser's own new tab | `blob:` |
 
-Images and PDFs take the same road: inside Aira a `data:` address for files up to about 1.43 MB, and a prompt to 下载, download, beyond that; in a desktop browser, still `blob:`.
+Images and PDFs take the same road: inside Aira a `data:` address for files up to about 1.43 MB, and a prompt to 下载, download, beyond that; in a desktop browser, still `blob:`. Markdown is first set as an HTML page (§12), then follows the table.
 
 ## 2. Packing
 
-The shelf reads only the folder you mounted, so the page's relative paths are settled before it leaves ([`packHtmlEntry`](../../src/assets/local-shelf.js#L3143-L3314)):
+The shelf reads only the folder you mounted, so the page's relative paths are settled before it leaves ([`packHtmlSource`](../../src/assets/local-shelf.js#L3384-L3548); a page set from Markdown goes through it too):
 
 - Local stylesheets become inline `<style>`; the `url()` assets inside them are inlined up to 4 MB each. Local scripts, images and media become `data:` resources, up to 8 MB each.
 - Resources starting with `http`, `https` or `//` stay as they are and are counted as 在线资源, online resources: web fonts and libraries on a CDN load over the network once the page opens.
@@ -44,7 +44,7 @@ From 5.7.7 to 5.9.7, the shelf opened a `blob:` address through a standard new-t
 
 ## 4. Aira receives a `data:` address
 
-From 6.0.1, inside Aira (detected by the `window.AiraHome` that Aira injects), the shelf encodes the packed page as base64 and hands over a `data:` address through the same standard new-tab link ([`openHtmlEntry`](../../src/assets/local-shelf.js#L2881-L2927), [`airaHtmlUrl`](../../src/assets/local-shelf.js#L2837-L2852)).
+From 6.0.1, inside Aira (detected by the `window.AiraHome` that Aira injects), the shelf encodes the packed page as base64 and hands over a `data:` address through the same standard new-tab link ([`openPackedEntry`](../../src/assets/local-shelf.js#L3108-L3154), [`airaHtmlUrl`](../../src/assets/local-shelf.js#L3050-L3065)).
 
 - **It passes the host.** `data` is in the table. Aira opens a tab and loads the address with `controller.loadUrl` ([`BrowserWebLoadCoordinator`](https://github.com/mason173/Aira-browser/blob/5593ec02aa4fb7c12606f44651948ac1c46a06bb/AiraBrowser/entry/src/main/ets/core/browser/BrowserWebLoadCoordinator.ets#L288)): a load the browser starts. Chromium blocks only the top-level `data:` navigations a page starts on its own, not this kind.
 - **Why base64.** Base64 is always 4/3 of the original. Percent-encoding is about 1.5× for an English page and about 3× for a Chinese one — three bytes per character, three characters per byte. A 25.4 KB English proposal is 33.9 KB in base64 and 37.6 KB percent-encoded.
@@ -61,7 +61,7 @@ Chromium refuses any address longer than 2 MiB (2,097,152 characters) and aborts
 
 The shelf sets its limit at 2,000,000 characters (`DATA_URL_LIMIT`) to keep a margin; in page terms, anything up to about 1.43 MB once packed opens directly.
 
-A larger page is first gzipped with `CompressionStream` and carried inside a very small page ([`inflatingPageUrl`](../../src/assets/local-shelf.js#L2820-L2835)):
+A larger page is first gzipped with `CompressionStream` and carried inside a very small page ([`inflatingPageUrl`](../../src/assets/local-shelf.js#L3033-L3048)):
 
 ```html
 <script type="application/octet-stream" id="lucent-packed">H4sIAAAA…</script>
@@ -124,28 +124,28 @@ A favourite keeps four things: the root folder's name, the path below it, the fi
 | The handle needs a grant (after reopening Aira, say) | as above | A card, 授权「root」后打开, names the root folder and the full path; 授权并打开 opens the system folder window at that root, and once it is chosen the shelf walks to the file, selects it and puts the favourites away |
 | An Aira that keeps folder grants (`AiraHome.localFolders`) | restored quietly | the same; if that fails, the row above |
 
-- **A folder above it works too.** The shelf looks inside the chosen folder for a child of the root's name and mounts that ([`pickedRoot`](../../src/assets/local-shelf.js#L1206-L1210)).
+- **A folder above it works too.** The shelf looks inside the chosen folder for a child of the root's name and mounts that ([`pickedRoot`](../../src/assets/local-shelf.js#L1207-L1211)).
 - **The wrong folder, or none.** The card stays open and says which folder was chosen and which one is needed, or 已取消选择.
 - **Without `showDirectoryPicker`**, the web folder picker is used, and the favourite opens once the folder is mounted.
-- **The card shows on the surface in view:** inside the favourites when they are open, on the shelf card otherwise ([`presentFavoriteAuth`](../../src/assets/local-shelf.js#L1182-L1187)).
-- **Walking the path** ([`revealRelative`](../../src/assets/local-shelf.js#L1060-L1115)) commits only when every folder on the way exists. When the file is found and the current search or filter would hide it, the search is cleared and the filter set to 全部类型 before it is selected and scrolled into view. A path that breaks halfway still brings up the 文件已移动或重命名 card.
+- **The card shows on the surface in view:** inside the favourites when they are open, on the shelf card otherwise ([`presentFavoriteAuth`](../../src/assets/local-shelf.js#L1183-L1188)).
+- **Walking the path** ([`revealRelative`](../../src/assets/local-shelf.js#L1061-L1116)) commits only when every folder on the way exists. When the file is found and the current search or filter would hide it, the search is cleared and the filter set to 全部类型 before it is selected and scrolled into view. A path that breaks halfway still brings up the 文件已移动或重命名 card.
 
 ## 10. Pasting a path
 
-The search field now reads 搜索当前文件夹 / 粘贴路径, search this folder / paste a path, one size smaller (11 px). When what is pasted is a path, it is no longer a filter: the list below opens that place. A path typed and confirmed with Enter does the same. Some keyboards paste from their suggestion bar without a paste event, so inserting eight or more characters at once that look like a path counts as a paste ([`onSearchPaste`](../../src/assets/local-shelf.js#L1469-L1475), [`onSearchKeydown`](../../src/assets/local-shelf.js#L1477-L1482), [`onSearchInput`](../../src/assets/local-shelf.js#L3705-L3716)).
+The search field now reads 搜索当前文件夹 / 粘贴路径, search this folder / paste a path, one size smaller (11 px). When what is pasted is a path, it is no longer a filter: the list below opens that place. A path typed and confirmed with Enter does the same. Some keyboards paste from their suggestion bar without a paste event, so inserting eight or more characters at once that look like a path counts as a paste ([`onSearchPaste`](../../src/assets/local-shelf.js#L1470-L1476), [`onSearchKeydown`](../../src/assets/local-shelf.js#L1478-L1483), [`onSearchInput`](../../src/assets/local-shelf.js#L3939-L3950)).
 
-**What counts as a path** ([`looksLikePath`](../../src/assets/local-shelf.js#L1288-L1295)): anything starting with `file:`; or text with a `/` or `\` that has at least two parts or starts with `/`, `\` or `~`. A single word, or a file name with spaces, still filters.
+**What counts as a path** ([`looksLikePath`](../../src/assets/local-shelf.js#L1289-L1296)): anything starting with `file:`; or text with a `/` or `\` that has at least two parts or starts with `/`, `\` or `~`. A single word, or a file name with spaces, still filters.
 
-**How it is split** ([`pathSegments`](../../src/assets/local-shelf.js#L1301-L1321)): a `file://` link gives its path, decoded, HarmonyOS's `file://docs/storage/Users/currentUser/Documents/…` included; quotes and angle brackets round it are dropped; escapes such as `%20` are decoded; backslashes count as slashes; `.` is skipped and `..` steps back.
+**How it is split** ([`pathSegments`](../../src/assets/local-shelf.js#L1302-L1322)): a `file://` link gives its path, decoded, HarmonyOS's `file://docs/storage/Users/currentUser/Documents/…` included; quotes and angle brackets round it are dropped; escapes such as `%20` are decoded; backslashes count as slashes; `.` is skipped and `..` steps back.
 
-**Where it leads** ([`locatePastedPath`](../../src/assets/local-shelf.js#L1352-L1406)):
+**Where it leads** ([`locatePastedPath`](../../src/assets/local-shelf.js#L1353-L1407)):
 
 | Path | Result |
 |---|---|
 | contains the mounted root's name | walk down from its last occurrence |
 | relative (not starting with `/`, `~`, a drive letter or `file:`) | relative to the current folder first, then to the root |
 | contains another known root (the default, a recent folder, or a favourite's root) | switch to it quietly if it still reads this session; otherwise the grant card, for that root or any folder above it |
-| contains no known folder | 授权它所在的文件夹: choose any folder on the path, and the shelf walks down from it ([`authorizePastedPath`](../../src/assets/local-shelf.js#L1423-L1467)) |
+| contains no known folder | 授权它所在的文件夹: choose any folder on the path, and the shelf walks down from it ([`authorizePastedPath`](../../src/assets/local-shelf.js#L1424-L1468)) |
 
 - A last part that looks like a file name (an extension of one to eight characters) is tried as a file first, otherwise as a folder; then the other way round.
 - A file is selected in its folder, with the search cleared and the filter widened if needed; a folder is entered.
@@ -175,28 +175,87 @@ In Chromium 153, a real folder tree was built in OPFS, the browser's private fil
 
 **Not covered.** ArkWeb's real system folder window on the MatePad: whether `startIn` lands on the root exactly, and the real state of a grant after reopening; and whether a keyboard's suggestion-bar paste raises a paste event.
 
+## 12. Markdown opens in a new tab too
+
+A browser does not set Markdown. Handed straight to a new tab in Chromium 153, a Markdown file looks the same as `text/markdown`, `text/x-markdown` or `text/plain`: the `#`, the table's pipes and the `**bold**` go into a `<pre>` as they are. So from 6.0.4 a Markdown file's preview has 在新标签页打开 too (the main button, at the right as for HTML), and the shelf sets the file as a page before handing it over ([`openMarkdownEntry`](../../src/assets/local-shelf.js#L3098-L3104)).
+
+- **The same renderer.** It is the preview's ([`renderMarkdown`](../../src/assets/local-shelf.js#L2582-L2591)), so headings, lists and task lists, tables with their alignment, code blocks, quotes, links and images match the preview. The page has a reading sheet of its own: text at most 840 px wide, light or dark with the system, black on white with no footer when printed, the file name at the foot; the tab's title is the first top-level heading, or the file name ([`markdownPageHtml`](../../src/assets/local-shelf.js#L2833-L2842)).
+- **Local images come along.** In a page, images with relative paths stay `<img>` and the packer of §2 inlines them; one that cannot be found becomes the preview's `<image 02>` mark ([`markMissingImages`](../../src/assets/local-shelf.js#L2845-L2861)). The preview itself still shows local images as marks.
+- **Links inside the document land.** Headings carry ids — lower case, punctuation dropped, spaces as hyphens, a repeated heading given `-1`, `-2` — so a link such as `[§四](#四可读性)` finds its heading. A page opened from a `data:` or `blob:` address ignores `#` links in Chromium, which takes them for a new navigation, so the page carries a small script that scrolls instead ([`MD_PAGE_SCRIPT`](../../src/assets/local-shelf.js#L2811-L2825)).
+- **Raw HTML in the file is shown as text and never runs.**
+- **The path is HTML's.** `openMarkdownEntry` and `openHtmlEntry` share [`openPackedEntry`](../../src/assets/local-shelf.js#L3108-L3154): a `data:` address inside Aira, gzipped and unpacking itself when it does not fit (§5); `blob:` in a desktop browser. The status line says 排版, set, where HTML says 打包, packed, and the fallback is 下载.
+- **Up to 8 MB** ([`MD_OPEN_LIMIT`](../../src/assets/local-shelf.js#L169)).
+
+| Case | Status line |
+|---|---|
+| Opened directly | 已交给 Aira 打开 · 排版后 149.1 KB · 内联 1 · 缺失 img/missing.png |
+| Opened compressed | 已交给 Aira 打开 · 排版后 2.72 MB · 内联 0 · 压缩后 247.1 KB |
+| Over 8 MB | huge.md 有 9.00 MB，超过排版上限（8 MB）；请用“下载” |
+
+## 13. Pictures from the web
+
+In a clipped article, the pictures are mostly addresses on the web. Before 6.0.4 three things kept them from showing:
+
+1. **Underscores.** Every WeChat image address has them (`mmbiz_jpg/…/640?wx_fmt=jpeg`). Italics were handled before images, so `_jpg/…?wx_` was read as italics and an `<em>` landed inside the address; the image server received `mmbiz%3Cem%3Ejpg/…`. Link and image addresses are now set aside whole before emphasis, balanced parentheses allowed; images are set before emphasis too, so alt text keeps its underscores; and, as in CommonMark, an underscore inside a word opens no emphasis ([`inlineMarkdown`](../../src/assets/local-shelf.js#L2467-L2549)).
+2. **Cubox's proxy.** Cubox exports an image as its own proxy: `https://cubox.pro/c/filters:no_upscale()?imageUrl=<the original, encoded>&valid=false`. The old `imageUrl=` rewrite split that one image into two broken ones and a stray `)`. The original address is used now, with the proxy kept as a fallback ([`proxiedImageUrl`](../../src/assets/local-shelf.js#L2557-L2563)).
+3. **The referrer.** WeChat's image server answers a foreign Referer with a placeholder, 此图片来自微信公众平台，未经允许不可引用 — this picture is from the WeChat platform and may not be used without permission. A `data:` page sends no Referer; the preview, carrying the homepage's address, and a desktop `blob:` page do. Remote images now carry `referrerpolicy="no-referrer"`, and the set page a `no-referrer` meta as well.
+
+An image that fails to load tries its fallback (Cubox's proxy), and then becomes a mark such as `<image 07>`, in the preview and in the tab alike. An `&amp;` left in an address becomes `&`.
+
+**What cannot be done.** These pictures are still addresses on the web, so reading needs a network. The shelf cannot take them into the page: homepage scripts may not go online (Aira's import rules, see [VERIFICATION](../VERIFICATION.md)), and a browser does not let a page read the pixels of another site's image.
+
+## 14. How these were checked
+
+The full 6.0.4 homepage package was loaded in Chromium 153 over a folder in OPFS:
+
+- `storyboard.md`: a table, a task list, code, a quote, a local image, an image that does not exist, a link inside the document, a repeated heading and a raw `<script>`;
+- `long.md`, 2.72 MB;
+- `huge.md`, 9 MB;
+- an HTML page with a local image.
+
+Each was opened in the simulated Aira host (as in §8) and in an ordinary desktop browser. Pictures from the web were answered by two stand-in servers: WeChat's image server under its hotlink rule, the original with no Referer and the placeholder for a foreign one, and a 404 for an address carrying `FAIL404`; and Cubox's proxy, which always served the original.
+
+| Case | Result |
+|---|---|
+| `storyboard.md`, Aira | `data:`, 198.8 KB; one table, three tasks, every heading with an id and the repeated one with `-1`; the local image inlined at 300 × 200 and the missing one shown as `<image 02>`; the `<script>` shown as text, the page's own script the only one; tapping `§四` scrolls to its heading |
+| `long.md`, Aira | 247.1 KB compressed, unpacks itself, all 10,045 sections present |
+| `huge.md` | not set; the status line points to 下载 |
+| The same three, desktop browser | `blob:`, with the same results |
+| HTML | packed to 142.6 KB, one asset inlined, as before |
+| Pictures and links from the web: a WeChat address, a Cubox export, an address with `&amp;`, a failed original with a proxy, links and an autolink with underscores, a linked image, an image with a title, a failed image with no fallback | 6.0.4's first build: `<em>` inside the addresses, the placeholder in the preview under the homepage's Referer, and Cubox images split in two with a `)`. Now: the preview, the `data:` page and the `blob:` page send no Referer and all receive the originals; the failed original falls back to Cubox's proxy; the one with no fallback becomes `<image 07>`; `原文_link` and `_斜体_` each keep their meaning |
+
+The checks of §8 and §11 were run again on the 6.0.4 package, with the same results.
+
+**Not covered.** WeChat's real image server and Cubox's real proxy (out of the test machine's reach); opening on the MatePad.
+
 ## Source
 
 | Where | What it does |
 |---|---|
 | [`DATA_URL_LIMIT`](../../src/assets/local-shelf.js#L168) | 2,000,000 characters |
-| [`openBlobUrl`](../../src/assets/local-shelf.js#L2756-L2775) | Desktop browsers: a `blob:` address through a new-tab link |
-| [`inAiraHome`](../../src/assets/local-shelf.js#L2781-L2783) | Inside Aira or not, by `window.AiraHome` |
-| [`clickNewTab`](../../src/assets/local-shelf.js#L2796-L2808) | The standard new-tab link: `target="_blank"`, `rel="noopener"` |
-| [`canInflate`](../../src/assets/local-shelf.js#L2810-L2813) | Whether `CompressionStream` is there |
-| [`inflatingPageUrl`](../../src/assets/local-shelf.js#L2820-L2835) | The small page: data first, then unpacking and `document.write` |
-| [`airaHtmlUrl`](../../src/assets/local-shelf.js#L2837-L2852) | Plain base64 first, compressed if that does not fit, nothing if neither does |
-| [`openDataEntry`](../../src/assets/local-shelf.js#L2854-L2879) | Images and PDFs |
-| [`openHtmlEntry`](../../src/assets/local-shelf.js#L2881-L2927) | HTML: packing, the 10 s timeout, the choice of path, the status line |
-| [`packHtmlEntry`](../../src/assets/local-shelf.js#L3143-L3314) | Packing |
-| [`openFavorite`](../../src/assets/local-shelf.js#L1016-L1054) | Favourites: with the root not mounted, switch quietly if it reads, otherwise the grant card |
-| [`revealRelative`](../../src/assets/local-shelf.js#L1060-L1115) | Walk down from the root; commit only when every folder exists; select the file, widening the search and filter if needed |
-| [`knownRootHandle`](../../src/assets/local-shelf.js#L1134-L1144) | A handle of the same name among the default and recent folders: for a quiet switch, and where the system window starts |
-| [`openFavoriteRoot`](../../src/assets/local-shelf.js#L1146-L1165) | Switch quietly when the handle still reads |
-| [`showFavoriteAuth`](../../src/assets/local-shelf.js#L1167-L1178), [`presentFavoriteAuth`](../../src/assets/local-shelf.js#L1182-L1187) | The grant card, on whichever surface is in view |
-| [`pickedRoot`](../../src/assets/local-shelf.js#L1206-L1210) | The chosen folder is the root, or holds it |
-| [`authorizeFavorite`](../../src/assets/local-shelf.js#L1212-L1266) | 授权并打开: the system window, mounting, walking to the favourite |
-| [`looksLikePath`](../../src/assets/local-shelf.js#L1288-L1295), [`pathSegments`](../../src/assets/local-shelf.js#L1301-L1321) | What counts as a path, and how it is split |
-| [`locatePastedPath`](../../src/assets/local-shelf.js#L1352-L1406) | The four cases of a pasted path |
-| [`authorizePastedPath`](../../src/assets/local-shelf.js#L1423-L1467) | Choose any folder on the path and walk down from it |
-| [`onSearchPaste`](../../src/assets/local-shelf.js#L1469-L1475), [`onSearchKeydown`](../../src/assets/local-shelf.js#L1477-L1482), [`onSearchInput`](../../src/assets/local-shelf.js#L3705-L3716) | Paste, Enter, and a keyboard's whole insertion |
+| [`MD_OPEN_LIMIT`](../../src/assets/local-shelf.js#L169) | The most Markdown that is set as a page, 8 MB |
+| [`openBlobUrl`](../../src/assets/local-shelf.js#L2969-L2988) | Desktop browsers: a `blob:` address through a new-tab link |
+| [`inAiraHome`](../../src/assets/local-shelf.js#L2994-L2996) | Inside Aira or not, by `window.AiraHome` |
+| [`clickNewTab`](../../src/assets/local-shelf.js#L3009-L3021) | The standard new-tab link: `target="_blank"`, `rel="noopener"` |
+| [`canInflate`](../../src/assets/local-shelf.js#L3023-L3026) | Whether `CompressionStream` is there |
+| [`inflatingPageUrl`](../../src/assets/local-shelf.js#L3033-L3048) | The small page: data first, then unpacking and `document.write` |
+| [`airaHtmlUrl`](../../src/assets/local-shelf.js#L3050-L3065) | Plain base64 first, compressed if that does not fit, nothing if neither does |
+| [`openDataEntry`](../../src/assets/local-shelf.js#L3067-L3092) | Images and PDFs |
+| [`openPackedEntry`](../../src/assets/local-shelf.js#L3108-L3154) | Shared by HTML and Markdown: packing or setting, the 10 s timeout, the choice of path, the status line |
+| [`openHtmlEntry`](../../src/assets/local-shelf.js#L3094-L3096), [`openMarkdownEntry`](../../src/assets/local-shelf.js#L3098-L3104) | Their verbs and fallbacks: 打包 / 下载打包页, 排版 / 下载 |
+| [`packHtmlSource`](../../src/assets/local-shelf.js#L3384-L3548) | Packing: a page's relative assets brought in; [`packHtmlEntry`](../../src/assets/local-shelf.js#L3370-L3381) reads the file and caches |
+| [`packMarkdownEntry`](../../src/assets/local-shelf.js#L2863-L2878) | Markdown: read, set as a page, packed, missing images marked |
+| [`markdownPageHtml`](../../src/assets/local-shelf.js#L2833-L2842), [`MD_PAGE_CSS`](../../src/assets/local-shelf.js#L2779-L2806), [`MD_PAGE_SCRIPT`](../../src/assets/local-shelf.js#L2811-L2825) | The reading page's shell and sheet, and its script for in-page links and failed images |
+| [`renderMarkdown`](../../src/assets/local-shelf.js#L2582-L2591), [`inlineMarkdown`](../../src/assets/local-shelf.js#L2467-L2549) | The renderer the preview and the page share; in a page, images stay `<img>` and headings carry ids |
+| [`proxiedImageUrl`](../../src/assets/local-shelf.js#L2557-L2563) | The original address inside a Cubox proxy |
+| [`openFavorite`](../../src/assets/local-shelf.js#L1017-L1055) | Favourites: with the root not mounted, switch quietly if it reads, otherwise the grant card |
+| [`revealRelative`](../../src/assets/local-shelf.js#L1061-L1116) | Walk down from the root; commit only when every folder exists; select the file, widening the search and filter if needed |
+| [`knownRootHandle`](../../src/assets/local-shelf.js#L1135-L1145) | A handle of the same name among the default and recent folders: for a quiet switch, and where the system window starts |
+| [`openFavoriteRoot`](../../src/assets/local-shelf.js#L1147-L1166) | Switch quietly when the handle still reads |
+| [`showFavoriteAuth`](../../src/assets/local-shelf.js#L1168-L1179), [`presentFavoriteAuth`](../../src/assets/local-shelf.js#L1183-L1188) | The grant card, on whichever surface is in view |
+| [`pickedRoot`](../../src/assets/local-shelf.js#L1207-L1211) | The chosen folder is the root, or holds it |
+| [`authorizeFavorite`](../../src/assets/local-shelf.js#L1213-L1267) | 授权并打开: the system window, mounting, walking to the favourite |
+| [`looksLikePath`](../../src/assets/local-shelf.js#L1289-L1296), [`pathSegments`](../../src/assets/local-shelf.js#L1302-L1322) | What counts as a path, and how it is split |
+| [`locatePastedPath`](../../src/assets/local-shelf.js#L1353-L1407) | The four cases of a pasted path |
+| [`authorizePastedPath`](../../src/assets/local-shelf.js#L1424-L1468) | Choose any folder on the path and walk down from it |
+| [`onSearchPaste`](../../src/assets/local-shelf.js#L1470-L1476), [`onSearchKeydown`](../../src/assets/local-shelf.js#L1478-L1483), [`onSearchInput`](../../src/assets/local-shelf.js#L3939-L3950) | Paste, Enter, and a keyboard's whole insertion |
