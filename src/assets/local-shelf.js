@@ -166,6 +166,7 @@
   var MEDIA_LIMIT = 120 * 1024 * 1024;
   var ASSET_LIMIT = 8 * 1024 * 1024;
   var DATA_URL_LIMIT = 2000000;
+  var MD_OPEN_LIMIT = 8 * 1024 * 1024;
   var FILTER_LABELS = {
     all: '全部类型',
     mdhtml: 'MD + HTML',
@@ -2441,6 +2442,10 @@
   }
 
   var mdImageCounter = 0;
+  // Page mode renders Markdown for its own tab: local images stay real <img> so the packer
+  // can inline them, and headings carry ids so in-page links land.
+  var mdForPage = false;
+  var mdHeadingIds = {};
 
   function inlineMarkdown(text) {
     var codes = [];
@@ -2469,6 +2474,11 @@
       }
       mdImageCounter += 1;
       var label = mdImageCounter < 10 ? '0' + mdImageCounter : String(mdImageCounter);
+      if (mdForPage) {
+        return '<img src="' + clean.replace(/"/g, '&quot;') + '" alt="' + alt + '"' +
+          (title ? ' title="' + title.replace(/"/g, '&quot;') + '"' : '') +
+          ' data-md-label="' + label + '">';
+      }
       if (/^https?:\/\//i.test(clean)) {
         return '<img src="' + clean.replace(/"/g, '&quot;') + '" alt="' + alt + '"' +
           (title ? ' title="' + title.replace(/"/g, '&quot;') + '"' : '') +
@@ -2478,7 +2488,8 @@
     });
     s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, function (_, label, url) {
       if (!/^(https?:|mailto:|#)/i.test(url)) return label;
-      return '<a href="' + url.replace(/"/g, '&quot;') + '" target="_blank" rel="noopener">' + label + '</a>';
+      var target = url.charAt(0) === '#' ? '' : ' target="_blank" rel="noopener"';
+      return '<a href="' + url.replace(/"/g, '&quot;') + '"' + target + '>' + label + '</a>';
     });
     s = s.replace(/\u0001(\d+)\u0001/g, function (_, index) {
       return breaks[Number(index)] || '';
@@ -2494,7 +2505,34 @@
     });
   }
 
-  function renderMarkdown(source) {
+  function markdownHeadingId(html) {
+    if (!mdForPage) return '';
+    var text = String(html || '').replace(/<[^>]*>/g, '')
+      .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+    var slug = text.trim().toLowerCase().replace(/[^\p{L}\p{N}\s_-]/gu, '').replace(/\s/g, '-') || 'section';
+    var id = slug;
+    var n = mdHeadingIds[slug] || 0;
+    if (n) id = slug + '-' + n;
+    mdHeadingIds[slug] = n + 1;
+    return ' id="' + id.replace(/"/g, '&quot;') + '"';
+  }
+
+  function markdownHeading(level, inner) {
+    var html = inlineMarkdown(inner);
+    return '<h' + level + markdownHeadingId(html) + '>' + html + '</h' + level + '>';
+  }
+
+  function renderMarkdown(source, forPage) {
+    mdForPage = !!forPage;
+    mdHeadingIds = {};
+    try {
+      return renderMarkdownBody(source);
+    } finally {
+      mdForPage = false;
+    }
+  }
+
+  function renderMarkdownBody(source) {
     mdImageCounter = 0;
     source = String(source || '');
     var fences = [];
@@ -2586,20 +2624,19 @@
       var heading = /^(#{1,6})\s+(.*)$/.exec(line);
       if (heading) {
         flushAll();
-        var level = heading[1].length;
-        out.push('<h' + level + '>' + inlineMarkdown(heading[2]) + '</h' + level + '>');
+        out.push(markdownHeading(heading[1].length, heading[2]));
         i += 1;
         continue;
       }
       if (i + 1 < lines.length && /^=+\s*$/.test(lines[i + 1]) && !/^\s*([-*+]|\d+\.)\s/.test(line) && line.indexOf('|') < 0) {
         flushAll();
-        out.push('<h1>' + inlineMarkdown(line) + '</h1>');
+        out.push(markdownHeading(1, line));
         i += 2;
         continue;
       }
       if (i + 1 < lines.length && /^-{2,}\s*$/.test(lines[i + 1]) && !/^\s*([-*+]|\d+\.)\s/.test(line) && line.indexOf('|') < 0) {
         flushAll();
-        out.push('<h2>' + inlineMarkdown(line) + '</h2>');
+        out.push(markdownHeading(2, line));
         i += 2;
         continue;
       }
@@ -2671,12 +2708,106 @@
     return out.join('\n');
   }
 
+  // A Markdown file opened in its own tab: browsers show text/markdown as raw source, so the
+  // shelf sets it as a reading page and hands that over the way it hands over an HTML page.
+  var MD_PAGE_CSS =
+    ':root{color-scheme:light dark;--ink:#1b1c20;--ink2:#4a4d55;--muted:#8a8d94;--paper:#fbfaf6;--line:#e5e0d4;--soft:#f5f2ea;--code:#efebe1;--link:#1d6d99;--gold:#c9a24f;--check:#8a6118}' +
+    '@media (prefers-color-scheme:dark){:root{--ink:#e8e9ed;--ink2:#c2c5cd;--muted:#8d919b;--paper:#15171d;--line:#2d313b;--soft:#1d2029;--code:#252935;--link:#8cc6ee;--gold:#d9b66d;--check:#e3c27d}}' +
+    '*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}' +
+    'body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 -apple-system,BlinkMacSystemFont,"HarmonyOS Sans SC","HarmonyOS Sans","PingFang SC","Noto Sans SC","Segoe UI",sans-serif}' +
+    '.md{max-width:840px;margin:0 auto;padding:56px 32px 32px;overflow-wrap:anywhere}' +
+    '.md>:first-child{margin-top:0}' +
+    '.md h1{font-size:2em;line-height:1.3;margin:0 0 .8em;letter-spacing:-.01em}' +
+    '.md h2{font-size:1.45em;line-height:1.4;margin:2em 0 .7em;padding-bottom:.3em;border-bottom:1px solid var(--line)}' +
+    '.md h3{font-size:1.2em;line-height:1.45;margin:1.7em 0 .6em}' +
+    '.md h4,.md h5,.md h6{font-size:1em;margin:1.5em 0 .5em}' +
+    '.md p{margin:.8em 0}.md ul,.md ol{margin:.8em 0;padding-left:1.6em}.md li{margin:.35em 0}' +
+    '.md li.md-task{list-style:none;margin-left:-1.25em}.md .md-check{color:var(--check);font-weight:700;margin-right:4px}' +
+    '.md code{background:var(--code);padding:.12em .38em;border-radius:5px;font:.875em/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}' +
+    '.md pre{background:var(--soft);padding:16px 18px;border-radius:12px;overflow:auto;line-height:1.6}' +
+    '.md pre code{background:none;padding:0;border-radius:0}' +
+    '.md table{width:100%;margin:1.3em 0;border-collapse:collapse;font-size:.94em;line-height:1.65}' +
+    '.md th,.md td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}' +
+    '.md th{background:var(--soft);font-weight:600}' +
+    '.md blockquote{margin:1.2em 0;padding:.2em 0 .2em 1.1em;border-left:3px solid var(--gold);color:var(--ink2)}' +
+    '.md hr{border:0;border-top:1px solid var(--line);margin:2.2em 0}' +
+    '.md a{color:var(--link);text-decoration:none}.md a:hover{text-decoration:underline}' +
+    '.md img{max-width:100%;height:auto;margin:.4em 0;border-radius:8px;vertical-align:middle}' +
+    '.md .md-image{display:inline-block;margin:4px 6px;padding:1px 8px;border:1px solid rgba(91,155,213,.38);border-radius:7px;color:#4d8fc7;background:rgba(91,155,213,.08);font:12px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}' +
+    '.md [id]{scroll-margin-top:24px}' +
+    '.md-source{max-width:840px;margin:0 auto;padding:12px 32px 48px;color:var(--muted);font-size:12px}' +
+    '@media (max-width:640px){.md{padding:32px 18px 24px}.md-source{padding:12px 18px 36px}}' +
+    '@media print{:root{--ink:#000;--ink2:#333;--paper:#fff;--soft:#f4f4f4;--code:#f0f0f0;--line:#ccc;--link:#000}.md{max-width:none;padding:0}.md-source{display:none}.md pre,.md table,.md img,.md blockquote{break-inside:avoid}}';
+
+  // A page opened from a data: or blob: address ignores #links (Chromium treats them as a new
+  // navigation to that address), so in-page links scroll to their heading here.
+  var MD_PAGE_SCRIPT =
+    'document.addEventListener("click",function(e){' +
+      'var a=e.target&&e.target.closest?e.target.closest(\'a[href^="#"]\'):null;if(!a)return;' +
+      'var id=a.getAttribute("href").slice(1);try{id=decodeURIComponent(id);}catch(x){}' +
+      'var t=document.getElementById(id);if(!t)return;' +
+      'e.preventDefault();t.scrollIntoView({behavior:"smooth",block:"start"});' +
+    '});';
+
+  function markdownTitle(text, name) {
+    var match = /^\s{0,3}#\s+(.+?)\s*#*\s*$/m.exec(String(text || ''));
+    var title = match ? match[1].replace(/[*_`~]/g, '').replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1').trim() : '';
+    return title || String(name || '').replace(/\.(md|markdown)$/i, '');
+  }
+
+  function markdownPageHtml(text, entry) {
+    return '<!doctype html>\n<html lang="zh-CN"><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<title>' + escapeHtml(markdownTitle(text, entry.name)) + '</title>' +
+      '<style>' + MD_PAGE_CSS + '</style></head><body>' +
+      '<main class="md">' + renderMarkdown(text, true) + '</main>' +
+      '<footer class="md-source">' + escapeHtml(entry.name) + '</footer>' +
+      '<script>' + MD_PAGE_SCRIPT + '</scr' + 'ipt></body></html>';
+  }
+
+  // Images the packer could not find become the same <image 01> marks as in the preview.
+  function markMissingImages(html, missing) {
+    var missingSet = {};
+    missing.forEach(function (ref) { missingSet[String(ref || '').trim()] = true; });
+    var doc = new DOMParser().parseFromString(html, 'text/html');
+    var changed = false;
+    doc.querySelectorAll('img[data-md-label]').forEach(function (img) {
+      var src = String(img.getAttribute('src') || '').trim();
+      if (!missingSet[src]) return;
+      var mark = doc.createElement('span');
+      mark.className = 'md-image';
+      mark.title = src;
+      mark.textContent = '<image ' + img.getAttribute('data-md-label') + '>';
+      img.replaceWith(mark);
+      changed = true;
+    });
+    return changed ? '<!doctype html>\n' + doc.documentElement.outerHTML : html;
+  }
+
+  function packMarkdownEntry(entry) {
+    if (!entry || !entry.file) return Promise.reject(new Error('文件不可用'));
+    if (entry.file.size > MD_OPEN_LIMIT) {
+      return Promise.reject(new Error(entry.name + ' 有 ' + formatBytes(entry.file.size) + '，超过排版上限 8 MB'));
+    }
+    var cacheKey = 'md|' + state.source + '|' + entry.path;
+    if (state.packedCache.has(cacheKey)) return Promise.resolve(state.packedCache.get(cacheKey));
+    var baseSegments = state.path.slice(1).map(function (part) { return part.name; });
+    return readText(entry.file).then(function (text) {
+      return packHtmlSource(markdownPageHtml(text, entry), baseSegments);
+    }).then(function (result) {
+      if (result.missing.length) result.html = markMissingImages(result.html, result.missing);
+      state.packedCache.set(cacheKey, result);
+      return result;
+    });
+  }
+
   function renderMarkdownPreview(entry, token) {
     if (!entry.file) {
       renderGenericPreview(entry, token, 'md');
       return;
     }
     previewLoading(entry.name);
+    addPreviewAction('在新标签页打开', true, function () { openMarkdownEntry(entry); });
     readSliceText(entry.file, TEXT_LIMIT).then(function (text) {
       if (token !== state.previewToken) return;
       previewFrame(
@@ -2879,13 +3010,27 @@
   }
 
   function openHtmlEntry(entry) {
+    openPackedEntry(entry, packHtmlEntry, '打包', '下载打包页');
+  }
+
+  function openMarkdownEntry(entry) {
+    if (entry && entry.file && entry.file.size > MD_OPEN_LIMIT) {
+      setStatus(entry.name + ' 有 ' + formatBytes(entry.file.size) + '，超过排版上限（8 MB）；请用“下载”', 'warn');
+      return;
+    }
+    openPackedEntry(entry, packMarkdownEntry, '排版', '下载');
+  }
+
+  // verb names the step (打包 for a page, 排版 for Markdown); fallback names the button to use
+  // when the result cannot be opened.
+  function openPackedEntry(entry, pack, verb, fallback) {
     if (!entry || !entry.file) return;
-    setStatus('正在打包 ' + entry.name + '…');
+    setStatus('正在' + verb + ' ' + entry.name + '…');
     var settled = false;
     var timer = window.setTimeout(function () {
       if (settled) return;
       settled = true;
-      setStatus('打包超过 10 秒，已取消；请用“下载打包页”保存 ' + entry.name, 'warn');
+      setStatus(verb + '超过 10 秒，已取消；请用“' + fallback + '”保存 ' + entry.name, 'warn');
     }, 10000);
     function finish() {
       if (settled) return false;
@@ -2893,28 +3038,28 @@
       window.clearTimeout(timer);
       return true;
     }
-    packHtmlEntry(entry).then(function (result) {
+    pack(entry).then(function (result) {
       if (settled) return null;
       var blob = new Blob([result.html], { type: 'text/html;charset=utf-8' });
       var external = result.external || [];
       var externalNote = external.length ? ' · 在线资源 ' + external.length + ' 个' : '';
       var missing = result.missing.length ? ' · 缺失 ' + shortPath(result.missing[0], 60) : '';
-      var summary = '打包后 ' + formatBytes(blob.size) + ' · 内联 ' + result.inlined + (missing || externalNote);
+      var summary = verb + '后 ' + formatBytes(blob.size) + ' · 内联 ' + result.inlined + (missing || externalNote);
       var tone = result.missing.length ? 'warn' : 'good';
       if (!inAiraHome()) {
         if (!finish()) return null;
         if (blob.size > 12 * 1024 * 1024) {
-          setStatus('打包后 ' + formatBytes(blob.size) + '，超过打开上限；请用“下载打包页”' + missing + externalNote, 'warn');
+          setStatus(verb + '后 ' + formatBytes(blob.size) + '，超过打开上限；请用“' + fallback + '”' + missing + externalNote, 'warn');
           return null;
         }
-        if (!openBlobUrl(blob, entry.name + ' · 打包页')) return null;
+        if (!openBlobUrl(blob, entry.name + ' · ' + verb + '页')) return null;
         setStatus('已请求在新标签页打开 · ' + summary, tone);
         return null;
       }
       return airaHtmlUrl(result.html, blob, entry.name).then(function (prepared) {
         if (!finish()) return;
         if (!prepared) {
-          setStatus('打包后 ' + formatBytes(blob.size) + '，压缩后仍超过 Aira 从主页打开的上限；请用“下载打包页”' + missing + externalNote, 'warn');
+          setStatus(verb + '后 ' + formatBytes(blob.size) + '，压缩后仍超过 Aira 从主页打开的上限；请用“' + fallback + '”' + missing + externalNote, 'warn');
           return;
         }
         clickNewTab(prepared.url);
@@ -2922,7 +3067,7 @@
       });
     }).catch(function (error) {
       if (!finish()) return;
-      setStatus('打包失败：' + errorText(error), 'warn');
+      setStatus(verb + '失败：' + errorText(error), 'warn');
     });
   }
 
@@ -3145,9 +3290,18 @@
     var cacheKey = state.source + '|' + entry.path;
     if (state.packedCache.has(cacheKey)) return Promise.resolve(state.packedCache.get(cacheKey));
     var baseSegments = state.path.slice(1).map(function (part) { return part.name; });
-    var ctx = { inlined: 0, missing: [], external: [], warnings: [] };
-
     return readText(entry.file).then(function (html) {
+      return packHtmlSource(html, baseSegments);
+    }).then(function (result) {
+      state.packedCache.set(cacheKey, result);
+      return result;
+    });
+  }
+
+  // Packs a page's relative assets in, against the folder it sits in (baseSegments).
+  function packHtmlSource(html, baseSegments) {
+    var ctx = { inlined: 0, missing: [], external: [], warnings: [] };
+    return Promise.resolve().then(function () {
       var doc = new DOMParser().parseFromString(html, 'text/html');
       doc.querySelectorAll('base').forEach(function (node) { node.remove(); });
       doc.querySelectorAll('meta[http-equiv]').forEach(function (node) {
@@ -3300,15 +3454,13 @@
             lower.indexOf('mailto:') !== 0 && lower.indexOf('tel:') !== 0 && lower.indexOf('data:') !== 0;
         });
         if (localLinks.length) ctx.warnings.push('有 ' + localLinks.length + ' 个站内链接，打包后可能无法跳转');
-        var result = {
+        return {
           html: '<!doctype html>\n' + doc.documentElement.outerHTML,
           inlined: ctx.inlined,
           missing: ctx.missing,
           external: ctx.external,
           warnings: ctx.warnings
         };
-        state.packedCache.set(cacheKey, result);
-        return result;
       });
     });
   }
