@@ -312,7 +312,7 @@
   }
   function openDownloads() {
     show("下载管理", "需要的内容，妥帖地留在手边。", "download", function (content) {
-      row(content, "lucent-5.0.0-aira.zip", "完成状态展示 · 示例文件，没有实际下载", null, "download", "样例");
+      row(content, "(261016) aira-profile-card-5.0 pro ultra.zip", "完成状态展示 · 示例文件，没有实际下载", null, "download", "样例");
       section(content, "可用操作");
       row(content, "导出演示偏好", "将主题、快捷方式与引擎设置保存为本地 JSON", saveJson, "download");
       note(content, "网页无法读取浏览器下载列表。Aira 原生环境会打开真实下载管理。");

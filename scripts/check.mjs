@@ -21,7 +21,7 @@ if (pkg.name !== 'lucent' || pkg.version !== '6.0.4' || pkg.author !== 'hydeclan
 
 // The device packages are kept byte for byte; their digests are documented in product-finale/README.md.
 const documented = await readFile(path.join(root, 'product-finale/README.md'), 'utf8');
-for (const PACKAGE of ['product-finale/lucent-5.0.0-aira.zip', 'product-finale/lucent-5.1.3-aira.zip', 'product-finale/lucent-5.9.4-aira.zip', 'product-finale/lucent-5.9.7-aira.zip', 'product-finale/lucent-6.0.1-aira.zip', 'product-finale/lucent-6.0.2-aira.zip', 'product-finale/lucent-6.0.3-aira.zip', 'product-finale/lucent-6.0.4-aira.zip']) {
+for (const PACKAGE of ['product-finale/(261016) aira-profile-card-5.0 pro ultra.zip', 'product-finale/(261020) lucent-next-5.1.3 ultra plus.zip', 'product-finale/(261021) lucent-next-5.9.4 plus ultra.zip', 'product-finale/(261027) lucent-next-5.9.7 porcelain buttons.zip', 'product-finale/(261029) lucent-next-6.0.1 local-shelf data-open.zip', 'product-finale/(261029) lucent-next-6.0.2 ultra.zip', 'product-finale/(261029) lucent-next-6.0.3 pro max.zip', 'product-finale/(261030) lucent-next-6.0.4 ultra.zip']) {
   const digest = createHash('sha256').update(await readFile(path.join(root, PACKAGE))).digest('hex');
   if (!documented.includes(digest)) throw new Error(`${PACKAGE} does not match the documented SHA-256`);
 }
