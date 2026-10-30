@@ -2446,10 +2446,41 @@
   // can inline them, and headings carry ids so in-page links land.
   var mdForPage = false;
   var mdHeadingIds = {};
+  // Original address of an image the clipper routed through its own proxy → the proxy address.
+  var mdImageFallbacks = {};
+
+  // Link and image addresses are set aside before emphasis runs, so the underscores in an
+  // address such as mmbiz_jpg/…?wx_fmt=jpeg are never read as italics.
+  var MD_DEST = /\]\(\s*(&lt;.*?&gt;|(?:[^()\s]|\([^()\s]*\))+)((?:\s+(?:&quot;.*?&quot;|&#39;.*?&#39;))?)\s*\)/g;
+
+  function decodeEntities(value) {
+    return String(value || '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+  }
+
+  // An address as an attribute value; an &amp; left over from copied HTML becomes a plain &.
+  function attrUrl(raw) {
+    return String(raw || '').replace(/&amp;/gi, '&').replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
 
   function inlineMarkdown(text) {
     var codes = [];
     var breaks = [];
+    var urls = [];
+    function keep(url) {
+      urls.push(url);
+      return '\u0002' + (urls.length - 1) + '\u0002';
+    }
+    function park(html) {
+      codes.push(html);
+      return '\u0000' + (codes.length - 1) + '\u0000';
+    }
+    function restore(value) {
+      return String(value || '').replace(/\u0002(\d+)\u0002/g, function (_, index) {
+        return urls[Number(index)] || '';
+      });
+    }
     var s = String(text || '').replace(/<br\s*\/?>/gi, function () {
       breaks.push('<br>');
       return '\u0001' + (breaks.length - 1) + '\u0001';
@@ -2458,39 +2489,57 @@
       codes.push('<code>' + code + '</code>');
       return '\u0000' + (codes.length - 1) + '\u0000';
     });
-    s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    s = s.replace(/__([^_]+)__/g, '<strong>$1</strong>');
-    s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
-    s = s.replace(/(^|[^_])_([^_\n]+)_/g, '$1<em>$2</em>');
-    s = s.replace(/~~([^~]+)~~/g, '<del>$1</del>');
-    s = s.replace(/&lt;((?:https?:|mailto:)[^&\s]+)&gt;/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
-    s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function (_, alt, url) {
-      var clean = url.trim().replace(/^&lt;|&gt;$/g, '').trim();
+    s = s.replace(/&lt;((?:https?:|mailto:)[^\s]*?)&gt;/g, function (_, url) {
+      return '\u0003' + keep(url) + '\u0003';
+    });
+    s = s.replace(MD_DEST, function (_, url, title) {
+      return '](' + keep(url) + title + ')';
+    });
+    s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function (_, alt, inner) {
+      return park(renderImage(alt, inner));
+    });
+    function renderImage(alt, inner) {
+      var clean = inner.trim();
       var title = '';
-      var titleMatch = /^(\S+)\s+(?:&quot;|&#39;|["'])(.*?)(?:&quot;|&#39;|["'])$/.exec(clean);
+      var titleMatch = /^(\S+)\s+(?:&quot;|&#39;)(.*?)(?:&quot;|&#39;)$/.exec(clean);
       if (titleMatch) {
         clean = titleMatch[1];
         title = titleMatch[2];
       }
+      clean = decodeEntities(restore(clean)).trim().replace(/^<|>$/g, '').trim();
+      var src = attrUrl(clean);
+      var remote = /^https?:\/\//i.test(clean);
+      var fallback = remote && mdImageFallbacks[clean] ? ' data-fallback-src="' + attrUrl(mdImageFallbacks[clean]) + '"' : '';
+      var titleAttr = title ? ' title="' + title + '"' : '';
       mdImageCounter += 1;
       var label = mdImageCounter < 10 ? '0' + mdImageCounter : String(mdImageCounter);
       if (mdForPage) {
-        return '<img src="' + clean.replace(/"/g, '&quot;') + '" alt="' + alt + '"' +
-          (title ? ' title="' + title.replace(/"/g, '&quot;') + '"' : '') +
-          ' data-md-label="' + label + '">';
+        return '<img src="' + src + '" alt="' + alt + '"' + titleAttr +
+          (remote ? ' referrerpolicy="no-referrer"' + fallback : '') + ' data-md-label="' + label + '">';
       }
-      if (/^https?:\/\//i.test(clean)) {
-        return '<img src="' + clean.replace(/"/g, '&quot;') + '" alt="' + alt + '"' +
-          (title ? ' title="' + title.replace(/"/g, '&quot;') + '"' : '') +
-          ' data-md-src="' + clean.replace(/"/g, '&quot;') + '" data-fallback="&lt;image ' + label + '&gt;" loading="lazy">';
+      if (remote) {
+        return '<img src="' + src + '" alt="' + alt + '"' + titleAttr + ' referrerpolicy="no-referrer"' + fallback +
+          ' data-md-src="' + src + '" data-fallback="&lt;image ' + label + '&gt;" loading="lazy">';
       }
-      return '<span class="md-image" data-md-src="' + clean.replace(/"/g, '&quot;') + '">&lt;image ' + label + '&gt;</span>';
+      return '<span class="md-image" data-md-src="' + src + '">&lt;image ' + label + '&gt;</span>';
+    }
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+    s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+    // As in CommonMark, an underscore inside a word (snake_case, 原文_link) does not open emphasis.
+    s = s.replace(/(^|[^\p{L}\p{N}_])_([^_\n]+?)_(?![\p{L}\p{N}_])/gu, '$1<em>$2</em>');
+    s = s.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+    s = s.replace(/\u0003\u0002(\d+)\u0002\u0003/g, function (_, index) {
+      var url = decodeEntities(urls[Number(index)]);
+      return '<a href="' + attrUrl(url) + '" target="_blank" rel="noopener">' + escapeHtml(url) + '</a>';
     });
-    s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, function (_, label, url) {
+    s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (_, label, inner) {
+      var url = decodeEntities(restore(inner.trim().split(/\s+/)[0])).replace(/^<|>$/g, '');
       if (!/^(https?:|mailto:|#)/i.test(url)) return label;
       var target = url.charAt(0) === '#' ? '' : ' target="_blank" rel="noopener"';
-      return '<a href="' + url.replace(/"/g, '&quot;') + '"' + target + '>' + label + '</a>';
+      return '<a href="' + attrUrl(url) + '"' + target + '>' + label + '</a>';
     });
+    s = restore(s);
     s = s.replace(/\u0001(\d+)\u0001/g, function (_, index) {
       return breaks[Number(index)] || '';
     });
@@ -2503,6 +2552,14 @@
     return String(line || '').trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(function (cell) {
       return cell.trim();
     });
+  }
+
+  function proxiedImageUrl(url) {
+    var match = /[?&]imageUrl=([^&#\s]+)/i.exec(String(url || ''));
+    if (!match) return '';
+    var decoded = '';
+    try { decoded = decodeURIComponent(match[1]); } catch (error) { return ''; }
+    return /^https?:\/\/[^\s()]+$/i.test(decoded) ? decoded : '';
   }
 
   function markdownHeadingId(html) {
@@ -2525,6 +2582,7 @@
   function renderMarkdown(source, forPage) {
     mdForPage = !!forPage;
     mdHeadingIds = {};
+    mdImageFallbacks = {};
     try {
       return renderMarkdownBody(source);
     } finally {
@@ -2554,6 +2612,14 @@
       if (!srcMatch) return '';
       var altMatch = /alt\s*=\s*["']([^"']*)["']/i.exec(tag);
       return '![' + (altMatch ? altMatch[1] : '') + '](' + srcMatch[1] + ')';
+    });
+    // Cubox exports an image as its proxy, https://cubox.pro/c/filters:no_upscale()?imageUrl=<encoded
+    // original>&valid=…; the original address is used, and the proxy kept as its fallback.
+    source = source.replace(/!\[([^\]]*)\]\(\s*((?:[^()\s]|\([^()\s]*\))+)\s*\)/g, function (full, alt, url) {
+      var original = proxiedImageUrl(url);
+      if (!original) return full;
+      mdImageFallbacks[original] = url;
+      return '![' + alt + '](' + original + ')';
     });
     source = source.replace(/imageUrl=([^\s<]+)/g, function (_, encoded) {
       var url = encoded;
@@ -2741,7 +2807,16 @@
 
   // A page opened from a data: or blob: address ignores #links (Chromium treats them as a new
   // navigation to that address), so in-page links scroll to their heading here.
+  // An image that does not load tries the clipper's proxy, then becomes an <image 01> mark.
   var MD_PAGE_SCRIPT =
+    'function lucentImg(i){' +
+      'var p=i.getAttribute("data-fallback-src");' +
+      'if(p&&!i.getAttribute("data-tried-fallback")){i.setAttribute("data-tried-fallback","1");i.src=p;return;}' +
+      'var m=document.createElement("span");m.className="md-image";m.title=i.getAttribute("src")||"";' +
+      'm.textContent="<image "+(i.getAttribute("data-md-label")||"")+">";i.replaceWith(m);' +
+    '}' +
+    'document.addEventListener("error",function(e){var t=e.target;if(t&&t.tagName==="IMG")lucentImg(t);},true);' +
+    'Array.prototype.forEach.call(document.images,function(i){if(i.complete&&!i.naturalWidth&&i.getAttribute("src"))lucentImg(i);});' +
     'document.addEventListener("click",function(e){' +
       'var a=e.target&&e.target.closest?e.target.closest(\'a[href^="#"]\'):null;if(!a)return;' +
       'var id=a.getAttribute("href").slice(1);try{id=decodeURIComponent(id);}catch(x){}' +
@@ -2758,6 +2833,7 @@
   function markdownPageHtml(text, entry) {
     return '<!doctype html>\n<html lang="zh-CN"><head><meta charset="utf-8">' +
       '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<meta name="referrer" content="no-referrer">' +
       '<title>' + escapeHtml(markdownTitle(text, entry.name)) + '</title>' +
       '<style>' + MD_PAGE_CSS + '</style></head><body>' +
       '<main class="md">' + renderMarkdown(text, true) + '</main>' +
@@ -2817,6 +2893,12 @@
       if (previewShadow) {
         Array.prototype.forEach.call(previewShadow.querySelectorAll('.md img'), function (img, index) {
           img.addEventListener('error', function () {
+            var proxy = img.getAttribute('data-fallback-src');
+            if (proxy && !img.getAttribute('data-tried-fallback')) {
+              img.setAttribute('data-tried-fallback', '1');
+              img.src = proxy;
+              return;
+            }
             if (img.getAttribute('data-failed')) return;
             img.setAttribute('data-failed', '1');
             var span = document.createElement('span');
